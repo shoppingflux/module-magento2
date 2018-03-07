@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+                <resource id="ShoppingFeed_Manager::main" title="Shopping Feed" translate="title" sortOrder="100000">
+                    <resource id="ShoppingFeed_Manager::accounts" title="Accounts" translate="title" sortOrder="10000">
+                        <resource id="ShoppingFeed_Manager::account_create_existing" title="Create Existing Account" translate="title" sortOrder="10000"/>
+                        <resource id="ShoppingFeed_Manager::account_create_unexisting" title="Create New Account" translate="title" sortOrder="20000"/>
+                        <resource id="ShoppingFeed_Manager::account_delete" title="Delete Account" translate="title" sortOrder="30000"/>
+                    </resource>
+                    <resource id="ShoppingFeed_Manager::stores" title="Stores" translate="title" sortOrder="20000">
+                        <resource id="ShoppingFeed_Manager::account_store_edit" title="Edit Account Store" translate="title" sortOrder="10000"/>
+                    </resource>
+                </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>
