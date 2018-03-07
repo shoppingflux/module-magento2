@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="ShoppingFeed\Manager\Api\Data\AccountSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
+    <preference for="ShoppingFeed\Manager\Api\Data\AccountInterface" type="ShoppingFeed\Manager\Model\Account"/>
+    <preference for="ShoppingFeed\Manager\Api\AccountRepositoryInterface" type="ShoppingFeed\Manager\Model\AccountRepository"/>
+    <type name="ShoppingFeed\Manager\Model\Account\Importer" shared="true"/>
+
+    <preference for="ShoppingFeed\Manager\Api\Data\Account\StoreSearchResultsInterface" type="Magento\Framework\Api\SearchResults"/>
+    <preference for="ShoppingFeed\Manager\Api\Data\Account\StoreInterface" type="ShoppingFeed\Manager\Model\Account\Store"/>
+    <preference for="ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface" type="ShoppingFeed\Manager\Model\Account\StoreRepository"/>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Refresher" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher" shared="true"/>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Exporter" shared="true">
+        <arguments>
+            <argument name="feedDirectory" xsi:type="string">shoppingfeed</argument>
+            <argument name="feedBaseFileName" xsi:type="string">feed_%d.xml</argument>
+        </arguments>
+    </type>
+    <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter" shared="true"/>
+
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePool"/>
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" shared="true">
+        <arguments>
+            <argument name="types" xsi:type="array">
+                <item name="stock" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock</item>
+                <item name="prices" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Prices</item>
+                <item name="attributes" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Attributes</item>
+                <item name="images" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Images</item>
+                <item name="categories" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Categories</item>
+                <item name="shipping" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Shipping</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type" shared="true"/>
+
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Export\State\Adapter"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\StockInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Stock"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\PricesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\AttributesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Attributes"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ImagesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Images"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Categories"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Shipping"/>
+
+    <type name="ShoppingFeed\Manager\Model\Account\Store\Config\AbstractField">
+        <arguments>
+            <argument name="config" xsi:type="object">moduleConfig</argument>
+        </arguments>
+    </type>
+
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Attribute\SourceInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Attribute\Source"/>
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Attribute\SourceInterface" shared="true">
+        <arguments>
+            <argument name="excludedAttributes" xsi:type="array">
+                <item name="attribute_set_id" xsi:type="string">attribute_set_id</item>
+                <item name="category_ids" xsi:type="string">category_ids</item>
+                <item name="created_at" xsi:type="string">created_at</item>
+                <item name="custom_design" xsi:type="string">custom_design</item>
+                <item name="custom_design_from" xsi:type="string">custom_design_from</item>
+                <item name="custom_design_to" xsi:type="string">custom_design_to</item>
+                <item name="custom_layout" xsi:type="string">custom_layout</item>
+                <item name="custom_layout_update" xsi:type="string">custom_layout_update</item>
+                <item name="entity_id" xsi:type="string">entity_id</item>
+                <item name="gallery" xsi:type="string">gallery</item>
+                <item name="gift_message_available" xsi:type="string">gift_message_available</item>
+                <item name="has_options" xsi:type="string">has_options</item>
+                <item name="links_exists" xsi:type="string">links_exists</item>
+                <item name="links_purchased_separately" xsi:type="string">links_purchased_separately</item>
+                <item name="links_title" xsi:type="string">links_title</item>
+                <item name="media_gallery" xsi:type="string">media_gallery</item>
+                <item name="msrp_display_actual_price_type" xsi:type="string">msrp_display_actual_price_type</item>
+                <item name="old_id" xsi:type="string">old_id</item>
+                <item name="options_container" xsi:type="string">options_container</item>
+                <item name="page_layout" xsi:type="string">page_layout</item>
+                <item name="price_type" xsi:type="string">price_type</item>
+                <item name="price_view" xsi:type="string">price_view</item>
+                <item name="quantity_and_stock_status" xsi:type="string">quantity_and_stock_status</item>
+                <item name="required_options" xsi:type="string">required_options</item>
+                <item name="samples_title" xsi:type="string">samples_title</item>
+                <item name="shipment_type" xsi:type="string">shipment_type</item>
+                <item name="sku_type" xsi:type="string">sku_type</item>
+                <item name="tier_price" xsi:type="string">tier_price</item>
+                <item name="type_id" xsi:type="string">type_id</item>
+                <item name="updated_at" xsi:type="string">updated_at</item>
+                <item name="url_key" xsi:type="string">url_key</item>
+                <item name="url_path" xsi:type="string">url_path</item>
+                <item name="weight_type" xsi:type="string">weight_type</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Export\State\Config"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Stock"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\PricesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Prices"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\AttributesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Attributes"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ImagesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Images"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Categories"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping"/>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\AttributesInterface">
+        <arguments>
+            <argument name="mappableAttributes" xsi:type="array">
+                <item name="brand" xsi:type="string" translate="true">Brand</item>
+                <item name="color" xsi:type="string" translate="true">Color</item>
+                <item name="description" xsi:type="string" translate="true">Description</item>
+                <item name="ean" xsi:type="string" translate="true">EAN / GTIN</item>
+                <item name="isbn" xsi:type="string" translate="true">ISBN</item>
+                <item name="matter" xsi:type="string" translate="true">Matter</item>
+                <item name="name" xsi:type="string" translate="true">Name</item>
+                <item name="short_description" xsi:type="string" translate="true">Short Description</item>
+                <item name="shoe_size" xsi:type="string" translate="true">Shoe Size</item>
+                <item name="size" xsi:type="string" translate="true">Size</item>
+                <item name="weight" xsi:type="string" translate="true">Weight</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPool"/>
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface" shared="true">
+        <arguments>
+            <argument name="renderers" xsi:type="array">
+                <item name="boolean" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Boolean</item>
+                <item name="date" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Date</item>
+                <item name="image" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Image</item>
+                <item name="option" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Option</item>
+                <item name="options" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Options</item>
+                <item name="price" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Price</item>
+                <item name="text" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Text</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Category\SelectorInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Category\Selector"/>
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Category\Selector" shared="true"/>
+
+    <type name="ShoppingFeed\Manager\Model\Time\Helper" shared="true"/>
+    
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="account_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Grid\Collection</item>
+                <item name="account_store_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Framework\Console\CommandList">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="sfm_feed_sync_product_list" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\SyncProductListCommand</item>
+                <item name="sfm_feed_force_export_state_refresh" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\ForceExportStateRefreshCommand</item>
+                <item name="sfm_feed_force_sections_refresh" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\ForceSectionsRefreshCommand</item>
+                <item name="sfm_feed_force_automatic_refresh" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\ForceAutomaticRefreshCommand</item>
+                <item name="sfm_feed_refresh" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\RefreshCommand</item>
+                <item name="sfm_feed_export" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\ExportCommand</item>
+            </argument>
+        </arguments>
+    </type>
+</config>

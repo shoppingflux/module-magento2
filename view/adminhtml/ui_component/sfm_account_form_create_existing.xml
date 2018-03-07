@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">sfm_account_form_create_existing.account_form_data_source</item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+    </argument>
+    <settings>
+        <buttons>
+            <button name="back" class="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\BackButton"/>
+            <button name="reset" class="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\ResetButton"/>
+            <button name="save" class="ShoppingFeed\Manager\Block\Adminhtml\Account\Edit\SaveButton"/>
+        </buttons>
+        <dataScope>data</dataScope>
+        <deps>
+            <dep>sfm_account_form_create_existing.account_form_data_source</dep>
+        </deps>
+        <namespace>sfm_account_form_create_existing</namespace>
+    </settings>
+    <dataSource name="account_form_data_source">
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+        <settings>
+            <submitUrl path="*/*/create_existing"/>
+        </settings>
+        <dataProvider class="ShoppingFeed\Manager\Ui\EmptyDataProvider" name="account_form_data_source">
+            <settings>
+                <requestFieldName>account_id</requestFieldName>
+                <primaryFieldName>account_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <fieldset name="account">
+        <settings>
+            <dataScope>account</dataScope>
+            <label translate="true">Account</label>
+        </settings>
+        <field name="store_id" formElement="select">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Magento\Store\Ui\Component\Listing\Column\Store\Options</item>
+            </argument>
+            <settings>
+                <dataType>int</dataType>
+                <label translate="true">Store View</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="use_api_token" formElement="checkbox">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="default" xsi:type="number">1</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>boolean</dataType>
+                <label translate="true">I know the account API token</label>
+                <switcherConfig>
+                    <rules>
+                        <rule name="0">
+                            <value>0</value>
+                            <actions>
+                                <action name="0">
+                                    <target>${$.parentName}.api_token</target>
+                                    <callback>hide</callback>
+                                </action>
+                                <action name="1">
+                                    <target>${$.parentName}.shopping_feed_username</target>
+                                    <callback>show</callback>
+                                </action>
+                                <action name="2">
+                                    <target>${$.parentName}.shopping_feed_password</target>
+                                    <callback>show</callback>
+                                </action>
+                            </actions>
+                        </rule>
+                        <rule name="1">
+                            <value>1</value>
+                            <actions>
+                                <action name="0">
+                                    <target>${$.parentName}.api_token</target>
+                                    <callback>show</callback>
+                                </action>
+                                <action name="1">
+                                    <target>${$.parentName}.shopping_feed_username</target>
+                                    <callback>hide</callback>
+                                </action>
+                                <action name="2">
+                                    <target>${$.parentName}.shopping_feed_password</target>
+                                    <callback>hide</callback>
+                                </action>
+                            </actions>
+                        </rule>
+                    </rules>
+                    <enabled>true</enabled>
+                </switcherConfig>
+            </settings>
+            <formElements>
+                <checkbox>
+                    <settings>
+                        <prefer>toggle</prefer>
+                        <valueMap>
+                            <map name="false" xsi:type="number">0</map>
+                            <map name="true" xsi:type="number">1</map>
+                        </valueMap>
+                    </settings>
+                </checkbox>
+            </formElements>
+        </field>
+        <field name="api_token" formElement="input">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">API Token</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="shopping_feed_username" formElement="input">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Shopping Feed Login</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="shopping_feed_password" formElement="input">
+            <settings>
+                <dataType>password</dataType>
+                <elementTmpl>ShoppingFeed_Manager/form/element/password</elementTmpl>
+                <label translate="true">Shopping Feed Password</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+    </fieldset>
+</form>
