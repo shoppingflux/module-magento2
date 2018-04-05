@@ -2,8 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Feed;
 
-use Magento\Framework\DataObject;
-
 
 class ExportableProduct
 {

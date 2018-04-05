@@ -166,11 +166,27 @@ abstract class AbstractField
     }
 
     /**
+     * @return ValueHandler
+     */
+    final public function getValueHandler()
+    {
+        return $this->valueHandler;
+    }
+
+    /**
      * @return bool
      */
     final public function isRequired()
     {
         return $this->isRequired;
+    }
+
+    /**
+     * @return string
+     */
+    final public function getLabel()
+    {
+        return $this->label;
     }
 
     /**
@@ -190,17 +206,9 @@ abstract class AbstractField
     }
 
     /**
-     * @return ValueHandler
-     */
-    final public function getValueHandler()
-    {
-        return $this->valueHandler;
-    }
-
-    /**
      * @return array
      */
-    public function getMetaConfig()
+    protected function getBaseUiMetaConfig()
     {
         $metaConfig = [
             'dataType' => $this->valueHandler->getFormDataType(),
@@ -243,16 +251,16 @@ abstract class AbstractField
     /**
      * @return array
      */
-    public function getMeta()
+    public function getUiMetaConfig()
     {
-        $metaConfig = $this->getMetaConfig();
+        $metaConfig = $this->getBaseUiMetaConfig();
 
         return [
             'arguments' => [
                 'data' => [
                     'config' => array_merge(
                         [
-                            'componentType' => 'field',
+                            'componentType' => FormField::NAME,
                             'dataScope' => $this->getName(),
                             'visible' => true,
                         ],

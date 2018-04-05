@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler;
 
+use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Value\AbstractHandler;
 
 
@@ -9,7 +10,7 @@ class Integer extends AbstractHandler
 {
     public function getFormDataType()
     {
-        return 'number';
+        return UiNumber::NAME;
     }
 
     public function getFieldValidationClasses()

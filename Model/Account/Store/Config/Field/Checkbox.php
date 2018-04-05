@@ -3,6 +3,8 @@
 namespace ShoppingFeed\Manager\Model\Account\Store\Config\Field;
 
 use Magento\Framework\Phrase;
+use Magento\Ui\Component\Form\Element\Checkbox as UiCheckbox;
+use Magento\Ui\Component\Form\Element\DataType\Boolean as UiBoolean;
 use ShoppingFeed\Manager\Model\Account\Store\Config\AbstractField;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\Boolean as BooleanHandler;
 
@@ -35,6 +37,18 @@ class Checkbox extends AbstractField
     private $uncheckedDependentFieldNames;
 
     /**
+     * @var string
+     */
+    private $checkedLabel;
+
+    /**
+     * @var string
+     */
+    private $uncheckedLabel;
+
+    // @todo CheckboxOption object to hold: notice, label, dependent field names
+
+    /**
      * @param string $name
      * @param string $label
      * @param bool $isCheckedByDefault
@@ -42,33 +56,40 @@ class Checkbox extends AbstractField
      * @param Phrase|string $uncheckedNotice
      * @param string[] $checkedDependentFieldNames
      * @param string[] $uncheckedDependentFieldNames
+     * @param string $checkedLabel
+     * @param string $uncheckedLabel
      */
     public function __construct(
-        string $name,
+        $name,
         $label,
         $isCheckedByDefault = false,
         $checkedNotice = '',
         $uncheckedNotice = '',
         array $checkedDependentFieldNames = [],
-        array $uncheckedDependentFieldNames = []
+        array $uncheckedDependentFieldNames = [],
+        $checkedLabel = '',
+        $uncheckedLabel = ''
     ) {
         $this->isCheckedByDefault = (bool) $isCheckedByDefault;
         $this->checkedNotice = $checkedNotice;
         $this->uncheckedNotice = $uncheckedNotice;
         $this->checkedDependentFieldNames = $checkedDependentFieldNames;
         $this->uncheckedDependentFieldNames = $uncheckedDependentFieldNames;
+        $this->checkedLabel = (string) trim($checkedLabel) ?? __('Yes');
+        $this->uncheckedLabel = (string) trim($uncheckedLabel) ?? __('No');
         parent::__construct($name, new BooleanHandler(), $label, false, $isCheckedByDefault, $isCheckedByDefault);
     }
 
-    public function getMetaConfig()
+    public function getBaseUiMetaConfig()
     {
         $metaConfig = array_merge(
-            parent::getMetaConfig(),
+            parent::getBaseUiMetaConfig(),
             [
-                'dataType' => 'boolean',
-                'formElement' => 'checkbox',
+                'dataType' => UiBoolean::NAME,
+                'formElement' => UiCheckbox::NAME,
                 'prefer' => 'toggle',
                 'valueMap' => [ 'true' => 1, 'false' => 0 ],
+                'toggleLabels' => [ 'on' => $this->checkedLabel, 'off' => $this->uncheckedLabel ],
                 'default' => $this->isCheckedByDefault ? 1 : 0,
             ]
         );

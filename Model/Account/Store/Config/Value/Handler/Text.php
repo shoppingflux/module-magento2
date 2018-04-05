@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler;
 
+use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Value\AbstractHandler;
 
 
@@ -9,7 +10,7 @@ class Text extends AbstractHandler
 {
     public function getFormDataType()
     {
-        return 'text';
+        return UiText::NAME;
     }
 
     public function isUndefinedValue($value)

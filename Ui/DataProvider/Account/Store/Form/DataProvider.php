@@ -2,7 +2,7 @@
 
 namespace ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Form;
 
-use Magento\Ui\Component\Form\Fieldset as FormFieldset;
+use Magento\Ui\Component\Form\Fieldset as UiFieldset;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as StoreConfigInterface;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
@@ -11,13 +11,15 @@ use ShoppingFeed\Manager\Ui\DataProvider\Account\Store\AbstractDataProvider;
 
 class DataProvider extends AbstractDataProvider
 {
+    const FIELDSET_EXPORT_STATE = 'feed_export_state';
+    const FIELDSET_BASE_SECTION_TYPE = 'feed_%s';
 
     /**
      * @param StoreConfigInterface $config
-     * @param string $fieldsetName
+     * @param int $sortOrder
      * @return array
      */
-    private function getConfigFormFieldsetMeta(StoreConfigInterface $config, $fieldsetName)
+    private function getStoreConfigFieldsetConfig(StoreConfigInterface $config, $sortOrder)
     {
         $dataScope = $config->getScope();
 
@@ -25,42 +27,40 @@ class DataProvider extends AbstractDataProvider
             $dataScope .= '.' . $subScope;
         }
 
-        $childrenMeta = [];
+        $childrenMetaConfig = [];
 
         foreach ($config->getFields() as $fieldName => $field) {
-            $childrenMeta[$fieldName] = $field->getMeta();
+            $childrenMetaConfig[$fieldName] = $field->getUiMetaConfig();
         }
 
         return [
             'arguments' => [
                 'data' => [
                     'config' => [
-                        'componentType' => 'fieldset',
+                        'label' => $config->getFieldsetLabel(),
+                        'componentType' => UiFieldset::NAME,
                         'collapsible' => true,
                         'dataScope' => $dataScope,
-                        'label' => $config->getFieldsetLabel(),
+                        'sortOrder' => $sortOrder,
                     ],
-                    'js_config' => [ 'component' => 'Magento_Ui/js/form/components/fieldset' ],
                 ],
             ],
-            'attributes' => [
-                'class' => FormFieldset::class,
-                'name' => $fieldsetName,
-            ],
-            'children' => $childrenMeta,
+            'children' => $childrenMetaConfig,
         ];
     }
 
+    /**
+     * @return array
+     */
     public function getMeta()
     {
-        $this->meta['feed_export_state'] = $this->getConfigFormFieldsetMeta(
-            $this->exportStateConfig,
-            'feed_export_state'
-        );
+        $this->meta[static::FIELDSET_EXPORT_STATE] = $this->getStoreConfigFieldsetConfig($this->exportStateConfig, 10);
+        $sortOrder = 20;
 
         foreach ($this->sectionTypePool->getSortedTypes() as $sectionType) {
-            $fieldsetName = 'feed_section_' . $sectionType->getCode();
-            $this->meta[$fieldsetName] = $this->getConfigFormFieldsetMeta($sectionType->getConfig(), $fieldsetName);
+            $fieldsetName = sprintf(static::FIELDSET_BASE_SECTION_TYPE, $sectionType->getCode());
+            $this->meta[$fieldsetName] = $this->getStoreConfigFieldsetConfig($sectionType->getConfig(), $sortOrder);
+            $sortOrder += 10;
         }
 
         return $this->meta;
@@ -71,7 +71,7 @@ class DataProvider extends AbstractDataProvider
      * @param array $data
      * @return array
      */
-    private function prepareConfigFormFieldsetData(StoreConfigInterface $config, array $data)
+    private function prepareStoreConfigFieldsetData(StoreConfigInterface $config, array $data)
     {
         $dataScope = $config->getScope();
 
@@ -107,10 +107,10 @@ class DataProvider extends AbstractDataProvider
         /** @var StoreInterface $store */
         $store = $this->coreRegistry->registry(RegistryConstants::CURRENT_ACCOUNT_STORE);
         $configData = $store->getConfiguration()->getData();
-        $configData = $this->prepareConfigFormFieldsetData($this->exportStateConfig, $configData);
+        $configData = $this->prepareStoreConfigFieldsetData($this->exportStateConfig, $configData);
 
         foreach ($this->sectionTypePool->getSortedTypes() as $sectionType) {
-            $configData = $this->prepareConfigFormFieldsetData($sectionType->getConfig(), $configData);
+            $configData = $this->prepareStoreConfigFieldsetData($sectionType->getConfig(), $configData);
         }
 
         $this->data[$store->getId()] = array_merge(

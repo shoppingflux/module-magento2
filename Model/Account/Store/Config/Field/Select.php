@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Account\Store\Config\Field;
 
 use Magento\Framework\Phrase;
+use Magento\Ui\Component\Form\Element\Select as UiSelect;
 use ShoppingFeed\Manager\Model\Account\Store\Config\AbstractField;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\Option as OptionHandler;
 
@@ -76,7 +77,7 @@ class Select extends AbstractField
             : [ 'value' => $this->getEmptyOptionValue(), 'label' => $this->getEmptyOptionLabel() ];
     }
 
-    public function getMetaConfig()
+    public function getBaseUiMetaConfig()
     {
         $options = $this->getValueHandler()->getOptionArray();
         $emptyOption = $this->getEmptyOption();
@@ -86,9 +87,9 @@ class Select extends AbstractField
         }
 
         $metaConfig = array_merge(
-            parent::getMetaConfig(),
+            parent::getBaseUiMetaConfig(),
             [
-                'formElement' => 'select',
+                'formElement' => UiSelect::NAME,
                 'options' => $options,
             ]
         );

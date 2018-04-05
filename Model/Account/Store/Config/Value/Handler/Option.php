@@ -8,7 +8,7 @@ use ShoppingFeed\Manager\Model\Account\Store\Config\Value\AbstractHandler;
 class Option extends AbstractHandler
 {
     /**
-     * @var array
+     * @var string
      */
     private $dataType;
 

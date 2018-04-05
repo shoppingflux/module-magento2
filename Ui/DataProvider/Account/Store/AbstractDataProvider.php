@@ -8,6 +8,8 @@ use Magento\Framework\Api\Search\SearchCriteriaBuilder;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider as BaseDataProvider;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterface;
+use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 
@@ -72,5 +74,13 @@ abstract class AbstractDataProvider extends BaseDataProvider
             $meta,
             $data
         );
+    }
+
+    /**
+     * @return AccountStoreInterface
+     */
+    protected function getAccountStore()
+    {
+        return $this->coreRegistry->registry(RegistryConstants::CURRENT_ACCOUNT_STORE);
     }
 }

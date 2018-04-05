@@ -55,11 +55,13 @@ class Categories extends AbstractAdapter implements CategoriesInterface
     {
         $data = [];
         $config = $this->getConfig();
-        $catalogProduct = $product->getCatalogProduct();
 
         $categoryPath = $this->productCategorySelector->getCatalogProductCategoryPath(
-            $catalogProduct,
+            $product->getCatalogProduct(),
             $store,
+            $product->getFeedProduct()->getSelectedCategoryId(),
+            $config->getCategorySelectionIds($store),
+            $config->getCategorySelectionMode($store),
             $config->getMaximumCategoryLevel($store),
             $config->getLevelWeightMultiplier($store),
             $config->shouldUseParentCategories($store),

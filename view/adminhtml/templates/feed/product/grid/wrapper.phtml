@@ -1,0 +1,19 @@
+<?php /** @var \ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Wrapper $block */ ?>
+<?php $gridBlock = $block->getGridBlock() ?>
+<?= $block->getGridHtml() ?>
+<input type="hidden" name="selected_product_ids" id="selected_product_ids" data-form-part="sfm_account_store_form" value="" />
+<script type="text/x-magento-init">
+    {
+        "*": {
+            "ShoppingFeed_Manager/js/feed/product/grid": {
+                "selectedProductIds": <?= /* @escapeNotVerified */ $block->getSelectedProductIdsJsonList() ?>,
+                "selectionInputId": "selected_product_ids",
+                "selectionParameterName": <?= /* @escapeNotVerified */ '"' . $gridBlock->getSelectedProductIdsParameterName() . '"' ?>,
+                "gridJsObjectName": <?= /* @escapeNotVerified */ '"' . $gridBlock->getJsObjectName() . '"' ?>
+            }
+        }
+    }
+</script>
+<script>
+    require('mage/apply/main').apply();
+</script>

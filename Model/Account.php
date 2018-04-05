@@ -24,7 +24,7 @@ class Account extends AbstractModel implements AccountInterface
 
     public function getShoppingFeedAccountId()
     {
-        return $this->getData(self::SHOPPING_FEED_ACCOUNT_ID);
+        return (int) $this->getData(self::SHOPPING_FEED_ACCOUNT_ID);
     }
 
     public function getApiToken()
@@ -54,7 +54,7 @@ class Account extends AbstractModel implements AccountInterface
 
     public function setShoppingFeedAccountId($shoppingFeedAccountId)
     {
-        return $this->setData(self::SHOPPING_FEED_ACCOUNT_ID, $shoppingFeedAccountId);
+        return $this->setData(self::SHOPPING_FEED_ACCOUNT_ID, (int) $shoppingFeedAccountId);
     }
 
     public function setApiToken($apiToken)

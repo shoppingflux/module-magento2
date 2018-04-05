@@ -9,6 +9,9 @@
     <preference for="ShoppingFeed\Manager\Api\Data\Account\StoreInterface" type="ShoppingFeed\Manager\Model\Account\Store"/>
     <preference for="ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface" type="ShoppingFeed\Manager\Model\Account\StoreRepository"/>
 
+    <preference for="ShoppingFeed\Manager\Api\Data\Feed\ProductInterface" type="ShoppingFeed\Manager\Model\Feed\Product"/>
+    <preference for="ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section"/>
+
     <type name="ShoppingFeed\Manager\Model\Feed\Refresher" shared="true"/>
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher" shared="true"/>
 
@@ -136,7 +139,7 @@
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Category\Selector" shared="true"/>
 
     <type name="ShoppingFeed\Manager\Model\Time\Helper" shared="true"/>
-    
+
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">

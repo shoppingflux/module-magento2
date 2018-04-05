@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 
 use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
+use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Field\MultiSelect;
@@ -55,7 +56,7 @@ class Config extends RefreshableConfig implements ConfigInterface
 
                 new MultiSelect(
                     self::KEY_EXPORTED_VISIBILITIES,
-                    new OptionHandler('text', $this->productVisibility->getAllOptions()),
+                    new OptionHandler(UiText::NAME, $this->productVisibility->getAllOptions()),
                     __('Export Products Visible in'),
                     true,
                     $this->productVisibility->getVisibleInSiteIds(),
@@ -78,7 +79,7 @@ class Config extends RefreshableConfig implements ConfigInterface
                 new Select(
                     self::KEY_CHILDREN_EXPORT_MODE,
                     new OptionHandler(
-                        'text',
+                        UiText::NAME,
                         [
                             [
                                 'value' => FeedExporter::CHILDREN_EXPORT_MODE_NONE,
@@ -129,7 +130,7 @@ class Config extends RefreshableConfig implements ConfigInterface
 
     public function getFieldsetLabel()
     {
-        return __('Feed - Products Selection');
+        return __('Feed - Exportable Products');
     }
 
     public function shouldExportSelectedOnly(StoreInterface $store)
