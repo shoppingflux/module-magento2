@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Api\Data\Account;
 
+use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Store\Api\Data\StoreInterface as BaseStoreInterface;
 use ShoppingFeed\Manager\DataObject;
 
@@ -69,6 +70,16 @@ interface StoreInterface
      * @return mixed
      */
     public function getScopeConfigValue($path);
+
+    /**
+     * @return int[]
+     */
+    public function getSelectedFeedProductIds();
+
+    /**
+     * @return CatalogProductCollection
+     */
+    public function getCatalogProductCollection();
 
     /**
      * @param int $id

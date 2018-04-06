@@ -85,9 +85,24 @@ class Selector implements SelectorInterface
         return $categoryPath;
     }
 
+    /**
+     * @param int $categoryId
+     * @param int[] $selectionIds
+     * @param string $selectionMode
+     * @return bool
+     */
+    private function isSelectableCategory($categoryId, array $selectionIds, $selectionMode)
+    {
+        $isSelected = in_array($categoryId, $selectionIds, true);
+        return ($selectionMode === self::SELECTION_MODE_INCLUDE) ? $isSelected : !$isSelected;
+    }
+
     public function getCatalogProductCategoryPath(
         CatalogProduct $product,
         StoreInterface $store,
+        $preselectedCategoryId,
+        array $selectionIds,
+        $selectionMode,
         $maximumLevel = PHP_INT_MAX,
         $levelWeightMultiplier = 1,
         $useParentCategories = false,
@@ -97,48 +112,60 @@ class Selector implements SelectorInterface
     ) {
         $categories = $this->getStoreCategoryList($store);
         $categoryIds = $product->getCategoryIds();
-        $categoryWeights = [];
+        $selectedCategoryId = null;
 
-        foreach ($categoryIds as $categoryId) {
-            if (isset($categories[$categoryId])
-                && ($categories[$categoryId]->getLevel() <= $maximumLevel)
-            ) {
-                $categoryWeights[$categoryId] = $categories[$categoryId]->getLevel() * $levelWeightMultiplier;
-            }
-        }
+        if (!empty($preselectedCategoryId)
+            && isset($categoryIds[$preselectedCategoryId])
+            && $this->isSelectableCategory((int) $preselectedCategoryId, $selectionIds, $selectionMode)
+        ) {
+            $selectedCategoryId = $preselectedCategoryId;
+        } else {
+            $categoryWeights = [];
 
-        if ($useParentCategories) {
             foreach ($categoryIds as $categoryId) {
-                if (isset($categories[$categoryId])) {
-                    $parentLevel = $categories[$categoryId]->getLevel();
-                    $parentCount = 0;
-                    $parentId = $categories[$categoryId]->getParentId();
+                if (isset($categories[$categoryId])
+                    && ($categories[$categoryId]->getLevel() <= $maximumLevel)
+                    && $this->isSelectableCategory((int) $categoryId, $selectionIds, $selectionMode)
+                ) {
+                    $categoryWeights[$categoryId] = $categories[$categoryId]->getLevel() * $levelWeightMultiplier;
+                }
+            }
 
-                    while ($parentId
-                        && (--$parentLevel >= $minimumParentLevel)
-                        && (++$parentCount <= $includableParentCount)
-                        && isset($categories[$parentId])
-                    ) {
-                        if (!isset($categoryWeights[$parentId])) {
-                            $categoryWeights[$parentId] = $parentLevel
-                                * $levelWeightMultiplier
-                                * $parentWeightMultiplier;
+            if ($useParentCategories) {
+                foreach ($categoryIds as $categoryId) {
+                    if (isset($categories[$categoryId])) {
+                        $parentLevel = $categories[$categoryId]->getLevel();
+                        $parentCount = 0;
+                        $parentId = $categories[$categoryId]->getParentId();
+
+                        while ($parentId
+                            && (--$parentLevel >= $minimumParentLevel)
+                            && (++$parentCount <= $includableParentCount)
+                            && isset($categories[$parentId])
+                        ) {
+                            if (!isset($categoryWeights[$parentId])
+                                && $this->isSelectableCategory($categoryId, $selectionIds, $selectionMode)
+                            ) {
+                                $categoryWeights[$parentId] = $parentLevel
+                                    * $levelWeightMultiplier
+                                    * $parentWeightMultiplier;
+                            }
+
+                            $parentId = $categories[$parentId]->getParentId();
                         }
-
-                        $parentId = $categories[$parentId]->getParentId();
                     }
                 }
             }
+
+            if (empty($categoryWeights)) {
+                return null;
+            }
+
+            arsort($categoryWeights, SORT_NUMERIC);
+            reset($categoryWeights);
+            $selectedCategoryId = key($categoryWeights);
         }
 
-        if (empty($categoryWeights)) {
-            return null;
-        }
-
-        arsort($categoryWeights, SORT_NUMERIC);
-        reset($categoryWeights);
-        $selectedId = key($categoryWeights);
-
-        return $this->getCategoryPath($categories[$selectedId], $categories);
+        return $this->getCategoryPath($categories[$selectedCategoryId], $categories);
     }
 }

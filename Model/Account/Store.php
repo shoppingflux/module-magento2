@@ -2,6 +2,9 @@
 
 namespace ShoppingFeed\Manager\Model\Account;
 
+use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
 use Magento\Framework\App\Config\ScopeConfigInterface;
@@ -9,13 +12,13 @@ use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\DataObject;
-use ShoppingFeed\Manager\Model\AbstractModel;
+use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as StoreConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
+use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
-use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
 
 
 /**
@@ -38,6 +41,11 @@ class Store extends AbstractModel implements StoreInterface
     private $storeManager;
 
     /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
      * @var ExportStateConfigInterface
      */
     private $exportStateConfig;
@@ -48,13 +56,19 @@ class Store extends AbstractModel implements StoreInterface
     private $sectionTypePool;
 
     /**
+     * @var StoreResource
+     */
+    private $storeResource;
+
+    /**
      * @param Context $context
      * @param Registry $registry
      * @param ScopeConfigInterface $scopeConfig
      * @param StoreManagerInterface $storeManager
-     * @param TimeHelper $timeHelper
+     * @param DataObjectFactory $dataObjectFactory
      * @param ExportStateConfigInterface $exportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
+     * @param StoreResourceFactory $storeResourceFactory
      * @param StoreResource|null $resource
      * @param StoreCollection|null $resourceCollection
      * @param array $data
@@ -64,18 +78,21 @@ class Store extends AbstractModel implements StoreInterface
         Registry $registry,
         ScopeConfigInterface $scopeConfig,
         StoreManagerInterface $storeManager,
-        TimeHelper $timeHelper,
+        DataObjectFactory $dataObjectFactory,
         ExportStateConfigInterface $exportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
+        StoreResourceFactory $storeResourceFactory,
         StoreResource $resource = null,
         StoreCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
+        $this->dataObjectFactory = $dataObjectFactory;
         $this->exportStateConfig = $exportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
-        parent::__construct($context, $registry, $timeHelper, $resource, $resourceCollection, $data);
+        $this->storeResource = $storeResourceFactory->create();
+        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
     protected function _construct()
@@ -85,12 +102,12 @@ class Store extends AbstractModel implements StoreInterface
 
     public function getAccountId()
     {
-        return $this->getData(self::ACCOUNT_ID);
+        return (int) $this->getData(self::ACCOUNT_ID);
     }
 
     public function getBaseStoreId()
     {
-        return $this->getData(self::BASE_STORE_ID);
+        return (int) $this->getData(self::BASE_STORE_ID);
     }
 
     public function getBaseStore()
@@ -100,7 +117,7 @@ class Store extends AbstractModel implements StoreInterface
 
     public function getShoppingFeedStoreId()
     {
-        return $this->getData(self::SHOPPING_FEED_STORE_ID);
+        return (int) $this->getData(self::SHOPPING_FEED_STORE_ID);
     }
 
     public function getShoppingFeedName()
@@ -114,7 +131,7 @@ class Store extends AbstractModel implements StoreInterface
 
         if (!$data instanceof DataObject) {
             $data = is_string($data) ? json_decode($data, true) : [];
-            $data = new DataObject(is_array($data) ? $data : []);
+            $data = $this->dataObjectFactory->create([ 'data' => is_array($data) ? $data : [] ]);
             $this->setConfiguration($data);
         }
 
@@ -140,19 +157,33 @@ class Store extends AbstractModel implements StoreInterface
         );
     }
 
+    public function getSelectedFeedProductIds()
+    {
+        return $this->storeResource->getSelectedFeedProductIds($this->getId());
+    }
+
+    /**
+     * @return CatalogProductCollection
+     * @throws LocalizedException
+     */
+    public function getCatalogProductCollection()
+    {
+        return $this->storeResource->getCatalogProductCollection($this);
+    }
+
     public function setAccountId($accountId)
     {
-        return $this->setData(self::ACCOUNT_ID, $accountId);
+        return $this->setData(self::ACCOUNT_ID, (int) $accountId);
     }
 
     public function setBaseStoreId($baseStoreId)
     {
-        return $this->setData(self::BASE_STORE_ID, $baseStoreId);
+        return $this->setData(self::BASE_STORE_ID, (int) $baseStoreId);
     }
 
     public function setShoppingFeedStoreId($shoppingFeedStoreId)
     {
-        return $this->setData(self::SHOPPING_FEED_STORE_ID, $shoppingFeedStoreId);
+        return $this->setData(self::SHOPPING_FEED_STORE_ID, (int) $shoppingFeedStoreId);
     }
 
     public function setShoppingFeedName($shoppingFeedName)

@@ -9,9 +9,15 @@ use ShoppingFeed\Manager\Model\Feed\Product\Category as FeedCategory;
 
 interface SelectorInterface
 {
+    const SELECTION_MODE_EXCLUDE = 'exclude';
+    const SELECTION_MODE_INCLUDE = 'include';
+
     /**
      * @param CatalogProduct $product
      * @param StoreInterface $storeInterface
+     * @param int|null $preselectedCategoryId
+     * @param int[] $selectionIds
+     * @param string $selectionMode
      * @param int $maximumLevel
      * @param int $levelWeightMultiplier
      * @param bool $useParentCategories
@@ -23,6 +29,9 @@ interface SelectorInterface
     public function getCatalogProductCategoryPath(
         CatalogProduct $product,
         StoreInterface $storeInterface,
+        $preselectedCategoryId,
+        array $selectionIds,
+        $selectionMode,
         $maximumLevel = PHP_INT_MAX,
         $levelWeightMultiplier = 1,
         $useParentCategories = false,

@@ -3,11 +3,11 @@
 namespace ShoppingFeed\Manager\Controller\Adminhtml\Account\Store;
 
 use Magento\Framework\Exception\NoSuchEntityException;
-use ShoppingFeed\Manager\Controller\Adminhtml\Account\Store;
+use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 
 
-class Edit extends Store
+class Edit extends StoreAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_store_edit';
 
@@ -22,8 +22,6 @@ class Edit extends Store
         }
 
         $this->coreRegistry->register(RegistryConstants::CURRENT_ACCOUNT_STORE, $store);
-        $resultPage = $this->initPage()->addBreadcrumb(__('Edit Account Store'), __('Edit Account Store'));
-
-        return $resultPage;
+        return $this->initPage()->addBreadcrumb(__('Edit Account Store'), __('Edit Account Store'));
     }
 }

@@ -3,9 +3,13 @@
 namespace ShoppingFeed\Manager\Model\ResourceModel\Account;
 
 use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
@@ -27,12 +31,18 @@ class Store extends AbstractDb
     protected $catalogProductResource;
 
     /**
+     * @var CatalogProductCollectionFactory
+     */
+    private $catalogProductCollectionFactory;
+
+    /**
      * @param DbContext $context
      * @param TimeHelper $timeHelper
      * @param ProductFilterApplier $productFilterApplier
      * @param SectionFilterApplier $sectionFilterApplier
      * @param SectionTypePoolInterface $sectionTypePool
      * @param CatalogProductResource $catalogProductResource
+     * @param CatalogProductCollectionFactory $catalogProductCollectionFactory
      * @param string|null $connectionName
      */
     public function __construct(
@@ -42,10 +52,12 @@ class Store extends AbstractDb
         SectionFilterApplier $sectionFilterApplier,
         SectionTypePoolInterface $sectionTypePool,
         CatalogProductResource $catalogProductResource,
+        CatalogProductCollectionFactory $catalogProductCollectionFactory,
         $connectionName = null
     ) {
         $this->sectionTypePool = $sectionTypePool;
         $this->catalogProductResource = $catalogProductResource;
+        $this->catalogProductCollectionFactory = $catalogProductCollectionFactory;
         parent::__construct($context, $timeHelper, $productFilterApplier, $sectionFilterApplier, $connectionName);
     }
 
@@ -81,6 +93,27 @@ class Store extends AbstractDb
         $object->setData(StoreInterface::CONFIGURATION, $baseConfiguration);
 
         return $preparedData;
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @return CatalogProductCollection
+     * @throws LocalizedException
+     */
+    public function getCatalogProductCollection(StoreInterface $store)
+    {
+        /** @var CatalogProductCollection $productCollection */
+        $productCollection = $this->catalogProductCollectionFactory->create();
+
+        $productCollection->joinTable(
+            [ 'feed_product_table' => $this->getFeedProductTable() ],
+            'product_id = entity_id',
+            [ FeedProductInterface::EXPORT_STATE, FeedProductInterface::CHILD_EXPORT_STATE ],
+            [ FeedProductInterface::STORE_ID => $store->getId() ]
+        );
+
+        $productCollection->setStoreId($store->getBaseStoreId());
+        return $productCollection;
     }
 
     /**
@@ -150,10 +183,26 @@ class Store extends AbstractDb
 
     /**
      * @param int $storeId
+     * @return int[]
+     */
+    public function getSelectedFeedProductIds($storeId)
+    {
+        $connection = $this->getConnection();
+
+        $idsSelect = $connection->select()
+            ->from($this->getFeedProductTable(), [ 'product_id' ])
+            ->where('store_id = ?', $storeId)
+            ->where('is_selected = ?', 1);
+
+        return array_map('intval', $connection->fetchCol($idsSelect));
+    }
+
+    /**
+     * @param int $storeId
      * @param int[] $productIds
      * @throws \Exception
      */
-    public function updateFeedProductSelection($storeId, array $productIds)
+    public function updateSelectedFeedProducts($storeId, array $productIds)
     {
         $connection = $this->getConnection();
         $connection->beginTransaction();
@@ -162,10 +211,10 @@ class Store extends AbstractDb
             $connection->update(
                 $this->getFeedProductTable(),
                 [ 'is_selected' => 0 ],
-                $connection->quoteInto('feed_id = ?', $storeId)
+                $connection->quoteInto('store_id = ?', $storeId)
             );
 
-            $idChunks = array_chunk($productIds, 1000);
+            $idChunks = array_chunk($productIds, 2000);
 
             foreach ($idChunks as $productIds) {
                 $connection->update(
@@ -177,6 +226,38 @@ class Store extends AbstractDb
             }
 
             $connection->commit();
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * @param int $productId
+     * @param int[] $storeIds
+     * @throws \Exception
+     */
+    public function updateFeedProductSelectedState($productId, array $storeIds)
+    {
+        $connection = $this->getConnection();
+        $connection->beginTransaction();
+
+        try {
+            $connection->update(
+                $this->getFeedProductTable(),
+                [ 'is_selected' => 1 ],
+                $connection->quoteInto('product_id = ?', $productId)
+                . ' AND '
+                . $connection->quoteInto('store_id IN (?)', $storeIds)
+            );
+
+            $connection->update(
+                $this->getFeedProductTable(),
+                [ 'is_selected' => 0 ],
+                $connection->quoteInto('product_id = ?', $productId)
+                . ' AND '
+                . $connection->quoteInto('store_id NOT IN (?)', $storeIds)
+            );
         } catch (\Exception $e) {
             $connection->rollBack();
             throw $e;

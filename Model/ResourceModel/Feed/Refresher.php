@@ -266,7 +266,6 @@ class Refresher extends AbstractDb
 
             $feedProduct = $this->feedProductFactory->create();
             $feedProduct->setData($rawProductData);
-            $feedProduct->afterLoad();
 
             $hasRefreshableExportState = false;
             $refreshableSectionTypeIds = [];

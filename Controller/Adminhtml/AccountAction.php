@@ -9,7 +9,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory;
 
 
-abstract class Account extends Action
+abstract class AccountAction extends Action
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::accounts';
 

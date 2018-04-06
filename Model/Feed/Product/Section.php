@@ -2,33 +2,149 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product;
 
-use ShoppingFeed\Manager\Model\AbstractModel;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as SectionResource;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Collection as SectionCollection;
+use ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface;
+use ShoppingFeed\Manager\DataObject;
 
 
-/**
- * @method SectionResource getResource()
- * @method SectionCollection getCollection()
- * @method int getTypeId()
- * @method int getProductId()
- * @method int getStoreId()
- * @method int|null getRefreshedAtTimestamp()
- * @method int getRefreshState()
- * @method int getRefreshStateUpdatedAtTimestamp()
- */
-class Section extends AbstractModel
+class Section extends DataObject implements SectionInterface
 {
-    protected $_eventPrefix = 'shoppingfeed_manager_feed_product_section';
-    protected $_eventObject = 'feed_product_section';
-
     protected $timestampFields = [
-        'refreshed_at' => 'refreshed_at_timestamp',
-        'refresh_state_updated_at' => 'refresh_state_updated_at_timestamp',
+        self::REFRESHED_AT => self::REFRESHED_AT_TIMESTAMP,
+        self::REFRESH_STATE_UPDATED_AT => self::REFRESH_STATE_UPDATED_AT_TIMESTAMP,
     ];
 
-    protected function _construct()
+    /**
+     * @return int
+     */
+    public function getTypeId()
     {
-        $this->_init(SectionResource::class);
+        return (int) $this->getData(self::TYPE_ID);
+    }
+
+    /**
+     * @return int
+     */
+    public function getProductId()
+    {
+        return (int) $this->getData(self::PRODUCT_ID);
+    }
+
+    /**
+     * @return int
+     */
+    public function getStoreId()
+    {
+        return (int) $this->getData(self::STORE_ID);
+    }
+
+    /**
+     * @return array
+     */
+    public function getFeedData()
+    {
+        return (array) $this->getData(self::FEED_DATA);
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getRefreshedAt()
+    {
+        return $this->getData(self::REFRESHED_AT);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getRefreshedAtTimestamp()
+    {
+        return $this->getData(self::REFRESHED_AT_TIMESTAMP);
+    }
+
+    /**
+     * @return int
+     */
+    public function getRefreshState()
+    {
+        return $this->getData(self::REFRESH_STATE);
+    }
+
+    /**
+     * @return string
+     */
+    public function getRefreshStateUpdatedAt()
+    {
+        return (int) $this->getData(self::REFRESH_STATE_UPDATED_AT);
+    }
+
+    /**
+     * @return int
+     */
+    public function getRefreshStateUpdatedAtTimestamp()
+    {
+        return $this->getData(self::REFRESH_STATE_UPDATED_AT_TIMESTAMP);
+    }
+
+    /**
+     * @param int $typeId
+     * @return SectionInterface
+     */
+    public function setTypeId($typeId)
+    {
+        return $this->setData(self::TYPE_ID, (int) $typeId);
+    }
+
+    /**
+     * @param int $productId
+     * @return SectionInterface
+     */
+    public function setProductId($productId)
+    {
+        return $this->setData(self::PRODUCT_ID, (int) $productId);
+    }
+
+    /**
+     * @param int $storeId
+     * @return SectionInterface
+     */
+    public function setStoreId($storeId)
+    {
+        return $this->setData(self::STORE_ID, (int) $storeId);
+    }
+
+    /**
+     * @param array $data
+     * @return SectionInterface
+     */
+    public function setFeedData(array $data)
+    {
+        return $this->setData(self::FEED_DATA, $data);
+    }
+
+    /**
+     * @param string|null $refreshedAt
+     * @return SectionInterface
+     */
+    public function setRefreshedAt($refreshedAt)
+    {
+        return $this->setData(self::REFRESHED_AT, $refreshedAt);
+    }
+
+    /**
+     * @param int $refreshState
+     * @return SectionInterface
+     */
+    public function setRefreshState($refreshState)
+    {
+        return $this->setData(self::REFRESH_STATE, (int) $refreshState);
+    }
+
+    /**
+     * @param string $refreshStateUpdatedAt
+     * @return SectionInterface
+     */
+    public function setRefreshStateUpdatedAt($refreshStateUpdatedAt)
+    {
+        return $this->setData(self::REFRESH_STATE_UPDATED_AT, $refreshStateUpdatedAt);
     }
 }

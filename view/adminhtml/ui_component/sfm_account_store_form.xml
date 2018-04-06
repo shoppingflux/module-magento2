@@ -35,4 +35,15 @@
             </settings>
         </dataProvider>
     </dataSource>
+    <fieldset name="feed_product_list" sortOrder="1000000">
+        <settings>
+            <collapsible>true</collapsible>
+            <label translate="true">Feed - Product List</label>
+        </settings>
+        <container name="feed_product_grid_container" sortOrder="10">
+            <htmlContent name="html_content">
+                <block name="feed_product_grid" class="ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Wrapper"/>
+            </htmlContent>
+        </container>
+    </fieldset>
 </form>

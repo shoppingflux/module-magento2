@@ -2,17 +2,15 @@
 
 namespace ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler;
 
+use Magento\Ui\Component\Form\Element\DataType\Boolean as UiBoolean;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Value\AbstractHandler;
 
 
 class Boolean extends AbstractHandler
 {
-    /**
-     * @return string
-     */
     public function getFormDataType()
     {
-        return 'boolean';
+        return UiBoolean::NAME;
     }
 
     public function prepareRawValueForForm($value, $defaultValue, $isRequired)

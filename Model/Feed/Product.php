@@ -2,84 +2,134 @@
 
 namespace ShoppingFeed\Manager\Model\Feed;
 
-use ShoppingFeed\Manager\Model\AbstractModel;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product as ProductResource;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Collection as ProductCollection;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface;
+use ShoppingFeed\Manager\DataObject;
 
 
-/**
- * @method ProductResource getResource()
- * @method ProductCollection getCollection()
- * @method int|null getExportRetentionStartedAtTimestamp()
- * @method int|null getExportStateRefreshedAtTimestamp()
- * @method int getExportStateRefreshStateUpdatedAtTimestamp()
- */
-class Product extends AbstractModel
+class Product extends DataObject implements ProductInterface
 {
-    protected $_eventPrefix = 'shoppingfeed_manager_feed_product';
-    protected $_eventObject = 'feed_product';
-
     protected $timestampFields = [
-        'export_retention_started_at' => 'export_retention_started_at_timestamp',
-        'export_state_refreshed_at' => 'export_state_refreshed_at_timestamp',
-        'export_state_refresh_state_updated_at' => 'export_state_refresh_state_updated_at_timestamp',
+        self::EXPORT_RETENTION_STARTED_AT => self::EXPORT_RETENTION_STARTED_AT_TIMESTAMP,
+        self::EXPORT_STATE_REFRESHED_AT => self::EXPORT_STATE_REFRESHED_AT_TIMESTAMP,
+        self::EXPORT_STATE_REFRESH_STATE_UPDATED_AT => self::EXPORT_STATE_REFRESH_STATE_UPDATED_AT_TIMESTAMP,
     ];
 
-    const STATE_EXPORTED = 1;
-    const STATE_RETAINED = 2;
-    const STATE_NOT_EXPORTED = 3;
-    const STATE_NEVER_EXPORTED = 4;
-
-    protected function _construct()
+    public function getId()
     {
-        $this->_init(ProductResource::class);
+        return (int) $this->getDataByKey(self::PRODUCT_ID);
     }
 
-    /**
-     * @return int
-     */
     public function getStoreId()
     {
-        return (int) $this->getDataByKey('store_id');
+        return (int) $this->getDataByKey(self::STORE_ID);
     }
 
-    /**
-     * @return int
-     */
-    public function getExportState()
-    {
-        return (int) $this->getDataByKey('export_state');
-    }
-
-    /**
-     * @return int
-     */
-    public function getChildExportState()
-    {
-        return (int) $this->getDataByKey('child_export_state');
-    }
-
-    /**
-     * @return int
-     */
-    public function getExportStateRefreshState()
-    {
-        return (int) $this->getDataByKey('export_state_refresh_state');
-    }
-
-    /**
-     * @return bool
-     */
     public function isSelected()
     {
-        return (bool) $this->getDataByKey('is_selected');
+        return (bool) $this->getDataByKey(self::IS_SELECTED);
     }
 
-    /**
-     * @return bool
-     */
-    public function isExported()
+    public function getSelectedCategoryId()
     {
-        return in_array((int) $this->getExportState(), [ self::STATE_EXPORTED, self::STATE_RETAINED ], true);
+        $categoryId = $this->getDataByKey(self::SELECTED_CATEGORY_ID);
+        return empty($categoryId) ? null : (int) $categoryId;
+    }
+
+    public function getExportState()
+    {
+        return (int) $this->getDataByKey(self::EXPORT_STATE);
+    }
+
+    public function getChildExportState()
+    {
+        return (int) $this->getDataByKey(self::CHILD_EXPORT_STATE);
+    }
+
+    public function getExportRetentionStartedAt()
+    {
+        return $this->getDataByKey(self::EXPORT_RETENTION_STARTED_AT);
+    }
+
+    public function getExportRetentionStartedAtTimestamp()
+    {
+        return $this->getDataByKey(self::EXPORT_RETENTION_STARTED_AT_TIMESTAMP);
+    }
+
+    public function getExportStateRefreshedAt()
+    {
+        return $this->getDataByKey(self::EXPORT_STATE_REFRESHED_AT);
+    }
+
+    public function getExportStateRefreshedAtTimestamp()
+    {
+        return $this->getDataByKey(self::EXPORT_STATE_REFRESHED_AT_TIMESTAMP);
+    }
+
+    public function getExportStateRefreshState()
+    {
+        return (int) $this->getDataByKey(self::EXPORT_STATE_REFRESH_STATE);
+    }
+
+    public function getExportStateRefreshStateUpdatedAt()
+    {
+        return $this->getDataByKey(self::EXPORT_STATE_REFRESH_STATE_UPDATED_AT);
+    }
+
+    public function getExportStateRefreshStateUpdatedAtTimestamp()
+    {
+        return $this->getDataByKey(self::EXPORT_STATE_REFRESH_STATE_UPDATED_AT_TIMESTAMP);
+    }
+
+    public function setId($id)
+    {
+        return $this->setData(self::PRODUCT_ID, (int) $id);
+    }
+
+    public function setStoreId($storeId)
+    {
+        return $this->setData(self::STORE_ID, (int) $storeId);
+    }
+
+    public function setIsSelected($isSelected)
+    {
+        return $this->setData(self::IS_SELECTED, (bool) $isSelected);
+    }
+
+    public function setSelectedCategoryId($selectedCategoryId)
+    {
+        return $this->setData(
+            self::SELECTED_CATEGORY_ID,
+            empty($selectedCategoryId) ? null : (int) $selectedCategoryId
+        );
+    }
+
+    public function setExportState($exportState)
+    {
+        return $this->setData(self::EXPORT_STATE, (int) $exportState);
+    }
+
+    public function setChildExportState($childExportState)
+    {
+        return $this->setData(self::CHILD_EXPORT_STATE, (int) $childExportState);
+    }
+
+    public function setExportRetentionStartedAt($retentionStartedAt)
+    {
+        return $this->setData(self::EXPORT_RETENTION_STARTED_AT, $retentionStartedAt);
+    }
+
+    public function setExportStateRefreshedAt($exportStateRefreshedAt)
+    {
+        return $this->setData(self::EXPORT_STATE_REFRESHED_AT, $exportStateRefreshedAt);
+    }
+
+    public function setExportStateRefreshState($refreshState)
+    {
+        return $this->setData(self::EXPORT_STATE_REFRESH_STATE, (int) $refreshState);
+    }
+
+    public function setExportStateRefreshStateUpdatedAt($refreshStateUpdatedAt)
+    {
+        return $this->setData(self::EXPORT_STATE_REFRESH_STATE_UPDATED_AT, $refreshStateUpdatedAt);
     }
 }

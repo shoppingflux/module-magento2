@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Account\Store\Config\Field;
 
 use Magento\Framework\Phrase;
+use Magento\Ui\Component\Form\Element\MultiSelect as UiMultiSelect;
 use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\Option as OptionHandler;
 
 
@@ -56,24 +57,28 @@ class MultiSelect extends Select
         return $this->isRequired() ? false : [ 'value' => self::NONE_OPTION_VALUE, 'label' => __('None') ];
     }
 
-    public function getMetaConfig()
+    public function getBaseUiMetaConfig()
     {
         return array_merge(
-            parent::getMetaConfig(),
-            [ 'formElement' => 'multiselect', 'size' => $this->size ]
+            parent::getBaseUiMetaConfig(),
+            [ 'formElement' => UiMultiSelect::NAME, 'size' => $this->size ]
         );
     }
 
+    /**
+     * @param mixed $value
+     * @param mixed $defaultValue
+     * @param string $handlerPrepareMethod
+     * @return array
+     */
     protected function prepareRawValue($value, $defaultValue, $handlerPrepareMethod)
     {
         $isRequired = $this->isRequired();
         $valueHandler = $this->getValueHandler();
 
-        if ($valueHandler->isUndefinedValue($value)) {
-            $value = $defaultValue;
+        if (!is_array($value)) {
+            $value = is_array($defaultValue) ? $defaultValue : [];
         }
-
-        $value = (array) $value;
 
         foreach ($value as $key => $subValue) {
             $subValue = $valueHandler->$handlerPrepareMethod($subValue, null, $isRequired);
