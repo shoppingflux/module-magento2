@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Feed;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
@@ -147,6 +148,7 @@ class Exporter
         $feedMediaPath = $this->directoryReader->getAbsolutePath($this->feedDirectory) . '/';
         $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
         $feedFilePath = $feedMediaPath . $feedFileName;
+        $feedTempFilePath = $feedFilePath . '.tmp';
 
         $feedGenerator = $this->feedGeneratorFactory->create();
         $childrenExportMode = $this->exportStateConfig->getChildrenExportMode($store);
@@ -161,9 +163,11 @@ class Exporter
         $feedGenerator->setAttribute('storeUrl', $baseStore->getUrl());
 
         if ($this->generalConfig->shouldUseGzipCompression($store)) {
-            $feedGenerator->setUri('compress.zlib://' . $feedFilePath . '.gz');
+            $feedFilePath .= '.gz';
+            $feedTempFilePath .= '.gz';
+            $feedGenerator->setUri('compress.zlib://' . $feedTempFilePath);
         } else {
-            $feedGenerator->setUri('file://' . $feedFilePath);
+            $feedGenerator->setUri('file://' . $feedTempFilePath);
         }
 
         $feedGenerator->addProcessor(
@@ -268,5 +272,11 @@ class Exporter
         }
 
         $feedGenerator->write($productIterators);
+
+        if (false === rename($feedTempFilePath, $feedFilePath)) {
+            throw new LocalizedException(
+                __('Could not copy file "%1" to file "%2".', $feedTempFilePath, $feedFilePath)
+            );
+        }
     }
 }

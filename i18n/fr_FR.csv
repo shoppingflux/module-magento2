@@ -49,6 +49,7 @@
 "Config fields must be of type: ShoppingFeed\Manager\Model\Config\FieldInterface.","Les champs de configuration doivent être du type : ShoppingFeed\Manager\Model\Config\FieldInterface."
 "Could not connect to the API with the login ""%1"" and given password.","Impossible de se connecter à l'API avec le login ""%1"" et le mot de passe donné."
 "Could not connect to the API with the token ""%1"".","Impossible de se connecter à l'API avec le token ""%1""."
+"Could not copy file ""%1"" to file ""%2"".","Impossible de copier le fichier ""%1"" vers le fichier ""%2""."
 "Could not determine the store view to which associate the Shopping Feed account main store.","Impossible de déterminer la vue magasin à laquelle associer le magasin principal du compte Shopping Feed."
 "Could not determine the store view to which associate the Shopping Feed store.","Impossible de déterminer la vue magasin à laquelle associer le magasin Shopping Feed."
 "Could not fetch the Shopping Feed store for ID ""%1"".","Impossible de récupérer le magasin Shopping Feed pour l'ID ""%1""."
