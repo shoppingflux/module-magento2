@@ -39,7 +39,7 @@ class Type extends AbstractDb
     /**
      * @param string $code
      * @param bool $createUnexisting
-     * @return int|null
+     * @return int
      * @throws LocalizedException
      */
     public function getCodeId($code, $createUnexisting = false)

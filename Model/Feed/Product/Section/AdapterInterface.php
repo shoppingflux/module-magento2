@@ -2,6 +2,9 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section;
 
+use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
+use ShoppingFeed\Feed\Product\Product as ExportedProduct;
+use ShoppingFeed\Feed\Product\ProductVariation as ExportedVariation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as BaseInterface;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
@@ -33,7 +36,7 @@ interface AdapterInterface extends BaseInterface
      * @param StoreInterface $store
      * @param array $parentData
      * @param array[] $childrenData
-     * @return mixed
+     * @return array
      */
     public function adaptParentProductData(StoreInterface $store, array $parentData, array $childrenData);
 
@@ -43,4 +46,39 @@ interface AdapterInterface extends BaseInterface
      * @return array
      */
     public function adaptChildProductData(StoreInterface $store, array $productData);
+
+    /**
+     * @param StoreInterface $store
+     * @param array $productData
+     * @param AbstractExportedProduct $exportedProduct
+     */
+    public function exportBaseProductData(
+        StoreInterface $store,
+        array $productData,
+        AbstractExportedProduct $exportedProduct
+    );
+
+    /**
+     * @param StoreInterface $store
+     * @param array $productData
+     * @param ExportedProduct $exportedProduct
+     */
+    public function exportMainProductData(
+        StoreInterface $store,
+        array $productData,
+        ExportedProduct $exportedProduct
+    );
+
+    /**
+     * @param StoreInterface $store
+     * @param array $productData
+     * @param array $configurableAttributeCodes
+     * @param ExportedVariation $exportedVariation
+     */
+    public function exportVariationProductData(
+        StoreInterface $store,
+        array $productData,
+        array $configurableAttributeCodes,
+        ExportedVariation $exportedVariation
+    );
 }

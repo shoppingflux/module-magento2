@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Account\Grid;
 
+use Magento\Framework\Api\Search\AggregationInterface as SearchAggregationInterface;
 use Magento\Framework\Api\Search\SearchResultInterface;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\View\Element\UiComponent\DataProvider\Document as UiDocument;
@@ -11,6 +12,9 @@ use ShoppingFeed\Manager\Model\ResourceModel\Account\Collection as AccountCollec
 
 class Collection extends AccountCollection implements SearchResultInterface
 {
+    /**
+     * @var SearchAggregationInterface
+     */
     protected $aggregations;
 
     protected function _construct()

@@ -5,6 +5,7 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
 use Magento\CatalogInventory\Model\Stock\Item as StockItem;
 use Magento\Store\Model\StoreManagerInterface;
+use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface as AttributeRendererPoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
@@ -18,7 +19,6 @@ use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
  */
 class Stock extends AbstractAdapter implements StockInterface
 {
-    const KEY_IS_IN_STOCK = 'is-in-stock';
     const KEY_QUANTITY = 'qty';
 
     /**
@@ -47,7 +47,6 @@ class Stock extends AbstractAdapter implements StockInterface
 
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
-        $isInStock = true;
         $quantity = $this->getConfig()->getDefaultQuantity($store);
 
         if ($this->getConfig()->shouldUseActualStockState($store)) {
@@ -62,23 +61,15 @@ class Stock extends AbstractAdapter implements StockInterface
             }
 
             if ($stockItem->getManageStock()) {
-                $isInStock = $stockItem->getIsInStock();
                 $quantity = $stockItem->getQty();
             }
         }
 
-        return [
-            self::KEY_IS_IN_STOCK => $isInStock ? 1 : 0,
-            self::KEY_QUANTITY => (int) floor($quantity),
-        ];
+        return [ self::KEY_QUANTITY => (int) floor($quantity) ];
     }
 
     public function adaptRetainedProductData(StoreInterface $store, array $productData)
     {
-        if (isset($productData[self::KEY_IS_IN_STOCK])) {
-            $productData[self::KEY_IS_IN_STOCK] = 0;
-        }
-
         if (isset($productData[self::KEY_QUANTITY])) {
             $productData[self::KEY_QUANTITY] = 0;
         }
@@ -93,5 +84,15 @@ class Stock extends AbstractAdapter implements StockInterface
         }
 
         return $parentData;
+    }
+
+    public function exportBaseProductData(
+        StoreInterface $store,
+        array $productData,
+        AbstractExportedProduct $exportedProduct
+    ) {
+        if (isset($productData[self::KEY_QUANTITY])) {
+            $exportedProduct->setQuantity($productData[self::KEY_QUANTITY]);
+        }
     }
 }

@@ -11,9 +11,9 @@ class Existing extends AccountAction
     
     public function execute()
     {
-        $resultPage = $this->initPage();
-        $resultPage->addBreadcrumb(__('New Account - Existing'), __('New Account - Existing'));
-        $resultPage->getConfig()->getTitle()->prepend(__('New Account - Existing'));
-        return $resultPage;
+        $pageResult = $this->initPage();
+        $pageResult->addBreadcrumb(__('New Account - Existing'), __('New Account - Existing'));
+        $pageResult->getConfig()->getTitle()->prepend(__('New Account - Existing'));
+        return $pageResult;
     }
 }

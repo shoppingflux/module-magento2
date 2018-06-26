@@ -2,35 +2,99 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product;
 
-use Magento\Framework\DataObject;
 use Magento\Catalog\Model\Category as CatalogCategory;
 
 
-/**
- * @method int getId()
- * @method int getParentId()
- * @method string getName()
- * @method string getUrl()
- * @method int getLevel()
- */
-class Category extends DataObject
+class Category
 {
     /**
-     * @param CatalogCategory $category
-     * @return $this
+     * @var int
      */
-    public function setCatalogCategory(CatalogCategory $category)
-    {
-        $this->setData(
-            [
-                'id' => (int) $category->getId(),
-                'parent_id' => (int) $category->getParentId(),
-                'name' => $category->getName(),
-                'url' => $category->getUrl(),
-                'level' => (int) $category->getLevel(),
-            ]
-        );
+    private $id;
 
-        return $this;
+    /**
+     * @var int
+     */
+    private $parentId;
+
+    /**
+     * @var string
+     */
+    private $name;
+
+    /**
+     * @var string
+     */
+    private $url;
+
+    /**
+     * @var int
+     */
+    private $level;
+
+    /**
+     * @var bool
+     */
+    private $isActive;
+
+    /**
+     * @param CatalogCategory $catalogCategory
+     */
+    public function __construct(CatalogCategory $catalogCategory)
+    {
+        $this->id = (int) $catalogCategory->getId();
+        $this->parentId = (int) $catalogCategory->getParentId();
+        $this->name = trim($catalogCategory->getName());
+        $this->url = $catalogCategory->getUrl();
+        $this->level = (int) $catalogCategory->getLevel();
+        $this->isActive = (bool) $catalogCategory->getIsActive();
+    }
+
+    /**
+     * @return int
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return int
+     */
+    public function getParentId()
+    {
+        return $this->parentId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUrl()
+    {
+        return $this->url;
+    }
+
+    /**
+     * @return int
+     */
+    public function getLevel()
+    {
+        return $this->level;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isActive()
+    {
+        return $this->isActive;
     }
 }

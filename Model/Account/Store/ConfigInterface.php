@@ -3,7 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Account\Store;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Model\Account\Store\Config\AbstractField;
+use ShoppingFeed\Manager\Model\Config\FieldInterface;
 
 
 interface ConfigInterface
@@ -19,22 +19,17 @@ interface ConfigInterface
     public function getScopeSubPath();
 
     /**
-     * @return AbstractField[]
+     * @param StoreInterface $store
+     * @return FieldInterface[]
      */
-    public function getFields();
-
-    /**
-     * @param string $name
-     * @return AbstractField|null
-     */
-    public function getField($name);
+    public function getFields(StoreInterface $store);
 
     /**
      * @param StoreInterface $store
      * @param string $name
-     * @return mixed|null
+     * @return FieldInterface|null
      */
-    public function getStoreFieldValue(StoreInterface $store, $name);
+    public function getField(StoreInterface $store, $name);
 
     /**
      * @return string

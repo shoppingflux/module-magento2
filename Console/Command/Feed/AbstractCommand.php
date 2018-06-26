@@ -39,8 +39,8 @@ abstract class AbstractCommand extends Command
     const REFRESH_STATE_REQUIRED = 'required';
 
     const REFRESH_STATE_MAP = [
-        self::REFRESH_STATE_ADVISED => FeedRefresher::REFRESH_STATE_ADVISED,
-        self::REFRESH_STATE_REQUIRED => FeedRefresher::REFRESH_STATE_REQUIRED,
+        self::REFRESH_STATE_ADVISED => FeedProduct::REFRESH_STATE_ADVISED,
+        self::REFRESH_STATE_REQUIRED => FeedProduct::REFRESH_STATE_REQUIRED,
     ];
 
     const EXPORT_STATE_EXPORTED = 'exported';

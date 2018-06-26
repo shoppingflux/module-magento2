@@ -26,6 +26,11 @@ class ExportableProduct
     private $children = [];
 
     /**
+     * @var string[]
+     */
+    private $configurableAttributeCodes = [];
+
+    /**
      * @return int
      */
     public function getId()
@@ -67,6 +72,14 @@ class ExportableProduct
     }
 
     /**
+     * @return bool
+     */
+    public function hasChildren()
+    {
+        return !empty($this->children);
+    }
+
+    /**
      * @return ExportableProduct[]
      */
     public function getChildren()
@@ -87,6 +100,14 @@ class ExportableProduct
         }
 
         return array_filter($childrenData, 'is_array');
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getConfigurableAttributeCodes()
+    {
+        return $this->configurableAttributeCodes;
     }
 
     /**
@@ -132,11 +153,13 @@ class ExportableProduct
 
     /**
      * @param array $children
+     * @param string[] $configurableAttributeCodes
      * @return $this
      */
-    public function setChildren(array $children)
+    public function setChildren(array $children, array $configurableAttributeCodes = [])
     {
         $this->children = $children;
+        $this->configurableAttributeCodes = $configurableAttributeCodes;
         return $this;
     }
 }

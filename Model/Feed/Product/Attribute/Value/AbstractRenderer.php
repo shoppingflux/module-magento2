@@ -85,6 +85,15 @@ abstract class AbstractRenderer implements RendererInterface
      * @param AbstractAttribute $attribute
      * @return bool
      */
+    protected function isDecimalAttribute(AbstractAttribute $attribute)
+    {
+        return ('decimal' === $attribute->getBackendType());
+    }
+
+    /**
+     * @param AbstractAttribute $attribute
+     * @return bool
+     */
     protected function isImageAttribute(AbstractAttribute $attribute)
     {
         return ($attribute->getFrontend() instanceof ImageFrontend);

@@ -3,13 +3,15 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\Select;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\TextBox;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\PositiveNumber as PositiveNumberHandler;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\Text as TextHandler;
+use ShoppingFeed\Manager\Model\Config\Field\Select;
+use ShoppingFeed\Manager\Model\Config\Field\TextBox;
+use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveNumber as PositiveNumberHandler;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
+use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Attribute\SourceInterface as AttributeSourceInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
 
@@ -28,53 +30,86 @@ class Shipping extends AbstractConfig implements ShippingInterface
     private $attributeSource;
 
     /**
+     * @param FieldFactoryInterface $fieldFactory
+     * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param AttributeSourceInterface $attributeSource
      */
-    public function __construct(AttributeSourceInterface $attributeSource)
-    {
+    public function __construct(
+        FieldFactoryInterface $fieldFactory,
+        ValueHandlerFactoryInterface $valueHandlerFactory,
+        AttributeSourceInterface $attributeSource
+    ) {
         $this->attributeSource = $attributeSource;
+        parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
     protected function getBaseFields()
     {
-        $attributeHandler = new AttributeHandler($this->attributeSource);
+        $attributeHandler = $this->valueHandlerFactory->create(
+            AttributeHandler::TYPE_CODE,
+            [ 'attributeSource' => $this->attributeSource ]
+        );
 
         return array_merge(
             [
-                new Select(
-                    self::KEY_CARRIER_NAME_ATTRIBUTE,
-                    $attributeHandler,
-                    __('Carrier Name Attribute')
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_CARRIER_NAME_ATTRIBUTE,
+                        'valueHandler' => $attributeHandler,
+                        'label' => __('Carrier Name Attribute'),
+                        'sortOrder' => 10,
+                    ]
                 ),
 
-                new Select(
-                    self::KEY_FEES_ATTRIBUTE,
-                    $attributeHandler,
-                    __('Fees Attribute')
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_FEES_ATTRIBUTE,
+                        'valueHandler' => $attributeHandler,
+                        'label' => __('Fees Attribute'),
+                        'sortOrder' => 20,
+                    ]
                 ),
 
-                new Select(
-                    self::KEY_DELAY_ATTRIBUTE,
-                    $attributeHandler,
-                    __('Delay Attribute')
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_DELAY_ATTRIBUTE,
+                        'valueHandler' => $attributeHandler,
+                        'label' => __('Delay Attribute'),
+                        'sortOrder' => 30,
+                    ]
                 ),
 
-                new TextBox(
-                    self::KEY_DEFAULT_CARRIER_NAME,
-                    new TextHandler(),
-                    __('Default Carrier Name')
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_DEFAULT_CARRIER_NAME,
+                        'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
+                        'label' => __('Default Carrier Name'),
+                        'sortOrder' => 40,
+                    ]
                 ),
 
-                new TextBox(
-                    self::KEY_DEFAULT_FEES,
-                    new PositiveNumberHandler(),
-                    __('Default Fees')
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_DEFAULT_FEES,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveNumberHandler::TYPE_CODE),
+                        'label' => __('Default Fees'),
+                        'sortOrder' => 50,
+                    ]
                 ),
 
-                new TextBox(
-                    self::KEY_DEFAULT_DELAY,
-                    new PositiveIntegerHandler(),
-                    __('Default Delay')
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_DEFAULT_DELAY,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'label' => __('Default Delay'),
+                        'sortOrder' => 60,
+                    ]
                 ),
             ],
             parent::getBaseFields()
@@ -88,31 +123,42 @@ class Shipping extends AbstractConfig implements ShippingInterface
 
     public function getCarrierNameAttribute(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_CARRIER_NAME_ATTRIBUTE);
+        return $this->getFieldValue($store, self::KEY_CARRIER_NAME_ATTRIBUTE);
     }
 
     public function getFeesAttribute(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_FEES_ATTRIBUTE);
+        return $this->getFieldValue($store, self::KEY_FEES_ATTRIBUTE);
     }
 
     public function getDelayAttribute(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_DELAY_ATTRIBUTE);
+        return $this->getFieldValue($store, self::KEY_DELAY_ATTRIBUTE);
     }
 
     public function getDefaultCarrierName(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_DEFAULT_CARRIER_NAME);
+        return $this->getFieldValue($store, self::KEY_DEFAULT_CARRIER_NAME);
     }
 
     public function getDefaultFees(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_DEFAULT_FEES);
+        return $this->getFieldValue($store, self::KEY_DEFAULT_FEES);
     }
 
     public function getDefaultDelay(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_DEFAULT_DELAY);
+        return $this->getFieldValue($store, self::KEY_DEFAULT_DELAY);
+    }
+
+    public function getAllAttributes(StoreInterface $store)
+    {
+        return array_filter(
+            [
+                $this->getCarrierNameAttribute($store),
+                $this->getFeesAttribute($store),
+                $this->getDelayAttribute($store),
+            ]
+        );
     }
 }

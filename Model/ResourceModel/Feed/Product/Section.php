@@ -18,7 +18,7 @@ class Section extends AbstractDb
      */
     public function serializeSectionData(array $data)
     {
-        return json_encode($data);
+        return json_encode($data, JSON_FORCE_OBJECT);
     }
 
     /**
@@ -44,7 +44,7 @@ class Section extends AbstractDb
         $now = $this->timeHelper->utcDate();
 
         $connection->update(
-            $this->getFeedProductSectionTable(),
+            $this->tableDictionary->getFeedProductSectionTableName(),
             [
                 'data' => $this->serializeSectionData($data),
                 'refreshed_at' => $now,

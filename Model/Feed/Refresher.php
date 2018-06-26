@@ -4,15 +4,18 @@ namespace ShoppingFeed\Manager\Model\Feed;
 
 use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
-use ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface as ExportStateAdapter;
+use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as ProductAdapterInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface as ExportStateAdapterInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Filter as FeedProductFilter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Filter as FeedSectionFilter;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePool;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product as FeedProductResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFactory as FeedProductResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as FeedSectionResource;
@@ -22,10 +25,14 @@ use ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher as RefresherResource
 
 class Refresher
 {
-    // @todo move this in ProductInterface?
-    const REFRESH_STATE_UP_TO_DATE = 1;
-    const REFRESH_STATE_ADVISED = 2;
-    const REFRESH_STATE_REQUIRED = 3;
+    // @todo getters + configuration data
+    const PRODUCT_COLLECTION_PAGE_SIZE = 1000;
+    const REFRESHABLE_SLICE_SIZE = 5000;
+
+    const MAXIMUM_REFRESHED_COUNT = 1000000;
+    const MAXIMUM_TIME_SPENT = 1800;
+
+    const PRODUCT_COLLECTION_STOCK_STATUS_FILTER_FLAG = 'has_stock_status_filter';
 
     /**
      * @var RefresherResource
@@ -33,14 +40,19 @@ class Refresher
     private $refresherResource;
 
     /**
-     * @var SectionTypePool
+     * @var SectionTypePoolInterface
      */
     private $sectionTypePool;
 
     /**
-     * @var ExportStateAdapter
+     * @var ExportStateAdapterInterface
      */
     private $exportStateAdapter;
+
+    /**
+     * @var ExportStateConfigInterface
+     */
+    private $exportStateConfig;
 
     /**
      * @var FeedProductResource
@@ -65,8 +77,9 @@ class Refresher
 
     /**
      * @param RefresherResource $refresherResource
-     * @param ExportStateAdapter $exportStateAdapter
-     * @param SectionTypePool $sectionTypePool
+     * @param ExportStateAdapterInterface $exportStateAdapter
+     * @param ExportStateConfigInterface $exportStateConfig
+     * @param SectionTypePoolInterface $sectionTypePool
      * @param FeedProductResourceFactory $feedProductResourceFactory
      * @param FeedSectionResourceFactory $feedSectionResourceFactory
      * @param CatalogProductRepository $catalogProductRepository
@@ -74,8 +87,9 @@ class Refresher
      */
     public function __construct(
         RefresherResource $refresherResource,
-        ExportStateAdapter $exportStateAdapter,
-        SectionTypePool $sectionTypePool,
+        ExportStateAdapterInterface $exportStateAdapter,
+        ExportStateConfigInterface $exportStateConfig,
+        SectionTypePoolInterface $sectionTypePool,
         FeedProductResourceFactory $feedProductResourceFactory,
         FeedSectionResourceFactory $feedSectionResourceFactory,
         CatalogProductRepository $catalogProductRepository,
@@ -83,6 +97,7 @@ class Refresher
     ) {
         $this->refresherResource = $refresherResource;
         $this->exportStateAdapter = $exportStateAdapter;
+        $this->exportStateConfig = $exportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
         $this->feedProductResource = $feedProductResourceFactory->create();
         $this->feedSectionResource = $feedSectionResourceFactory->create();
@@ -91,10 +106,84 @@ class Refresher
     }
 
     /**
+     * @param RefreshableProduct $refreshableProduct
+     * @param StoreInterface $store
+     * @param bool $refreshExportState
+     * @param array $refreshableSectionTypeIds
+     * @throws LocalizedException
+     */
+    private function refreshProduct(
+        RefreshableProduct $refreshableProduct,
+        StoreInterface $store,
+        $refreshExportState,
+        array $refreshableSectionTypeIds
+    ) {
+        $productId = $refreshableProduct->getId();
+        $storeId = $store->getId();
+
+        if ($refreshExportState) {
+            $previousBaseExportState = $refreshableProduct->getFeedProduct()->getExportState();
+
+            list($baseExportState, $childExportState) = $this->exportStateAdapter->getProductExportStates(
+                $store,
+                $refreshableProduct
+            );
+
+            $this->feedProductResource->updateProductExportStates(
+                $productId,
+                $storeId,
+                $baseExportState,
+                $childExportState,
+                FeedProduct::REFRESH_STATE_UP_TO_DATE,
+                (FeedProduct::STATE_RETAINED !== $baseExportState),
+                (FeedProduct::STATE_RETAINED !== $previousBaseExportState)
+            );
+        }
+
+        foreach ($refreshableSectionTypeIds as $typeId) {
+            $sectionType = $this->sectionTypePool->getTypeById($typeId);
+            $sectionData = $sectionType->getAdapter()->getProductData($store, $refreshableProduct);
+
+            $this->feedSectionResource->updateSectionData(
+                $sectionType->getId(),
+                $productId,
+                $storeId,
+                $sectionData,
+                FeedProduct::REFRESH_STATE_UP_TO_DATE
+            );
+        }
+    }
+
+    /**
+     * @param CatalogProductCollection $productCollection
+     * @param ProductAdapterInterface $productAdapter
+     * @param StoreInterface $store
+     * @throws LocalizedException
+     */
+    private function applyAdapterToLoadableProductCollection(
+        CatalogProductCollection $productCollection,
+        ProductAdapterInterface $productAdapter,
+        StoreInterface $store
+    ) {
+        $productAdapter->prepareLoadableProductCollection($store, $productCollection);
+
+        if ($productCollection->isLoaded()) {
+            throw new LocalizedException(
+                __(
+                    'Product adapter "%1" must not load the given collection in prepareLoadableProductCollection().',
+                    get_class($productAdapter)
+                )
+            );
+        }
+    }
+
+
+    /**
      * @param RefreshableProduct[] $refreshableProducts
      * @param StoreInterface $store
      * @param bool $refreshExportState
      * @param array $refreshableSectionTypeIds
+     * @throws LocalizedException
      */
     protected function refreshProductsWithCollection(
         array $refreshableProducts,
@@ -102,8 +191,59 @@ class Refresher
         $refreshExportState,
         array $refreshableSectionTypeIds
     ) {
-        // @todo
+        /** @var ProductAdapterInterface[] $sectionAdapters */
+        $sectionAdapters = [];
+
+        foreach ($refreshableSectionTypeIds as $typeId) {
+            $sectionAdapters[] = $this->sectionTypePool->getTypeById($typeId)->getAdapter();
+        }
+
         $productCollection = $this->catalogProductCollectionFactory->create();
+        // Depending on the configuration, the Magento_CatalogInventory may unwantedly filter the collection.
+        $productCollection->setFlag(static::PRODUCT_COLLECTION_STOCK_STATUS_FILTER_FLAG, true);
+
+        if ($refreshExportState) {
+            $this->applyAdapterToLoadableProductCollection($productCollection, $this->exportStateAdapter, $store);
+        }
+
+        foreach ($sectionAdapters as $sectionAdapter) {
+            $this->applyAdapterToLoadableProductCollection($productCollection, $sectionAdapter, $store);
+        }
+
+        $refreshableProductSlices = array_chunk($refreshableProducts, static::PRODUCT_COLLECTION_PAGE_SIZE);
+
+        foreach ($refreshableProductSlices as $refreshableProductSlice) {
+            $sliceProductCollection = clone $productCollection;
+            $sliceProductIds = [];
+
+            /** @var RefreshableProduct $refreshableProduct */
+            foreach ($refreshableProductSlice as $refreshableProduct) {
+                $sliceProductIds[] = $refreshableProduct->getId();
+            }
+
+            $sliceProductCollection->addIdFilter($sliceProductIds);
+            $sliceProductCollection->load();
+
+            foreach ($sliceProductCollection as $catalogProduct) {
+                $catalogProduct->setData('website_ids', $catalogProduct->getData('websites'));
+            }
+
+            if ($refreshExportState) {
+                $this->exportStateAdapter->prepareLoadedProductCollection($store, $sliceProductCollection);
+            }
+
+            foreach ($sectionAdapters as $sectionAdapter) {
+                $sectionAdapter->prepareLoadedProductCollection($store, $sliceProductCollection);
+            }
+
+            foreach ($refreshableProductSlice as $refreshableProduct) {
+                /** @var CatalogProduct $catalogProduct */
+                if ($catalogProduct = $sliceProductCollection->getItemById($refreshableProduct->getId())) {
+                    $refreshableProduct->setCatalogProduct($catalogProduct, false);
+                    $this->refreshProduct($refreshableProduct, $store, $refreshExportState, $refreshableSectionTypeIds);
+                }
+            }
+        }
     }
 
     /**
@@ -121,53 +261,16 @@ class Refresher
         array $refreshableSectionTypeIds
     ) {
         foreach ($refreshableProducts as $refreshableProduct) {
-            $productId = $refreshableProduct->getId();
-            $storeId = $store->getId();
-
             /** @var CatalogProduct $catalogProduct */
             $catalogProduct = $this->catalogProductRepository->getById(
-                $productId,
+                $refreshableProduct->getId(),
                 false,
                 $store->getBaseStoreId(),
                 true
             );
 
             $refreshableProduct->setCatalogProduct($catalogProduct, true);
-
-            if ($refreshExportState) {
-                $previousBaseExportState = $refreshableProduct->getFeedProduct()->getExportState();
-
-                list($baseExportState, $childExportState) = $this->exportStateAdapter->getProductExportStates(
-                    $store,
-                    $refreshableProduct
-                );
-
-                $this->feedProductResource->updateProductExportStates(
-                    $productId,
-                    $storeId,
-                    $baseExportState,
-                    $childExportState,
-                    self::REFRESH_STATE_UP_TO_DATE,
-                    (FeedProduct::STATE_RETAINED !== $baseExportState),
-                    (FeedProduct::STATE_RETAINED !== $previousBaseExportState)
-                );
-            }
-
-            // @todo do not refresh a section if the new export state is not in its filtered export states?
-            // @todo (but via another option, otherwise certainly too restrictive)
-
-            foreach ($refreshableSectionTypeIds as $typeId) {
-                $sectionType = $this->sectionTypePool->getTypeById($typeId);
-                $sectionData = $sectionType->getAdapter()->getProductData($store, $refreshableProduct);
-
-                $this->feedSectionResource->updateSectionData(
-                    $sectionType->getId(),
-                    $productId,
-                    $storeId,
-                    $sectionData,
-                    self::REFRESH_STATE_UP_TO_DATE
-                );
-            }
+            $this->refreshProduct($refreshableProduct, $store, $refreshExportState, $refreshableSectionTypeIds);
         }
     }
 
@@ -207,10 +310,17 @@ class Refresher
         $sortedRefreshedSectionTypeIds = array_values($sortedRefreshedSectionTypeIds);
 
         $refreshedProductCount = 0;
-        $refreshableSliceSize = 5000; // @todo customizable
-        $maximumRefreshedCount = 1000000; // @todo customizable (+ maximum time threshold)
+        $refreshableSliceSize = static::REFRESHABLE_SLICE_SIZE;
+        $maximumRefreshedCount = static::MAXIMUM_REFRESHED_COUNT;
+        $startTime = time();
 
         while ($refreshedProductCount < $maximumRefreshedCount) {
+            $currentTime = time();
+
+            if ($currentTime - $startTime > static::MAXIMUM_TIME_SPENT) {
+                break;
+            }
+
             $refreshableProducts = $this->refresherResource->getRefreshableProducts(
                 $store->getId(),
                 $exportStateRefreshProductFilter,
@@ -261,12 +371,16 @@ class Refresher
             // Find out the most efficient way to refresh the products from the current slice.
 
             $isProductLoadingRequiredForSections = false;
-            $isProductLoadingRequiredForExportState = $this->exportStateAdapter->requiresLoadedProduct($store);
+            $isProductLoadingRequiredForExportState =
+                $this->exportStateAdapter->requiresLoadedProduct($store)
+                || $this->exportStateConfig->shouldForceProductLoadForRefresh($store);
 
             foreach ($sliceRefreshableSectionTypeIds as $typeId) {
                 $sectionType = $this->sectionTypePool->getTypeById($typeId);
 
-                if ($sectionType->getAdapter()->requiresLoadedProduct($store)) {
+                if ($sectionType->getAdapter()->requiresLoadedProduct($store)
+                    || $sectionType->getConfig()->shouldForceProductLoadForRefresh($store)
+                ) {
                     $isProductLoadingRequiredForSections = true;
                     break;
                 }

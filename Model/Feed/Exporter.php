@@ -3,11 +3,14 @@
 namespace ShoppingFeed\Manager\Model\Feed;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\Exception\FileSystemException;
+use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
-use Magento\Framework\Filesystem\Directory\Write as DirectoryWriter;
+use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
+use ShoppingFeed\Feed\Product\Product as ExportedProduct;
+use ShoppingFeed\Feed\ProductGeneratorFactory as FeedGeneratorFactory;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Model\Feed\ExportableProduct;
+use ShoppingFeed\Manager\Model\Feed\ConfigInterface as FeedConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
@@ -27,9 +30,24 @@ class Exporter
     private $resource;
 
     /**
-     * @var DirectoryWriter
+     * @var ProductMetadataInterface
      */
-    private $fileWriter;
+    private $productMetaData;
+
+    /**
+     * @var DirectoryReadInterface
+     */
+    private $directoryReader;
+
+    /**
+     * @var FeedGeneratorFactory
+     */
+    private $feedGeneratorFactory;
+
+    /**
+     * @var FeedConfigInterface
+     */
+    private $generalConfig;
 
     /**
      * @var ExportStateConfigInterface
@@ -54,49 +72,34 @@ class Exporter
     /**
      * @param FileSystem $fileSystem
      * @param ExporterResource $resource
+     * @param ProductMetadataInterface $productMetadata
+     * @param FeedGeneratorFactory $feedGeneratorFactory
+     * @param ConfigInterface $generalConfig
      * @param ExportStateConfigInterface $exportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
      * @param string $feedDirectory
      * @param string $feedBaseFileName
-     * @throws FileSystemException
      */
     public function __construct(
         FileSystem $fileSystem,
         ExporterResource $resource,
+        ProductMetadataInterface $productMetadata,
+        FeedGeneratorFactory $feedGeneratorFactory,
+        FeedConfigInterface $generalConfig,
         ExportStateConfigInterface $exportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
         $feedDirectory,
         $feedBaseFileName
     ) {
-        $this->fileWriter = $fileSystem->getDirectoryWrite(DirectoryList::MEDIA);
         $this->resource = $resource;
+        $this->productMetaData = $productMetadata;
+        $this->directoryReader = $fileSystem->getDirectoryRead(DirectoryList::MEDIA);
+        $this->feedGeneratorFactory = $feedGeneratorFactory;
+        $this->generalConfig = $generalConfig;
         $this->exportStateConfig = $exportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
         $this->feedDirectory = $feedDirectory;
         $this->feedBaseFileName = $feedBaseFileName;
-    }
-
-    /**
-     * @param ExportableProduct $product
-     * @param \DOMDocument $domDocument
-     * @param string $nodeName
-     * @return \DOMElement
-     */
-    private function createExportableProductNode(
-        ExportableProduct $product,
-        \DOMDocument $domDocument,
-        $nodeName = 'product'
-    ) {
-        $productNode = $domDocument->createElement($nodeName);
-        $sectionsData = $product->getMergedSectionsData();
-
-        foreach ($sectionsData as $key => $value) {
-            $valueNode = $domDocument->createElement($key);
-            $valueNode->appendChild($domDocument->createCDATASection($value));
-            $productNode->appendChild($valueNode);
-        }
-
-        return $productNode;
     }
 
     /**
@@ -138,93 +141,142 @@ class Exporter
 
     /**
      * @param StoreInterface $store
-     * @return $this
-     * @throws FileSystemException
-     * @throws \Zend_Db_Statement_Exception
+     * @throws \Exception
      */
     public function exportStoreFeed(StoreInterface $store)
     {
-        $feedMediaPath = $this->fileWriter->getAbsolutePath($this->feedDirectory) . '/';
-        $this->fileWriter->create($feedMediaPath);
-
+        $feedMediaPath = $this->directoryReader->getAbsolutePath($this->feedDirectory) . '/';
         $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
-        $feedTempFileName = $feedFileName . '.tmp';
         $feedFilePath = $feedMediaPath . $feedFileName;
-        $feedTempFilePath = $feedMediaPath . $feedTempFileName;
+        $feedTempFilePath = $feedFilePath . '.tmp';
 
-        $fileDriver = $this->fileWriter->getDriver();
-        $feedTempFile = $fileDriver->fileOpen($feedTempFilePath, 'w');
-
-        $fileDriver->fileWrite($feedTempFile, '<?xml version="1.0" encoding="utf-8"?>');
-        $fileDriver->fileWrite($feedTempFile, "\n");
-        $fileDriver->fileWrite($feedTempFile, '<products>');
-
-        $domDocument = new \DOMDocument('1.0', 'utf-8');
-        $domDocument->formatOutput = true;
-
+        $feedGenerator = $this->feedGeneratorFactory->create();
         $childrenExportMode = $this->exportStateConfig->getChildrenExportMode($store);
 
-        $this->resource->iterateExportableProducts(
-            function (ExportableProduct $product) use ($store, $fileDriver, $feedTempFile, $domDocument) {
-                if (FeedProduct::STATE_RETAINED === $product->getExportState()) {
-                    $this->adaptExportableProductSectionsData($store, $product, true);
+        $feedGenerator->setPlatform(
+            $this->productMetaData->getName() . ' ' . $this->productMetaData->getEdition(),
+            $this->productMetaData->getVersion()
+        );
+
+        $baseStore = $store->getBaseStore();
+        $feedGenerator->setAttribute('storeName', $baseStore->getName());
+        $feedGenerator->setAttribute('storeUrl', $baseStore->getUrl());
+
+        if ($this->generalConfig->shouldUseGzipCompression($store)) {
+            $feedFilePath .= '.gz';
+            $feedTempFilePath .= '.gz';
+            $feedGenerator->setUri('compress.zlib://' . $feedTempFilePath);
+        } else {
+            $feedGenerator->setUri('file://' . $feedTempFilePath);
+        }
+
+        $feedGenerator->addProcessor(
+            function (ExportableProduct $product) use ($store) {
+                $isParent = $product->hasChildren();
+                $isRetained = (FeedProduct::STATE_RETAINED === $product->getExportState());
+
+                if ($isParent || $isRetained) {
+                    $this->adaptExportableProductSectionsData($store, $product, $isRetained, $isParent);
                 }
 
-                $productNode = $this->createExportableProductNode($product, $domDocument);
-                $fileDriver->fileWrite($feedTempFile, "\n" . $domDocument->saveXML($productNode));
-            },
-            $store->getId(),
-            $this->sectionTypePool->getTypeIds(),
-            [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
-            (self::CHILDREN_EXPORT_MODE_NONE === $childrenExportMode)
-            || (self::CHILDREN_EXPORT_MODE_SEPARATELY === $childrenExportMode),
-            (self::CHILDREN_EXPORT_MODE_BOTH === $childrenExportMode)
-            || (self::CHILDREN_EXPORT_MODE_SEPARATELY === $childrenExportMode)
+                if ($isParent) {
+                    foreach ($product->getChildren() as $childProduct) {
+                        $this->adaptExportableProductSectionsData(
+                            $store,
+                            $childProduct,
+                            $isRetained,
+                            false,
+                            true
+                        );
+                    }
+                }
+
+                return $product;
+            }
+        );
+
+        $feedGenerator->addMapper(
+            function (ExportableProduct $product, ExportedProduct $exportedProduct) use ($store) {
+                foreach ($this->sectionTypePool->getTypes() as $sectionType) {
+                    $sectionType->getAdapter()->exportBaseProductData(
+                        $store,
+                        $product->getSectionTypeData($sectionType->getId()),
+                        $exportedProduct
+                    );
+
+                    $sectionType->getAdapter()->exportMainProductData(
+                        $store,
+                        $product->getSectionTypeData($sectionType->getId()),
+                        $exportedProduct
+                    );
+                }
+
+                if ($product->hasChildren()) {
+                    $configurableAttributeCodes = $product->getConfigurableAttributeCodes();
+
+                    foreach ($product->getChildren() as $childProduct) {
+                        $exportedVariation = $exportedProduct->createVariation();
+
+                        foreach ($this->sectionTypePool->getTypes() as $sectionType) {
+                            $sectionType->getAdapter()->exportBaseProductData(
+                                $store,
+                                $childProduct->getSectionTypeData($sectionType->getId()),
+                                $exportedVariation
+                            );
+
+                            $sectionType->getAdapter()->exportVariationProductData(
+                                $store,
+                                $childProduct->getSectionTypeData($sectionType->getId()),
+                                $configurableAttributeCodes,
+                                $exportedVariation
+                            );
+                        }
+                    }
+                }
+            }
+        );
+
+        $productIterators = new \AppendIterator();
+
+        $productIterators->append(
+            $this->resource->getExportableProductsIterator(
+                $store->getId(),
+                $this->sectionTypePool->getTypeIds(),
+                [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
+
+                in_array(
+                    $childrenExportMode,
+                    [ self::CHILDREN_EXPORT_MODE_NONE, self::CHILDREN_EXPORT_MODE_SEPARATELY ],
+                    true
+                ),
+
+                in_array(
+                    $childrenExportMode,
+                    [ self::CHILDREN_EXPORT_MODE_BOTH, self::CHILDREN_EXPORT_MODE_SEPARATELY ],
+                    true
+                )
+            )
         );
 
         if ((self::CHILDREN_EXPORT_MODE_BOTH === $childrenExportMode)
             || (self::CHILDREN_EXPORT_MODE_WITHIN_PARENTS === $childrenExportMode)
         ) {
-            $this->resource->iterateExportableParentProducts(
-                function (ExportableProduct $parentProduct) use ($store, $fileDriver, $feedTempFile, $domDocument) {
-                    $isRetainedParent = (FeedProduct::STATE_RETAINED === $parentProduct->getExportState());
-                    $childNodes = [];
-
-                    foreach ($parentProduct->getChildren() as $childProduct) {
-                        $this->adaptExportableProductSectionsData(
-                            $store,
-                            $childProduct,
-                            $isRetainedParent,
-                            false,
-                            true
-                        );
-
-                        $childNodes[] = $this->createExportableProductNode($childProduct, $domDocument, 'child');
-                    }
-
-                    $this->adaptExportableProductSectionsData($store, $parentProduct, $isRetainedParent, true);
-                    $parentNode = $this->createExportableProductNode($parentProduct, $domDocument);
-                    $childrenNode = $domDocument->createElement('child-products');
-
-                    foreach ($childNodes as $childNode) {
-                        $childrenNode->appendChild($childNode);
-                    }
-
-                    $parentNode->appendChild($childrenNode);
-                    $fileDriver->fileWrite($feedTempFile, "\n" . $domDocument->saveXML($parentNode));
-                },
-                $store->getId(),
-                $this->sectionTypePool->getTypeIds(),
-                [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
-                [ FeedProduct::STATE_EXPORTED ]
+            $productIterators->append(
+                $this->resource->getExportableParentProductsIterator(
+                    $store->getId(),
+                    $this->sectionTypePool->getTypeIds(),
+                    [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
+                    [ FeedProduct::STATE_EXPORTED ]
+                )
             );
         }
 
-        $fileDriver->fileWrite($feedTempFile, "\n");
-        $fileDriver->fileWrite($feedTempFile, '</products>');
-        $fileDriver->fileClose($feedTempFile);
-        $this->fileWriter->renameFile($feedTempFilePath, $feedFilePath);
+        $feedGenerator->write($productIterators);
 
-        return $this;
+        if (false === rename($feedTempFilePath, $feedFilePath)) {
+            throw new LocalizedException(
+                __('Could not copy file "%1" to file "%2".', $feedTempFilePath, $feedFilePath)
+            );
+        }
     }
 }

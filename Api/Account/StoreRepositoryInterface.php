@@ -28,6 +28,13 @@ interface StoreRepositoryInterface
     public function getById($storeId);
 
     /**
+     * @param int $shoppingFeedStoreId
+     * @return StoreInterface
+     * @throws NoSuchEntityException
+     */
+    public function getByShoppingFeedStoreId($shoppingFeedStoreId);
+
+    /**
      * @param StoreInterface $store
      * @return bool
      * @throws CouldNotDeleteException

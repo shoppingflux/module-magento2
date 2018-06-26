@@ -20,6 +20,6 @@ class Boolean extends AbstractRenderer
 
     public function renderAttributeValue(AbstractAttribute $attribute, $value)
     {
-        return (null !== $value) && ($value !== '') ? (string) ($value ? __('Yes') : __('No')) : '';
+        return (null !== $value) && ('' !== $value) ? (string) ($value ? __('Yes') : __('No')) : '';
     }
 }

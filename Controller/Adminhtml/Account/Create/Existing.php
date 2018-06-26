@@ -6,17 +6,11 @@ use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Model\Account\Importer as AccountImporter;
-use ShoppingFeed\Manager\Model\ShoppingFeed\Api\Client as ApiClient;
 
 
 class Existing extends Action
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_create_existing';
-
-    /**
-     * @var ApiClient
-     */
-    private $apiClient;
 
     /**
      * @var AccountImporter
@@ -25,12 +19,10 @@ class Existing extends Action
 
     /**
      * @param Context $context
-     * @param ApiClient $apiClient
      * @param AccountImporter $accountImporter
      */
-    public function __construct(Context $context, ApiClient $apiClient, AccountImporter $accountImporter)
+    public function __construct(Context $context, AccountImporter $accountImporter)
     {
-        $this->apiClient = $apiClient;
         $this->accountImporter = $accountImporter;
         parent::__construct($context);
     }
@@ -41,14 +33,19 @@ class Existing extends Action
 
         if (is_array($accountData = $this->getRequest()->getParam('account'))) {
             $apiToken = false;
+            $storeData = $this->getRequest()->getParam('store');
+
+            if (!is_array($storeData)) {
+                $storeData = [];
+            }
 
             try {
                 if (empty($accountData['use_api_token'])) {
-                    if (!empty($accountData['shopping_feed_username'])
+                    if (!empty($accountData['shopping_feed_login'])
                         && !empty($accountData['shopping_feed_password'])
                     ) {
-                        $apiToken = $this->apiClient->getApiToken(
-                            $accountData['shopping_feed_username'],
+                        $apiToken = $this->accountImporter->getApiTokenByLogin(
+                            $accountData['shopping_feed_login'],
                             $accountData['shopping_feed_password']
                         );
                     }
@@ -56,16 +53,22 @@ class Existing extends Action
                     $apiToken = trim($accountData['api_token']);
                 }
 
-                if (!empty($apiToken) && !empty($accountData['store_id'])) {
-                    $apiAccount = $this->apiClient->getAccountData($apiToken);
-                    $this->accountImporter->importFromApi($apiAccount, (int) $accountData['store_id']);
+                if (empty($apiToken)) {
+                    throw new LocalizedException(__('The Shopping Feed account API token could not be determined.'));
                 }
 
+                $this->accountImporter->importAccountByApiToken(
+                    $apiToken,
+                    (bool) ($storeData['import_main_store'] ?? false),
+                    (int) ($storeData['base_store_id'] ?? 0)
+                );
+
+                $this->messageManager->addSuccessMessage(__('The account has been successfully created.'));
                 return $redirectResult->setPath('*/*/');
             } catch (LocalizedException $e) {
                 $this->messageManager->addExceptionMessage($e->getPrevious() ?: $e);
             } catch (\Exception $e) {
-                $this->messageManager->addExceptionMessage($e, __('Something went wrong while creating the account.'));
+                $this->messageManager->addExceptionMessage($e, __('An error occurred while creating the account.'));
             }
         }
 

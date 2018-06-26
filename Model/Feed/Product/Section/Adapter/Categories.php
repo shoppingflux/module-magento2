@@ -2,7 +2,9 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 
+use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Store\Model\StoreManagerInterface;
+use ShoppingFeed\Feed\Product\Product as ExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface as AttributeRendererPoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category\SelectorInterface as CategorySelectorInterface;
@@ -17,15 +19,10 @@ use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
  */
 class Categories extends AbstractAdapter implements CategoriesInterface
 {
-    const BREADCRUMBS_SEPARATOR = ' > '; // @todo configuration field?
+    const CATEGORY_NAME_SEPARATOR = ' > ';
 
-    const KEY_BREADCRUMBS = 'category_breadcrumbs';
-    const KEY_MAIN_CATEGORY_ID = 'category_id';
-    const KEY_MAIN_CATEGORY_NAME = 'category_main';
-    const KEY_MAIN_CATEGORY_URL = 'category_main_url';
-    const BASE_KEY_SUB_CATEGORY_ID = 'category_sub_%d_id';
-    const BASE_KEY_SUB_CATEGORY_NAME = 'category_sub_%d_main';
-    const BASE_KEY_SUB_CATEGORY_URL = 'category_sub_%d_url';
+    const KEY_CATEGORY_NAME = 'category_name';
+    const KEY_CATEGORY_URL = 'category_url';
 
     /**
      * @var CategorySelectorInterface
@@ -51,6 +48,11 @@ class Categories extends AbstractAdapter implements CategoriesInterface
         return Type::CODE;
     }
 
+    public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
+        $productCollection->addCategoryIds();
+    }
+
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
         $data = [];
@@ -70,30 +72,31 @@ class Categories extends AbstractAdapter implements CategoriesInterface
             $config->getParentWeightMultiplier($store)
         );
 
-        if (is_array($categoryPath)) {
-            $index = 0;
-            $breadcrumbs = [];
+        if (is_array($categoryPath) && !empty($categoryPath)) {
+            $mainCategory = reset($categoryPath);
+            $data[self::KEY_CATEGORY_URL] = $mainCategory->getUrl();
+            $pathNames = [];
 
             foreach ($categoryPath as $category) {
-                if ($index++ === 0) {
-                    $idKey = self::KEY_MAIN_CATEGORY_ID;
-                    $nameKey = self::KEY_MAIN_CATEGORY_NAME;
-                    $urlKey = self::KEY_MAIN_CATEGORY_URL;
-                } else {
-                    $idKey = sprintf(self::BASE_KEY_SUB_CATEGORY_ID, $index);
-                    $nameKey = sprintf(self::BASE_KEY_SUB_CATEGORY_NAME, $index);
-                    $urlKey = sprintf(self::BASE_KEY_SUB_CATEGORY_URL, $index);
-                }
-
-                $data[$idKey] = $category->getId();
-                $data[$nameKey] = $category->getName();
-                $data[$urlKey] = $category->getUrl();
-                $breadcrumbs[] = $category->getName();
+                $pathNames[] = $category->getName();
             }
 
-            $data[self::KEY_BREADCRUMBS] = implode(self::BREADCRUMBS_SEPARATOR, array_reverse($breadcrumbs));
+            $data[self::KEY_CATEGORY_NAME] = implode(self::CATEGORY_NAME_SEPARATOR, array_reverse($pathNames));
         }
 
         return $data;
+    }
+
+    public function exportMainProductData(
+        StoreInterface $store,
+        array $productData,
+        ExportedProduct $exportedProduct
+    ) {
+        if (isset($productData[self::KEY_CATEGORY_NAME])) {
+            $exportedProduct->setCategory(
+                $productData[self::KEY_CATEGORY_NAME],
+                $productData[self::KEY_CATEGORY_URL] ?? ''
+            );
+        }
     }
 }

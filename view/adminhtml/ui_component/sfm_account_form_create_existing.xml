@@ -39,18 +39,6 @@
             <dataScope>account</dataScope>
             <label translate="true">Account</label>
         </settings>
-        <field name="store_id" formElement="select">
-            <argument name="data" xsi:type="array">
-                <item name="options" xsi:type="object">Magento\Store\Ui\Component\Listing\Column\Store\Options</item>
-            </argument>
-            <settings>
-                <dataType>int</dataType>
-                <label translate="true">Store View</label>
-                <validation>
-                    <rule name="required-entry" xsi:type="boolean">true</rule>
-                </validation>
-            </settings>
-        </field>
         <field name="use_api_token" formElement="checkbox">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -59,7 +47,7 @@
             </argument>
             <settings>
                 <dataType>boolean</dataType>
-                <label translate="true">I know the account API token</label>
+                <label translate="true">I Know the Account API Token</label>
                 <switcherConfig>
                     <rules>
                         <rule name="0">
@@ -70,7 +58,7 @@
                                     <callback>hide</callback>
                                 </action>
                                 <action name="1">
-                                    <target>${$.parentName}.shopping_feed_username</target>
+                                    <target>${$.parentName}.shopping_feed_login</target>
                                     <callback>show</callback>
                                 </action>
                                 <action name="2">
@@ -87,7 +75,7 @@
                                     <callback>show</callback>
                                 </action>
                                 <action name="1">
-                                    <target>${$.parentName}.shopping_feed_username</target>
+                                    <target>${$.parentName}.shopping_feed_login</target>
                                     <callback>hide</callback>
                                 </action>
                                 <action name="2">
@@ -121,10 +109,10 @@
                 </validation>
             </settings>
         </field>
-        <field name="shopping_feed_username" formElement="input">
+        <field name="shopping_feed_login" formElement="input">
             <settings>
                 <dataType>text</dataType>
-                <label translate="true">Shopping Feed Login</label>
+                <label translate="true">Shopping Feed Account Name</label>
                 <validation>
                     <rule name="required-entry" xsi:type="boolean">true</rule>
                 </validation>
@@ -135,6 +123,69 @@
                 <dataType>password</dataType>
                 <elementTmpl>ShoppingFeed_Manager/form/element/password</elementTmpl>
                 <label translate="true">Shopping Feed Password</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+    </fieldset>
+    <fieldset name="store">
+        <settings>
+            <dataScope>store</dataScope>
+            <label translate="true">Store</label>
+        </settings>
+        <field name="import_main_store" formElement="checkbox">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="default" xsi:type="number">1</item>
+                </item>
+            </argument>
+            <settings>
+                <dataType>boolean</dataType>
+                <label translate="true">Import the Account Main Store</label>
+                <switcherConfig>
+                    <rules>
+                        <rule name="0">
+                            <value>0</value>
+                            <actions>
+                                <action name="0">
+                                    <target>${$.parentName}.base_store_id</target>
+                                    <callback>hide</callback>
+                                </action>
+                            </actions>
+                        </rule>
+                        <rule name="1">
+                            <value>1</value>
+                            <actions>
+                                <action name="0">
+                                    <target>${$.parentName}.base_store_id</target>
+                                    <callback>show</callback>
+                                </action>
+                            </actions>
+                        </rule>
+                    </rules>
+                    <enabled>true</enabled>
+                </switcherConfig>
+            </settings>
+            <formElements>
+                <checkbox>
+                    <settings>
+                        <prefer>toggle</prefer>
+                        <valueMap>
+                            <map name="false" xsi:type="number">0</map>
+                            <map name="true" xsi:type="number">1</map>
+                        </valueMap>
+                    </settings>
+                </checkbox>
+            </formElements>
+        </field>
+        <field name="base_store_id" formElement="select">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Magento\Store\Ui\Component\Listing\Column\Store\Options</item>
+            </argument>
+            <settings>
+                <dataType>int</dataType>
+                <label translate="true">Associated Store View</label>
                 <validation>
                     <rule name="required-entry" xsi:type="boolean">true</rule>
                 </validation>

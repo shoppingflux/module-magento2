@@ -3,8 +3,12 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section;
 
 use Magento\Catalog\Model\Product as CatalogProduct;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Store\Model\StoreManagerInterface;
+use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
+use ShoppingFeed\Feed\Product\Product as ExportedProduct;
+use ShoppingFeed\Feed\Product\ProductVariation as ExportedVariation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface as AttributeRendererPoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface as SectionConfig;
@@ -55,10 +59,15 @@ abstract class AbstractAdapter implements AdapterInterface
 
     public function requiresLoadedProduct(StoreInterface $store)
     {
-        // @todo the adapter should only return whether or not it always *itself* requires a loaded product
-        // @todo then the user-defined configuration value should be checked on top of it by whatever requires it
-        // @todo this would eg allow for displaying a specific notice to the user
-        return true; // $this->getConfig()->shouldForceProductLoadForRefresh($store);
+        return false;
+    }
+
+    public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
+    }
+
+    public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
     }
 
     public function adaptRetainedProductData(StoreInterface $store, array $productData)
@@ -74,6 +83,28 @@ abstract class AbstractAdapter implements AdapterInterface
     public function adaptChildProductData(StoreInterface $store, array $productData)
     {
         return $productData;
+    }
+
+    public function exportBaseProductData(
+        StoreInterface $store,
+        array $productData,
+        AbstractExportedProduct $exportedProduct
+    ) {
+    }
+
+    public function exportMainProductData(
+        StoreInterface $store,
+        array $productData,
+        ExportedProduct $exportedProduct
+    ) {
+    }
+
+    public function exportVariationProductData(
+        StoreInterface $store,
+        array $productData,
+        array $configurableAttributeCodes,
+        ExportedVariation $exportedVariation
+    ) {
     }
 
     /**

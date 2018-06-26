@@ -5,12 +5,14 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\Checkbox;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\MultiSelect;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\Select;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\TextBox;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\Option as OptionHandler;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
+use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
+use ShoppingFeed\Manager\Model\Config\Field\MultiSelect;
+use ShoppingFeed\Manager\Model\Config\Field\Select;
+use ShoppingFeed\Manager\Model\Config\Field\TextBox;
+use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
+use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Feed\Exporter as FeedExporter;
 use ShoppingFeed\Manager\Model\Feed\Product\RefreshableConfig;
 
@@ -33,11 +35,17 @@ class Config extends RefreshableConfig implements ConfigInterface
     private $productVisibility;
 
     /**
+     * @param FieldFactoryInterface $fieldFactory
+     * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param ProductVisibility $productVisibility
      */
-    public function __construct(ProductVisibility $productVisibility)
-    {
+    public function __construct(
+        FieldFactoryInterface $fieldFactory,
+        ValueHandlerFactoryInterface $valueHandlerFactory,
+        ProductVisibility $productVisibility
+    ) {
         $this->productVisibility = $productVisibility;
+        parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
     final public function getScopeSubPath()
@@ -49,79 +57,106 @@ class Config extends RefreshableConfig implements ConfigInterface
     {
         return array_merge(
             [
-                new Checkbox(
-                    self::KEY_EXPORT_SELECTED_ONLY,
-                    __('Export Only Selected Products')
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_EXPORT_SELECTED_ONLY,
+                        'label' => __('Export Only Selected Products'),
+                    ]
                 ),
 
-                new MultiSelect(
-                    self::KEY_EXPORTED_VISIBILITIES,
-                    new OptionHandler(UiText::NAME, $this->productVisibility->getAllOptions()),
-                    __('Export Products Visible in'),
-                    true,
-                    $this->productVisibility->getVisibleInSiteIds(),
-                    $this->productVisibility->getVisibleInSiteIds(),
-                    '',
-                    [],
-                    4
-                ),
-
-                new Checkbox(
-                    self::KEY_EXPORT_OUT_OF_STOCK,
-                    __('Export Out of Stock Products')
-                ),
-
-                new Checkbox(
-                    self::KEY_EXPORT_NOT_SALABLE,
-                    __('Export Not Salable Products')
-                ),
-
-                new Select(
-                    self::KEY_CHILDREN_EXPORT_MODE,
-                    new OptionHandler(
-                        UiText::NAME,
-                        [
+                $this->fieldFactory->create(
+                    MultiSelect::TYPE_CODE,
+                    [
+                        'name' => self::KEY_EXPORTED_VISIBILITIES,
+                        'valueHandler' => $this->valueHandlerFactory->create(
+                            OptionHandler::TYPE_CODE,
                             [
-                                'value' => FeedExporter::CHILDREN_EXPORT_MODE_NONE,
-                                'label' => __('No'),
-                            ],
-                            [
-                                'value' => FeedExporter::CHILDREN_EXPORT_MODE_SEPARATELY,
-                                'label' => __('Separately'),
-                            ],
-                            [
-                                'value' => FeedExporter::CHILDREN_EXPORT_MODE_WITHIN_PARENTS,
-                                'label' => __('Within Parents'),
-                            ],
-                            [
-                                'value' => FeedExporter::CHILDREN_EXPORT_MODE_BOTH,
-                                'label' => __('Separately and Within Parents'),
-                            ],
-                        ],
-                        true
-                    ),
-                    __('Export Child Products'),
-                    true,
-                    FeedExporter::CHILDREN_EXPORT_MODE_WITHIN_PARENTS,
-                    FeedExporter::CHILDREN_EXPORT_MODE_WITHIN_PARENTS
+                                'dataType' => UiText::NAME,
+                                'optionArray' => $this->productVisibility->getAllOptions(),
+                            ]
+                        ),
+                        'isRequired' => true,
+                        'defaultFormValue' => $this->productVisibility->getVisibleInSiteIds(),
+                        'defaultUseValue' => $this->productVisibility->getVisibleInSiteIds(),
+                        'size' => 4,
+                        'label' => __('Export Products Visible in'),
+                    ]
                 ),
 
-                new Checkbox(
-                    self::KEY_RETAIN_PREVIOUSLY_EXPORTED,
-                    __('Retain Previously Exported Products'),
-                    true,
-                    '',
-                    '',
-                    [ self::KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION ]
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_EXPORT_OUT_OF_STOCK,
+                        'label' => __('Export Out of Stock Products'),
+                    ]
                 ),
 
-                new TextBox(
-                    self::KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION,
-                    new PositiveIntegerHandler(),
-                    __('Previously Exported Products Retention Duration'),
-                    true,
-                    48,
-                    __('In hours.')
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_EXPORT_NOT_SALABLE,
+                        'label' => __('Export Not Salable Products'),
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_CHILDREN_EXPORT_MODE,
+                        'valueHandler' => $this->valueHandlerFactory->create(
+                            OptionHandler::TYPE_CODE,
+                            [
+                                'dataType' => UiText::NAME,
+                                'hasEmptyOption' => true,
+                                'optionArray' => [
+                                    [
+                                        'value' => FeedExporter::CHILDREN_EXPORT_MODE_NONE,
+                                        'label' => __('No'),
+                                    ],
+                                    [
+                                        'value' => FeedExporter::CHILDREN_EXPORT_MODE_SEPARATELY,
+                                        'label' => __('Separately'),
+                                    ],
+                                    [
+                                        'value' => FeedExporter::CHILDREN_EXPORT_MODE_WITHIN_PARENTS,
+                                        'label' => __('Within Parents'),
+                                    ],
+                                    [
+                                        'value' => FeedExporter::CHILDREN_EXPORT_MODE_BOTH,
+                                        'label' => __('Separately and Within Parents'),
+                                    ],
+                                ],
+                            ]
+                        ),
+                        'isRequired' => true,
+                        'defaultFormValue' => FeedExporter::CHILDREN_EXPORT_MODE_WITHIN_PARENTS,
+                        'defaultUseValue' => FeedExporter::CHILDREN_EXPORT_MODE_WITHIN_PARENTS,
+                        'label' => __('Export Child Products'),
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_RETAIN_PREVIOUSLY_EXPORTED,
+                        'isRequired' => true,
+                        'label' => __('Retain Previously Exported Products'),
+                        'checkedDependentFieldNames' => [ self::KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION ],
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'isRequired' => true,
+                        'defaultFormValue' => 48,
+                        'defaultUseValue' => 48,
+                        'label' => __('Retention Duration for Previously Exported Products'),
+                        'notice' => __('In hours.'),
+                    ]
                 ),
             ],
             parent::getBaseFields()
@@ -135,36 +170,36 @@ class Config extends RefreshableConfig implements ConfigInterface
 
     public function shouldExportSelectedOnly(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_EXPORT_SELECTED_ONLY);
+        return $this->getFieldValue($store, self::KEY_EXPORT_SELECTED_ONLY);
     }
 
     public function getExportedVisibilities(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_EXPORTED_VISIBILITIES);
+        return $this->getFieldValue($store, self::KEY_EXPORTED_VISIBILITIES);
     }
 
     public function shouldExportOutOfStock(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_EXPORT_OUT_OF_STOCK);
+        return $this->getFieldValue($store, self::KEY_EXPORT_OUT_OF_STOCK);
     }
 
     public function shouldExportNotSalable(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_EXPORT_NOT_SALABLE);
+        return $this->getFieldValue($store, self::KEY_EXPORT_NOT_SALABLE);
     }
 
     public function getChildrenExportMode(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_CHILDREN_EXPORT_MODE);
+        return $this->getFieldValue($store, self::KEY_CHILDREN_EXPORT_MODE);
     }
 
     public function shouldRetainPreviouslyExported(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_RETAIN_PREVIOUSLY_EXPORTED);
+        return $this->getFieldValue($store, self::KEY_RETAIN_PREVIOUSLY_EXPORTED);
     }
 
     public function getPreviouslyExportedRetentionDuration(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION) * 3600;
+        return $this->getFieldValue($store, self::KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION) * 3600;
     }
 }

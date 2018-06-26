@@ -17,7 +17,37 @@ interface AttributesInterface extends ConfigInterface
 
     /**
      * @param StoreInterface $store
+     * @return AbstractAttribute|null
+     */
+    public function getBrandAttribute(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return AbstractAttribute|null
+     */
+    public function getDescriptionAttribute(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return AbstractAttribute|null
+     */
+    public function getShortDescriptionAttribute(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return AbstractAttribute|null
+     */
+    public function getGtinAttribute(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return AbstractAttribute[]
      */
     public function getAttributeMap(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return AbstractAttribute[]
+     */
+    public function getAllAttributes(StoreInterface $store);
 }

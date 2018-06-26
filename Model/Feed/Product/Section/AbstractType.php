@@ -9,9 +9,14 @@ use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type as TypeRe
 abstract class AbstractType
 {
     /**
-     * @var int
+     * @var TypeResource
      */
-    private $id;
+    private $typeResource;
+
+    /**
+     * @var int|null
+     */
+    private $id = null;
 
     /**
      * @var AdapterInterface
@@ -27,11 +32,10 @@ abstract class AbstractType
      * @param TypeResource $typeResource
      * @param AdapterInterface $adapter
      * @param ConfigInterface $config
-     * @throws LocalizedException
      */
     public function __construct(TypeResource $typeResource, AdapterInterface $adapter, ConfigInterface $config)
     {
-        $this->id = $typeResource->getCodeId($this->getCode(), true);
+        $this->typeResource = $typeResource;
         $this->adapter = $adapter;
         $this->config = $config;
         $this->adapter->setType($this);
@@ -43,6 +47,10 @@ abstract class AbstractType
      */
     public function getId()
     {
+        if (null === $this->id) {
+            $this->id = $this->typeResource->getCodeId($this->getCode(), true);
+        }
+
         return $this->id;
     }
 
@@ -55,7 +63,7 @@ abstract class AbstractType
      * @return string
      */
     abstract public function getLabel();
-    
+
     /**
      * @return int
      */

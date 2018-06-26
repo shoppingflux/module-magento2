@@ -3,7 +3,6 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Model\Account\Store;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface;
 
 

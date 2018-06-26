@@ -3,9 +3,9 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\Checkbox;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\TextBox;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
+use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
+use ShoppingFeed\Manager\Model\Config\Field\TextBox;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 
 
@@ -18,24 +18,28 @@ class Images extends AbstractConfig implements ImagesInterface
     {
         return array_merge(
             [
-                new Checkbox(
-                    self::KEY_EXPORT_ALL_IMAGES,
-                    __('Export All Images'),
-                    true,
-                    '',
-                    '',
-                    [],
-                    [ self::KEY_EXPORTED_IMAGE_COUNT ]
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_EXPORT_ALL_IMAGES,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Export All Images'),
+                        'uncheckedDependentFieldNames' => [ self::KEY_EXPORTED_IMAGE_COUNT ],
+                        'sortOrder' => 10,
+                    ]
                 ),
 
-                new TextBox(
-                    self::KEY_EXPORTED_IMAGE_COUNT,
-                    new PositiveIntegerHandler(),
-                    __('Exported Image Count'),
-                    true,
-                    5,
-                    5,
-                    ''
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_EXPORTED_IMAGE_COUNT,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'isRequired' => true,
+                        'defaultFormValue' => 5,
+                        'defaultUseValue' => 5,
+                        'label' => __('Exported Image Count'),
+                        'sortOrder' => 20,
+                    ]
                 ),
             ],
             parent::getBaseFields()
@@ -49,11 +53,11 @@ class Images extends AbstractConfig implements ImagesInterface
 
     public function shouldExportAllImages(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_EXPORT_ALL_IMAGES);
+        return $this->getFieldValue($store, self::KEY_EXPORT_ALL_IMAGES);
     }
 
     public function getExportedImageCount(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_EXPORTED_IMAGE_COUNT);
+        return $this->getFieldValue($store, self::KEY_EXPORTED_IMAGE_COUNT);
     }
 }

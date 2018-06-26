@@ -28,7 +28,7 @@ class RendererPool implements RendererPoolInterface
             if (!$renderer instanceof RendererInterface) {
                 throw new LocalizedException(
                     __(
-                        'Attribute renderer %1 must be of type: ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererInterface',
+                        'Attribute renderer "%1" must be of type: ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererInterface.',
                         $code
                     )
                 );
@@ -48,7 +48,7 @@ class RendererPool implements RendererPoolInterface
         if (!is_array($this->sortedRenderers)) {
             $this->sortedRenderers = $this->getRenderers();
 
-            usort(
+            uasort(
                 $this->sortedRenderers,
                 function ($rendererA, $rendererB) {
                     /**
@@ -74,7 +74,7 @@ class RendererPool implements RendererPoolInterface
             return $this->renderers[$code];
         }
 
-        throw new LocalizedException(__('Attribute renderer for code %1 does not exist', $code));
+        throw new LocalizedException(__('Attribute renderer for code "%1" does not exist.', $code));
     }
 
     /**

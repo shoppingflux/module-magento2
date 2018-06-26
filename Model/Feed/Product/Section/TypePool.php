@@ -13,9 +13,9 @@ class TypePool implements TypePoolInterface
     private $types = [];
 
     /**
-     * @var int[]
+     * @var int[]|null
      */
-    private $typeIds = [];
+    private $typeIds = null;
 
     /**
      * @var AbstractType[]
@@ -32,19 +32,26 @@ class TypePool implements TypePoolInterface
             if (!$type instanceof AbstractType) {
                 throw new LocalizedException(
                     __(
-                        'Section type %1 must be of type: ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractType',
+                        'Section type "%1" must be of type: ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractType.',
                         $code
                     )
                 );
             }
 
             $this->types[$code] = $type;
-            $this->typeIds[$code] = $type->getId();
         }
     }
 
     public function getTypeIds()
     {
+        if (null === $this->typeIds) {
+            $this->typeIds = [];
+
+            foreach ($this->types as $type) {
+                $this->typeIds[$type->getCode()] = $type->getId();
+            }
+        }
+
         return $this->typeIds;
     }
 
@@ -74,11 +81,13 @@ class TypePool implements TypePoolInterface
      */
     public function getTypeById($id)
     {
-        if (false !== ($code = array_search($id, $this->typeIds, true))) {
+        $code = array_search($id, $this->getTypeIds(), true);
+
+        if (false !== $code) {
             return $this->getTypeByCode($code);
         }
 
-        throw new LocalizedException(__('Section type for ID %1 does not exist', $id));
+        throw new LocalizedException(__('Section type for ID "%1" does not exist.', $id));
     }
 
     /**
@@ -92,12 +101,12 @@ class TypePool implements TypePoolInterface
             return $this->types[$code];
         }
 
-        throw new LocalizedException(__('Section type for code %1 does not exist', $code));
+        throw new LocalizedException(__('Section type for code "%1" does not exist.', $code));
     }
 
     public function sortTypes(array $types)
     {
-        usort(
+        uasort(
             $types,
             function ($typeA, $typeB) {
                 /**

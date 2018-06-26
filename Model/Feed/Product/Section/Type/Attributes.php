@@ -15,7 +15,11 @@ use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type as TypeRe
 class Attributes extends AbstractType
 {
     const CODE = 'attributes';
-    
+
+    const ATTRIBUTE_BRAND = 'brand';
+    const ATTRIBUTE_DESCRIPTION = 'description';
+    const ATTRIBUTE_GTIN = 'gtin';
+
     public function __construct(TypeResource $typeResource, AdapterInterface $adapter, ConfigInterface $config)
     {
         parent::__construct($typeResource, $adapter, $config);
@@ -30,7 +34,7 @@ class Attributes extends AbstractType
     {
         return __('Attributes');
     }
-    
+
     public function getSortOrder()
     {
         return 30000;

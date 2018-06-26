@@ -3,7 +3,10 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 
 use Magento\Catalog\Model\Product as CatalogProduct;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
+use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
+use ShoppingFeed\Feed\Product\Product as ExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ShippingInterface as ConfigInterface;
@@ -23,6 +26,13 @@ class Shipping extends AbstractAdapter implements ShippingInterface
     public function getSectionType()
     {
         return Type::CODE;
+    }
+
+    public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
+        foreach ($this->getConfig()->getAllAttributes($store) as $attribute) {
+            $productCollection->addAttributeToSelect($attribute->getAttributeCode());
+        }
     }
 
     /**
@@ -56,17 +66,31 @@ class Shipping extends AbstractAdapter implements ShippingInterface
                 $config->getDefaultCarrierName($store)
             ),
 
-            self::KEY_FEES => $this->getCatalogProductValue(
+            self::KEY_FEES => (float) $this->getCatalogProductValue(
                 $catalogProduct,
                 $config->getFeesAttribute($store),
                 $config->getDefaultFees($store)
             ),
 
-            self::KEY_DELAY => $this->getCatalogProductValue(
+            self::KEY_DELAY => (int) $this->getCatalogProductValue(
                 $catalogProduct,
                 $config->getDelayAttribute($store),
                 $config->getDefaultDelay($store)
             ),
         ];
+    }
+
+    public function exportBaseProductData(
+        StoreInterface $store,
+        array $productData,
+        AbstractExportedProduct $exportedProduct
+    ) {
+        if (isset($productData[self::KEY_FEES]) && isset($productData[self::KEY_DELAY])) {
+            $exportedProduct->addShipping(
+                $productData[self::KEY_FEES],
+                $productData[self::KEY_DELAY],
+                $productData[self::KEY_CARRIER_NAME] ?? ''
+            );
+        }
     }
 }

@@ -4,16 +4,23 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\MultiSelect;
-use ShoppingFeed\Manager\Model\Account\Store\Config\Field\Select;
+use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
+use ShoppingFeed\Manager\Model\Config\Field\MultiSelect;
+use ShoppingFeed\Manager\Model\Config\Field\Select;
+use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
+use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Attribute\SourceInterface as AttributeSourceInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
 
 class Attributes extends AbstractConfig implements AttributesInterface
 {
     const KEY_USE_PRODUCT_ID_FOR_SKU = 'use_product_id_for_sku';
+    const KEY_BRAND_ATTRIBUTE = 'brand_attribute';
+    const KEY_DESCRIPTION_ATTRIBUTE = 'description_attribute';
+    const KEY_SHORT_DESCRIPTION_ATTRIBUTE = 'short_description_attribute';
+    const KEY_GTIN_ATTRIBUTE = 'gtin_attribute';
     const KEY_BASE_MAPPED_ATTRIBUTE = 'attribute_for_%s';
     const KEY_ADDITIONAL_ATTRIBUTES = 'additional_attributes';
 
@@ -28,35 +35,111 @@ class Attributes extends AbstractConfig implements AttributesInterface
     protected $mappableAttributes;
 
     /**
+     * @param FieldFactoryInterface $fieldFactory
+     * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param AttributeSourceInterface $attributeSource
      * @param string[] $mappableAttributes
      */
-    public function __construct(AttributeSourceInterface $attributeSource, array $mappableAttributes = [])
-    {
+    public function __construct(
+        FieldFactoryInterface $fieldFactory,
+        ValueHandlerFactoryInterface $valueHandlerFactory,
+        AttributeSourceInterface $attributeSource,
+        array $mappableAttributes = []
+    ) {
         $this->attributeSource = $attributeSource;
         $this->mappableAttributes = array_filter($mappableAttributes);
+        parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
     protected function getBaseFields()
     {
-        $fields = [];
-        $attributeValueHandler = new AttributeHandler($this->attributeSource);
+        $attributeValueHandler = $this->valueHandlerFactory->create(
+            AttributeHandler::TYPE_CODE,
+            [ 'attributeSource' => $this->attributeSource ]
+        );
+
+        $fields = [
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_USE_PRODUCT_ID_FOR_SKU,
+                    'label' => __('Use Product ID for SKU'),
+                    'sortOrder' => 10,
+                ]
+            ),
+
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_BRAND_ATTRIBUTE,
+                    'valueHandler' => $attributeValueHandler,
+                    'isRequired' => false,
+                    'label' => __('Brand Attribute'),
+                    'sortOrder' => 20,
+                ]
+            ),
+
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_DESCRIPTION_ATTRIBUTE,
+                    'valueHandler' => $attributeValueHandler,
+                    'isRequired' => false,
+                    'label' => __('Description Attribute'),
+                    'sortOrder' => 30,
+                ]
+            ),
+
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_SHORT_DESCRIPTION_ATTRIBUTE,
+                    'valueHandler' => $attributeValueHandler,
+                    'isRequired' => false,
+                    'label' => __('Short Description Attribute'),
+                    'sortOrder' => 40,
+                ]
+            ),
+
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_GTIN_ATTRIBUTE,
+                    'valueHandler' => $attributeValueHandler,
+                    'isRequired' => false,
+                    'label' => __('GTIN Attribute'),
+                    'sortOrder' => 50,
+                ]
+            ),
+        ];
+
+        $sortOrder = 60;
 
         foreach ($this->mappableAttributes as $attributeCode => $attributeLabel) {
             $fieldName = sprintf(self::KEY_BASE_MAPPED_ATTRIBUTE, $attributeCode);
 
-            $fields[] = new Select(
-                $fieldName,
-                $attributeValueHandler,
-                $attributeLabel,
-                false
+            $fields[] = $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => $fieldName,
+                    'valueHandler' => $attributeValueHandler,
+                    'isRequired' => false,
+                    'label' => __('%1 Attribute', $attributeLabel),
+                    'sortOrder' => $sortOrder,
+                ]
             );
+
+            $sortOrder += 10;
         }
 
-        $fields[] = new MultiSelect(
-            self::KEY_ADDITIONAL_ATTRIBUTES,
-            $attributeValueHandler,
-            __('Additional Attributes')
+        $fields[] = $this->fieldFactory->create(
+            MultiSelect::TYPE_CODE,
+            [
+                'name' => self::KEY_ADDITIONAL_ATTRIBUTES,
+                'valueHandler' => $attributeValueHandler,
+                'label' => __('Additional Attributes'),
+                'sortOrder' => $sortOrder,
+            ]
         );
 
         return array_merge($fields, parent::getBaseFields());
@@ -69,29 +152,66 @@ class Attributes extends AbstractConfig implements AttributesInterface
 
     public function shouldUseProductIdForSku(StoreInterface $store)
     {
-        return $this->getStoreFieldValue($store, self::KEY_USE_PRODUCT_ID_FOR_SKU);
+        return $this->getFieldValue($store, self::KEY_USE_PRODUCT_ID_FOR_SKU);
+    }
+
+    public function getBrandAttribute(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_BRAND_ATTRIBUTE);
+    }
+
+    public function getDescriptionAttribute(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_DESCRIPTION_ATTRIBUTE);
+    }
+
+    public function getShortDescriptionAttribute(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_SHORT_DESCRIPTION_ATTRIBUTE);
+    }
+
+    public function getGtinAttribute(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_GTIN_ATTRIBUTE);
     }
 
     public function getAttributeMap(StoreInterface $store)
     {
-        $map = [];
+        $attributeMap = [];
 
         foreach ($this->mappableAttributes as $attributeCode => $attributeLabel) {
             $fieldName = sprintf(self::KEY_BASE_MAPPED_ATTRIBUTE, $attributeCode);
-            $map[$attributeCode] = $this->getStoreFieldValue($store, $fieldName);
+            $attributeMap[$attributeCode] = $this->getFieldValue($store, $fieldName);
         }
 
-        $additionalAttributes = $this->getStoreFieldValue($store, self::KEY_ADDITIONAL_ATTRIBUTES);
+        $additionalAttributes = $this->getFieldValue($store, self::KEY_ADDITIONAL_ATTRIBUTES);
 
         /** @var AbstractAttribute $attribute */
         foreach ($additionalAttributes as $attribute) {
             $attributeCode = $attribute->getAttributeCode();
 
-            if (!isset($map[$attributeCode])) {
-                $map[$attributeCode] = $attribute;
+            if (!isset($attributeMap[$attributeCode])) {
+                $attributeMap[$attributeCode] = $attribute;
             }
         }
 
-        return array_filter($map);
+        return array_filter($attributeMap);
+    }
+
+    public function getAllAttributes(StoreInterface $store)
+    {
+        return array_values(
+            array_filter(
+                array_merge(
+                    [
+                        $this->getBrandAttribute($store),
+                        $this->getDescriptionAttribute($store),
+                        $this->getShortDescriptionAttribute($store),
+                        $this->getGtinAttribute($store),
+                    ],
+                    $this->getAttributeMap($store)
+                )
+            )
+        );
     }
 }
