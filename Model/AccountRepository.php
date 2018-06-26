@@ -33,11 +33,6 @@ class AccountRepository implements AccountRepositoryInterface
         $this->accountFactory = $accountFactory;
     }
 
-    /**
-     * @param AccountInterface $account
-     * @return AccountInterface
-     * @throws CouldNotSaveException
-     */
     public function save(AccountInterface $account)
     {
         try {
@@ -49,45 +44,30 @@ class AccountRepository implements AccountRepositoryInterface
         return $account;
     }
 
-    /**
-     * @param int $accountId
-     * @return AccountInterface
-     * @throws NoSuchEntityException
-     */
     public function getById($accountId)
     {
         $account = $this->accountFactory->create();
         $this->accountResource->load($account, $accountId);
 
         if (!$account->getId()) {
-            throw new NoSuchEntityException(__('Shopping Feed account with ID "%1" does not exist.', $accountId));
+            throw new NoSuchEntityException(__('Account for ID "%1" does not exist.', $accountId));
         }
 
         return $account;
     }
 
-    /**
-     * @param string $apiToken
-     * @return AccountInterface
-     * @throws NoSuchEntityException
-     */
     public function getByApiToken($apiToken)
     {
         $account = $this->accountFactory->create();
         $this->accountResource->load($account, $apiToken, AccountInterface::API_TOKEN);
 
         if (!$account->getId()) {
-            throw new NoSuchEntityException(__('Shopping Feed account with API token "%1" does not exist.', $apiToken));
+            throw new NoSuchEntityException(__('Account for API token "%1" does not exist.', $apiToken));
         }
 
         return $account;
     }
 
-    /**
-     * @param AccountInterface $account
-     * @return bool
-     * @throws CouldNotDeleteException
-     */
     public function delete(AccountInterface $account)
     {
         try {
@@ -99,12 +79,6 @@ class AccountRepository implements AccountRepositoryInterface
         return true;
     }
 
-    /**
-     * @param int $accountId
-     * @return bool
-     * @throws CouldNotDeleteException
-     * @throws NoSuchEntityException
-     */
     public function deleteById($accountId)
     {
         return $this->delete($this->getById($accountId));

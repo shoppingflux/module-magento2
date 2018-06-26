@@ -15,6 +15,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as Section
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Filter\Applier as ProductFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Filter\Applier as SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
 
 
@@ -38,6 +39,7 @@ class Store extends AbstractDb
     /**
      * @param DbContext $context
      * @param TimeHelper $timeHelper
+     * @param TableDictionary $tableDictionary
      * @param ProductFilterApplier $productFilterApplier
      * @param SectionFilterApplier $sectionFilterApplier
      * @param SectionTypePoolInterface $sectionTypePool
@@ -48,6 +50,7 @@ class Store extends AbstractDb
     public function __construct(
         DbContext $context,
         TimeHelper $timeHelper,
+        TableDictionary $tableDictionary,
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
         SectionTypePoolInterface $sectionTypePool,
@@ -58,7 +61,15 @@ class Store extends AbstractDb
         $this->sectionTypePool = $sectionTypePool;
         $this->catalogProductResource = $catalogProductResource;
         $this->catalogProductCollectionFactory = $catalogProductCollectionFactory;
-        parent::__construct($context, $timeHelper, $productFilterApplier, $sectionFilterApplier, $connectionName);
+
+        parent::__construct(
+            $context,
+            $timeHelper,
+            $tableDictionary,
+            $productFilterApplier,
+            $sectionFilterApplier,
+            $connectionName
+        );
     }
 
     protected function _construct()
@@ -106,7 +117,7 @@ class Store extends AbstractDb
         $productCollection = $this->catalogProductCollectionFactory->create();
 
         $productCollection->joinTable(
-            [ 'feed_product_table' => $this->getFeedProductTable() ],
+            [ 'feed_product_table' => $this->tableDictionary->getFeedProductTableName() ],
             'product_id = entity_id',
             [ FeedProductInterface::EXPORT_STATE, FeedProductInterface::CHILD_EXPORT_STATE ],
             [ FeedProductInterface::STORE_ID => $store->getId() ]
@@ -125,7 +136,7 @@ class Store extends AbstractDb
         $connection = $this->getConnection();
 
         $existingListSelect = $connection->select()
-            ->from($this->getFeedProductTable(), [ 'product_id' ])
+            ->from($this->tableDictionary->getFeedProductTableName(), [ 'product_id' ])
             ->where('store_id = ?', $storeId);
 
         $entityIdFieldName = $this->catalogProductResource->getEntityIdField();
@@ -146,20 +157,20 @@ class Store extends AbstractDb
         $connection->query(
             $connection->insertFromSelect(
                 $insertableListSelect,
-                $this->getFeedProductTable(),
+                $this->tableDictionary->getFeedProductTableName(),
                 [ 'product_id', 'store_id' ]
             )
         );
 
         foreach ($this->sectionTypePool->getTypeIds() as $sectionTypeId) {
             $existingListSelect = $connection->select()
-                ->from($this->getFeedProductSectionTable(), [ 'product_id' ])
+                ->from($this->tableDictionary->getFeedProductSectionTableName(), [ 'product_id' ])
                 ->where('type_id = ?', $sectionTypeId)
                 ->where('store_id = ?', $storeId);
 
             $insertableListSelect = $connection->select()
                 ->from(
-                    $this->getFeedProductTable(),
+                    $this->tableDictionary->getFeedProductTableName(),
                     [
                         'type_id' => new \Zend_Db_Expr($sectionTypeId),
                         'product_id' => 'product_id',
@@ -172,7 +183,7 @@ class Store extends AbstractDb
             $connection->query(
                 $connection->insertFromSelect(
                     $insertableListSelect,
-                    $this->getFeedProductSectionTable(),
+                    $this->tableDictionary->getFeedProductSectionTableName(),
                     [ 'type_id', 'product_id', 'store_id' ]
                 )
             );
@@ -190,7 +201,7 @@ class Store extends AbstractDb
         $connection = $this->getConnection();
 
         $idsSelect = $connection->select()
-            ->from($this->getFeedProductTable(), [ 'product_id' ])
+            ->from($this->tableDictionary->getFeedProductTableName(), [ 'product_id' ])
             ->where('store_id = ?', $storeId)
             ->where('is_selected = ?', 1);
 
@@ -209,7 +220,7 @@ class Store extends AbstractDb
 
         try {
             $connection->update(
-                $this->getFeedProductTable(),
+                $this->tableDictionary->getFeedProductTableName(),
                 [ 'is_selected' => 0 ],
                 $connection->quoteInto('store_id = ?', $storeId)
             );
@@ -218,11 +229,16 @@ class Store extends AbstractDb
 
             foreach ($idChunks as $productIds) {
                 $connection->update(
-                    $this->getFeedProductTable(),
+                    $this->tableDictionary->getFeedProductTableName(),
                     [ 'is_selected' => 1 ],
-                    $connection->quoteInto('product_id IN (?)', $productIds)
+                    implode(
+                        ' AND ',
+                        [
+                            $connection->quoteInto('store_id = ?', $storeId),
+                            $connection->quoteInto('product_id IN (?)', $productIds),
+                        ]
+                    )
                 );
-
             }
 
             $connection->commit();
@@ -244,7 +260,7 @@ class Store extends AbstractDb
 
         try {
             $connection->update(
-                $this->getFeedProductTable(),
+                $this->tableDictionary->getFeedProductTableName(),
                 [ 'is_selected' => 1 ],
                 $connection->quoteInto('product_id = ?', $productId)
                 . ' AND '
@@ -252,7 +268,7 @@ class Store extends AbstractDb
             );
 
             $connection->update(
-                $this->getFeedProductTable(),
+                $this->tableDictionary->getFeedProductTableName(),
                 [ 'is_selected' => 0 ],
                 $connection->quoteInto('product_id = ?', $productId)
                 . ' AND '

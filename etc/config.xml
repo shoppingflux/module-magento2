@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <carriers>
+            <sfm_marketplace>
+                <active>1</active>
+                <sallowspecific>0</sallowspecific>
+                <model>ShoppingFeed\Manager\Model\Shipping\Carrier\Marketplace</model>
+                <name>Shopping Feed Marketplace Carrier</name>
+                <price>0.00</price>
+                <title>Marketplace Carrier</title>
+                <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
+            </sfm_marketplace>
+        </carriers>
+        
+        <payment>
+            <sfm_shopping_feed_order>
+                <model>ShoppingFeedManagerPaymentFacade</model>
+                <title>Shopping Feed Order</title>
+                <payment_action>order</payment_action>
+                <active>1</active>
+                <is_gateway>0</is_gateway>
+                <can_use_checkout>0</can_use_checkout>
+                <can_use_internal>0</can_use_internal>
+                <can_authorize>0</can_authorize>
+                <can_capture>0</can_capture>
+                <can_refund>1</can_refund>
+                <can_void>0</can_void>
+                <can_cancel>1</can_cancel>
+                <order_status>processing</order_status>
+            </sfm_shopping_feed_order>
+        </payment>
+    </default>
+</config>

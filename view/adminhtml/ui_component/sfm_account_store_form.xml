@@ -35,7 +35,7 @@
             </settings>
         </dataProvider>
     </dataSource>
-    <fieldset name="feed_product_list" sortOrder="1000000">
+    <fieldset name="feed_product_list" sortOrder="1000">
         <settings>
             <collapsible>true</collapsible>
             <label translate="true">Feed - Product List</label>

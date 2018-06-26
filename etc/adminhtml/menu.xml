@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
     <menu>
-        <add id="ShoppingFeed_Manager::main" title="Shopping Feed" translate="title" module="ShoppingFeed_Manager" sortOrder="100000" parent="Magento_Backend::marketing" resource="ShoppingFeed_Manager::main"/>
-        <add id="ShoppingFeed_Manager::accounts" title="Accounts" translate="title" module="ShoppingFeed_Manager" sortOrder="100100" action="shoppingfeed_manager/account/index" parent="ShoppingFeed_Manager::main" resource="ShoppingFeed_Manager::accounts"/>
-        <add id="ShoppingFeed_Manager::account_stores" title="Stores" translate="title" module="ShoppingFeed_Manager" sortOrder="100200" action="shoppingfeed_manager/account_store/index" parent="ShoppingFeed_Manager::main" resource="ShoppingFeed_Manager::stores"/>
+        <add id="ShoppingFeed_Manager::main_marketing" title="Shopping Feed" translate="title" module="ShoppingFeed_Manager" sortOrder="100000" parent="Magento_Backend::marketing" resource="ShoppingFeed_Manager::main_marketing"/>
+        <add id="ShoppingFeed_Manager::accounts" title="Accounts" translate="title" module="ShoppingFeed_Manager" sortOrder="100100" action="shoppingfeed_manager/account/index" parent="ShoppingFeed_Manager::main_marketing" resource="ShoppingFeed_Manager::accounts"/>
+        <add id="ShoppingFeed_Manager::account_stores" title="Stores" translate="title" module="ShoppingFeed_Manager" sortOrder="100200" action="shoppingfeed_manager/account_store/index" parent="ShoppingFeed_Manager::main_marketing" resource="ShoppingFeed_Manager::account_stores"/>
+
+        <add id="ShoppingFeed_Manager::main_sales" title="Shopping Feed" translate="title" module="ShoppingFeed_Manager" sortOrder="100000" parent="Magento_Sales::sales" resource="ShoppingFeed_Manager::main_sales"/>
+        <add id="ShoppingFeed_Manager::shipping_method_rules" title="Shipping Method Rules" translate="title" module="ShoppingFeed_Manager" sortOrder="100100" action="shoppingfeed_manager/shipping_method_rule/index" parent="ShoppingFeed_Manager::main_sales" resource="ShoppingFeed_Manager::shipping_method_rules"/>
     </menu>
 </config>

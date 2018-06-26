@@ -63,7 +63,7 @@ class DataObject extends BaseDataObject
      */
     public function setDataByPath($key, $value = null)
     {
-        $data =& $this->_data;
+        $data = &$this->_data;
         $keys = explode('/', $key);
 
         foreach ($keys as $key) {
@@ -74,9 +74,9 @@ class DataObject extends BaseDataObject
             }
 
             if ($data[$key] instanceof DataObject) {
-                $data =& $data[$key]->_data;
+                $data = &$data[$key]->_data;
             } else {
-                $data =& $data[$key];
+                $data = &$data[$key];
             }
         }
 
@@ -90,7 +90,7 @@ class DataObject extends BaseDataObject
      */
     public function hasDataForPath($key)
     {
-        $data =& $this->_data;
+        $data = &$this->_data;
         $keys = explode('/', $key);
         $lastKey = array_pop($keys);
         $hasData = true;
@@ -98,9 +98,9 @@ class DataObject extends BaseDataObject
         foreach ($keys as $key) {
             if (isset($data[$key]) && (is_array($data[$key]) || ($data[$key] instanceof DataObject))) {
                 if ($data[$key] instanceof DataObject) {
-                    $data =& $data[$key]->_data;
+                    $data = &$data[$key]->_data;
                 } else {
-                    $data =& $data[$key];
+                    $data = &$data[$key];
                 }
             } else {
                 $hasData = false;

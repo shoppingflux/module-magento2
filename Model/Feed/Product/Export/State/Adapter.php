@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Type as ProductType;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableType;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
@@ -36,6 +37,16 @@ class Adapter implements AdapterInterface
     public function requiresLoadedProduct(StoreInterface $store)
     {
         return true;
+    }
+
+    public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
+        // Despite the name, this method actually adds the website IDs to the products.
+        $productCollection->addWebsiteNamesToResult();
+    }
+
+    public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
     }
 
     /**
@@ -100,7 +111,9 @@ class Adapter implements AdapterInterface
         $baseExportState = FeedProduct::STATE_EXPORTED;
         $childExportState = FeedProduct::STATE_EXPORTED;
 
-        if (!in_array($catalogProduct->getTypeId(), $this->getExportedProductTypes(), true)) {
+        if (!in_array($catalogProduct->getTypeId(), $this->getExportedProductTypes(), true)
+            || !in_array($store->getBaseStore()->getWebsiteId(), $catalogProduct->getWebsiteIds())
+        ) {
             $baseExportState = FeedProduct::STATE_NEVER_EXPORTED;
             $childExportState = FeedProduct::STATE_NEVER_EXPORTED;
         } elseif (

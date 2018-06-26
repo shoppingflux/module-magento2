@@ -3,9 +3,12 @@
 namespace ShoppingFeed\Manager\Block\Adminhtml\Feed\Product;
 
 use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget\Grid\Column;
 use Magento\Backend\Block\Widget\Grid\Extended as ExtendedGrid;
 use Magento\Backend\Helper\Data as BackendHelper;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Registry;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
@@ -13,24 +16,34 @@ use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 
 class Grid extends ExtendedGrid
 {
+    const FLAG_KEY_LIKELY_UNSYNCED_PRODUCT_LIST = 'likely_unsynced_product_list';
+
     /**
      * @var Registry
      */
     private $coreRegistry;
 
     /**
+     * @var ProductCollectionFactory
+     */
+    private $productCollectionFactory;
+
+    /**
      * @param Context $context
      * @param BackendHelper $backendHelper
      * @param Registry $coreRegistry
+     * @param ProductCollectionFactory $productCollectionFactory
      * @param array $data
      */
     public function __construct(
         Context $context,
         BackendHelper $backendHelper,
         Registry $coreRegistry,
+        ProductCollectionFactory $productCollectionFactory,
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
+        $this->productCollectionFactory = $productCollectionFactory;
         parent::__construct($context, $backendHelper, $data);
     }
 
@@ -59,6 +72,36 @@ class Grid extends ExtendedGrid
         return parent::_prepareCollection();
     }
 
+    /**
+     * @param Column $column
+     * @return $this
+     * @throws LocalizedException
+     */
+    protected function _addColumnFilterToCollection($column)
+    {
+        if ($column->getId() == 'is_selected') {
+            $productIds = $this->getSelectedProductIds();
+
+            if (empty($productIds)) {
+                $productIds = 0;
+            }
+
+            if ($column->getFilter()->getValue()) {
+                $this->getCollection()->addFieldToFilter('entity_id', [ 'in' => $productIds ]);
+            } elseif ($productIds) {
+                $this->getCollection()->addFieldToFilter('entity_id', [ 'nin' => $productIds ]);
+            }
+        } else {
+            parent::_addColumnFilterToCollection($column);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     * @throws \Exception
+     */
     protected function _prepareColumns()
     {
         $this->addColumn(
@@ -140,5 +183,29 @@ class Grid extends ExtendedGrid
         }
 
         return array_filter($productIds);
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasLikelyUnsyncedProductList()
+    {
+        if (!$this->hasData(self::FLAG_KEY_LIKELY_UNSYNCED_PRODUCT_LIST)) {
+            /** @var ProductCollection $storeCollection */
+            $storeCollection = $this->getAccountStore()->getCatalogProductCollection();
+            $storeProductCount = $storeCollection->getSize();
+
+            if ($storeProductCount > 0) {
+                /** @var ProductCollection $storeCollection */
+                $baseCollection = $this->productCollectionFactory->create();
+                $hasLikelyUnsyncedProductList = $storeCollection->getSize() !== $baseCollection->getSize();
+            } else {
+                $hasLikelyUnsyncedProductList = true;
+            }
+
+            $this->setData(self::FLAG_KEY_LIKELY_UNSYNCED_PRODUCT_LIST, $hasLikelyUnsyncedProductList);
+        }
+
+        return (bool) $this->getDataByKey(self::FLAG_KEY_LIKELY_UNSYNCED_PRODUCT_LIST);
     }
 }

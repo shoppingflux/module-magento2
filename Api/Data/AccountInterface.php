@@ -7,7 +7,6 @@ interface AccountInterface
 {
     /**#@+*/
     const ACCOUNT_ID = 'account_id';
-    const SHOPPING_FEED_ACCOUNT_ID = 'shopping_feed_account_id';
     const API_TOKEN = 'api_token';
     const SHOPPING_FEED_LOGIN = 'shopping_feed_login';
     const SHOPPING_FEED_EMAIL = 'shopping_feed_email';
@@ -19,11 +18,6 @@ interface AccountInterface
      * @return int|null
      */
     public function getId();
-
-    /**
-     * @return int
-     */
-    public function getShoppingFeedAccountId();
 
     /**
      * @return string
@@ -55,12 +49,6 @@ interface AccountInterface
      * @return AccountInterface
      */
     public function setId($id);
-
-    /**
-     * @param int $shoppingFeedAccountId
-     * @return AccountInterface
-     */
-    public function setShoppingFeedAccountId($shoppingFeedAccountId);
 
     /**
      * @param string $apiToken

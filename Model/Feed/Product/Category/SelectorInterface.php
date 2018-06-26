@@ -13,6 +13,12 @@ interface SelectorInterface
     const SELECTION_MODE_INCLUDE = 'include';
 
     /**
+     * @param StoreInterface $store
+     * @return array
+     */
+    public function getStoreCategoryTree(StoreInterface $store);
+
+    /**
      * @param CatalogProduct $product
      * @param StoreInterface $storeInterface
      * @param int|null $preselectedCategoryId

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">sfm_account_store_form_create_existing.account_store_form_data_source</item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+    </argument>
+    <settings>
+        <buttons>
+            <button name="back" class="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\BackButton"/>
+            <button name="reset" class="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\ResetButton"/>
+            <button name="save" class="ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\SaveButton"/>
+        </buttons>
+        <dataScope>data</dataScope>
+        <deps>
+            <dep>sfm_account_store_form_create_existing.account_store_form_data_source</dep>
+        </deps>
+        <namespace>sfm_account_store_form_create_existing</namespace>
+    </settings>
+    <dataSource name="account_store_form_data_source">
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+        <settings>
+            <submitUrl path="*/*/create_existing"/>
+        </settings>
+        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Form\Create\Existing\DataProvider" name="account_store_form_data_source">
+            <settings>
+                <requestFieldName>store_id</requestFieldName>
+                <primaryFieldName>store_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <fieldset name="store">
+        <settings>
+            <dataScope>store</dataScope>
+            <label translate="true">Import</label>
+        </settings>
+        <field name="account_id" formElement="select">
+            <settings>
+                <dataType>int</dataType>
+                <label translate="true">Account</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="shopping_feed_store_id" formElement="select">
+            <settings>
+                <dataType>int</dataType>
+                <label translate="true">Shopping Feed Store</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+            <formElements>
+                <select>
+                    <settings>
+                        <filterBy>
+                            <field>account_id</field>
+                            <target>${$.provider}:${$.parentScope}.account_id</target>
+                        </filterBy>
+                    </settings>
+                </select>
+            </formElements>
+        </field>
+        <field name="base_store_id" formElement="select">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Magento\Store\Ui\Component\Listing\Column\Store\Options</item>
+            </argument>
+            <settings>
+                <dataType>int</dataType>
+                <label translate="true">Associated Store View</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+    </fieldset>
+</form>

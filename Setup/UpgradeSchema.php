@@ -1,0 +1,757 @@
+<?php
+
+namespace ShoppingFeed\Manager\Setup;
+
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\DB\Ddl\Table;
+use Magento\Framework\Setup\ModuleContextInterface;
+use Magento\Framework\Setup\SchemaSetupInterface;
+use Magento\Framework\Setup\UpgradeSchemaInterface;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
+
+
+class UpgradeSchema implements UpgradeSchemaInterface
+{
+    /**
+     * @var TableDictionary
+     */
+    private $tableDictionary;
+
+    /**
+     * @param TableDictionary $tableDictionary
+     */
+    public function __construct(TableDictionary $tableDictionary)
+    {
+        $this->tableDictionary = $tableDictionary;
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @param ModuleContextInterface $context
+     * @throws \Zend_Db_Exception
+     */
+    public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
+    {
+        $setup->startSetup();
+        $moduleVersion = $context->getVersion();
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.3.0') < 0)) {
+            $this->createMarketplaceOrderTable($setup);
+            $this->createMarketplaceOrderAddressTable($setup);
+            $this->createMarketplaceOrderItemTable($setup);
+            $this->createMarketplaceOrderTicketTable($setup);
+            $this->createMarketplaceOrderLogTable($setup);
+            $this->createShippingMethodRuleTable($setup);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createMarketplaceOrderTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $accountStoreTableCode = $this->tableDictionary->getAccountStoreTableCode();
+        $marketplaceOrderTableCode = $this->tableDictionary->getMarketplaceOrderTableCode();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+        $salesOrderTableCode = $this->tableDictionary->getSalesOrderTableCode();
+
+        if (!$setup->tableExists($marketplaceOrderTableCode)) {
+            $table = $connection->newTable($marketplaceOrderTableName)
+                ->addColumn(
+                    OrderInterface::ORDER_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'primary' => true,
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Order ID'
+                )
+                ->addColumn(
+                    OrderInterface::STORE_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => true,
+                        'unsigned' => true,
+                    ],
+                    'Store ID'
+                )
+                ->addColumn(
+                    OrderInterface::SALES_ORDER_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => true,
+                        'unsigned' => true,
+                    ],
+                    'Sales Order ID'
+                )
+                ->addColumn(
+                    OrderInterface::SHOPPING_FEED_ORDER_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Shopping Feed Order ID'
+                )
+                ->addColumn(
+                    OrderInterface::MARKETPLACE_ORDER_NUMBER,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Marketplace Order Number'
+                )
+                ->addColumn(
+                    OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Shopping Feed Marketplace ID'
+                )
+                ->addColumn(
+                    OrderInterface::MARKETPLACE_NAME,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Marketplace Name'
+                )
+                ->addColumn(
+                    OrderInterface::SHOPPING_FEED_STATUS,
+                    Table::TYPE_TEXT,
+                    64,
+                    [ 'nullable' => false ],
+                    'Shopping Feed Status'
+                )
+                ->addColumn(
+                    OrderInterface::CURRENCY_CODE,
+                    Table::TYPE_TEXT,
+                    3,
+                    [ 'nullable' => false ],
+                    'Currency Code'
+                )
+                ->addColumn(
+                    OrderInterface::PRODUCT_AMOUNT,
+                    Table::TYPE_DECIMAL,
+                    [ 12, 4 ],
+                    [ 'nullable' => false ],
+                    'Product Amount'
+                )
+                ->addColumn(
+                    OrderInterface::SHIPPING_AMOUNT,
+                    Table::TYPE_DECIMAL,
+                    [ 12, 4 ],
+                    [ 'nullable' => false ],
+                    'Shipping Amount'
+                )
+                ->addColumn(
+                    OrderInterface::TOTAL_AMOUNT,
+                    Table::TYPE_DECIMAL,
+                    [ 12, 4 ],
+                    [ 'nullable' => false ],
+                    'Total Amount'
+                )
+                ->addColumn(
+                    OrderInterface::PAYMENT_METHOD,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Payment Method'
+                )
+                ->addColumn(
+                    OrderInterface::SHIPMENT_CARRIER,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Shipment Carrier'
+                )
+                ->addColumn(
+                    OrderInterface::CREATED_AT,
+                    Table::TYPE_DATETIME,
+                    null,
+                    [ 'nullable' => false ],
+                    'Created At'
+                )
+                ->addColumn(
+                    OrderInterface::UPDATED_AT,
+                    Table::TYPE_DATETIME,
+                    null,
+                    [ 'nullable' => false ],
+                    'Updated At'
+                )
+                ->addColumn(
+                    OrderInterface::FETCHED_AT,
+                    Table::TYPE_DATETIME,
+                    null,
+                    [ 'nullable' => false ],
+                    'Fetched At'
+                )
+                ->addColumn(
+                    OrderInterface::IMPORTED_AT,
+                    Table::TYPE_DATETIME,
+                    null,
+                    [ 'nullable' => true ],
+                    'Imported At'
+                )
+                ->addColumn(
+                    OrderInterface::ACKNOWLEDGED_AT,
+                    Table::TYPE_DATETIME,
+                    null,
+                    [ 'nullable' => true ],
+                    'Acknowledged At'
+                )
+                ->addIndex(
+                    $setup->getIdxName(
+                        $marketplaceOrderTableCode,
+                        OrderInterface::SALES_ORDER_ID,
+                        AdapterInterface::INDEX_TYPE_UNIQUE
+                    ),
+                    OrderInterface::SALES_ORDER_ID,
+                    [ 'type' => AdapterInterface::INDEX_TYPE_UNIQUE ]
+                )
+                ->addIndex(
+                    $setup->getIdxName(
+                        $salesOrderTableCode,
+                        OrderInterface::SHOPPING_FEED_ORDER_ID,
+                        AdapterInterface::INDEX_TYPE_UNIQUE
+                    ),
+                    OrderInterface::SHOPPING_FEED_ORDER_ID,
+                    [ 'type' => AdapterInterface::INDEX_TYPE_UNIQUE ]
+                )
+                ->addForeignKey(
+                    $setup->getFkName(
+                        $marketplaceOrderTableCode,
+                        OrderInterface::STORE_ID,
+                        $accountStoreTableCode,
+                        StoreInterface::STORE_ID
+                    ),
+                    OrderInterface::STORE_ID,
+                    $setup->getTable($accountStoreTableCode),
+                    StoreInterface::STORE_ID,
+                    Table::ACTION_SET_NULL
+                )
+                ->addForeignKey(
+                    $setup->getFkName(
+                        $marketplaceOrderTableCode,
+                        OrderInterface::SALES_ORDER_ID,
+                        $salesOrderTableCode,
+                        'entity_id'
+                    ),
+                    OrderInterface::SALES_ORDER_ID,
+                    $setup->getTable($salesOrderTableCode),
+                    'entity_id',
+                    Table::ACTION_SET_NULL
+                )
+                ->setComment('Shopping Feed Marketplace Order');
+
+            $connection->createTable($table);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createMarketplaceOrderAddressTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableCode = $this->tableDictionary->getMarketplaceOrderTableCode();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+        $marketplaceOrderAddressTableCode = $this->tableDictionary->getMarketplaceOrderAddressTableCode();
+        $marketplaceOrderAddressTableName = $this->tableDictionary->getMarketplaceOrderAddressTableName();
+
+        if (!$setup->tableExists($marketplaceOrderAddressTableCode)) {
+            $table = $connection->newTable($marketplaceOrderAddressTableName)
+                ->addColumn(
+                    AddressInterface::ADDRESS_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'primary' => true,
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Address ID'
+                )
+                ->addColumn(
+                    AddressInterface::ORDER_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Order ID'
+                )
+                ->addColumn(
+                    AddressInterface::TYPE,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Type'
+                )
+                ->addColumn(
+                    AddressInterface::FIRST_NAME,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'First Name'
+                )
+                ->addColumn(
+                    AddressInterface::LAST_NAME,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Last Name'
+                )
+                ->addColumn(
+                    AddressInterface::COMPANY,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Company'
+                )
+                ->addColumn(
+                    AddressInterface::STREET,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Street'
+                )
+                ->addColumn(
+                    AddressInterface::POSTAL_CODE,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Postal Code'
+                )
+                ->addColumn(
+                    AddressInterface::CITY,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'City'
+                )
+                ->addColumn(
+                    AddressInterface::COUNTRY_CODE,
+                    Table::TYPE_TEXT,
+                    2,
+                    [ 'nullable' => false ],
+                    'Country Code'
+                )
+                ->addColumn(
+                    AddressInterface::PHONE,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Phone'
+                )
+                ->addColumn(
+                    AddressInterface::EMAIL,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Email'
+                )
+                ->addColumn(
+                    AddressInterface::MISC_DATA,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Misc Data'
+                )
+                ->addIndex(
+                    $setup->getIdxName(
+                        $marketplaceOrderAddressTableCode,
+                        [ AddressInterface::ORDER_ID, AddressInterface::TYPE ],
+                        AdapterInterface::INDEX_TYPE_UNIQUE
+                    ),
+                    [ AddressInterface::ORDER_ID, AddressInterface::TYPE ],
+                    [ 'type' => AdapterInterface::INDEX_TYPE_UNIQUE ]
+                )
+                ->addForeignKey(
+                    $setup->getFkName(
+                        $marketplaceOrderAddressTableCode,
+                        AddressInterface::ORDER_ID,
+                        $marketplaceOrderTableCode,
+                        OrderInterface::ORDER_ID
+                    ),
+                    AddressInterface::ORDER_ID,
+                    $marketplaceOrderTableName,
+                    OrderInterface::ORDER_ID,
+                    Table::ACTION_CASCADE
+                )
+                ->setComment('Shopping Feed Marketplace Order Address');
+
+            $connection->createTable($table);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createMarketplaceOrderItemTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableCode = $this->tableDictionary->getMarketplaceOrderTableCode();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+        $marketplaceOrderItemTableCode = $this->tableDictionary->getMarketplaceOrderItemTableCode();
+        $marketplaceOrderItemTableName = $this->tableDictionary->getMarketplaceOrderItemTableName();
+
+        if (!$setup->tableExists($marketplaceOrderItemTableCode)) {
+            $table = $connection->newTable($marketplaceOrderItemTableName)
+                ->addColumn(
+                    ItemInterface::ITEM_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'primary' => true,
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Item ID'
+                )
+                ->addColumn(
+                    ItemInterface::ORDER_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Order ID'
+                )
+                ->addColumn(
+                    ItemInterface::REFERENCE,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Reference'
+                )
+                ->addColumn(
+                    ItemInterface::QUANTITY,
+                    Table::TYPE_DECIMAL,
+                    [ 12, 4 ],
+                    [ 'nullable' => false ],
+                    'Quantity'
+                )
+                ->addColumn(
+                    ItemInterface::PRICE,
+                    Table::TYPE_DECIMAL,
+                    [ 12, 4 ],
+                    [ 'nullable' => false ],
+                    'Prices'
+                )
+                ->addForeignKey(
+                    $setup->getFkName(
+                        $marketplaceOrderItemTableCode,
+                        ItemInterface::ORDER_ID,
+                        $marketplaceOrderTableCode,
+                        OrderInterface::ORDER_ID
+                    ),
+                    ItemInterface::ORDER_ID,
+                    $marketplaceOrderTableName,
+                    OrderInterface::ORDER_ID,
+                    Table::ACTION_CASCADE
+                )
+                ->setComment('Shopping Feed Marketplace Order Item');
+
+            $connection->createTable($table);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createMarketplaceOrderTicketTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableCode = $this->tableDictionary->getMarketplaceOrderTableCode();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+        $marketplaceOrderTicketTableCode = $this->tableDictionary->getMarketplaceOrderTicketTableCode();
+        $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
+
+        if (!$setup->tableExists($marketplaceOrderTicketTableCode)) {
+            $table = $connection->newTable($marketplaceOrderTicketTableName)
+                ->addColumn(
+                    'ticket_id',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'primary' => true,
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Ticket ID'
+                )
+                ->addColumn(
+                    'shopping_feed_ticket_id',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Shopping Feed Ticket ID'
+                )
+                ->addColumn(
+                    'marketplace_order_id',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Marketplace Order ID'
+                )
+                ->addColumn(
+                    'action_code',
+                    Table::TYPE_TEXT,
+                    32,
+                    [ 'nullable' => false ],
+                    'Action Code'
+                )
+                ->addColumn(
+                    'created_at',
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT,
+                    ],
+                    'Created At'
+                )
+                ->addForeignKey(
+                    $setup->getFkName(
+                        $marketplaceOrderTicketTableCode,
+                        'marketplace_order_id',
+                        $marketplaceOrderTableCode,
+                        OrderInterface::ORDER_ID
+                    ),
+                    'marketplace_order_id',
+                    $marketplaceOrderTableName,
+                    OrderInterface::ORDER_ID,
+                    Table::ACTION_CASCADE
+                )
+                ->setComment('Shopping Feed Marketplace Order Ticket');
+
+            $connection->createTable($table);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createMarketplaceOrderLogTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableCode = $this->tableDictionary->getMarketplaceOrderTableCode();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+        $marketplaceOrderLogTableCode = $this->tableDictionary->getMarketplaceOrderLogTableCode();
+        $marketplaceOrderLogTableName = $this->tableDictionary->getMarketplaceOrderLogTableName();
+
+        if (!$setup->tableExists($marketplaceOrderLogTableCode)) {
+            $table = $connection->newTable($marketplaceOrderLogTableName)
+                ->addColumn(
+                    'log_id',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'primary' => true,
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Log ID'
+                )
+                ->addColumn(
+                    'marketplace_order_id',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Marketplace Order ID'
+                )
+                ->addColumn(
+                    'type',
+                    Table::TYPE_TEXT,
+                    32,
+                    [ 'nullable' => false ],
+                    'Type'
+                )
+                ->addColumn(
+                    'message',
+                    Table::TYPE_TEXT,
+                    65536,
+                    [ 'nullable' => false ],
+                    'Message'
+                )
+                ->addColumn(
+                    'created_at',
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT,
+                    ],
+                    'Created At'
+                )
+                ->addForeignKey(
+                    $setup->getFkName(
+                        $marketplaceOrderLogTableCode,
+                        'marketplace_order_id',
+                        $marketplaceOrderTableCode,
+                        OrderInterface::ORDER_ID
+                    ),
+                    'marketplace_order_id',
+                    $marketplaceOrderTableName,
+                    OrderInterface::ORDER_ID,
+                    Table::ACTION_CASCADE
+                )
+                ->setComment('Shopping Feed Marketplace Order Log');
+
+            $connection->createTable($table);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createShippingMethodRuleTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $shippingMethodRuleTableCode = $this->tableDictionary->getShippingMethodRuleTableCode();
+        $shippingMethodRuleTableName = $this->tableDictionary->getShippingMethodRuleTableName();
+
+        if (!$setup->tableExists($shippingMethodRuleTableCode)) {
+            $table = $connection->newTable($shippingMethodRuleTableName)
+                ->addColumn(
+                    'rule_id',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'primary' => true,
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Rule ID'
+                )
+                ->addColumn(
+                    'name',
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Name'
+                )
+                ->addColumn(
+                    'description',
+                    Table::TYPE_TEXT,
+                    65536,
+                    [ 'nullable' => false ],
+                    'Description'
+                )
+                ->addColumn(
+                    'from_date',
+                    Table::TYPE_DATE,
+                    null,
+                    [ 'nullable' => true ],
+                    'From Date'
+                )
+                ->addColumn(
+                    'to_date',
+                    Table::TYPE_DATE,
+                    null,
+                    [ 'nullable' => true ],
+                    'To Date'
+                )
+                ->addColumn(
+                    'is_active',
+                    Table::TYPE_BOOLEAN,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => 0,
+                    ],
+                    'To Date'
+                )
+                ->addColumn(
+                    'conditions_serialized',
+                    Table::TYPE_TEXT,
+                    16777216,
+                    [ 'nullable' => true ],
+                    'Serialized Conditions'
+                )
+                ->addColumn(
+                    'applier_code',
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Applier Code'
+                )
+                ->addColumn(
+                    'applier_configuration',
+                    Table::TYPE_TEXT,
+                    65536,
+                    [ 'nullable' => true ],
+                    'Applier Configuration'
+                )
+                ->addColumn(
+                    'sort_order',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'nullable' => false,
+                        'unsigned' => true,
+                        'default' => 0,
+                    ],
+                    'Sort Order'
+                )
+                ->addColumn(
+                    'created_at',
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT,
+                    ],
+                    'Created At'
+                )
+                ->addColumn(
+                    'updated_at',
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT_UPDATE,
+                    ],
+                    'Updated At'
+                )
+                ->setComment('Shopping Feed Shipping Method Rule');
+
+            $connection->createTable($table);
+        }
+    }
+}

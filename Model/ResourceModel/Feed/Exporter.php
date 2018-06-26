@@ -4,13 +4,14 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
 use Magento\Framework\DB\Select as DbSelect;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
-use Magento\Framework\Model\ResourceModel\IteratorFactory;
 use ShoppingFeed\Manager\Model\Feed\ExportableProductFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Filter\Applier as ProductFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as FeedSectionResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFactory as FeedSectionResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Filter\Applier as SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Query\IteratorFactory as QueryIteratorFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
 
 
@@ -19,9 +20,9 @@ class Exporter extends AbstractDb
     const BASE_SECTION_DATA_KEY = 'section_%d';
 
     /**
-     * @var IteratorFactory
+     * @var QueryIteratorFactory
      */
-    private $iteratorFactory;
+    private $queryIteratorFactory;
 
     /**
      * @var FeedSectionResource
@@ -36,9 +37,10 @@ class Exporter extends AbstractDb
     /**
      * @param DbContext $context
      * @param TimeHelper $timeHelper
+     * @param TableDictionary $tableDictionary
      * @param ProductFilterApplier $productFilterApplier
      * @param SectionFilterApplier $sectionFilterApplier
-     * @param IteratorFactory $iteratorFactory
+     * @param QueryIteratorFactory $queryIteratorFactory
      * @param FeedSectionResourceFactory $feedSectionResourceFactory
      * @param ExportableProductFactory $exportableProductFactory
      * @param string|null $connectionName
@@ -46,17 +48,26 @@ class Exporter extends AbstractDb
     public function __construct(
         DbContext $context,
         TimeHelper $timeHelper,
+        TableDictionary $tableDictionary,
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
-        IteratorFactory $iteratorFactory,
+        QueryIteratorFactory $queryIteratorFactory,
         FeedSectionResourceFactory $feedSectionResourceFactory,
         ExportableProductFactory $exportableProductFactory,
         $connectionName = null
     ) {
-        $this->iteratorFactory = $iteratorFactory;
+        $this->queryIteratorFactory = $queryIteratorFactory;
         $this->feedSectionResource = $feedSectionResourceFactory->create();
         $this->exportableProductFactory = $exportableProductFactory;
-        parent::__construct($context, $timeHelper, $productFilterApplier, $sectionFilterApplier, $connectionName);
+
+        parent::__construct(
+            $context,
+            $timeHelper,
+            $tableDictionary,
+            $productFilterApplier,
+            $sectionFilterApplier,
+            $connectionName
+        );
     }
 
     protected function _construct()
@@ -72,7 +83,7 @@ class Exporter extends AbstractDb
         return new \Zend_Db_Expr(
             $this->getConnection()
                 ->select()
-                ->from($this->getConfigurableProductLinkTable(), [ 'parent_id' ])
+                ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'parent_id' ])
         );
     }
 
@@ -84,7 +95,7 @@ class Exporter extends AbstractDb
         return new \Zend_Db_Expr(
             $this->getConnection()
                 ->select()
-                ->from($this->getConfigurableProductLinkTable(), [ 'product_id' ])
+                ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'product_id' ])
         );
     }
 
@@ -98,7 +109,7 @@ class Exporter extends AbstractDb
     {
         $baseSelect = $this->getConnection()
             ->select()
-            ->from([ 'product_table' => $this->getFeedProductTable() ], [ 'product_id' ])
+            ->from([ 'product_table' => $this->tableDictionary->getFeedProductTableName() ], [ 'product_id' ])
             ->where('product_table.store_id = ?', $storeId)
             ->where('export_state_refreshed_at IS NOT NULL');
 
@@ -114,12 +125,49 @@ class Exporter extends AbstractDb
     }
 
     /**
+     * @return string[][]
+     */
+    private function getParentConfigurableAttributeCodes()
+    {
+        $connection = $this->getConnection();
+
+        $attributeMap = $connection->fetchPairs(
+            $connection->select()
+                ->from(
+                    $this->tableDictionary->getEavAttributeTableName(),
+                    [ 'attribute_id', 'attribute_code' ]
+                )
+        );
+
+        $productAttributeIds = $connection->fetchAll(
+            $connection->select()
+                ->from(
+                    $this->tableDictionary->getConfigurableProductAttributeTableCode(),
+                    [ 'product_id', 'attribute_id' ]
+                )
+        );
+
+        $productAttributeCodes = [];
+
+        foreach ($productAttributeIds as $row) {
+            $productId = (int) $row['product_id'];
+            $attributeId = (int) $row['attribute_id'];
+
+            if (isset($attributeMap[$attributeId])) {
+                $productAttributeCodes[$productId][] = $attributeMap[$attributeId];
+            }
+        }
+
+        return $productAttributeCodes;
+    }
+
+    /**
      * @param DbSelect $productSelect
      * @param int[] $sectionTypeIds
      */
     private function joinSectionTablesToProductSelect(DbSelect $productSelect, array $sectionTypeIds)
     {
-        $feedSectionTable = $this->getFeedProductSectionTable();
+        $feedSectionTable = $this->tableDictionary->getFeedProductSectionTableName();
         $connection = $this->getConnection();
 
         foreach ($sectionTypeIds as $sectionTypeId) {
@@ -148,7 +196,7 @@ class Exporter extends AbstractDb
     private function joinChildParentIdToProductSelect(DbSelect $productSelect)
     {
         $productSelect->joinInner(
-            [ 'configurable_link_table' => $this->getConfigurableProductLinkTable() ],
+            [ 'configurable_link_table' => $this->tableDictionary->getConfigurableProductLinkTableName() ],
             'product_table.product_id = configurable_link_table.product_id',
             [ 'parent_id' ]
         );
@@ -173,16 +221,14 @@ class Exporter extends AbstractDb
     }
 
     /**
-     * @param callable $callback
      * @param int $storeId
      * @param int[] $sectionTypeIds
      * @param int[] $exportStates
      * @param bool $includeParentProducts
      * @param bool $includeChildProducts
-     * @return $this
+     * @return \Iterator
      */
-    public function iterateExportableProducts(
-        callable $callback,
+    public function getExportableProductsIterator(
         $storeId,
         array $sectionTypeIds,
         array $exportStates,
@@ -200,37 +246,32 @@ class Exporter extends AbstractDb
             $productSelect->where('product_table.product_id NOT IN (?)', $this->getConfigurableChildrenIdsQuery());
         }
 
-        $this->iteratorFactory->create()
-            ->walk(
-                $productSelect,
-                [
-                    function (array $args) use ($callback, $sectionTypeIds) {
-                        $row = $args['row'];
+        return $this->queryIteratorFactory->create(
+            [
+                'query' => $productSelect,
 
-                        $exportableProduct = $this->exportableProductFactory->create()
-                            ->setId((int) $row['product_id'])
-                            ->setExportState((int) $row['export_state'])
-                            ->setSectionsData($this->prepareRowSectionsData($row, $sectionTypeIds));
+                'itemCallback' => function (array $args) use ($sectionTypeIds) {
+                    $row = $args['row'];
 
-                        call_user_func($callback, $exportableProduct);
-                    },
-                ]
-            );
+                    $exportableProduct = $this->exportableProductFactory->create()
+                        ->setId((int) $row['product_id'])
+                        ->setExportState((int) $row['export_state'])
+                        ->setSectionsData($this->prepareRowSectionsData($row, $sectionTypeIds));
 
-        return $this;
+                    return $exportableProduct;
+                },
+            ]
+        );
     }
 
     /**
-     * @param callable $callback
      * @param int $storeId
      * @param int[] $sectionTypeIds
      * @param int[] $parentExportStates
      * @param int[] $childExportStates
-     * @return $this
-     * @throws \Zend_Db_Statement_Exception
+     * @return \Iterator
      */
-    public function iterateExportableParentProducts(
-        callable $callback,
+    public function getExportableParentProductsIterator(
         $storeId,
         array $sectionTypeIds,
         array $parentExportStates,
@@ -248,47 +289,57 @@ class Exporter extends AbstractDb
         $this->joinSectionTablesToProductSelect($childrenSelect, $sectionTypeIds);
         $childrenSelect->order('parent_id ASC');
 
-        $parentQuery = $connection->query($parentSelect);
+        $parentConfigurableAttributeCodes = $this->getParentConfigurableAttributeCodes();
         $childrenQuery = $connection->query($childrenSelect);
         $previousChildRow = null;
 
-        while (is_array($parentRow = $parentQuery->fetch())) {
-            $parentId = (int) $parentRow['product_id'];
-            $childRows = [];
+        return $this->queryIteratorFactory->create(
+            [
+                'query' => $parentSelect,
 
-            if (null !== $previousChildRow) {
-                $childRows[] = $previousChildRow;
-            }
+                'itemCallback' => function ($args) use (
+                    $sectionTypeIds,
+                    $parentConfigurableAttributeCodes,
+                    $childrenQuery,
+                    &$previousChildRow
+                ) {
+                    $parentRow = $args['row'];
+                    $parentId = (int) $parentRow['product_id'];
+                    $childRows = [];
 
-            while (is_array($childRow = $childrenQuery->fetch())) {
-                $childParentId = (int) $childRow['parent_id'];
+                    if (null !== $previousChildRow) {
+                        $childRows[] = $previousChildRow;
+                    }
 
-                if ($childParentId !== $parentId) {
-                    $previousChildRow = $childRow;
-                    break;
-                } else {
-                    $childRows[] = $childRow;
-                }
-            }
+                    while (is_array($childRow = $childrenQuery->fetch())) {
+                        $childParentId = (int) $childRow['parent_id'];
 
-            $children = [];
+                        if ($childParentId !== $parentId) {
+                            $previousChildRow = $childRow;
+                            break;
+                        } else {
+                            $childRows[] = $childRow;
+                        }
+                    }
 
-            foreach ($childRows as $childRow) {
-                $children[] = $this->exportableProductFactory->create()
-                    ->setId((int) $childRow['product_id'])
-                    ->setExportState((int) $childRow['export_state'])
-                    ->setSectionsData($this->prepareRowSectionsData($childRow, $sectionTypeIds));
-            }
+                    $children = [];
 
-            $parent = $this->exportableProductFactory->create()
-                ->setChildren($children)
-                ->setId((int) $parentRow['product_id'])
-                ->setExportState((int) $parentRow['export_state'])
-                ->setSectionsData($this->prepareRowSectionsData($parentRow, $sectionTypeIds));
+                    foreach ($childRows as $childRow) {
+                        $children[] = $this->exportableProductFactory->create()
+                            ->setId((int) $childRow['product_id'])
+                            ->setExportState((int) $childRow['export_state'])
+                            ->setSectionsData($this->prepareRowSectionsData($childRow, $sectionTypeIds));
+                    }
 
-            call_user_func($callback, $parent);
-        }
+                    $parent = $this->exportableProductFactory->create()
+                        ->setChildren($children, $parentConfigurableAttributeCodes[$parentId] ?? [])
+                        ->setId((int) $parentRow['product_id'])
+                        ->setExportState((int) $parentRow['export_state'])
+                        ->setSectionsData($this->prepareRowSectionsData($parentRow, $sectionTypeIds));
 
-        return $this;
+                    return $parent;
+                },
+            ]
+        );
     }
 }

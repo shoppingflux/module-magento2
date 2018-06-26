@@ -5,6 +5,8 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Category;
 use Magento\Catalog\Model\Category as CatalogCategory;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category as FeedCategory;
 use ShoppingFeed\Manager\Model\Feed\Product\CategoryFactory as FeedCategoryFactory;
@@ -12,6 +14,11 @@ use ShoppingFeed\Manager\Model\Feed\Product\CategoryFactory as FeedCategoryFacto
 
 class Selector implements SelectorInterface
 {
+    /**
+     * @var BaseStoreManagerInterface
+     */
+    private $baseStoreManager;
+
     /**
      * @var CategoryCollectionFactory
      */
@@ -23,18 +30,26 @@ class Selector implements SelectorInterface
     private $feedCategoryFactory;
 
     /**
+     * @var array[]
+     */
+    private $storeCategoryTree = [];
+
+    /**
      * @var FeedCategory[][]
      */
     private $storeCategoryList = [];
 
     /**
+     * @param BaseStoreManagerInterface $baseStoreManager
      * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param FeedCategoryFactory $feedCategoryFactory
      */
     public function __construct(
+        BaseStoreManagerInterface $baseStoreManager,
         CategoryCollectionFactory $categoryCollectionFactory,
         FeedCategoryFactory $feedCategoryFactory
     ) {
+        $this->baseStoreManager = $baseStoreManager;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->feedCategoryFactory = $feedCategoryFactory;
     }
@@ -42,6 +57,7 @@ class Selector implements SelectorInterface
     /**
      * @param StoreInterface $store
      * @return FeedCategory[]
+     * @throws LocalizedException
      */
     private function getStoreCategoryList(StoreInterface $store)
     {
@@ -49,20 +65,63 @@ class Selector implements SelectorInterface
 
         if (!isset($this->storeCategoryList[$storeId])) {
             $this->storeCategoryList[$storeId] = [];
+            $baseStoreGroup = $this->baseStoreManager->getGroup($store->getBaseStore()->getStoreGroupId());
+            $rootCategoryId = $baseStoreGroup->getRootCategoryId();
+
             $categoryCollection = $this->categoryCollectionFactory->create();
-            $categoryCollection->addIsActiveFilter();
+            $categoryCollection->setStoreId($storeId);
+            $categoryCollection->addPathFilter('^' . CatalogCategory::TREE_ROOT_ID . '/' . $rootCategoryId);
             $categoryCollection->addNameToResult();
             $categoryCollection->addUrlRewriteToResult();
+            $categoryCollection->addAttributeToSelect('is_active');
 
             /** @var CatalogCategory $category */
             foreach ($categoryCollection as $category) {
-                $feedCategory = $this->feedCategoryFactory->create();
-                $feedCategory->setCatalogCategory($category);
+                $feedCategory = $this->feedCategoryFactory->create([ 'catalogCategory' => $category ]);
                 $this->storeCategoryList[$storeId][$category->getId()] = $feedCategory;
             }
         }
 
         return $this->storeCategoryList[$storeId];
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @return array
+     * @throws LocalizedException
+     */
+    public function getStoreCategoryTree(StoreInterface $store)
+    {
+        $storeId = $store->getBaseStoreId();
+
+        if (!isset($this->storeCategoryTree[$storeId])) {
+            $baseStoreGroup = $this->baseStoreManager->getGroup($store->getBaseStore()->getStoreGroupId());
+            $rootCategoryId = $baseStoreGroup->getRootCategoryId();
+
+            $categoryList = $this->getStoreCategoryList($store);
+            $categoryTree = [];
+
+            foreach ($categoryList as $category) {
+                $categoryId = $category->getId();
+                $parentId = $category->getParentId();
+
+                if (!isset($categoryTree[$categoryId])) {
+                    $categoryTree[$categoryId] = [ 'value' => $categoryId ];
+                }
+
+                if (!isset($categoryTree[$parentId])) {
+                    $categoryTree[$parentId] = [ 'value' => $parentId ];
+                }
+
+                $categoryTree[$categoryId]['label'] = $category->getName();
+                $categoryTree[$categoryId]['is_active'] = $category->isActive();
+                $categoryTree[$parentId]['optgroup'][] = &$categoryTree[$categoryId];
+            }
+
+            $this->storeCategoryTree[$storeId] = $categoryTree[$rootCategoryId]['optgroup'] ?? [];
+        }
+
+        return $this->storeCategoryTree[$storeId];
     }
 
     /**
@@ -86,14 +145,18 @@ class Selector implements SelectorInterface
     }
 
     /**
-     * @param int $categoryId
+     * @param FeedCategory $category
      * @param int[] $selectionIds
      * @param string $selectionMode
      * @return bool
      */
-    private function isSelectableCategory($categoryId, array $selectionIds, $selectionMode)
+    private function isSelectableCategory(FeedCategory $category, array $selectionIds, $selectionMode)
     {
-        $isSelected = in_array($categoryId, $selectionIds, true);
+        if (!$category->isActive()) {
+            return false;
+        }
+
+        $isSelected = in_array($category->getId(), $selectionIds, true);
         return ($selectionMode === self::SELECTION_MODE_INCLUDE) ? $isSelected : !$isSelected;
     }
 
@@ -115,8 +178,8 @@ class Selector implements SelectorInterface
         $selectedCategoryId = null;
 
         if (!empty($preselectedCategoryId)
-            && isset($categoryIds[$preselectedCategoryId])
-            && $this->isSelectableCategory((int) $preselectedCategoryId, $selectionIds, $selectionMode)
+            && isset($categories[$preselectedCategoryId])
+            && $this->isSelectableCategory($categories[$preselectedCategoryId], $selectionIds, $selectionMode)
         ) {
             $selectedCategoryId = $preselectedCategoryId;
         } else {
@@ -125,7 +188,7 @@ class Selector implements SelectorInterface
             foreach ($categoryIds as $categoryId) {
                 if (isset($categories[$categoryId])
                     && ($categories[$categoryId]->getLevel() <= $maximumLevel)
-                    && $this->isSelectableCategory((int) $categoryId, $selectionIds, $selectionMode)
+                    && $this->isSelectableCategory($categories[$categoryId], $selectionIds, $selectionMode)
                 ) {
                     $categoryWeights[$categoryId] = $categories[$categoryId]->getLevel() * $levelWeightMultiplier;
                 }
@@ -134,17 +197,17 @@ class Selector implements SelectorInterface
             if ($useParentCategories) {
                 foreach ($categoryIds as $categoryId) {
                     if (isset($categories[$categoryId])) {
-                        $parentLevel = $categories[$categoryId]->getLevel();
+                        $parentLevel = $categories[$categoryId]->getLevel() - 1;
                         $parentCount = 0;
                         $parentId = $categories[$categoryId]->getParentId();
 
                         while ($parentId
-                            && (--$parentLevel >= $minimumParentLevel)
-                            && (++$parentCount <= $includableParentCount)
                             && isset($categories[$parentId])
+                            && ($parentLevel-- >= $minimumParentLevel)
+                            && (++$parentCount <= $includableParentCount)
                         ) {
                             if (!isset($categoryWeights[$parentId])
-                                && $this->isSelectableCategory($categoryId, $selectionIds, $selectionMode)
+                                && $this->isSelectableCategory($categories[$parentId], $selectionIds, $selectionMode)
                             ) {
                                 $categoryWeights[$parentId] = $parentLevel
                                     * $levelWeightMultiplier

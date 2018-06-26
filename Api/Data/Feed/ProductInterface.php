@@ -13,6 +13,10 @@ interface ProductInterface
     const STATE_NOT_EXPORTED = 3;
     const STATE_NEVER_EXPORTED = 4;
 
+    const REFRESH_STATE_UP_TO_DATE = 1;
+    const REFRESH_STATE_ADVISED = 2;
+    const REFRESH_STATE_REQUIRED = 3;
+    
     /**#@+*/
     const PRODUCT_ID = 'product_id';
     const STORE_ID = 'store_id';

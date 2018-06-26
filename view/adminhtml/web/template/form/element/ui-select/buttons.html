@@ -1,0 +1,26 @@
+<div class="admin__action-multiselect-actions-wrap">
+    <!-- ko if: $data.clearButton -->
+    <button class="action-default"
+            data-action="clear-advanced-select"
+            type="button"
+            data-bind="click: onClear">
+        <span translate="clearLabel"></span>
+    </button>
+    <!-- /ko -->
+    <!-- ko if: $data.resetButton -->
+    <button class="action-default"
+            data-action="reset-advanced-select"
+            type="button"
+            data-bind="click: onReset">
+        <span translate="resetLabel"></span>
+    </button>
+    <!-- /ko -->
+    <!-- ko if: $data.closeButton -->
+    <button class="action-default"
+            data-action="close-advanced-select"
+            type="button"
+            data-bind="click: onClose">
+        <span translate="closeLabel"></span>
+    </button>
+    <!-- /ko -->
+</div>

@@ -6,7 +6,7 @@ use Magento\Backend\App\Action\Context;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
-use Magento\Framework\View\Result\PageFactory;
+use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
@@ -25,19 +25,19 @@ class Save extends StoreAction
     /**
      * @param Context $context
      * @param Registry $coreRegistry
-     * @param PageFactory $resultPageFactory
+     * @param PageResultFactory $pageResultFactory
      * @param StoreRepositoryInterface $storeRepository
      * @param StoreResourceFactory $storeResourceFactory
      */
     public function __construct(
         Context $context,
         Registry $coreRegistry,
-        PageFactory $resultPageFactory,
+        PageResultFactory $pageResultFactory,
         StoreRepositoryInterface $storeRepository,
         StoreResourceFactory $storeResourceFactory
     ) {
         $this->storeResourceFactory = $storeResourceFactory;
-        parent::__construct($context, $coreRegistry, $resultPageFactory, $storeRepository);
+        parent::__construct($context, $coreRegistry, $pageResultFactory, $storeRepository);
     }
 
     public function execute()
@@ -70,7 +70,7 @@ class Save extends StoreAction
         } catch (LocalizedException $e) {
             $this->messageManager->addExceptionMessage($e->getPrevious() ?: $e);
         } catch (\Exception $e) {
-            $this->messageManager->addExceptionMessage($e, __('Something went wrong while saving the account store.'));
+            $this->messageManager->addExceptionMessage($e, __('An error occurred while saving the account store.'));
         }
 
         if (!$isSaveSuccessful || $this->getRequest()->getParam('back')) {

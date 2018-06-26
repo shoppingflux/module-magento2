@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid;
 
+use Magento\Framework\Api\Search\AggregationInterface as SearchAggregationInterface;
 use Magento\Framework\Api\Search\SearchResultInterface;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\View\Element\UiComponent\DataProvider\Document as UiDocument;
@@ -11,6 +12,9 @@ use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCo
 
 class Collection extends StoreCollection implements SearchResultInterface
 {
+    /**
+     * @var SearchAggregationInterface
+     */
     protected $aggregations;
 
     protected function _construct()
@@ -24,9 +28,12 @@ class Collection extends StoreCollection implements SearchResultInterface
 
         $this->getSelect()
             ->joinInner(
-                [ 'account_table' => $this->getResource()->getAccountTable() ],
+                [ 'account_table' => $this->tableDictionary->getAccountTableName() ],
                 'main_table.account_id = account_table.account_id',
-                [ 'api_token' ]
+                [
+                    'api_token',
+                    'shopping_feed_account_name' => 'shopping_feed_login',
+                ]
             );
 
         return $this;

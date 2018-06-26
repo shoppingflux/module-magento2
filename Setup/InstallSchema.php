@@ -7,35 +7,60 @@ use Magento\Framework\DB\Ddl\Table;
 use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
-
+use ShoppingFeed\Manager\Api\Data\AccountInterface;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface as FeedSectionInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
-use ShoppingFeed\Manager\Model\Feed\Section as FeedSection;
-use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 
 
 class InstallSchema implements InstallSchemaInterface
 {
     /**
+     * @var TableDictionary
+     */
+    private $tableDictionary;
+
+    /**
+     * @param TableDictionary $tableDictionary
+     */
+    public function __construct(TableDictionary $tableDictionary)
+    {
+        $this->tableDictionary = $tableDictionary;
+    }
+
+    /**
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
      * @return void
-     * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
      * @throws \Zend_Db_Exception
      */
     public function install(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
-        $connection = $setup->getConnection();
         $setup->startSetup();
+        $this->createAccountTable($setup);
+        $this->createAccountStoreTable($setup);
+        $this->createFeedProductTable($setup);
+        $this->createFeedSectionTypeTable($setup);
+        $this->createFeedSectionTable($setup);
+        $setup->endSetup();
+    }
 
-        /**
-         * Create "sfm_account" table
-         */
-        $accountTableName = 'sfm_account';
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createAccountTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $accountTableCode = $this->tableDictionary->getAccountTableCode();
+        $accountTableName = $this->tableDictionary->getAccountTableName();
 
-        if (!$setup->tableExists($accountTableName)) {
-            $table = $connection->newTable($setup->getTable($accountTableName))
+        if (!$setup->tableExists($accountTableCode)) {
+            $table = $connection->newTable($accountTableName)
                 ->addColumn(
-                    'account_id',
+                    AccountInterface::ACCOUNT_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -47,38 +72,28 @@ class InstallSchema implements InstallSchemaInterface
                     'Account ID'
                 )
                 ->addColumn(
-                    'shopping_feed_account_id',
-                    Table::TYPE_INTEGER,
-                    null,
-                    [
-                        'nullable' => false,
-                        'unsigned' => true,
-                    ],
-                    'Shopping Feed Account ID'
-                )
-                ->addColumn(
-                    'api_token',
+                    AccountInterface::API_TOKEN,
                     Table::TYPE_TEXT,
                     255,
                     [ 'nullable' => false ],
                     'API Token'
                 )
                 ->addColumn(
-                    'shopping_feed_login',
+                    AccountInterface::SHOPPING_FEED_LOGIN,
                     Table::TYPE_TEXT,
                     255,
                     [ 'nullable' => false ],
                     'Shopping Feed Login'
                 )
                 ->addColumn(
-                    'shopping_feed_email',
+                    AccountInterface::SHOPPING_FEED_EMAIL,
                     Table::TYPE_TEXT,
                     255,
                     [ 'nullable' => false ],
                     'Shopping Feed Email'
                 )
                 ->addColumn(
-                    'created_at',
+                    AccountInterface::CREATED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [
@@ -87,45 +102,36 @@ class InstallSchema implements InstallSchemaInterface
                     ],
                     'Created At'
                 )
-                ->addColumn(
-                    'updated_at',
-                    Table::TYPE_TIMESTAMP,
-                    null,
-                    [
-                        'nullable' => false,
-                        'default' => Table::TIMESTAMP_INIT_UPDATE,
-                    ],
-                    'Updated At'
-                )
                 ->addIndex(
                     $setup->getIdxName(
-                        $accountTableName,
-                        'shopping_feed_account_id',
+                        $accountTableCode,
+                        AccountInterface::API_TOKEN,
                         AdapterInterface::INDEX_TYPE_UNIQUE
                     ),
-                    'shopping_feed_account_id',
-                    [ 'type' => AdapterInterface::INDEX_TYPE_UNIQUE ]
-                )
-                ->addIndex(
-                    $setup->getIdxName($accountTableName, 'api_token', AdapterInterface::INDEX_TYPE_UNIQUE),
-                    'api_token',
+                    AccountInterface::API_TOKEN,
                     [ 'type' => AdapterInterface::INDEX_TYPE_UNIQUE ]
                 )
                 ->setComment('Shopping Feed Account');
 
             $connection->createTable($table);
         }
+    }
 
-        /**
-         * Create "sfm_account_store" table
-         *
-         */
-        $accountStoreTableName = 'sfm_account_store';
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createAccountStoreTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $accountTableCode = $this->tableDictionary->getAccountTableCode();
+        $accountStoreTableCode = $this->tableDictionary->getAccountStoreTableCode();
+        $accountStoreTableName = $this->tableDictionary->getAccountStoreTableName();
 
-        if (!$setup->tableExists($accountStoreTableName)) {
-            $table = $connection->newTable($setup->getTable($accountStoreTableName))
+        if (!$setup->tableExists($accountStoreTableCode)) {
+            $table = $connection->newTable($accountStoreTableName)
                 ->addColumn(
-                    'store_id',
+                    StoreInterface::STORE_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -137,7 +143,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Account Store ID'
                 )
                 ->addColumn(
-                    'account_id',
+                    StoreInterface::ACCOUNT_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -147,7 +153,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Account ID'
                 )
                 ->addColumn(
-                    'base_store_id',
+                    StoreInterface::BASE_STORE_ID,
                     Table::TYPE_SMALLINT,
                     null,
                     [
@@ -157,7 +163,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Base Store ID'
                 )
                 ->addColumn(
-                    'shopping_feed_store_id',
+                    StoreInterface::SHOPPING_FEED_STORE_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -167,16 +173,16 @@ class InstallSchema implements InstallSchemaInterface
                     'Shopping Feed Store ID'
                 )
                 ->addColumn(
-                    'shopping_feed_name',
+                    StoreInterface::SHOPPING_FEED_NAME,
                     Table::TYPE_TEXT,
                     255,
                     [ 'nullable' => false ],
                     'Shopping Feed Name'
                 )
                 ->addColumn(
-                    'configuration',
+                    StoreInterface::CONFIGURATION,
                     Table::TYPE_TEXT,
-                    16777215,
+                    16777216,
                     [
                         'nullable' => false,
                         'default' => '',
@@ -184,7 +190,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Configuration'
                 )
                 ->addColumn(
-                    'created_at',
+                    StoreInterface::CREATED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [
@@ -194,7 +200,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Created At'
                 )
                 ->addColumn(
-                    'updated_at',
+                    StoreInterface::UPDATED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [
@@ -204,32 +210,37 @@ class InstallSchema implements InstallSchemaInterface
                     'Updated At'
                 )
                 ->addIndex(
-                    $setup->getIdxName($accountStoreTableName, 'account_id'),
-                    'account_id'
+                    $setup->getIdxName($accountStoreTableCode, StoreInterface::ACCOUNT_ID),
+                    StoreInterface::ACCOUNT_ID
                 )
                 ->addIndex(
-                    $setup->getIdxName($accountStoreTableName, 'base_store_id'),
-                    'base_store_id'
+                    $setup->getIdxName($accountStoreTableCode, StoreInterface::BASE_STORE_ID),
+                    StoreInterface::BASE_STORE_ID
                 )
                 ->addIndex(
                     $setup->getIdxName(
                         $accountStoreTableName,
-                        'shopping_feed_store_id',
+                        StoreInterface::SHOPPING_FEED_STORE_ID,
                         AdapterInterface::INDEX_TYPE_UNIQUE
                     ),
-                    'shopping_feed_store_id',
+                    StoreInterface::SHOPPING_FEED_STORE_ID,
                     [ 'type' => AdapterInterface::INDEX_TYPE_UNIQUE ]
                 )
                 ->addForeignKey(
-                    $setup->getFkName($accountStoreTableName, 'account_id', $accountTableName, 'account_id'),
-                    'account_id',
-                    $setup->getTable($accountTableName),
-                    'account_id',
+                    $setup->getFkName(
+                        $accountStoreTableCode,
+                        StoreInterface::ACCOUNT_ID,
+                        $accountTableCode,
+                        AccountInterface::ACCOUNT_ID
+                    ),
+                    StoreInterface::ACCOUNT_ID,
+                    $setup->getTable($accountTableCode),
+                    AccountInterface::ACCOUNT_ID,
                     Table::ACTION_CASCADE
                 )
                 ->addForeignKey(
-                    $setup->getFkName($accountStoreTableName, 'base_store_id', 'store', 'store_id'),
-                    'base_store_id',
+                    $setup->getFkName($accountStoreTableCode, StoreInterface::BASE_STORE_ID, 'store', 'store_id'),
+                    StoreInterface::BASE_STORE_ID,
                     $setup->getTable('store'),
                     'store_id',
                     Table::ACTION_CASCADE
@@ -238,18 +249,25 @@ class InstallSchema implements InstallSchemaInterface
 
             $connection->createTable($table);
         }
+    }
 
-        /**
-         * Create "sfm_feed_product" table
-         */
-        $feedProductTableName = 'sfm_feed_product';
-        $catalogProductTableName = 'catalog_product_entity';
-        $catalogCategoryTableName = 'catalog_category_entity';
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createFeedProductTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $accountStoreTableCode = $this->tableDictionary->getAccountStoreTableCode();
+        $feedProductTableCode = $this->tableDictionary->getFeedProductTableCode();
+        $feedProductTableName = $this->tableDictionary->getFeedProductTableName();
+        $catalogCategoryTableCode = $this->tableDictionary->getCatalogCategoryTableCode();
+        $catalogProductTableCode = $this->tableDictionary->getCatalogProductTableCode();
 
-        if (!$setup->tableExists($feedProductTableName)) {
-            $table = $connection->newTable($setup->getTable($feedProductTableName))
+        if (!$setup->tableExists($feedProductTableCode)) {
+            $table = $connection->newTable($feedProductTableName)
                 ->addColumn(
-                    'product_id',
+                    FeedProductInterface::PRODUCT_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -260,7 +278,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Product ID'
                 )
                 ->addColumn(
-                    'store_id',
+                    FeedProductInterface::STORE_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -271,7 +289,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Store ID'
                 )
                 ->addColumn(
-                    'is_selected',
+                    FeedProductInterface::IS_SELECTED,
                     Table::TYPE_BOOLEAN,
                     null,
                     [
@@ -281,7 +299,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Is Selected'
                 )
                 ->addColumn(
-                    'selected_category_id',
+                    FeedProductInterface::SELECTED_CATEGORY_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -291,7 +309,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Selected Category ID'
                 )
                 ->addColumn(
-                    'export_state',
+                    FeedProductInterface::EXPORT_STATE,
                     Table::TYPE_SMALLINT,
                     null,
                     [
@@ -301,7 +319,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Export State'
                 )
                 ->addColumn(
-                    'child_export_state',
+                    FeedProductInterface::CHILD_EXPORT_STATE,
                     Table::TYPE_SMALLINT,
                     null,
                     [
@@ -311,31 +329,31 @@ class InstallSchema implements InstallSchemaInterface
                     'Export State (as a Child)'
                 )
                 ->addColumn(
-                    'export_retention_started_at',
+                    FeedProductInterface::EXPORT_RETENTION_STARTED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [],
                     'Export Retention Started At'
                 )
                 ->addColumn(
-                    'export_state_refreshed_at',
+                    FeedProductInterface::EXPORT_STATE_REFRESHED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [],
                     'Export State Refreshed At'
                 )
                 ->addColumn(
-                    'export_state_refresh_state',
+                    FeedProductInterface::EXPORT_STATE_REFRESH_STATE,
                     Table::TYPE_SMALLINT,
                     null,
                     [
                         'nullable' => false,
-                        'default' => FeedRefresher::REFRESH_STATE_REQUIRED,
+                        'default' => FeedProduct::REFRESH_STATE_REQUIRED,
                     ],
                     'Export State Refresh State'
                 )
                 ->addColumn(
-                    'export_state_refresh_state_updated_at',
+                    FeedProductInterface::EXPORT_STATE_REFRESH_STATE_UPDATED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [
@@ -345,44 +363,54 @@ class InstallSchema implements InstallSchemaInterface
                     'Export State Refresh State Updated At'
                 )
                 ->addIndex(
-                    $setup->getIdxName($feedProductTableName, 'selected_category_id'),
-                    'selected_category_id'
+                    $setup->getIdxName($feedProductTableCode, FeedProductInterface::SELECTED_CATEGORY_ID),
+                    FeedProductInterface::SELECTED_CATEGORY_ID
                 )
                 ->addIndex(
-                    $setup->getIdxName($feedProductTableName, 'export_state'),
-                    'export_state'
+                    $setup->getIdxName($feedProductTableCode, FeedProductInterface::EXPORT_STATE),
+                    FeedProductInterface::EXPORT_STATE
                 )
                 ->addIndex(
-                    $setup->getIdxName($feedProductTableName, 'child_export_state'),
-                    'child_export_state'
+                    $setup->getIdxName($feedProductTableCode, FeedProductInterface::CHILD_EXPORT_STATE),
+                    FeedProductInterface::CHILD_EXPORT_STATE
                 )
                 ->addIndex(
-                    $setup->getIdxName($feedProductTableName, 'export_state_refresh_state'),
-                    'export_state_refresh_state'
+                    $setup->getIdxName($feedProductTableCode, FeedProductInterface::EXPORT_STATE_REFRESH_STATE),
+                    FeedProductInterface::EXPORT_STATE_REFRESH_STATE
                 )
                 ->addForeignKey(
-                    $setup->getFkName($feedProductTableName, 'product_id', $catalogProductTableName, 'entity_id'),
-                    'product_id',
-                    $setup->getTable($catalogProductTableName),
+                    $setup->getFkName(
+                        $feedProductTableCode,
+                        FeedProductInterface::PRODUCT_ID,
+                        $catalogProductTableCode,
+                        'entity_id'
+                    ),
+                    FeedProductInterface::PRODUCT_ID,
+                    $setup->getTable($catalogProductTableCode),
                     'entity_id',
                     Table::ACTION_CASCADE
                 )
                 ->addForeignKey(
-                    $setup->getFkName($feedProductTableName, 'store_id', $accountStoreTableName, 'store_id'),
-                    'store_id',
-                    $setup->getTable($accountStoreTableName),
-                    'store_id',
+                    $setup->getFkName(
+                        $feedProductTableCode,
+                        FeedProductInterface::STORE_ID,
+                        $accountStoreTableCode,
+                        StoreInterface::STORE_ID
+                    ),
+                    FeedProductInterface::STORE_ID,
+                    $setup->getTable($accountStoreTableCode),
+                    StoreInterface::STORE_ID,
                     Table::ACTION_CASCADE
                 )
                 ->addForeignKey(
                     $setup->getFkName(
-                        $feedProductTableName,
-                        'selected_category_id',
-                        $catalogCategoryTableName,
+                        $feedProductTableCode,
+                        FeedProductInterface::SELECTED_CATEGORY_ID,
+                        $catalogCategoryTableCode,
                         'entity_id'
                     ),
-                    'selected_category_id',
-                    $setup->getTable($catalogCategoryTableName),
+                    FeedProductInterface::SELECTED_CATEGORY_ID,
+                    $setup->getTable($catalogCategoryTableCode),
                     'entity_id',
                     Table::ACTION_SET_NULL
                 )
@@ -390,14 +418,20 @@ class InstallSchema implements InstallSchemaInterface
 
             $connection->createTable($table);
         }
+    }
 
-        /**
-         * Create "sfm_feed_product_section_type" table
-         */
-        $feedSectionTypeTableName = 'sfm_feed_product_section_type';
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createFeedSectionTypeTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $feedSectionTypeTableCode = $this->tableDictionary->getFeedProductSectionTypeTableCode();
+        $feedSectionTypeTableName = $this->tableDictionary->getFeedProductSectionTypeTableName();
 
-        if (!$setup->tableExists($feedSectionTypeTableName)) {
-            $table = $connection->newTable($setup->getTable($feedSectionTypeTableName))
+        if (!$setup->tableExists($feedSectionTypeTableCode)) {
+            $table = $connection->newTable($feedSectionTypeTableName)
                 ->addColumn(
                     'type_id',
                     Table::TYPE_SMALLINT,
@@ -418,7 +452,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Code'
                 )
                 ->addIndex(
-                    $setup->getIdxName($feedSectionTypeTableName, 'code', AdapterInterface::INDEX_TYPE_UNIQUE),
+                    $setup->getIdxName($feedSectionTypeTableCode, 'code', AdapterInterface::INDEX_TYPE_UNIQUE),
                     'code',
                     [ 'type' => AdapterInterface::INDEX_TYPE_UNIQUE ]
                 )
@@ -426,16 +460,25 @@ class InstallSchema implements InstallSchemaInterface
 
             $connection->createTable($table);
         }
+    }
 
-        /**
-         * Create "sfm_feed_product_section" table
-         */
-        $feedSectionTableName = 'sfm_feed_product_section';
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createFeedSectionTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $accountStoreTableCode = $this->tableDictionary->getAccountStoreTableCode();
+        $feedProductTableCode = $this->tableDictionary->getFeedProductTableCode();
+        $feedSectionTypeTableCode = $this->tableDictionary->getFeedProductSectionTypeTableCode();
+        $feedSectionTableCode = $this->tableDictionary->getFeedProductSectionTableCode();
+        $feedSectionTableName = $this->tableDictionary->getFeedProductSectionTableName();
 
-        if (!$setup->tableExists($feedSectionTableName)) {
-            $table = $connection->newTable($setup->getTable($feedSectionTableName))
+        if (!$setup->tableExists($feedSectionTableCode)) {
+            $table = $connection->newTable($feedSectionTableName)
                 ->addColumn(
-                    'type_id',
+                    FeedSectionInterface::TYPE_ID,
                     Table::TYPE_SMALLINT,
                     null,
                     [
@@ -446,7 +489,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Type ID'
                 )
                 ->addColumn(
-                    'product_id',
+                    FeedSectionInterface::PRODUCT_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -457,7 +500,7 @@ class InstallSchema implements InstallSchemaInterface
                     'Product ID'
                 )
                 ->addColumn(
-                    'store_id',
+                    FeedSectionInterface::STORE_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -468,9 +511,9 @@ class InstallSchema implements InstallSchemaInterface
                     'Store ID'
                 )
                 ->addColumn(
-                    'data',
+                    FeedSectionInterface::FEED_DATA,
                     Table::TYPE_TEXT,
-                    65535,
+                    65536,
                     [
                         'nullable' => false,
                         'default' => '',
@@ -478,24 +521,24 @@ class InstallSchema implements InstallSchemaInterface
                     'Data'
                 )
                 ->addColumn(
-                    'refreshed_at',
+                    FeedSectionInterface::REFRESHED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [],
                     'Refreshed At'
                 )
                 ->addColumn(
-                    'refresh_state',
+                    FeedSectionInterface::REFRESH_STATE,
                     Table::TYPE_SMALLINT,
                     null,
                     [
                         'nullable' => false,
-                        'default' => FeedRefresher::REFRESH_STATE_REQUIRED,
+                        'default' => FeedProduct::REFRESH_STATE_REQUIRED,
                     ],
                     'Refresh State'
                 )
                 ->addColumn(
-                    'refresh_state_updated_at',
+                    FeedSectionInterface::REFRESH_STATE_UPDATED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [
@@ -505,35 +548,48 @@ class InstallSchema implements InstallSchemaInterface
                     'Refresh State Updated At'
                 )
                 ->addIndex(
-                    $setup->getIdxName($feedSectionTableName, 'refresh_state'),
-                    'refresh_state'
+                    $setup->getIdxName($feedSectionTableCode, FeedSectionInterface::REFRESH_STATE),
+                    FeedSectionInterface::REFRESH_STATE
                 )
                 ->addForeignKey(
-                    $setup->getFkName($feedSectionTableName, 'type_id', $feedSectionTypeTableName, 'type_id'),
-                    'type_id',
-                    $setup->getTable($feedSectionTypeTableName),
+                    $setup->getFkName(
+                        $feedSectionTableCode,
+                        FeedSectionInterface::TYPE_ID,
+                        $feedSectionTypeTableCode,
+                        'type_id'
+                    ),
+                    FeedSectionInterface::TYPE_ID,
+                    $setup->getTable($feedSectionTypeTableCode),
                     'type_id',
                     Table::ACTION_CASCADE
                 )
                 ->addForeignKey(
-                    $setup->getFkName($feedSectionTableName, 'product_id', $feedProductTableName, 'product_id'),
-                    'product_id',
-                    $setup->getTable($feedProductTableName),
-                    'product_id',
+                    $setup->getFkName(
+                        $feedSectionTableCode,
+                        FeedSectionInterface::PRODUCT_ID,
+                        $feedProductTableCode,
+                        FeedProductInterface::PRODUCT_ID
+                    ),
+                    FeedSectionInterface::PRODUCT_ID,
+                    $setup->getTable($feedProductTableCode),
+                    FeedProductInterface::PRODUCT_ID,
                     Table::ACTION_CASCADE
                 )
                 ->addForeignKey(
-                    $setup->getFkName($feedSectionTableName, 'store_id', $accountStoreTableName, 'store_id'),
-                    'store_id',
-                    $setup->getTable($accountStoreTableName),
-                    'store_id',
+                    $setup->getFkName(
+                        $feedSectionTableCode,
+                        FeedSectionInterface::STORE_ID,
+                        $accountStoreTableCode,
+                        StoreInterface::STORE_ID
+                    ),
+                    FeedSectionInterface::STORE_ID,
+                    $setup->getTable($accountStoreTableCode),
+                    StoreInterface::STORE_ID,
                     Table::ACTION_CASCADE
                 )
                 ->setComment('Shopping Feed Feed Product Section');
 
             $connection->createTable($table);
         }
-
-        $setup->endSetup();
     }
 }

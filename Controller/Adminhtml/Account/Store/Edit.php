@@ -17,8 +17,8 @@ class Edit extends StoreAction
             $store = $this->getStore();
         } catch (NoSuchEntityException $e) {
             $this->messageManager->addErrorMessage(__('This account store does no longer exist.'));
-            $resultRedirect = $this->resultRedirectFactory->create();
-            return $resultRedirect->setPath('*/*/');
+            $redirectResult = $this->resultRedirectFactory->create();
+            return $redirectResult->setPath('*/*/');
         }
 
         $this->coreRegistry->register(RegistryConstants::CURRENT_ACCOUNT_STORE, $store);

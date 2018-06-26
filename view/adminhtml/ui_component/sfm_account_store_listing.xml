@@ -6,6 +6,13 @@
         </item>
     </argument>
     <settings>
+        <buttons>
+            <button name="create_existing">
+                <url path="*/*/create_form_existing"/>
+                <class>primary</class>
+                <label translate="true">Add Existing Store</label>
+            </button>
+        </buttons>
         <spinner>sfm_account_store_columns</spinner>
         <deps>
             <dep>sfm_account_store_listing.account_store_listing_data_source</dep>
@@ -18,7 +25,7 @@
             </storageConfig>
             <updateUrl path="mui/index/render"/>
         </settings>
-        <aclResource>ShoppingFeed_Manager::account_store</aclResource>
+        <aclResource>ShoppingFeed_Manager::account_stores</aclResource>
         <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Listing\DataProvider" name="account_store_listing_data_source">
             <settings>
                 <requestFieldName>id</requestFieldName>
@@ -55,6 +62,18 @@
                 <label translate="true">API Token</label>
             </settings>
         </column>
+        <column name="shopping_feed_account_name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Shopping Feed Account Name</label>
+            </settings>
+        </column>
+        <column name="shopping_feed_name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Shopping Feed Name</label>
+            </settings>
+        </column>
         <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
             <settings>
                 <filter>dateRange</filter>
@@ -69,7 +88,7 @@
                 <label translate="true">Modified</label>
             </settings>
         </column>
-        <actionsColumn name="actions" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\StoreActions">
+        <actionsColumn name="actions" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store\Actions">
             <settings>
                 <label translate="true">Actions</label>
                 <indexField>store_id</indexField>

@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
+use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\ProductFactory as FeedProductFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Filter as ProductFilter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Filter as SectionFilter;
@@ -12,6 +13,7 @@ use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Filter\Applier as ProductFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Filter\Applier as SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
 
 
@@ -30,6 +32,7 @@ class Refresher extends AbstractDb
     /**
      * @param DbContext $context
      * @param TimeHelper $timeHelper
+     * @param TableDictionary $tableDictionary
      * @param ProductFilterApplier $productFilterApplier
      * @param SectionFilterApplier $sectionFilterApplier
      * @param FeedProductFactory $feedProductFactory
@@ -39,6 +42,7 @@ class Refresher extends AbstractDb
     public function __construct(
         DbContext $context,
         TimeHelper $timeHelper,
+        TableDictionary $tableDictionary,
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
         FeedProductFactory $feedProductFactory,
@@ -47,7 +51,15 @@ class Refresher extends AbstractDb
     ) {
         $this->feedProductFactory = $feedProductFactory;
         $this->refreshableProductFactory = $refreshableProductFactory;
-        parent::__construct($context, $timeHelper, $productFilterApplier, $sectionFilterApplier, $connectionName);
+
+        parent::__construct(
+            $context,
+            $timeHelper,
+            $tableDictionary,
+            $productFilterApplier,
+            $sectionFilterApplier,
+            $connectionName
+        );
     }
 
     protected function _construct()
@@ -66,10 +78,10 @@ class Refresher extends AbstractDb
 
         switch ($newRefreshState) {
             /** @noinspection PhpMissingBreakStatementInspection */
-            case FeedRefresher::REFRESH_STATE_REQUIRED:
-                $overridableStates[] = FeedRefresher::REFRESH_STATE_ADVISED;
-            case FeedRefresher::REFRESH_STATE_ADVISED:
-                $overridableStates[] = FeedRefresher::REFRESH_STATE_UP_TO_DATE;
+            case FeedProduct::REFRESH_STATE_REQUIRED:
+                $overridableStates[] = FeedProduct::REFRESH_STATE_ADVISED;
+            case FeedProduct::REFRESH_STATE_ADVISED:
+                $overridableStates[] = FeedProduct::REFRESH_STATE_UP_TO_DATE;
 
         }
 
@@ -92,7 +104,7 @@ class Refresher extends AbstractDb
     {
         $this->getConnection()
             ->update(
-                $this->getFeedProductTable(),
+                $this->tableDictionary->getFeedProductTableName(),
                 [
                     'export_state_refresh_state' => $refreshState,
                     'export_state_refresh_state_updated_at' => $this->timeHelper->utcDate(),
@@ -124,12 +136,12 @@ class Refresher extends AbstractDb
             $productFilter->setStoreIds([ $storeId ]);
 
             $productSelect = $connection->select()
-                ->from([ 'product_table' => $this->getFeedProductTable() ], [ 'product_id' ]);
+                ->from([ 'product_table' => $this->tableDictionary->getFeedProductTableName() ], [ 'product_id' ]);
 
             $this->productFilterApplier->applyFilterToDbSelect($productSelect, $productFilter, 'product_table');
 
             $connection->update(
-                $this->getFeedProductSectionTable(),
+                $this->tableDictionary->getFeedProductSectionTableName(),
                 [
                     'refresh_state' => $refreshState,
                     'refresh_state_updated_at' => $this->timeHelper->utcDate(),
@@ -160,7 +172,7 @@ class Refresher extends AbstractDb
         $priorityWeight = pow(2, 31);
         $exportStateWeights = [];
         $sectionTypeWeights = [];
-        $refreshStates = [ FeedRefresher::REFRESH_STATE_REQUIRED, FeedRefresher::REFRESH_STATE_ADVISED ];
+        $refreshStates = [ FeedProduct::REFRESH_STATE_REQUIRED, FeedProduct::REFRESH_STATE_ADVISED ];
 
         foreach ($refreshStates as $refreshState) {
             if ($isExportStateRefreshed) {
@@ -192,7 +204,7 @@ class Refresher extends AbstractDb
         array $sortedRefreshedSectionTypeIds = [],
         array $refreshedSectionTypeProductFilters = [],
         array $refreshedSectionTypeSectionFilters = [],
-        $maximumCount = 5000
+        $maximumCount = FeedRefresher::REFRESHABLE_SLICE_SIZE
     ) {
         if ((null === $exportStateRefreshProductFilter) && empty($sortedRefreshedSectionTypeIds)) {
             return [];
@@ -203,7 +215,7 @@ class Refresher extends AbstractDb
         $isExportStateRefreshed = ($exportStateRefreshProductFilter !== null);
 
         $select = $connection->select()
-            ->from([ $productTableAlias => $this->getFeedProductTable() ])
+            ->from([ $productTableAlias => $this->tableDictionary->getFeedProductTableName() ])
             ->where($productTableAlias . '.store_id = ?', $storeId);
 
         list ($exportStateWeights, $sectionTypeWeights) = $this->getRefreshPriorityWeights(
@@ -233,7 +245,7 @@ class Refresher extends AbstractDb
             $sectionFilter->setTypeIds([ $typeId ])->setStoreIds([ $storeId ]);
 
             $select->joinLeft(
-                [ $sectionTableAlias => $this->getFeedProductSectionTable() ],
+                [ $sectionTableAlias => $this->tableDictionary->getFeedProductSectionTableName() ],
                 implode(
                     ' AND ',
                     array_merge(

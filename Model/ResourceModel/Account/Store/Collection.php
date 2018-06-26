@@ -2,8 +2,9 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Account\Store;
 
-use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store;
+use ShoppingFeed\Manager\Model\ResourceModel\AbstractCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 
 
@@ -12,7 +13,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
  */
 class Collection extends AbstractCollection
 {
-    protected $_idFieldName = 'store_id';
+    protected $_idFieldName = StoreInterface::STORE_ID;
 
     protected function _construct()
     {
@@ -25,13 +26,7 @@ class Collection extends AbstractCollection
      */
     public function addIdFilter($storeIds)
     {
-        if (!is_array($storeIds)) {
-            $storeIds = array_map('intval', $storeIds);
-        } else {
-            $storeIds = [ (int) $storeIds ];
-        }
-
-        $this->addFieldToFilter('store_id', [ 'in' => $storeIds ]);
+        $this->addFieldToFilter(StoreInterface::STORE_ID, [ 'in' => $this->prepareIdFilterValue($storeIds) ]);
         return $this;
     }
 }

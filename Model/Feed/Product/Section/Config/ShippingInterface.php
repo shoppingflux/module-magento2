@@ -44,4 +44,10 @@ interface ShippingInterface extends ConfigInterface
      * @return string|null
      */
     public function getDefaultDelay(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return AbstractAttribute[]
+     */
+    public function getAllAttributes(StoreInterface $store);
 }

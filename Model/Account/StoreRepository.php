@@ -33,11 +33,6 @@ class StoreRepository implements StoreRepositoryInterface
         $this->storeFactory = $storeFactory;
     }
 
-    /**
-     * @param StoreInterface $store
-     * @return StoreInterface
-     * @throws CouldNotSaveException
-     */
     public function save(StoreInterface $store)
     {
         try {
@@ -49,28 +44,32 @@ class StoreRepository implements StoreRepositoryInterface
         return $store;
     }
 
-    /**
-     * @param string $storeId
-     * @return Store
-     * @throws NoSuchEntityException
-     */
     public function getById($storeId)
     {
-        $account = $this->storeFactory->create();
-        $this->storeResource->load($account, $storeId);
+        $store = $this->storeFactory->create();
+        $this->storeResource->load($store, $storeId);
 
-        if (!$account->getId()) {
-            throw new NoSuchEntityException(__('Shopping Feed account store with ID "%1" does not exist.', $storeId));
+        if (!$store->getId()) {
+            throw new NoSuchEntityException(__('Account store for ID "%1" does not exist.', $storeId));
         }
 
-        return $account;
+        return $store;
     }
 
-    /**
-     * @param StoreInterface $store
-     * @return bool
-     * @throws CouldNotDeleteException
-     */
+    public function getByShoppingFeedStoreId($shoppingFeedStoreId)
+    {
+        $store = $this->storeFactory->create();
+        $this->storeResource->load($store, $shoppingFeedStoreId, StoreInterface::SHOPPING_FEED_STORE_ID);
+
+        if (!$store->getId()) {
+            throw new NoSuchEntityException(
+                __('Account store for Shopping Feed store ID "%1" does not exist.', $shoppingFeedStoreId)
+            );
+        }
+
+        return $store;
+    }
+
     public function delete(StoreInterface $store)
     {
         try {
@@ -82,12 +81,6 @@ class StoreRepository implements StoreRepositoryInterface
         return true;
     }
 
-    /**
-     * @param int $storeId
-     * @return bool
-     * @throws CouldNotDeleteException
-     * @throws NoSuchEntityException
-     */
     public function deleteById($storeId)
     {
         return $this->delete($this->getById($storeId));

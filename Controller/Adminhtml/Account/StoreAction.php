@@ -4,17 +4,18 @@ namespace ShoppingFeed\Manager\Controller\Adminhtml\Account;
 
 use Magento\Backend\App\Action;
 use Magento\Backend\App\Action\Context;
-use Magento\Backend\Model\View\Result\Page;
+use Magento\Backend\Model\View\Result\Page as PageResult;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
-use Magento\Framework\View\Result\PageFactory;
+use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 
 
 abstract class StoreAction extends Action
 {
-    const ADMIN_RESOURCE = 'ShoppingFeed_Manager::stores';
+    const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_stores';
+    const REQUEST_KEY_STORE_ID = 'store_id';
 
     /**
      * @var Registry
@@ -22,9 +23,9 @@ abstract class StoreAction extends Action
     protected $coreRegistry;
 
     /**
-     * @var PageFactory
+     * @var PageResultFactory
      */
-    protected $resultPageFactory;
+    protected $pageResultFactory;
 
     /**
      * @var StoreRepositoryInterface
@@ -34,17 +35,17 @@ abstract class StoreAction extends Action
     /**
      * @param Context $context
      * @param Registry $coreRegistry
-     * @param PageFactory $resultPageFactory
+     * @param PageResultFactory $pageResultFactory
      * @param StoreRepositoryInterface $storeRepository
      */
     public function __construct(
         Context $context,
         Registry $coreRegistry,
-        PageFactory $resultPageFactory,
+        PageResultFactory $pageResultFactory,
         StoreRepositoryInterface $storeRepository
     ) {
         $this->coreRegistry = $coreRegistry;
-        $this->resultPageFactory = $resultPageFactory;
+        $this->pageResultFactory = $pageResultFactory;
         $this->storeRepository = $storeRepository;
         parent::__construct($context);
     }
@@ -57,23 +58,23 @@ abstract class StoreAction extends Action
     protected function getStore($storeId = null)
     {
         if (null === $storeId) {
-            $storeId = (int) $this->getRequest()->getParam('store_id');
+            $storeId = (int) $this->getRequest()->getParam(static::REQUEST_KEY_STORE_ID);
         }
 
         return $this->storeRepository->getById($storeId);
     }
 
     /**
-     * @return Page
+     * @return PageResult
      */
     protected function initPage()
     {
-        /** @var Page $resultPage */
-        $resultPage = $this->resultPageFactory->create();
-        $resultPage->setActiveMenu('ShoppingFeed_Manager::stores');
-        $resultPage->addBreadcrumb(__('Shopping Feed'), __('Shopping Feed'));
-        $resultPage->addBreadcrumb(__('Stores'), __('Stores'));
-        $resultPage->getConfig()->getTitle()->prepend(__('Stores'));
-        return $resultPage;
+        /** @var PageResult $pageResult */
+        $pageResult = $this->pageResultFactory->create();
+        $pageResult->setActiveMenu('ShoppingFeed_Manager::account_stores');
+        $pageResult->addBreadcrumb(__('Shopping Feed'), __('Shopping Feed'));
+        $pageResult->addBreadcrumb(__('Stores'), __('Stores'));
+        $pageResult->getConfig()->getTitle()->prepend(__('Stores'));
+        return $pageResult;
     }
 }

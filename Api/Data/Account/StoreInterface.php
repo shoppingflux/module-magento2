@@ -3,7 +3,8 @@
 namespace ShoppingFeed\Manager\Api\Data\Account;
 
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
-use Magento\Store\Api\Data\StoreInterface as BaseStoreInterface;
+use Magento\Store\Model\Store as BaseStore;
+use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\DataObject;
 
 
@@ -31,12 +32,17 @@ interface StoreInterface
     public function getAccountId();
 
     /**
+     * @return AccountInterface
+     */
+    public function getAccount();
+
+    /**
      * @return int
      */
     public function getBaseStoreId();
 
     /**
-     * @return BaseStoreInterface
+     * @return BaseStore
      */
     public function getBaseStore();
 
@@ -130,8 +136,8 @@ interface StoreInterface
     public function setUpdatedAt($updatedAt);
 
     /**
-     * @param array $params
+     * @param array $data
      * @return StoreInterface
      */
-    public function importConfigurationData(array $params);
+    public function importConfigurationData(array $data);
 }

@@ -4,21 +4,26 @@ namespace ShoppingFeed\Manager\Model\Account;
 
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as StoreConfigInterface;
+use ShoppingFeed\Manager\Model\Feed\ConfigInterface as FeedConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
+use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 
 
 /**
@@ -46,14 +51,34 @@ class Store extends AbstractModel implements StoreInterface
     private $dataObjectFactory;
 
     /**
+     * @var AccountRepositoryInterface
+     */
+    private $accountRepository;
+
+    /**
+     * @var AccountInterface|null
+     */
+    private $account = null;
+
+    /**
+     * @var FeedConfigInterface
+     */
+    private $feedGeneralConfig;
+
+    /**
      * @var ExportStateConfigInterface
      */
-    private $exportStateConfig;
+    private $feedExportStateConfig;
 
     /**
      * @var SectionTypePoolInterface
      */
     private $sectionTypePool;
+
+    /**
+     * @var OrderConfigInterface
+     */
+    private $orderGeneralConfig;
 
     /**
      * @var StoreResource
@@ -66,8 +91,11 @@ class Store extends AbstractModel implements StoreInterface
      * @param ScopeConfigInterface $scopeConfig
      * @param StoreManagerInterface $storeManager
      * @param DataObjectFactory $dataObjectFactory
-     * @param ExportStateConfigInterface $exportStateConfig
+     * @param AccountRepositoryInterface $accountRepository
+     * @param FeedConfigInterface $feedGeneralConfig
+     * @param ExportStateConfigInterface $feedExportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
+     * @param OrderConfigInterface $orderGeneralConfig
      * @param StoreResourceFactory $storeResourceFactory
      * @param StoreResource|null $resource
      * @param StoreCollection|null $resourceCollection
@@ -79,8 +107,11 @@ class Store extends AbstractModel implements StoreInterface
         ScopeConfigInterface $scopeConfig,
         StoreManagerInterface $storeManager,
         DataObjectFactory $dataObjectFactory,
-        ExportStateConfigInterface $exportStateConfig,
+        AccountRepositoryInterface $accountRepository,
+        FeedConfigInterface $feedGeneralConfig,
+        ExportStateConfigInterface $feedExportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
+        OrderConfigInterface $orderGeneralConfig,
         StoreResourceFactory $storeResourceFactory,
         StoreResource $resource = null,
         StoreCollection $resourceCollection = null,
@@ -89,8 +120,11 @@ class Store extends AbstractModel implements StoreInterface
         $this->scopeConfig = $scopeConfig;
         $this->storeManager = $storeManager;
         $this->dataObjectFactory = $dataObjectFactory;
-        $this->exportStateConfig = $exportStateConfig;
+        $this->accountRepository = $accountRepository;
+        $this->feedGeneralConfig = $feedGeneralConfig;
+        $this->feedExportStateConfig = $feedExportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
+        $this->orderGeneralConfig = $orderGeneralConfig;
         $this->storeResource = $storeResourceFactory->create();
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
@@ -100,9 +134,28 @@ class Store extends AbstractModel implements StoreInterface
         $this->_init(StoreResource::class);
     }
 
+    public function getId()
+    {
+        $id = parent::getId();
+        return empty($id) ? null : (int) $id;
+    }
+
     public function getAccountId()
     {
         return (int) $this->getData(self::ACCOUNT_ID);
+    }
+
+    /**
+     * @return AccountInterface
+     * @throws NoSuchEntityException
+     */
+    public function getAccount()
+    {
+        if (null === $this->account) {
+            $this->account = $this->accountRepository->getById($this->getAccountId());
+        }
+
+        return $this->account;
     }
 
     public function getBaseStoreId()
@@ -159,7 +212,14 @@ class Store extends AbstractModel implements StoreInterface
 
     public function getSelectedFeedProductIds()
     {
-        return $this->storeResource->getSelectedFeedProductIds($this->getId());
+        if (!$this->hasData('selected_feed_product_ids')) {
+            $this->setData(
+                'selected_feed_product_ids',
+                $this->storeResource->getSelectedFeedProductIds($this->getId())
+            );
+        }
+
+        return $this->getDataByKey('selected_feed_product_ids');
     }
 
     /**
@@ -208,49 +268,52 @@ class Store extends AbstractModel implements StoreInterface
 
     /**
      * @param StoreConfigInterface $configModel
-     * @param array $params
+     * @param array $data
      */
-    private function importSubConfigurationData(StoreConfigInterface $configModel, array $params)
+    private function importSubConfigurationData(StoreConfigInterface $configModel, array $data)
     {
         $configObject = $this->getConfiguration();
 
-        if (isset($params[$configModel->getScope()])) {
+        if (isset($data[$configModel->getScope()])) {
             $subScopePath = $configModel->getScopeSubPath();
-            $subParams = $params[$configModel->getScope()];
+            $subData = $data[$configModel->getScope()];
 
             foreach ($subScopePath as $pathPart) {
-                if (!empty($subParams[$pathPart]) && is_array($subParams[$pathPart])) {
-                    $subParams = $subParams[$pathPart];
+                if (!empty($subData[$pathPart]) && is_array($subData[$pathPart])) {
+                    $subData = $subData[$pathPart];
                 } else {
-                    $subParams = false;
+                    $subData = false;
                     break;
                 }
             }
 
-            if (is_array($subParams)) {
-                foreach ($subParams as $fieldName => $fieldValue) {
-                    $field = $configModel->getField($fieldName);
+            if (is_array($subData)) {
+                foreach ($subData as $fieldName => $fieldValue) {
+                    $field = $configModel->getField($this, $fieldName);
 
                     if ($field) {
-                        $subParams[$fieldName] = $field->prepareFormValueForSave($fieldValue);
+                        $subData[$fieldName] = $field->prepareFormValueForSave($fieldValue);
                     }
                 }
 
                 $configObject->setDataByPath(
                     $configModel->getScope() . '/' . implode('/', $subScopePath),
-                    $subParams
+                    $subData
                 );
             }
         }
     }
 
-    public function importConfigurationData(array $params)
+    public function importConfigurationData(array $data)
     {
-        $this->importSubConfigurationData($this->exportStateConfig, $params);
+        $this->importSubConfigurationData($this->feedGeneralConfig, $data);
+        $this->importSubConfigurationData($this->feedExportStateConfig, $data);
 
         foreach ($this->sectionTypePool->getTypes() as $sectionType) {
-            $this->importSubConfigurationData($sectionType->getConfig(), $params);
+            $this->importSubConfigurationData($sectionType->getConfig(), $data);
         }
+
+        $this->importSubConfigurationData($this->orderGeneralConfig, $data);
 
         return $this;
     }

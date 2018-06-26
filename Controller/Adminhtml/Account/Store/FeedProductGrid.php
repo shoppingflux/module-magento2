@@ -7,7 +7,7 @@ use Magento\Framework\Controller\Result\RawFactory as RawResultFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
 use Magento\Framework\View\LayoutFactory;
-use Magento\Framework\View\Result\PageFactory;
+use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
 use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid as ProductGridBlock;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
@@ -29,7 +29,7 @@ class FeedProductGrid extends StoreAction
     /**
      * @param Context $context
      * @param Registry $coreRegistry
-     * @param PageFactory $resultPageFactory
+     * @param PageResultFactory $pageResultFactory
      * @param StoreRepositoryInterface $storeRepository
      * @param RawResultFactory $rawResultFactory
      * @param LayoutFactory $layoutFactory
@@ -37,14 +37,14 @@ class FeedProductGrid extends StoreAction
     public function __construct(
         Context $context,
         Registry $coreRegistry,
-        PageFactory $resultPageFactory,
+        PageResultFactory $pageResultFactory,
         StoreRepositoryInterface $storeRepository,
         RawResultFactory $rawResultFactory,
         LayoutFactory $layoutFactory
     ) {
         $this->rawResultFactory = $rawResultFactory;
         $this->layoutFactory = $layoutFactory;
-        parent::__construct($context, $coreRegistry, $resultPageFactory, $storeRepository);
+        parent::__construct($context, $coreRegistry, $pageResultFactory, $storeRepository);
     }
 
     public function execute()
@@ -59,8 +59,8 @@ class FeedProductGrid extends StoreAction
 
             return $rawResult->setContents($productGridBlock->toHtml());
         } catch (NoSuchEntityException $e) {
-            $resultRedirect = $this->resultRedirectFactory->create();
-            return $resultRedirect->setPath('*/*/', [ '_current' => true, 'store_id' => null ]);
+            $redirectResult = $this->resultRedirectFactory->create();
+            return $redirectResult->setPath('*/*/', [ '_current' => true, 'store_id' => null ]);
         }
     }
 }

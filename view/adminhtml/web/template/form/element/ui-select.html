@@ -1,0 +1,13 @@
+<div>
+    <!-- ko template: { name: "ui/grid/filters/elements/ui-select", data: $data } --><!-- /ko -->
+    <!-- ko if: hasSelectionOptionSelectedNote() -->
+        <div class="admin__field-note _in-selection-selected">
+            <span translate="selectionOptionSelectedNote"></span> 
+        </div>
+    <!-- /ko -->
+    <!-- ko if: hasNonSelectionOptionSelectedNote() -->
+    <div class="admin__field-note _off-selection-selected">
+        <span translate="nonSelectionOptionSelectedNote"></span>
+    </div>
+    <!-- /ko -->
+</div>
