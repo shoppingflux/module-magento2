@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Console\Command\Exception as CommandException;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
@@ -73,16 +72,15 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
 
         $this->setDefinition(
             [
-                $this->getStoreIdsOption('Force automatic refresh for those store IDs'),
+                $this->getStoresOption('Force automatic refresh for those store IDs'),
 
                 $this->getFlagOption(
                     self::OPTION_KEY_FORCE_EXPORT_STATE_REFRESH,
                     'Force automatic refresh for product export states'
                 ),
 
-                $this->getSectionTypesOptions(
+                $this->getSectionTypesOption(
                     'Force automatic refresh for those section types (%s)',
-                    true,
                     false,
                     self::OPTION_KEY_FORCE_SECTION_TYPES_REFRESH
                 ),
@@ -97,14 +95,14 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
         $io = new SymfonyStyle($input, $output);
 
         try {
-            $storeCollection = $this->getStoreCollection($input);
+            $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getAllIds();
 
             $io->title('Forcing automatic refresh for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
-                if ($input->getOption(self::OPTION_KEY_FORCE_EXPORT_STATE_REFRESH)) { // @todo getFlagValue
+                if ($this->getFlagOptionValue($input, self::OPTION_KEY_FORCE_EXPORT_STATE_REFRESH)) {
                     $refreshState = $this->exportStateConfig->getAutomaticRefreshState($store);
 
                     if (false !== $refreshState) {
@@ -127,7 +125,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
                 }
 
                 $emptyProductFilter = $this->createFeedProductFilter();
-                $sectionTypes = $this->getSectionTypes($input, true, self::OPTION_KEY_FORCE_SECTION_TYPES_REFRESH);
+                $sectionTypes = $this->getSectionTypesOptionValue($input, self::OPTION_KEY_FORCE_SECTION_TYPES_REFRESH);
 
                 foreach ($sectionTypes as $sectionType) {
                     $typeConfig = $sectionType->getConfig();
@@ -161,7 +159,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
 
             $io->newLine(2);
             $io->success('Successfully forced automatic refresh.');
-        } catch (CommandException $e) {
+        } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;
         }

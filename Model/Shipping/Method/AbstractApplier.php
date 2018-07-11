@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Shipping\Method;
 
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\ConfigInterface;
+use ShoppingFeed\Manager\Model\Shipping\Method\Applier\ResultFactory;
 
 
 abstract class AbstractApplier implements ApplierInterface
@@ -13,11 +14,18 @@ abstract class AbstractApplier implements ApplierInterface
     private $config;
 
     /**
-     * @param ConfigInterface $config
+     * @var ResultFactory
      */
-    public function __construct(ConfigInterface $config)
+    protected $resultFactory;
+
+    /**
+     * @param ConfigInterface $config
+     * @param ResultFactory $resultFactory
+     */
+    public function __construct(ConfigInterface $config, ResultFactory $resultFactory)
     {
         $this->config = $config;
+        $this->resultFactory = $resultFactory;
     }
 
     public function getConfig()

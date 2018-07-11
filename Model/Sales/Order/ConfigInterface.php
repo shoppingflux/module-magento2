@@ -12,7 +12,11 @@ interface ConfigInterface extends BaseConfig
      * @param StoreInterface $store
      * @return bool
      */
+    public function shouldUseItemReferenceAsProductId(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
     public function shouldCreateInvoice(StoreInterface $store);
-    
-    // @todo use SKUs as product IDs
 }

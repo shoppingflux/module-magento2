@@ -2,7 +2,7 @@
 <listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
     <argument name="data" xsi:type="array">
         <item name="js_config" xsi:type="array">
-            <item name="provider" xsi:type="string">sfm_account_listing.account_listing_data_source</item>
+            <item name="provider" xsi:type="string">sfm_account_listing.sfm_account_listing_data_source</item>
         </item>
     </argument>
     <settings>
@@ -22,10 +22,10 @@
         </buttons>
         <spinner>sfm_account_columns</spinner>
         <deps>
-            <dep>sfm_account_listing.account_listing_data_source</dep>
+            <dep>sfm_account_listing.sfm_account_listing_data_source</dep>
         </deps>
     </settings>
-    <dataSource name="account_listing_data_source" component="Magento_Ui/js/grid/provider">
+    <dataSource name="sfm_account_listing_data_source" component="Magento_Ui/js/grid/provider">
         <settings>
             <storageConfig>
                 <param name="indexField" xsi:type="string">account_id</param>
@@ -33,7 +33,7 @@
             <updateUrl path="mui/index/render"/>
         </settings>
         <aclResource>ShoppingFeed_Manager::accounts</aclResource>
-        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Account\Listing\DataProvider" name="account_listing_data_source">
+        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Account\Listing\DataProvider" name="sfm_account_listing_data_source">
             <settings>
                 <requestFieldName>id</requestFieldName>
                 <primaryFieldName>account_id</primaryFieldName>

@@ -275,4 +275,28 @@ class Dictionary extends AbstractDb
     {
         return 'sales_order';
     }
+
+    /**
+     * @return string
+     */
+    public function getSalesOrderTableName()
+    {
+        return $this->getTable($this->getSalesOrderTableCode());
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalesShipmentTableCode()
+    {
+        return 'sales_shipment';
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalesShipmentTableName()
+    {
+        return $this->getTable($this->getSalesShipmentTableCode());
+    }
 }

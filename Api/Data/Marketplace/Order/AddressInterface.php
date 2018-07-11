@@ -23,6 +23,7 @@ interface AddressInterface
     const CITY = 'city';
     const COUNTRY_CODE = 'country_code';
     const PHONE = 'phone';
+    const MOBILE_PHONE = 'mobile_phone';
     const EMAIL = 'email';
     const MISC_DATA = 'misc_data';
     /**#@+*/
@@ -81,6 +82,11 @@ interface AddressInterface
      * @return string
      */
     public function getPhone();
+
+    /**
+     * @return string
+     */
+    public function getMobilePhone();
 
     /**
      * @return string
@@ -151,6 +157,12 @@ interface AddressInterface
      * @return AddressInterface
      */
     public function setPhone($phone);
+
+    /**
+     * @param string $phone
+     * @return AddressInterface
+     */
+    public function setMobilePhone($phone);
 
     /**
      * @param string $email

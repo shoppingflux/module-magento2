@@ -8,6 +8,7 @@ use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 
 class Config extends AbstractConfig implements ConfigInterface
 {
+    const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_CREATE_INVOICE = 'create_invoice';
 
     public function getScopeSubPath()
@@ -22,14 +23,31 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Use Item Reference as Product ID'),
+                        'checkedNotice' => __('The item references will be considered to correspond to product IDs.'),
+                        'uncheckedNotice' => __('The item references will be considered to correspond to product SKUs.'),
+                        'sortOrder' => 10,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_CREATE_INVOICE,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Invoice'),
-                        'sortOrder' => 10,
+                        'sortOrder' => 20,
                     ]
                 ),
             ]
         );
+    }
+
+    public function shouldUseItemReferenceAsProductId(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID);
     }
 
     public function shouldCreateInvoice(StoreInterface $store)

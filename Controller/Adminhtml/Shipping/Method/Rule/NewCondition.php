@@ -2,15 +2,9 @@
 
 namespace ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\Rule;
 
-use Magento\Backend\App\Action\Context;
-use Magento\Framework\Controller\Result\RawFactory as RawResultFactory;
-use Magento\Framework\Registry;
-use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use Magento\Rule\Model\Condition\AbstractCondition;
-use ShoppingFeed\Manager\Api\Shipping\Method\RuleRepositoryInterface;
 use ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\ConditionsForm as RuleConditionsForm;
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
-use ShoppingFeed\Manager\Model\Shipping\Method\RuleFactory;
 use ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Form\DataProvider as RuleFormDataProvider;
 
 

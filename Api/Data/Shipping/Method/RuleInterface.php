@@ -4,7 +4,9 @@ namespace ShoppingFeed\Manager\Api\Data\Shipping\Method;
 
 use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Quote\Model\Quote;
 use Magento\Rule\Model\Condition\Combine as CombinedCondition;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierInterface;
 
 
@@ -27,6 +29,8 @@ interface RuleInterface
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
     /**#@-*/
+
+    const KEY_VALIDATED_MARKETPLACE_ORDER = 'sfm_validated_marketplace_order';
 
     /**
      * @return int
@@ -176,4 +180,11 @@ interface RuleInterface
      * @return RuleInterface
      */
     public function setUpdatedAt($updatedAt);
+
+    /**
+     * @param Quote $quote
+     * @param MarketplaceOrderInterface $marketplaceOrder
+     * @return bool
+     */
+    public function isAppliableToQuote(Quote $quote, MarketplaceOrderInterface $marketplaceOrder);
 }

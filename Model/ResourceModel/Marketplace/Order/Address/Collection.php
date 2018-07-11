@@ -13,7 +13,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address as Addres
  */
 class Collection extends AbstractCollection
 {
-    protected $_idFieldName = 'address_id';
+    protected $_idFieldName = AddressInterface::ADDRESS_ID;
 
     protected function _construct()
     {
@@ -26,7 +26,7 @@ class Collection extends AbstractCollection
      */
     public function addOrderIdFilter($orderIds)
     {
-        $this->addFieldToFilter('order_id', [ 'in' => $this->prepareIdFilterValue($orderIds) ]);
+        $this->addFieldToFilter(AddressInterface::ORDER_ID, [ 'in' => $this->prepareIdFilterValue($orderIds) ]);
         return $this;
     }
 

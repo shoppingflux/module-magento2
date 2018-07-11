@@ -12,6 +12,8 @@ use ShoppingFeed\Manager\Ui\DataProvider\Catalog\Product\Form\Modifier\FeedAttri
 
 class SaveProductAttributesObserver implements ObserverInterface
 {
+    const EVENT_KEY_PRODUCT = 'product';
+
     /**
      * @var FeedProductResource
      */
@@ -30,7 +32,7 @@ class SaveProductAttributesObserver implements ObserverInterface
      */
     public function execute(Observer $observer)
     {
-        if (($catalogProduct = $observer->getEvent()->getData('product'))
+        if (($catalogProduct = $observer->getEvent()->getData(static::EVENT_KEY_PRODUCT))
             && ($catalogProduct instanceof CatalogProduct)
             && is_array($feedAttributes = $catalogProduct->getData(UiAttributesModifier::DATA_SCOPE_SFM_MODULE))
         ) {

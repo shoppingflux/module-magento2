@@ -3,7 +3,6 @@
 namespace ShoppingFeed\Manager\Model\Config\Field\Category;
 
 use Magento\Catalog\Model\Category;
-use Magento\Catalog\Model\ResourceModel\Category\Collection as CategoryCollection;
 use Magento\Ui\Component\Container as UiContainer;
 use Magento\Ui\Component\Form\Element\Select as UiSelect;
 use Magento\Ui\Component\Form\Field as UiField;

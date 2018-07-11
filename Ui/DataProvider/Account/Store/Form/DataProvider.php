@@ -175,7 +175,7 @@ class DataProvider extends BaseDataProvider
         }
 
         $sortOrder = self::SORT_ORDER_PRODUCT_LIST_FIELDSET + 10;
-        
+
         $this->meta[static::FIELDSET_ORDER_GENERAL] = $this->getStoreConfigFieldsetMeta(
             $store,
             $this->orderGeneralConfig,
@@ -235,6 +235,8 @@ class DataProvider extends BaseDataProvider
         foreach ($this->sectionTypePool->getSortedTypes() as $sectionType) {
             $configData = $this->prepareStoreConfigFieldsetData($store, $sectionType->getConfig(), $configData);
         }
+
+        $configData = $this->prepareStoreConfigFieldsetData($store, $this->orderGeneralConfig, $configData);
 
         $this->data[$storeId] = array_merge(
             $this->data[$storeId] ?? [],

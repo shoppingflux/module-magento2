@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Console\Command\Exception as CommandException;
 use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
@@ -62,8 +61,8 @@ class ForceSectionsRefreshCommand extends AbstractCommand
         $this->setDefinition(
             [
                 $this->getRefreshStateArgument('The refresh state to force (%s)'),
-                $this->getStoreIdsOption('Only force refresh for those store IDs'),
-                $this->getSectionTypesOptions('Only force refresh for those section types (%s)'),
+                $this->getStoresOption('Only force refresh for those store IDs'),
+                $this->getSectionTypesOption('Only force refresh for those section types (%s)'),
                 $this->getExportStatesOption('Only force refresh for products with those export states (%s)'),
                 $this->getSelectedOnlyOption('Only force refresh for selected products'),
             ]
@@ -76,20 +75,20 @@ class ForceSectionsRefreshCommand extends AbstractCommand
         $io = new SymfonyStyle($input, $output);
 
         try {
-            $storeCollection = $this->getStoreCollection($input);
+            $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getAllIds();
-            $refreshState = $this->getRefreshState($input);
+            $refreshState = $this->getRefreshStateArgumentValue($input);
             $overridableRefreshStates = $this->refresherResource->getOverridableRefreshStates($refreshState);
 
             $io->title('Forcing product sections refresh for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             $productFilter = $this->createFeedProductFilter();
-            $productFilter->setSelectedOnly($this->getSelectedOnly($input));
-            $productFilter->setExportStates($this->getExportStates($input));
+            $productFilter->setSelectedOnly($this->getSelectedOnlyOptionValue($input));
+            $productFilter->setExportStates($this->getExportStatesOptionValue($input));
 
             $sectionFilter = $this->createFeedSectionFilter();
-            $sectionFilter->setTypeIds($this->getSectionTypeIds($input));
+            $sectionFilter->setTypeIds($this->getSectionTypesOptionIds($input));
             $sectionFilter->setRefreshStates($overridableRefreshStates);
 
             foreach ($storeCollection as $store) {
@@ -100,7 +99,7 @@ class ForceSectionsRefreshCommand extends AbstractCommand
 
             $io->newLine(2);
             $io->success('Successfully forced product sections refresh.');
-        } catch (CommandException $e) {
+        } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;
         }

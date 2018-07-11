@@ -137,6 +137,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
             [
                 'name' => self::KEY_ADDITIONAL_ATTRIBUTES,
                 'valueHandler' => $attributeValueHandler,
+                'defaultUseValue' => [],
                 'label' => __('Additional Attributes'),
                 'sortOrder' => $sortOrder,
             ]

@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Console\Command\Exception as CommandException;
 use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
@@ -92,9 +91,8 @@ class RefreshCommand extends AbstractCommand
         ];
 
         $sectionOptions = [
-            $this->getSectionTypesOptions(
+            $this->getSectionTypesOption(
                 'Refresh data for those section types (%s)',
-                true,
                 false,
                 self::OPTION_KEY_REFRESH_SECTION_TYPES
             ),
@@ -120,7 +118,7 @@ class RefreshCommand extends AbstractCommand
         }
 
         $baseOptions = [
-            $this->getStoreIdsOption('Only refresh feed product data for those store IDs'),
+            $this->getStoresOption('Only refresh feed product data for those store IDs'),
             $this->getExportStatesOption('Only refresh data for products with those export states (%s) (overridable)'),
             $this->getSelectedOnlyOption('Only refresh data for selected products (overridable)'),
             $this->getRefreshStatesOption('Only refresh data with those refresh states (%s) (overridable)'),
@@ -135,17 +133,17 @@ class RefreshCommand extends AbstractCommand
         $io = new SymfonyStyle($input, $output);
 
         try {
-            $storeCollection = $this->getStoreCollection($input);
+            $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getAllIds();
 
-            $defaultExportStates = $this->getExportStates($input);
-            $defaultSelectedOnly = $this->getSelectedOnly($input);
-            $defaultRefreshStates = $this->getRefreshStates($input);
+            $defaultExportStates = $this->getExportStatesOptionValue($input);
+            $defaultSelectedOnly = $this->getSelectedOnlyOptionValue($input);
+            $defaultRefreshStates = $this->getRefreshStatesOptionValue($input);
 
             if ($input->getOption(self::OPTION_KEY_REFRESH_EXPORT_STATE)) {
-                $exportStates = $this->getExportStates($input, false, self::OPTION_KEY_EXPORT_STATE_EXPORT_STATES);
-                $selectedOnly = $this->getSelectedOnly($input, self::OPTION_KEY_EXPORT_STATE_SELECTED_ONLY);
-                $refreshStates = $this->getRefreshStates($input, false, self::OPTION_KEY_EXPORT_STATE_REFRESH_STATES);
+                $exportStates = $this->getExportStatesOptionValue($input, self::OPTION_KEY_EXPORT_STATE_EXPORT_STATES);
+                $selectedOnly = $this->getSelectedOnlyOptionValue($input, self::OPTION_KEY_EXPORT_STATE_SELECTED_ONLY);
+                $refreshStates = $this->getRefreshStatesOptionValue($input, self::OPTION_KEY_EXPORT_STATE_REFRESH_STATES);
 
                 $exportStateProductFilter = $this->createFeedProductFilter()
                     ->setExportStates(empty($exportStates) ? $defaultExportStates : $exportStates)
@@ -155,7 +153,7 @@ class RefreshCommand extends AbstractCommand
                 $exportStateProductFilter = null;
             }
 
-            $refreshedSectionTypes = $this->getSectionTypes($input, true, self::OPTION_KEY_REFRESH_SECTION_TYPES);
+            $refreshedSectionTypes = $this->getSectionTypesOptionValue($input, self::OPTION_KEY_REFRESH_SECTION_TYPES);
             $sectionTypeProductFilters = [];
             $sectionTypeSectionFilters = [];
 
@@ -163,20 +161,18 @@ class RefreshCommand extends AbstractCommand
                 $typeId = $sectionType->getId();
                 $typeCode = $sectionType->getCode();
 
-                $exportStates = $this->getExportStates(
+                $exportStates = $this->getExportStatesOptionValue(
                     $input,
-                    false,
                     sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_EXPORT_STATES, $typeCode)
                 );
 
-                $selectedOnly = $this->getSelectedOnly(
+                $selectedOnly = $this->getSelectedOnlyOptionValue(
                     $input,
                     sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_SELECTED_ONLY, $typeCode)
                 );
 
-                $refreshStates = $this->getRefreshStates(
+                $refreshStates = $this->getRefreshStatesOptionValue(
                     $input,
-                    false,
                     sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_REFRESH_STATES, $typeCode)
                 );
 
@@ -202,7 +198,7 @@ class RefreshCommand extends AbstractCommand
 
                 $io->progressAdvance(1);
             }
-        } catch (CommandException $e) {
+        } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;
         }

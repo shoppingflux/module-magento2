@@ -11,6 +11,11 @@ class Filter extends AbstractFilter
     /**
      * @var int[]|null
      */
+    private $productIds = null;
+
+    /**
+     * @var int[]|null
+     */
     private $storeIds = null;
 
     /**
@@ -32,6 +37,14 @@ class Filter extends AbstractFilter
      * @var TimeFilter|null
      */
     private $lastExportStateRefreshTimeFilter = null;
+
+    /**
+     * @return int[]|null
+     */
+    public function getProductIds()
+    {
+        return $this->productIds;
+    }
 
     /**
      * @return int[]|null
@@ -71,6 +84,16 @@ class Filter extends AbstractFilter
     public function getLastExportStateRefreshTimeFilter()
     {
         return $this->lastExportStateRefreshTimeFilter;
+    }
+
+    /**
+     * @param int[] $productIds
+     * @return $this
+     */
+    public function setProductIds(array $productIds)
+    {
+        $this->productIds = $productIds;
+        return $this;
     }
 
     /**
@@ -122,6 +145,6 @@ class Filter extends AbstractFilter
         $this->lastExportStateRefreshTimeFilter = $lastExportStateRefreshTimeFilter;
         return $this;
     }
-    
+
     // @todo also have lastExportStateRefreshStateUpdateTimeFilter
 }

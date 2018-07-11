@@ -8,13 +8,16 @@ use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
 
 class Actions extends AbstractActions
 {
+    const ACL_EDIT = 'ShoppingFeed_Manager::shipping_method_rule_edit';
+    const ACL_DELETE = 'ShoppingFeed_Manager::shipping_method_rule_edit';
+
     const URL_PATH_EDIT = 'shoppingfeed_manager/shipping_method_rule/edit';
     const URL_PATH_DELETE = 'shoppingfeed_manager/shipping_method_rule/delete';
 
     public function prepareDataSource(array $dataSource)
     {
-        $isEditAllowed = $this->authorizationModel->isAllowed('ShoppingFeed_Manager::shipping_method_rule_edit');
-        $isDeleteAllowed = $this->authorizationModel->isAllowed('ShoppingFeed_Manager::shipping_method_rule_delete');
+        $isEditAllowed = $this->authorizationModel->isAllowed(static::ACL_EDIT);
+        $isDeleteAllowed = $this->authorizationModel->isAllowed(static::ACL_DELETE);
 
         if (!$isEditAllowed && !$isDeleteAllowed) {
             return $dataSource;

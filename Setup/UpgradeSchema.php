@@ -8,6 +8,8 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface;
@@ -46,6 +48,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->createMarketplaceOrderTicketTable($setup);
             $this->createMarketplaceOrderLogTable($setup);
             $this->createShippingMethodRuleTable($setup);
+        }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.4.0') < 0)) {
+            $this->addMarketplaceOrderImportRemainingTryCountField($setup);
+            $this->addMarketplaceOrderAddressMobilePhoneField($setup);
+            $this->renameMarketplaceOrderTicketOrderIdField($setup);
+            $this->renameMarketplaceOrderTicketActionField($setup);
+            $this->addMarketplaceOrderTicketShoppingFeedIdUniqueIndex($setup);
+            $this->addMarketplaceOrderTicketStatusField($setup);
+            $this->renameMarketplaceOrderLogOrderIdField($setup);
+            $this->addMarketplaceOrderLogDetailsField($setup);
         }
     }
 
@@ -263,6 +276,30 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderImportRemainingTryCountField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTableName, OrderInterface::IMPORT_REMAINING_TRY_COUNT)) {
+            $connection->addColumn(
+                $marketplaceOrderTableName,
+                OrderInterface::IMPORT_REMAINING_TRY_COUNT,
+                [
+                    'type' => Table::TYPE_INTEGER,
+                    'nullable' => false,
+                    'unsigned' => true,
+                    'default' => OrderInterface::DEFAULT_IMPORT_TRY_COUNT,
+                    'comment' => 'Import Remaining Try Count',
+                    'after' => OrderInterface::SHIPMENT_CARRIER,
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
      * @throws \Zend_Db_Exception
      */
     private function createMarketplaceOrderAddressTable(SchemaSetupInterface $setup)
@@ -403,6 +440,29 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderAddressMobilePhoneField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderAddressTableName = $this->tableDictionary->getMarketplaceOrderAddressTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderAddressTableName, AddressInterface::MOBILE_PHONE)) {
+            $connection->addColumn(
+                $marketplaceOrderAddressTableName,
+                AddressInterface::MOBILE_PHONE,
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => 255,
+                    'nullable' => false,
+                    'comment' => 'Mobile Phone',
+                    'after' => AddressInterface::PHONE,
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
      * @throws \Zend_Db_Exception
      */
     private function createMarketplaceOrderItemTable(SchemaSetupInterface $setup)
@@ -491,7 +551,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (!$setup->tableExists($marketplaceOrderTicketTableCode)) {
             $table = $connection->newTable($marketplaceOrderTicketTableName)
                 ->addColumn(
-                    'ticket_id',
+                    TicketInterface::TICKET_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -503,7 +563,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'Ticket ID'
                 )
                 ->addColumn(
-                    'shopping_feed_ticket_id',
+                    TicketInterface::SHOPPING_FEED_TICKET_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -513,7 +573,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'Shopping Feed Ticket ID'
                 )
                 ->addColumn(
-                    'marketplace_order_id',
+                    TicketInterface::ORDER_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -523,14 +583,14 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'Marketplace Order ID'
                 )
                 ->addColumn(
-                    'action_code',
+                    TicketInterface::ACTION,
                     Table::TYPE_TEXT,
                     32,
                     [ 'nullable' => false ],
-                    'Action Code'
+                    'Action'
                 )
                 ->addColumn(
-                    'created_at',
+                    TicketInterface::CREATED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [
@@ -542,11 +602,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ->addForeignKey(
                     $setup->getFkName(
                         $marketplaceOrderTicketTableCode,
-                        'marketplace_order_id',
+                        TicketInterface::ORDER_ID,
                         $marketplaceOrderTableCode,
                         OrderInterface::ORDER_ID
                     ),
-                    'marketplace_order_id',
+                    TicketInterface::ORDER_ID,
                     $marketplaceOrderTableName,
                     OrderInterface::ORDER_ID,
                     Table::ACTION_CASCADE
@@ -554,6 +614,107 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ->setComment('Shopping Feed Marketplace Order Ticket');
 
             $connection->createTable($table);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function renameMarketplaceOrderTicketOrderIdField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
+
+        if ($connection->tableColumnExists($marketplaceOrderTicketTableName, 'marketplace_order_id')
+            && !$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::ORDER_ID)
+        ) {
+            $connection->changeColumn(
+                $marketplaceOrderTicketTableName,
+                'marketplace_order_id',
+                TicketInterface::ORDER_ID,
+                [
+                    'type' => Table::TYPE_INTEGER,
+                    'nullable' => false,
+                    'unsigned' => true,
+                    'comment' => 'Order ID',
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function renameMarketplaceOrderTicketActionField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
+
+        if ($connection->tableColumnExists($marketplaceOrderTicketTableName, 'action_code')
+            && !$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::ACTION)
+        ) {
+            $connection->changeColumn(
+                $marketplaceOrderTicketTableName,
+                'action_code',
+                TicketInterface::ACTION,
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => 32,
+                    'nullable' => false,
+                    'comment' => 'Action',
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderTicketShoppingFeedIdUniqueIndex(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTicketTableCode = $this->tableDictionary->getMarketplaceOrderTicketTableCode();
+        $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
+
+        $indexName = $setup->getIdxName(
+            $marketplaceOrderTicketTableCode,
+            [ TicketInterface::SHOPPING_FEED_TICKET_ID ],
+            AdapterInterface::INDEX_TYPE_UNIQUE
+        );
+
+        $tableIndices = $connection->getIndexList($marketplaceOrderTicketTableName);
+
+        if (!isset($tableIndices[$indexName])) {
+            $connection->addIndex(
+                $marketplaceOrderTicketTableName,
+                $indexName,
+                [ TicketInterface::SHOPPING_FEED_TICKET_ID ],
+                AdapterInterface::INDEX_TYPE_UNIQUE
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderTicketStatusField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::STATUS)) {
+            $connection->addColumn(
+                $marketplaceOrderTicketTableName,
+                TicketInterface::STATUS,
+                [
+                    'type' => Table::TYPE_INTEGER,
+                    'nullable' => false,
+                    'unsigned' => true,
+                    'default' => TicketInterface::STATUS_PENDING,
+                    'comment' => 'Status',
+                    'after' => TicketInterface::ACTION,
+                ]
+            );
         }
     }
 
@@ -572,7 +733,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (!$setup->tableExists($marketplaceOrderLogTableCode)) {
             $table = $connection->newTable($marketplaceOrderLogTableName)
                 ->addColumn(
-                    'log_id',
+                    LogInterface::LOG_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
@@ -584,31 +745,31 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'Log ID'
                 )
                 ->addColumn(
-                    'marketplace_order_id',
+                    LogInterface::ORDER_ID,
                     Table::TYPE_INTEGER,
                     null,
                     [
                         'nullable' => false,
                         'unsigned' => true,
                     ],
-                    'Marketplace Order ID'
+                    'Order ID'
                 )
                 ->addColumn(
-                    'type',
+                    LogInterface::TYPE,
                     Table::TYPE_TEXT,
                     32,
                     [ 'nullable' => false ],
                     'Type'
                 )
                 ->addColumn(
-                    'message',
+                    LogInterface::MESSAGE,
                     Table::TYPE_TEXT,
                     65536,
                     [ 'nullable' => false ],
                     'Message'
                 )
                 ->addColumn(
-                    'created_at',
+                    LogInterface::CREATED_AT,
                     Table::TYPE_TIMESTAMP,
                     null,
                     [
@@ -620,11 +781,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ->addForeignKey(
                     $setup->getFkName(
                         $marketplaceOrderLogTableCode,
-                        'marketplace_order_id',
+                        LogInterface::ORDER_ID,
                         $marketplaceOrderTableCode,
                         OrderInterface::ORDER_ID
                     ),
-                    'marketplace_order_id',
+                    LogInterface::ORDER_ID,
                     $marketplaceOrderTableName,
                     OrderInterface::ORDER_ID,
                     Table::ACTION_CASCADE
@@ -632,6 +793,54 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ->setComment('Shopping Feed Marketplace Order Log');
 
             $connection->createTable($table);
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function renameMarketplaceOrderLogOrderIdField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderLogTableName = $this->tableDictionary->getMarketplaceOrderLogTableName();
+
+        if ($connection->tableColumnExists($marketplaceOrderLogTableName, 'marketplace_order_id')
+            && !$connection->tableColumnExists($marketplaceOrderLogTableName, LogInterface::ORDER_ID)
+        ) {
+            $connection->changeColumn(
+                $marketplaceOrderLogTableName,
+                'marketplace_order_id',
+                LogInterface::ORDER_ID,
+                [
+                    'type' => Table::TYPE_INTEGER,
+                    'nullable' => false,
+                    'unsigned' => true,
+                    'comment' => 'Order ID',
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderLogDetailsField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderLogTableName = $this->tableDictionary->getMarketplaceOrderLogTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderLogTableName, LogInterface::DETAILS)) {
+            $connection->addColumn(
+                $marketplaceOrderLogTableName,
+                LogInterface::DETAILS,
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => 65536,
+                    'nullable' => true,
+                    'comment' => 'Details',
+                    'after' => LogInterface::MESSAGE,
+                ]
+            );
         }
     }
 

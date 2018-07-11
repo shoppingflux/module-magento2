@@ -3,7 +3,6 @@
 namespace ShoppingFeed\Manager\Model\Marketplace;
 
 use Magento\Framework\Model\AbstractModel;
-use ShoppingFeed\Manager\Api\Data\Marketplace\n;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
@@ -46,7 +45,7 @@ class Order extends AbstractModel implements OrderInterface
 
     public function getMarketplaceOrderNumber()
     {
-        return (int) $this->getDataByKey(self::MARKETPLACE_ORDER_NUMBER);
+        return trim($this->getDataByKey(self::MARKETPLACE_ORDER_NUMBER));
     }
 
     public function getShoppingFeedMarketplaceId()
@@ -92,6 +91,11 @@ class Order extends AbstractModel implements OrderInterface
     public function getShipmentCarrier()
     {
         return trim($this->getDataByKey(self::SHIPMENT_CARRIER));
+    }
+
+    public function getImportRemainingTryCount()
+    {
+        return (int) $this->getDataByKey(self::IMPORT_REMAINING_TRY_COUNT);
     }
 
     public function getCreatedAt()
@@ -182,6 +186,16 @@ class Order extends AbstractModel implements OrderInterface
     public function setShipmentCarrier($shipmentCarrier)
     {
         return $this->setData(self::SHIPMENT_CARRIER, trim($shipmentCarrier));
+    }
+
+    public function resetImportRemainingTryCount()
+    {
+        return $this->setImportRemainingTryCount(self::DEFAULT_IMPORT_TRY_COUNT);
+    }
+
+    public function setImportRemainingTryCount($tryCount)
+    {
+        return $this->setData(self::IMPORT_REMAINING_TRY_COUNT, max(0, (int) $tryCount));
     }
 
     public function setCreatedAt($createdAt)

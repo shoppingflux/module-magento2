@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Console\Command\Exception as CommandException;
 use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
@@ -58,7 +57,7 @@ class SyncProductListCommand extends AbstractCommand
     {
         $this->setName('shoppingfeed:feed:sync-product-list');
         $this->setDescription('Synchronizes the product list of one or more feeds with the catalog product list');
-        $this->setDefinition([ $this->getStoreIdsOption('Only synchronize the product list for those store IDs') ]);
+        $this->setDefinition([ $this->getStoresOption('Only synchronize the product list for those store IDs') ]);
         parent::configure();
     }
 
@@ -67,7 +66,7 @@ class SyncProductListCommand extends AbstractCommand
         $io = new SymfonyStyle($input, $output);
 
         try {
-            $storeCollection = $this->getStoreCollection($input);
+            $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getAllIds();
 
             $io->title('Synchronizing feed product list for store IDs: ' . implode(', ', $storeIds));
@@ -80,7 +79,7 @@ class SyncProductListCommand extends AbstractCommand
 
             $io->newLine(2);
             $io->success('Successfully synchronized feed product list(s).');
-        } catch (CommandException $e) {
+        } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;
         }

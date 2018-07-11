@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section;
 
-use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type as TypeResource;
 
 

@@ -74,14 +74,19 @@ class Store extends AbstractDb
 
     protected function _construct()
     {
-        $this->_init('sfm_account_store', 'store_id');
+        $this->_init('sfm_account_store', StoreInterface::STORE_ID);
     }
 
     protected function _prepareDataForSave(AbstractModel $object)
     {
         /** @var StoreInterface $object */
         $preparedData = parent::_prepareDataForSave($object);
-        $preparedData[StoreInterface::CONFIGURATION] = json_encode($object->getConfiguration()->getData());
+
+        $preparedData[StoreInterface::CONFIGURATION] = json_encode(
+            $object->getConfiguration()->getData(),
+            JSON_FORCE_OBJECT
+        );
+
         return $preparedData;
     }
 
@@ -92,9 +97,9 @@ class Store extends AbstractDb
         $jsonConfiguration = '';
 
         if ($baseConfiguration instanceof DataObject) {
-            $jsonConfiguration = json_encode($baseConfiguration->getData());
+            $jsonConfiguration = json_encode($baseConfiguration->getData(), JSON_FORCE_OBJECT);
         } elseif (is_array($baseConfiguration)) {
-            $jsonConfiguration = json_encode($baseConfiguration);
+            $jsonConfiguration = json_encode($baseConfiguration, JSON_FORCE_OBJECT);
         } elseif (is_string($baseConfiguration)) {
             $jsonConfiguration = $baseConfiguration;
         }
