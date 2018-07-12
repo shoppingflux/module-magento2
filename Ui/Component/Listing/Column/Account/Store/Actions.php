@@ -8,13 +8,16 @@ use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
 
 class Actions extends AbstractActions
 {
+    const ACL_EDIT = 'ShoppingFeed_Manager::account_store_edit';
+    const ACL_DELETE = 'ShoppingFeed_Manager::account_store_delete';
+    
     const URL_PATH_EDIT = 'shoppingfeed_manager/account_store/edit';
     const URL_PATH_DELETE = 'shoppingfeed_manager/account_store/delete';
 
     public function prepareDataSource(array $dataSource)
     {
-        $isEditAllowed = $this->authorizationModel->isAllowed('ShoppingFeed_Manager::account_store_edit');
-        $isDeleteAllowed = $this->authorizationModel->isAllowed('ShoppingFeed_Manager::account_store_delete');
+        $isEditAllowed = $this->authorizationModel->isAllowed(static::ACL_EDIT);
+        $isDeleteAllowed = $this->authorizationModel->isAllowed(static::ACL_DELETE);
 
         if (!$isEditAllowed && !$isDeleteAllowed) {
             return $dataSource;

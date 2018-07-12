@@ -13,7 +13,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item as ItemResou
  */
 class Collection extends AbstractCollection
 {
-    protected $_idFieldName = 'item_id';
+    protected $_idFieldName = ItemInterface::ITEM_ID;
 
     protected function _construct()
     {
@@ -26,7 +26,7 @@ class Collection extends AbstractCollection
      */
     public function addOrderIdFilter($orderIds)
     {
-        $this->addFieldToFilter('order_id', [ 'in' => $this->prepareIdFilterValue($orderIds) ]);
+        $this->addFieldToFilter(ItemInterface::ORDER_ID, [ 'in' => $this->prepareIdFilterValue($orderIds) ]);
         return $this;
     }
 

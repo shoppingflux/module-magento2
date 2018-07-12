@@ -11,6 +11,7 @@ use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProductFactory as RefreshableProductFactory;
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
+use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Filter\Applier as ProductFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Filter\Applier as SectionFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
@@ -19,6 +20,16 @@ use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
 
 class Refresher extends AbstractDb
 {
+    /**
+     * @var StoreCollectionFactory
+     */
+    private $storeCollectionFactory;
+
+    /**
+     * @var int[]|null
+     */
+    private $allStoreIds = null;
+
     /**
      * @var FeedProductFactory
      */
@@ -33,6 +44,7 @@ class Refresher extends AbstractDb
      * @param DbContext $context
      * @param TimeHelper $timeHelper
      * @param TableDictionary $tableDictionary
+     * @param StoreCollectionFactory $storeCollectionFactory
      * @param ProductFilterApplier $productFilterApplier
      * @param SectionFilterApplier $sectionFilterApplier
      * @param FeedProductFactory $feedProductFactory
@@ -43,12 +55,14 @@ class Refresher extends AbstractDb
         DbContext $context,
         TimeHelper $timeHelper,
         TableDictionary $tableDictionary,
+        StoreCollectionFactory $storeCollectionFactory,
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
         FeedProductFactory $feedProductFactory,
         RefreshableProductFactory $refreshableProductFactory,
         string $connectionName = null
     ) {
+        $this->storeCollectionFactory = $storeCollectionFactory;
         $this->feedProductFactory = $feedProductFactory;
         $this->refreshableProductFactory = $refreshableProductFactory;
 
@@ -96,21 +110,42 @@ class Refresher extends AbstractDb
     }
 
     /**
+     * @return int[]
+     */
+    private function getAllStoreIds()
+    {
+        if (null === $this->allStoreIds) {
+            $storeCollection = $this->storeCollectionFactory->create();
+            $this->allStoreIds = $storeCollection->getAllIds();
+        }
+
+        return $this->allStoreIds;
+    }
+
+    /**
      * @param int $refreshState
      * @param ProductFilter $productFilter
      * @return $this
      */
     public function forceProductExportStateRefresh($refreshState, ProductFilter $productFilter)
     {
-        $this->getConnection()
-            ->update(
-                $this->tableDictionary->getFeedProductTableName(),
-                [
-                    'export_state_refresh_state' => $refreshState,
-                    'export_state_refresh_state_updated_at' => $this->timeHelper->utcDate(),
-                ],
-                implode(' AND ', $this->productFilterApplier->getFilterConditions($productFilter))
-            );
+        $connection = $this->getConnection();
+        $overridableRefreshStates = $this->getOverridableRefreshStates($refreshState);
+
+        $connection->update(
+            $this->tableDictionary->getFeedProductTableName(),
+            [
+                'export_state_refresh_state' => $refreshState,
+                'export_state_refresh_state_updated_at' => $this->timeHelper->utcDate(),
+            ],
+            implode(
+                ' AND ',
+                array_merge(
+                    $this->productFilterApplier->getFilterConditions($productFilter),
+                    [ $connection->quoteInto('export_state_refresh_state IN (?)', $overridableRefreshStates) ]
+                )
+            )
+        );
 
         return $this;
     }
@@ -128,6 +163,11 @@ class Refresher extends AbstractDb
     ) {
         $connection = $this->getConnection();
         $storeIds = $sectionFilter->getStoreIds();
+        $overridableRefreshStates = $this->getOverridableRefreshStates($refreshState);
+
+        if (null === $storeIds) {
+            $storeIds = $this->getAllStoreIds();
+        }
 
         // Update product sections on a store-by-store basis, as update() does not handle aliased target table names,
         // which we would need for filtering products.
@@ -149,7 +189,10 @@ class Refresher extends AbstractDb
                 implode(
                     ' AND ',
                     array_merge(
-                        [ 'product_id IN (' . $productSelect->assemble() . ')' ],
+                        [
+                            'product_id IN (' . $productSelect->assemble() . ')',
+                            $connection->quoteInto('refresh_state IN (?)', $overridableRefreshStates),
+                        ],
                         $this->sectionFilterApplier->getFilterConditions($sectionFilter)
                     )
                 )

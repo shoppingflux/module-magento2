@@ -15,7 +15,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\Collectio
 class Address extends AbstractModel implements AddressInterface
 {
     protected $_eventPrefix = 'shoppingfeed_manager_marketplace_order_address';
-    protected $_eventObject = 'sales_order_address';
+    protected $_eventObject = 'marketplace_order_address';
 
     protected function _construct()
     {
@@ -70,6 +70,11 @@ class Address extends AbstractModel implements AddressInterface
     public function getPhone()
     {
         return trim($this->getDataByKey(self::PHONE));
+    }
+
+    public function getMobilePhone()
+    {
+        return trim($this->getDataByKey(self::MOBILE_PHONE));
     }
 
     public function getEmail()
@@ -130,6 +135,11 @@ class Address extends AbstractModel implements AddressInterface
     public function setPhone($phone)
     {
         return $this->setData(self::PHONE, trim($phone));
+    }
+
+    public function setMobilePhone($phone)
+    {
+        return $this->setData(self::MOBILE_PHONE, trim($phone));
     }
 
     public function setEmail($email)

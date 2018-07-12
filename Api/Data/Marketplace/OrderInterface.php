@@ -23,12 +23,15 @@ interface OrderInterface
     const TOTAL_AMOUNT = 'total_amount';
     const PAYMENT_METHOD = 'payment_method';
     const SHIPMENT_CARRIER = 'shipment_carrier';
+    const IMPORT_REMAINING_TRY_COUNT = 'import_remaining_try_count';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
     const FETCHED_AT = 'fetched_at';
     const IMPORTED_AT = 'imported_at';
     const ACKNOWLEDGED_AT = 'acknowledged_at';
     /**#@+*/
+
+    const DEFAULT_IMPORT_TRY_COUNT = 3;
 
     /**
      * @return int
@@ -99,6 +102,11 @@ interface OrderInterface
      * @return string
      */
     public function getShipmentCarrier();
+
+    /**
+     * @return int
+     */
+    public function getImportRemainingTryCount();
 
     /**
      * @return string
@@ -202,6 +210,17 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setShipmentCarrier($shipmentCarrier);
+
+    /**
+     * @return OrderInterface
+     */
+    public function resetImportRemainingTryCount();
+
+    /**
+     * @param int $tryCount
+     * @return OrderInterface
+     */
+    public function setImportRemainingTryCount($tryCount);
 
     /**
      * @param string $createdAt

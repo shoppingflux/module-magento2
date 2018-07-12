@@ -24,6 +24,10 @@ class Applier extends AbstractApplier
     {
         $conditions = [];
 
+        if (is_array($productIds = $productFilter->getProductIds())) {
+            $conditions[] = $this->getQuotedCondition('product_id', 'IN (?)', $productIds, $productTableAlias);
+        }
+
         if (is_array($storeIds = $productFilter->getStoreIds())) {
             $conditions[] = $this->getQuotedCondition('store_id', 'IN (?)', $storeIds, $productTableAlias);
         }

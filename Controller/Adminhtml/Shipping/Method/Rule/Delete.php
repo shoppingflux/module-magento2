@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\Rule;
 
-use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
 

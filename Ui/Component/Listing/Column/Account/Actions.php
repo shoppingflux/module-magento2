@@ -8,11 +8,12 @@ use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
 
 class Actions extends AbstractActions
 {
+    const ACL_DELETE = 'ShoppingFeed_Manager::account_delete';
     const URL_PATH_DELETE = 'shoppingfeed_manager/account/delete';
 
     public function prepareDataSource(array $dataSource)
     {
-        $isDeleteAllowed = $this->authorizationModel->isAllowed('ShoppingFeed_Manager::account_delete');
+        $isDeleteAllowed = $this->authorizationModel->isAllowed(static::ACL_DELETE);
 
         if (!$isDeleteAllowed) {
             return $dataSource;

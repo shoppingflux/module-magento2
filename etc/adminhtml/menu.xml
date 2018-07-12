@@ -7,5 +7,6 @@
 
         <add id="ShoppingFeed_Manager::main_sales" title="Shopping Feed" translate="title" module="ShoppingFeed_Manager" sortOrder="100000" parent="Magento_Sales::sales" resource="ShoppingFeed_Manager::main_sales"/>
         <add id="ShoppingFeed_Manager::shipping_method_rules" title="Shipping Method Rules" translate="title" module="ShoppingFeed_Manager" sortOrder="100100" action="shoppingfeed_manager/shipping_method_rule/index" parent="ShoppingFeed_Manager::main_sales" resource="ShoppingFeed_Manager::shipping_method_rules"/>
+        <add id="ShoppingFeed_Manager::marketplace_orders" title="Marketplace Orders" translate="title" module="ShoppingFeed_Manager" sortOrder="100100" action="shoppingfeed_manager/marketplace_order/index" parent="ShoppingFeed_Manager::main_sales" resource="ShoppingFeed_Manager::marketplace_orders"/>
     </menu>
 </config>

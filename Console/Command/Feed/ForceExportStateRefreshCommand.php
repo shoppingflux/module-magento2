@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Console\Command\Exception as CommandException;
 use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
@@ -62,7 +61,7 @@ class ForceExportStateRefreshCommand extends AbstractCommand
         $this->setDefinition(
             [
                 $this->getRefreshStateArgument('The refresh state to force (%s)'),
-                $this->getStoreIdsOption('Only force refresh for those store IDs'),
+                $this->getStoresOption('Only force refresh for those store IDs'),
                 $this->getExportStatesOption('Only refresh products with those export states (%s)'),
                 $this->getSelectedOnlyOption('Only refresh selected products'),
             ]
@@ -76,17 +75,17 @@ class ForceExportStateRefreshCommand extends AbstractCommand
         $io = new SymfonyStyle($input, $output);
 
         try {
-            $storeCollection = $this->getStoreCollection($input);
+            $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getAllIds();
-            $refreshState = $this->getRefreshState($input);
+            $refreshState = $this->getRefreshStateArgumentValue($input);
             $overridableRefreshStates = $this->refresherResource->getOverridableRefreshStates($refreshState);
 
             $io->title('Forcing export state refresh for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             $productFilter = $this->createFeedProductFilter();
-            $productFilter->setSelectedOnly($this->getSelectedOnly($input));
-            $productFilter->setExportStates($this->getExportStates($input));
+            $productFilter->setSelectedOnly($this->getSelectedOnlyOptionValue($input));
+            $productFilter->setExportStates($this->getExportStatesOptionValue($input));
             $productFilter->setExportStateRefreshStates($overridableRefreshStates);
 
             foreach ($storeCollection as $store) {
@@ -97,7 +96,7 @@ class ForceExportStateRefreshCommand extends AbstractCommand
 
             $io->newLine(2);
             $io->success('Successfully forced export state refresh.');
-        } catch (CommandException $e) {
+        } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;
         }

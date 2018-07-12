@@ -6,7 +6,6 @@ use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
-use ShoppingFeed\Feed\Product\Product as ExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ShippingInterface as ConfigInterface;
@@ -39,7 +38,7 @@ class Shipping extends AbstractAdapter implements ShippingInterface
      * @param CatalogProduct $product
      * @param AbstractAttribute|null $attribute
      * @param mixed|null $defaultValue
-     * @return string|null
+     * @return mixed|null
      */
     protected function getCatalogProductValue(CatalogProduct $product, $attribute, $defaultValue)
     {
@@ -50,8 +49,8 @@ class Shipping extends AbstractAdapter implements ShippingInterface
         }
 
         return (null !== $value)
-            ? (string) $value
-            : (null !== $defaultValue) ? (string) $defaultValue : null;
+            ? $value
+            : (null !== $defaultValue) ? $defaultValue : null;
     }
 
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
@@ -59,24 +58,26 @@ class Shipping extends AbstractAdapter implements ShippingInterface
         $config = $this->getConfig();
         $catalogProduct = $product->getCatalogProduct();
 
+        $fees = $this->getCatalogProductValue(
+            $catalogProduct,
+            $config->getFeesAttribute($store),
+            $config->getDefaultFees($store)
+        );
+
+        $delay = $this->getCatalogProductValue(
+            $catalogProduct,
+            $config->getDelayAttribute($store),
+            $config->getDefaultDelay($store)
+        );
+
         return [
-            self::KEY_CARRIER_NAME => $this->getCatalogProductValue(
+            self::KEY_CARRIER_NAME => (string) $this->getCatalogProductValue(
                 $catalogProduct,
                 $config->getCarrierNameAttribute($store),
                 $config->getDefaultCarrierName($store)
             ),
-
-            self::KEY_FEES => (float) $this->getCatalogProductValue(
-                $catalogProduct,
-                $config->getFeesAttribute($store),
-                $config->getDefaultFees($store)
-            ),
-
-            self::KEY_DELAY => (int) $this->getCatalogProductValue(
-                $catalogProduct,
-                $config->getDelayAttribute($store),
-                $config->getDefaultDelay($store)
-            ),
+            self::KEY_FEES => is_numeric($fees) ? (float) $fees : null,
+            self::KEY_DELAY => is_int($delay) || ctype_digit($delay) ? (int) $delay : null,
         ];
     }
 

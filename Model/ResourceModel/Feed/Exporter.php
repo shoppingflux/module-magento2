@@ -249,7 +249,6 @@ class Exporter extends AbstractDb
         return $this->queryIteratorFactory->create(
             [
                 'query' => $productSelect,
-
                 'itemCallback' => function (array $args) use ($sectionTypeIds) {
                     $row = $args['row'];
 
@@ -296,7 +295,6 @@ class Exporter extends AbstractDb
         return $this->queryIteratorFactory->create(
             [
                 'query' => $parentSelect,
-
                 'itemCallback' => function ($args) use (
                     $sectionTypeIds,
                     $parentConfigurableAttributeCodes,

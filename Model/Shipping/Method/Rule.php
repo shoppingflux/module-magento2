@@ -14,8 +14,10 @@ use Magento\Framework\Model\ResourceModel\AbstractResource;
 use Magento\Framework\Registry;
 use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Quote\Model\Quote;
 use Magento\Rule\Model\AbstractModel;
-use Magento\SalesRule\Model\Rule\Condition\CombineFactory as CombinedConditionFactory;
+use ShoppingFeed\Manager\Model\Shipping\Method\Rule\Condition\CombineFactory as CombinedConditionFactory;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule as RuleResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Collection as RuleCollection;
@@ -255,5 +257,12 @@ class Rule extends AbstractModel implements RuleInterface
     public function setUpdatedAt($updatedAt)
     {
         return $this->setData(self::UPDATED_AT, $updatedAt);
+    }
+
+    public function isAppliableToQuote(Quote $quote, MarketplaceOrderInterface $marketplaceOrder)
+    {
+        $shippingAddress = $quote->getShippingAddress();
+        $shippingAddress->setData(self::KEY_VALIDATED_MARKETPLACE_ORDER, $marketplaceOrder);
+        return $this->validate($shippingAddress);
     }
 }

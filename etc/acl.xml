@@ -20,6 +20,10 @@
                         <resource id="ShoppingFeed_Manager::shipping_method_rule_edit" title="Edit Shipping Method Rule" translate="title" sortOrder="10000"/>
                         <resource id="ShoppingFeed_Manager::shipping_method_rule_delete" title="Delete Shipping Method Rule" translate="title" sortOrder="20000"/>
                     </resource>
+
+                    <resource id="ShoppingFeed_Manager::marketplace_orders" title="Marketplace Orders" translate="title" sortOrder="40000">
+                        <resource id="ShoppingFeed_Manager::marketplace_order_reset_import_try_count" title="Reset Import Attempts" translate="title" sortOrder="10000"/>
+                    </resource>
                 </resource>
             </resource>
         </resources>

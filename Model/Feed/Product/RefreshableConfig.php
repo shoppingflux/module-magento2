@@ -11,7 +11,6 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Feed\AbstractConfig;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
-use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 
 
 abstract class RefreshableConfig extends AbstractConfig implements RefreshableConfigInterface

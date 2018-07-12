@@ -167,6 +167,12 @@
     <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\Item"/>
     <preference for="ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\ItemRepository"/>
 
+    <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\Log"/>
+    <preference for="ShoppingFeed\Manager\Api\Marketplace\Order\LogRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\LogRepository"/>
+
+    <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\Ticket"/>
+    <preference for="ShoppingFeed\Manager\Api\Marketplace\Order\TicketRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\TicketRepository"/>
+
     <preference for="ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\Rule"/>
     <preference for="ShoppingFeed\Manager\Api\Shipping\Method\RuleRepositoryInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\RuleRepository"/>
 
@@ -243,15 +249,17 @@
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
-                <item name="account_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Grid\Collection</item>
-                <item name="account_store_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid\Collection</item>
-                <item name="shipping_method_rule_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Grid\Collection</item>
+                <item name="sfm_account_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Grid\Collection</item>
+                <item name="sfm_account_store_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid\Collection</item>
+                <item name="sfm_shipping_method_rule_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Grid\Collection</item>
+                <item name="sfm_marketplace_order_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Grid\Collection</item>
             </argument>
         </arguments>
     </type>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Account\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
 
     <type name="Magento\Framework\Console\CommandList">
         <arguments>
@@ -262,6 +270,9 @@
                 <item name="sfm_feed_force_automatic_refresh" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\ForceAutomaticRefreshCommand</item>
                 <item name="sfm_feed_refresh" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\RefreshCommand</item>
                 <item name="sfm_feed_export" xsi:type="object">ShoppingFeed\Manager\Console\Command\Feed\ExportCommand</item>
+                <item name="sfm_orders_fetch_marketplace_orders" xsi:type="object">ShoppingFeed\Manager\Console\Command\Orders\FetchMarketplaceOrdersCommand</item>
+                <item name="sfm_orders_import_sales_orders" xsi:type="object">ShoppingFeed\Manager\Console\Command\Orders\ImportSalesOrdersCommand</item>
+                <item name="sfm_orders_send_state_updates" xsi:type="object">ShoppingFeed\Manager\Console\Command\Orders\SendStateUpdatesCommand</item>
             </argument>
         </arguments>
     </type>

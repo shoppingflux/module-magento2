@@ -2,7 +2,7 @@
 <listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
     <argument name="data" xsi:type="array">
         <item name="js_config" xsi:type="array">
-            <item name="provider" xsi:type="string">sfm_shipping_method_rule_listing.shipping_method_rule_listing_data_source</item>
+            <item name="provider" xsi:type="string">sfm_shipping_method_rule_listing.sfm_shipping_method_rule_listing_data_source</item>
         </item>
     </argument>
     <settings>
@@ -15,10 +15,10 @@
         </buttons>
         <spinner>sfm_shipping_method_rule_columns</spinner>
         <deps>
-            <dep>sfm_shipping_method_rule_listing.shipping_method_rule_listing_data_source</dep>
+            <dep>sfm_shipping_method_rule_listing.sfm_shipping_method_rule_listing_data_source</dep>
         </deps>
     </settings>
-    <dataSource name="shipping_method_rule_listing_data_source" component="Magento_Ui/js/grid/provider">
+    <dataSource name="sfm_shipping_method_rule_listing_data_source" component="Magento_Ui/js/grid/provider">
         <settings>
             <storageConfig>
                 <param name="indexField" xsi:type="string">rule_id</param>
@@ -26,7 +26,7 @@
             <updateUrl path="mui/index/render"/>
         </settings>
         <aclResource>ShoppingFeed_Manager::shipping_method_rules</aclResource>
-        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Listing\DataProvider" name="shipping_method_rule_listing_data_source">
+        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Listing\DataProvider" name="sfm_shipping_method_rule_listing_data_source">
             <settings>
                 <requestFieldName>id</requestFieldName>
                 <primaryFieldName>rule_id</primaryFieldName>
@@ -53,13 +53,19 @@
             <settings>
                 <filter>textRange</filter>
                 <label translate="true">ID</label>
-                <sorting>asc</sorting>
             </settings>
         </column>
         <column name="name">
             <settings>
                 <filter>text</filter>
                 <label translate="true">Name</label>
+            </settings>
+        </column>
+        <column name="sort_order">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Priority</label>
+                <sorting>asc</sorting>
             </settings>
         </column>
         <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">

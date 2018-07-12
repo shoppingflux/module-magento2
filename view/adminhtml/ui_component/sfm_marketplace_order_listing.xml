@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">sfm_marketplace_order_listing.sfm_marketplace_order_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <spinner>sfm_marketplace_order_columns</spinner>
+        <deps>
+            <dep>sfm_marketplace_order_listing.sfm_marketplace_order_listing_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="sfm_marketplace_order_listing_data_source" component="Magento_Ui/js/grid/provider">
+        <settings>
+            <storageConfig>
+                <param name="indexField" xsi:type="string">order_id</param>
+            </storageConfig>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>ShoppingFeed_Manager::marketplace_orders</aclResource>
+        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Listing\DataProvider" name="sfm_marketplace_order_listing_data_source">
+            <settings>
+                <requestFieldName>id</requestFieldName>
+                <primaryFieldName>order_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <settings>
+            <sticky>true</sticky>
+        </settings>
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters">
+            <argument name="data" xsi:type="array">
+                <item name="observers" xsi:type="array">
+                    <item name="column" xsi:type="string">column</item>
+                </item>
+            </argument>
+        </filters>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="sfm_marketplace_order_columns">
+        <column name="order_id">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">ID</label>
+                <sorting>desc</sorting>
+            </settings>
+        </column>
+        <column name="marketplace_name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Marketplace</label>
+            </settings>
+        </column>
+        <column name="marketplace_order_number">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Marketplace Number</label>
+            </settings>
+        </column>
+        <column name="sales_order_number">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Magento Number</label>
+            </settings>
+        </column>
+        <column name="currency_code" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <options class="Magento\Config\Model\Config\Source\Locale\Currency"/>
+                <filter>select</filter>
+                <dataType>select</dataType>
+                <label translate="true">Currency</label>
+            </settings>
+        </column>
+        <column name="product_amount" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Price">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Product Amount</label>
+            </settings>
+        </column>
+        <column name="shipping_amount" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Price">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Shipping Amount</label>
+            </settings>
+        </column>
+        <column name="total_amount" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Price">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Total Amount</label>
+            </settings>
+        </column>
+        <column name="import_remaining_try_count">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">Import Attempts Left</label>
+            </settings>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Created</label>
+            </settings>
+        </column>
+        <column name="fetched_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Fetched</label>
+            </settings>
+        </column>
+        <column name="imported_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Imported</label>
+            </settings>
+        </column>
+        <actionsColumn name="actions" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Actions">
+            <settings>
+                <label translate="true">Actions</label>
+                <indexField>order_id</indexField>
+            </settings>
+        </actionsColumn>
+    </columns>
+</listing>

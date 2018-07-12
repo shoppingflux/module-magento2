@@ -6,7 +6,7 @@ use Magento\Framework\Data\Collection\Db\FetchStrategyInterface;
 use Magento\Framework\Data\Collection\EntityFactoryInterface;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
-use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
+use Magento\Framework\Model\ResourceModel\Db\AbstractDb as AbstractResource;
 use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection as BaseCollection;
 use Psr\Log\LoggerInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
@@ -26,7 +26,7 @@ class AbstractCollection extends BaseCollection
      * @param EventManagerInterface $eventManager
      * @param TableDictionary $tableDictionary
      * @param AdapterInterface|null $connection
-     * @param AbstractDb|null $resource
+     * @param AbstractResource|null $resource
      */
     public function __construct(
         EntityFactoryInterface $entityFactory,
@@ -35,7 +35,7 @@ class AbstractCollection extends BaseCollection
         EventManagerInterface $eventManager,
         TableDictionary $tableDictionary,
         AdapterInterface $connection = null,
-        AbstractDb $resource = null
+        AbstractResource $resource = null
     ) {
         $this->tableDictionary = $tableDictionary;
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
