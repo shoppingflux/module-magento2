@@ -7,11 +7,10 @@ use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
-use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as ProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as SectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock as StockSectionType;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher as FeedRefresher;
-
 
 class AfterStockItemSaveObserver implements ObserverInterface
 {

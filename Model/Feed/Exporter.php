@@ -4,9 +4,11 @@ namespace ShoppingFeed\Manager\Model\Feed;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
+use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
 use ShoppingFeed\Feed\ProductGeneratorFactory as FeedGeneratorFactory;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -15,7 +17,6 @@ use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter as ExporterResource;
-
 
 class Exporter
 {
@@ -35,9 +36,19 @@ class Exporter
     private $productMetaData;
 
     /**
-     * @var DirectoryReadInterface
+     * @var FileSystem
      */
-    private $directoryReader;
+    private $fileSystem;
+
+    /**
+     * @var DirectoryReadInterface|null
+     */
+    private $mediaDirectoryReader = null;
+
+    /**
+     * @var DirectoryWriteInterface|null
+     */
+    private $mediaDirectoryWriter = null;
 
     /**
      * @var FeedGeneratorFactory
@@ -91,15 +102,40 @@ class Exporter
         $feedDirectory,
         $feedBaseFileName
     ) {
+        $this->fileSystem = $fileSystem;
         $this->resource = $resource;
         $this->productMetaData = $productMetadata;
-        $this->directoryReader = $fileSystem->getDirectoryRead(DirectoryList::MEDIA);
         $this->feedGeneratorFactory = $feedGeneratorFactory;
         $this->generalConfig = $generalConfig;
         $this->exportStateConfig = $exportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
         $this->feedDirectory = $feedDirectory;
         $this->feedBaseFileName = $feedBaseFileName;
+    }
+
+    /**
+     * @return DirectoryReadInterface
+     */
+    private function getMediaDirectoryReader()
+    {
+        if (null === $this->mediaDirectoryReader) {
+            $this->mediaDirectoryReader = $this->fileSystem->getDirectoryRead(DirectoryList::MEDIA);
+        }
+
+        return $this->mediaDirectoryReader;
+    }
+
+    /**
+     * @return DirectoryWriteInterface|null
+     * @throws FileSystemException
+     */
+    private function getMediaDirectoryWriter()
+    {
+        if (null === $this->mediaDirectoryWriter) {
+            $this->mediaDirectoryWriter = $this->fileSystem->getDirectoryWrite(DirectoryList::MEDIA);
+        }
+
+        return $this->mediaDirectoryWriter;
     }
 
     /**
@@ -145,10 +181,16 @@ class Exporter
      */
     public function exportStoreFeed(StoreInterface $store)
     {
-        $feedMediaPath = $this->directoryReader->getAbsolutePath($this->feedDirectory) . '/';
+        $mediaDirectoryReader = $this->getMediaDirectoryReader();
+        $feedMediaPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory) . '/';
         $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
         $feedFilePath = $feedMediaPath . $feedFileName;
         $feedTempFilePath = $feedFilePath . '.tmp';
+
+        if (!$mediaDirectoryReader->isExist($feedMediaPath)) {
+            $mediaDirectoryWriter = $this->getMediaDirectoryWriter();
+            $mediaDirectoryWriter->create($feedMediaPath);
+        }
 
         $feedGenerator = $this->feedGeneratorFactory->create();
         $childrenExportMode = $this->exportStateConfig->getChildrenExportMode($store);
@@ -243,13 +285,11 @@ class Exporter
                 $store->getId(),
                 $this->sectionTypePool->getTypeIds(),
                 [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
-
                 in_array(
                     $childrenExportMode,
                     [ self::CHILDREN_EXPORT_MODE_NONE, self::CHILDREN_EXPORT_MODE_SEPARATELY ],
                     true
                 ),
-
                 in_array(
                     $childrenExportMode,
                     [ self::CHILDREN_EXPORT_MODE_BOTH, self::CHILDREN_EXPORT_MODE_SEPARATELY ],
@@ -273,7 +313,7 @@ class Exporter
 
         $feedGenerator->write($productIterators);
 
-        if (false === rename($feedTempFilePath, $feedFilePath)) {
+        if (false === $this->getMediaDirectoryWriter()->renameFile($feedTempFilePath, $feedFilePath)) {
             throw new LocalizedException(
                 __('Could not copy file "%1" to file "%2".', $feedTempFilePath, $feedFilePath)
             );

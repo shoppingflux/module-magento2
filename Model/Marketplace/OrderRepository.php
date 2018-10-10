@@ -9,7 +9,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\OrderFactory as OrderResourceFactory;
 
-
 class OrderRepository implements OrderRepositoryInterface
 {
     /**

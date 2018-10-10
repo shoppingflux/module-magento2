@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Config;
 
 use Magento\Framework\Exception\LocalizedException;
 
-
 class FieldFactory implements FieldFactoryInterface
 {
     /**

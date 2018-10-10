@@ -11,7 +11,6 @@ use Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection as Ba
 use Psr\Log\LoggerInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 
-
 class AbstractCollection extends BaseCollection
 {
     /**

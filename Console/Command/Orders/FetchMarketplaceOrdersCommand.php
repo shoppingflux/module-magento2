@@ -7,7 +7,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-
 class FetchMarketplaceOrdersCommand extends AbstractCommand
 {
     protected function configure()
@@ -24,7 +23,7 @@ class FetchMarketplaceOrdersCommand extends AbstractCommand
 
         try {
             $storeCollection = $this->getStoresOptionCollection($input);
-            $storeIds = $storeCollection->getAllIds();
+            $storeIds = $storeCollection->getLoadedIds();
 
             $io->title('Fetching new marketplace orders for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));

@@ -6,21 +6,20 @@ use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
-use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Filter\Applier as ProductFilterApplier;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Filter\Applier as SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
-use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
-
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Store extends AbstractDb
 {
+    const DATA_OBJECT_FIELD_NAMES = [ StoreInterface::CONFIGURATION ];
+
     /**
      * @var SectionTypePoolInterface
      */
@@ -77,40 +76,6 @@ class Store extends AbstractDb
         $this->_init('sfm_account_store', StoreInterface::STORE_ID);
     }
 
-    protected function _prepareDataForSave(AbstractModel $object)
-    {
-        /** @var StoreInterface $object */
-        $preparedData = parent::_prepareDataForSave($object);
-
-        $preparedData[StoreInterface::CONFIGURATION] = json_encode(
-            $object->getConfiguration()->getData(),
-            JSON_FORCE_OBJECT
-        );
-
-        return $preparedData;
-    }
-
-    protected function prepareDataForUpdate($object)
-    {
-        /** @var AbstractModel $object */
-        $baseConfiguration = $object->getData(StoreInterface::CONFIGURATION);
-        $jsonConfiguration = '';
-
-        if ($baseConfiguration instanceof DataObject) {
-            $jsonConfiguration = json_encode($baseConfiguration->getData(), JSON_FORCE_OBJECT);
-        } elseif (is_array($baseConfiguration)) {
-            $jsonConfiguration = json_encode($baseConfiguration, JSON_FORCE_OBJECT);
-        } elseif (is_string($baseConfiguration)) {
-            $jsonConfiguration = $baseConfiguration;
-        }
-
-        $object->setData(StoreInterface::CONFIGURATION, $jsonConfiguration);
-        $preparedData = parent::prepareDataForUpdate($object);
-        $object->setData(StoreInterface::CONFIGURATION, $baseConfiguration);
-
-        return $preparedData;
-    }
-
     /**
      * @param StoreInterface $store
      * @return CatalogProductCollection
@@ -133,16 +98,38 @@ class Store extends AbstractDb
     }
 
     /**
+     * @return int[]
+     * @throws LocalizedException
+     */
+    public function getStoreIds()
+    {
+        $connection = $this->getConnection();
+
+        return array_map(
+            'intval',
+            $connection->fetchCol(
+                $connection->select()
+                    ->from($this->getMainTable(), [ StoreInterface::STORE_ID ])
+            )
+        );
+    }
+
+    /**
      * @param int $storeId
+     * @param int[]|null $productIds
      * @return $this
      */
-    public function synchronizeFeedProductList($storeId)
+    public function synchronizeFeedProductList($storeId, $productIds = null)
     {
         $connection = $this->getConnection();
 
         $existingListSelect = $connection->select()
             ->from($this->tableDictionary->getFeedProductTableName(), [ 'product_id' ])
             ->where('store_id = ?', $storeId);
+
+        if (is_array($productIds)) {
+            $existingListSelect->where('product_id IN (?)', $productIds);
+        }
 
         $entityIdFieldName = $this->catalogProductResource->getEntityIdField();
 
@@ -172,6 +159,10 @@ class Store extends AbstractDb
                 ->from($this->tableDictionary->getFeedProductSectionTableName(), [ 'product_id' ])
                 ->where('type_id = ?', $sectionTypeId)
                 ->where('store_id = ?', $storeId);
+
+            if (is_array($productIds)) {
+                $existingListSelect->where('product_id IN (?)', $productIds);
+            }
 
             $insertableListSelect = $connection->select()
                 ->from(

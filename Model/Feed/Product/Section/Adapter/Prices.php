@@ -18,7 +18,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\PricesInterface as Co
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Prices as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
-
 /**
  * @method ConfigInterface getConfig()
  */

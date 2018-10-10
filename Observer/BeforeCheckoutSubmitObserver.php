@@ -7,7 +7,6 @@ use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Model\Quote;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
 
-
 class BeforeCheckoutSubmitObserver implements ObserverInterface
 {
     const EVENT_KEY_QUOTE = 'quote';

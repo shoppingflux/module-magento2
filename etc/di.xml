@@ -8,6 +8,7 @@
 
     <preference for="ShoppingFeed\Manager\Api\Data\Account\StoreInterface" type="ShoppingFeed\Manager\Model\Account\Store"/>
     <preference for="ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface" type="ShoppingFeed\Manager\Model\Account\StoreRepository"/>
+    <type name="ShoppingFeed\Manager\Model\Account\Store\Source" shared="true"/>
 
     <preference for="ShoppingFeed\Manager\Api\Data\Feed\ProductInterface" type="ShoppingFeed\Manager\Model\Feed\Product"/>
     <preference for="ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section"/>
@@ -177,7 +178,7 @@
     <preference for="ShoppingFeed\Manager\Api\Shipping\Method\RuleRepositoryInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\RuleRepository"/>
 
     <preference for="ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\ApplierPool"/>
-    <type name="ShoppingFeed\Manager\Model\Shipping\Method\ApplierPool">
+    <type name="ShoppingFeed\Manager\Model\Shipping\Method\ApplierPool" shared="true">
         <arguments>
             <argument name="appliers" xsi:type="array">
                 <item name="basic" xsi:type="object">ShoppingFeed\Manager\Model\Shipping\Method\Applier\Basic</item>
@@ -191,12 +192,40 @@
     <preference for="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\MarketplaceInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\Marketplace"/>
 
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Config"/>
-
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Importer" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector" shared="true"/>
 
     <type name="Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector">
         <plugin name="sfm_tax_sales_total_quote_common_tax_collector_plugin" type="ShoppingFeed\Manager\Plugin\Tax\Sales\Total\Quote\CommonTaxCollectorPlugin" sortOrder="0"/>
+    </type>
+
+    <preference for="ShoppingFeed\Manager\Api\Data\Cron\TaskInterface" type="ShoppingFeed\Manager\Model\Cron\Task"/>
+    <preference for="ShoppingFeed\Manager\Api\Cron\TaskRepositoryInterface" type="ShoppingFeed\Manager\Model\Cron\TaskRepository"/>
+    <type name="ShoppingFeed\Manager\Model\Cron\Task\Runner" shared="true"/>
+
+    <preference for="ShoppingFeed\Manager\Model\Command\ConfigInterface" type="ShoppingFeed\Manager\Model\Command\BaseConfig"/>
+    <preference for="ShoppingFeed\Manager\Model\CommandPoolInterface" type="ShoppingFeed\Manager\Model\CommandPool"/>
+    <type name="ShoppingFeed\Manager\Model\CommandPool" shared="true">
+        <arguments>
+            <argument name="groups" xsi:type="array">
+                <item name="feed" xsi:type="string">Feed</item>
+                <item name="orders" xsi:type="string">Orders</item>
+            </argument>
+            <argument name="commands" xsi:type="array">
+                <item name="feed" xsi:type="array">
+                    <item name="sync_product_list" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\SyncProductList</item>
+                    <item name="force_automatic_refresh" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\ForceAutomaticRefresh</item>
+                    <item name="refresh" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\Refresh</item>
+                    <item name="export" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\Export</item>
+                </item>
+                <item name="orders" xsi:type="array">
+                    <item name="fetch_marketplace_orders" xsi:type="object">ShoppingFeed\Manager\Model\Command\Orders\FetchMarketplaceOrders</item>
+                    <item name="import_sales_orders" xsi:type="object">ShoppingFeed\Manager\Model\Command\Orders\ImportSalesOrders</item>
+                    <item name="send_state_updates" xsi:type="object">ShoppingFeed\Manager\Model\Command\Orders\SendStateUpdates</item>
+                </item>
+            </argument>
+        </arguments>
     </type>
 
     <type name="Magento\SalesRule\Model\Utility">
@@ -242,8 +271,8 @@
         </arguments>
     </type>
 
-    <type name="ShoppingFeed\Manager\Model\String\Helper" shared="true"/>
-    <type name="ShoppingFeed\Manager\Model\Time\Helper" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\StringHelper" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\TimeHelper" shared="true"/>
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary" shared="true"/>
 
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
@@ -253,6 +282,7 @@
                 <item name="sfm_account_store_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid\Collection</item>
                 <item name="sfm_shipping_method_rule_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Grid\Collection</item>
                 <item name="sfm_marketplace_order_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Grid\Collection</item>
+                <item name="sfm_cron_task_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Cron\Task\Grid\Collection</item>
             </argument>
         </arguments>
     </type>
@@ -260,6 +290,7 @@
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Cron\Task\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
 
     <type name="Magento\Framework\Console\CommandList">
         <arguments>
@@ -275,5 +306,9 @@
                 <item name="sfm_orders_send_state_updates" xsi:type="object">ShoppingFeed\Manager\Console\Command\Orders\SendStateUpdatesCommand</item>
             </argument>
         </arguments>
+    </type>
+
+    <type name="Magento\Cron\Model\ConfigInterface">
+        <plugin name="sfm_cron_config_plugin" type="ShoppingFeed\Manager\Plugin\Cron\ConfigPlugin" sortOrder="0"/>
     </type>
 </config>

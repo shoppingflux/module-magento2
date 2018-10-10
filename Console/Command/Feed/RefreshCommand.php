@@ -4,16 +4,15 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\Time\FilterFactory as TimeFilterFactory;
+use ShoppingFeed\Manager\Model\TimeFilterFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-
 
 class RefreshCommand extends AbstractCommand
 {
@@ -134,7 +133,7 @@ class RefreshCommand extends AbstractCommand
 
         try {
             $storeCollection = $this->getStoresOptionCollection($input);
-            $storeIds = $storeCollection->getAllIds();
+            $storeIds = $storeCollection->getLoadedIds();
 
             $defaultExportStates = $this->getExportStatesOptionValue($input);
             $defaultSelectedOnly = $this->getSelectedOnlyOptionValue($input);
@@ -143,7 +142,10 @@ class RefreshCommand extends AbstractCommand
             if ($input->getOption(self::OPTION_KEY_REFRESH_EXPORT_STATE)) {
                 $exportStates = $this->getExportStatesOptionValue($input, self::OPTION_KEY_EXPORT_STATE_EXPORT_STATES);
                 $selectedOnly = $this->getSelectedOnlyOptionValue($input, self::OPTION_KEY_EXPORT_STATE_SELECTED_ONLY);
-                $refreshStates = $this->getRefreshStatesOptionValue($input, self::OPTION_KEY_EXPORT_STATE_REFRESH_STATES);
+                $refreshStates = $this->getRefreshStatesOptionValue(
+                    $input,
+                    self::OPTION_KEY_EXPORT_STATE_REFRESH_STATES
+                );
 
                 $exportStateProductFilter = $this->createFeedProductFilter()
                     ->setExportStates(empty($exportStates) ? $defaultExportStates : $exportStates)
@@ -183,7 +185,6 @@ class RefreshCommand extends AbstractCommand
                 $sectionTypeSectionFilters[$typeId] = $this->createFeedSectionFilter()
                     ->setRefreshStates(empty($refreshStates) ? $defaultRefreshStates : $refreshStates);
             }
-
 
             $io->title('Refreshing feed for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));

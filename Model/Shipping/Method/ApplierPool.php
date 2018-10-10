@@ -3,8 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Shipping\Method;
 
 use Magento\Framework\Exception\LocalizedException;
-use ShoppingFeed\Manager\Model\String\Helper as StringHelper;
-
+use ShoppingFeed\Manager\Model\StringHelper;
 
 class ApplierPool implements ApplierPoolInterface
 {

@@ -9,7 +9,6 @@ use ShoppingFeed\Manager\Model\Marketplace\Order;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 
-
 /**
  * @method OrderResource getResource()
  */
@@ -90,7 +89,7 @@ class Collection extends AbstractCollection
             ->where('status = ?', TicketInterface::STATUS_HANDLED);
 
         $this->getSelect()
-            ->where('main_table.order_id NOT IN (?)', $ticketSelect->assemble());
+            ->where('main_table.order_id NOT IN (?)', new \Zend_Db_Expr($ticketSelect->assemble()));
     }
 
     /**

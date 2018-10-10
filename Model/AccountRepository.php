@@ -10,18 +10,17 @@ use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account as AccountResource;
 use ShoppingFeed\Manager\Model\ResourceModel\AccountFactory as AccountResourceFactory;
 
-
 class AccountRepository implements AccountRepositoryInterface
 {
     /**
      * @var AccountResource
      */
-    protected $accountResource;
+    private $accountResource;
 
     /**
      * @var AccountFactory
      */
-    protected $accountFactory;
+    private $accountFactory;
 
     /**
      * @param AccountResourceFactory $accountResourceFactory

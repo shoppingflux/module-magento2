@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 
-
 class Save extends StoreAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_store_edit';
@@ -74,7 +73,7 @@ class Save extends StoreAction
         }
 
         if (!$isSaveSuccessful || $this->getRequest()->getParam('back')) {
-            return $redirectResult->setPath('*/*/edit', [ 'store_id' => $store->getId() ]);
+            return $redirectResult->setPath('*/*/edit', [ self::REQUEST_KEY_STORE_ID => $store->getId() ]);
         }
 
         return $redirectResult->setPath('*/*/');

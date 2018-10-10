@@ -6,7 +6,6 @@ use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 
-
 /**
  * @api
  */

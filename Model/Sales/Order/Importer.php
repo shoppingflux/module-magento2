@@ -5,8 +5,7 @@ namespace ShoppingFeed\Manager\Model\Sales\Order;
 use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepositoryInterface;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
-use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Framework\DataObject;
+use Magento\Checkout\Model\Session\Proxy as CheckoutSessionProxy;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
@@ -29,7 +28,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as Marketplace
 use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface as ShippingMethodRuleInterface;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface as MarketplaceOrderRepositoryInterface;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
-use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as MarketplaceOrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\OrderFactory as MarketplaceOrderResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as MarketplaceAddressCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item\CollectionFactory as MarketplaceItemCollectionFactory;
@@ -37,9 +35,8 @@ use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Collection as 
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\CollectionFactory as ShippingMethodRuleCollectionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingMethodApplierPoolInterface;
-use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
+use ShoppingFeed\Manager\Model\TimeHelper;
 use ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider as PaymentConfigProvider;
-
 
 class Importer implements ImporterInterface
 {
@@ -74,9 +71,9 @@ class Importer implements ImporterInterface
     private $catalogProductRepository;
 
     /**
-     * @var CheckoutSession
+     * @var CheckoutSessionProxy
      */
-    private $checkoutSession;
+    private $checkoutSessionProxy;
 
     /**
      * @var QuoteManagerInterface
@@ -109,9 +106,14 @@ class Importer implements ImporterInterface
     private $shippingMethodApplierPool;
 
     /**
-     * @var ShippingMethodRuleCollection
+     * @var ShippingMethodRuleCollectionFactory
      */
-    private $shippingMethodRuleCollection;
+    private $shippingMethodRuleCollectionFactory;
+
+    /**
+     * @var ShippingMethodRuleCollection|null
+     */
+    private $shippingMethodRuleCollection = null;
 
     /**
      * @var MarketplaceOrderManager
@@ -124,9 +126,9 @@ class Importer implements ImporterInterface
     private $marketplaceOrderRepository;
 
     /**
-     * @var MarketplaceOrderResource
+     * @var MarketplaceOrderResourceFactory
      */
-    private $marketplaceOrderResource;
+    private $marketplaceOrderResourceFactory;
 
     /**
      * @var MarketplaceAddressCollectionFactory
@@ -155,7 +157,7 @@ class Importer implements ImporterInterface
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
      * @param CatalogProductRepositoryInterface $catalogProductRepository
-     * @param CheckoutSession $checkoutSession
+     * @param CheckoutSessionProxy $checkoutSessionProxy
      * @param QuoteManagerInterface $quoteManager
      * @param QuoteRepositoryInterface $quoteRepository
      * @param QuoteAddressExtensionFactory $quoteAddressExtensionFactory
@@ -176,7 +178,7 @@ class Importer implements ImporterInterface
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
         CatalogProductRepositoryInterface $catalogProductRepository,
-        CheckoutSession $checkoutSession,
+        CheckoutSessionProxy $checkoutSessionProxy,
         QuoteManagerInterface $quoteManager,
         QuoteRepositoryInterface $quoteRepository,
         QuoteAddressExtensionFactory $quoteAddressExtensionFactory,
@@ -196,21 +198,17 @@ class Importer implements ImporterInterface
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
         $this->catalogProductRepository = $catalogProductRepository;
-        $this->checkoutSession = $checkoutSession;
+        $this->checkoutSessionProxy = $checkoutSessionProxy;
         $this->quoteManager = $quoteManager;
         $this->quoteRepository = $quoteRepository;
         $this->quoteAddressExtensionFactory = $quoteAddressExtensionFactory;
         $this->shippingRateMethodFactory = $shippingRateMethodFactory;
         $this->shippingAddressRateFactory = $shippingAddressRateFactory;
         $this->shippingMethodApplierPool = $shippingMethodApplierPool;
-
-        $this->shippingMethodRuleCollection = $shippingMethodRuleCollectionFactory->create();
-        $this->shippingMethodRuleCollection->addEnabledAtFilter();
-        $this->shippingMethodRuleCollection->addSortOrderOrder();
-
+        $this->shippingMethodRuleCollectionFactory = $shippingMethodRuleCollectionFactory;
         $this->marketplaceOrderManager = $marketplaceOrderManager;
         $this->marketplaceOrderRepository = $marketplaceOrderRepository;
-        $this->marketplaceOrderResource = $marketplaceOrderResourceFactory->create();
+        $this->marketplaceOrderResourceFactory = $marketplaceOrderResourceFactory;
         $this->marketplaceAddressCollectionFactory = $marketplaceAddressCollectionFactory;
         $this->marketplaceItemCollectionFactory = $marketplaceItemCollectionFactory;
     }
@@ -252,6 +250,8 @@ class Importer implements ImporterInterface
         $this->baseStoreManager->setCurrentStore($baseStore);
         $originalBaseStoreCurrencyCode = $baseStore->getCurrentCurrencyCode();
 
+        $marketplaceOrderResource = $this->marketplaceOrderResourceFactory->create();
+
         try {
             foreach ($marketplaceOrders as $marketplaceOrder) {
                 $marketplaceOrderId = $marketplaceOrder->getId();
@@ -267,7 +267,7 @@ class Importer implements ImporterInterface
                     $quote->setCheckoutMethod(QuoteManagerInterface::METHOD_GUEST);
                     $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
 
-                    $this->marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
+                    $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
                     $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
 
                     if (($quoteAddress = $quote->getBillingAddress())
@@ -316,11 +316,11 @@ class Importer implements ImporterInterface
                     );
 
                     $transaction->save();
-                    $salesIncrementId = $this->checkoutSession->getLastRealOrderId();
+                    $salesIncrementId = $this->checkoutSessionProxy->getData('last_real_order_id');
 
                     if (!empty($salesIncrementId)) {
                         try {
-                            $this->marketplaceOrderManager->notifyOrderImportSuccess(
+                            $this->marketplaceOrderManager->notifyStoreOrderImportSuccess(
                                 $marketplaceOrder,
                                 $salesIncrementId,
                                 $store
@@ -362,7 +362,7 @@ class Importer implements ImporterInterface
         );
 
         if ($marketplaceOrder->getImportRemainingTryCount() === 1) {
-            $this->marketplaceOrderManager->notifyOrderImportFailure($marketplaceOrder, $store);
+            $this->marketplaceOrderManager->notifyStoreOrderImportFailure($marketplaceOrder, $store);
         }
     }
 
@@ -434,6 +434,21 @@ class Importer implements ImporterInterface
     }
 
     /**
+     * @return ShippingMethodRuleCollection
+     */
+    private function getShippingMethodRuleCollection()
+    {
+        if (null === $this->shippingMethodRuleCollection) {
+            $this->shippingMethodRuleCollection = $this->shippingMethodRuleCollectionFactory->create();
+            $this->shippingMethodRuleCollection->addEnabledAtFilter();
+            $this->shippingMethodRuleCollection->addSortOrderOrder();
+            $this->shippingMethodRuleCollection->load();
+        }
+
+        return $this->shippingMethodRuleCollection;
+    }
+
+    /**
      * @param Quote $quote
      * @param MarketplaceOrderInterface $marketplaceOrder
      * @param StoreInterface $store
@@ -444,8 +459,7 @@ class Importer implements ImporterInterface
         MarketplaceOrderInterface $marketplaceOrder,
         StoreInterface $store
     ) {
-        $this->shippingMethodRuleCollection->load();
-
+        $shippingMethodRuleCollection = $this->getShippingMethodRuleCollection();
         $shippingAddress = $quote->getShippingAddress();
         $shippingRates = $shippingAddress->getAllShippingRates();
 
@@ -458,7 +472,7 @@ class Importer implements ImporterInterface
         $shippingMethodApplierResult = null;
 
         /** @var ShippingMethodRuleInterface $shippingMethodRule */
-        foreach ($this->shippingMethodRuleCollection as $shippingMethodRule) {
+        foreach ($shippingMethodRuleCollection as $shippingMethodRule) {
             if ($shippingMethodRule->isAppliableToQuote($quote, $marketplaceOrder)) {
                 try {
                     $shippingMethodApplierResult = $this->shippingMethodApplierPool
@@ -481,7 +495,7 @@ class Importer implements ImporterInterface
         if (null === $shippingMethodApplierResult) {
             $shippingMethodApplierResult = $this->shippingMethodApplierPool
                 ->getDefaultApplier()
-                ->applyToQuoteShippingAddress($shippingAddress, $shippingAmount, new DataObject());
+                ->applyToQuoteShippingAddress($shippingAddress, $shippingAmount, $this->dataObjectFactory->create());
         }
 
         if (null === $shippingMethodApplierResult) {

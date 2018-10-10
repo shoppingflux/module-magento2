@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config;
 
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\AbstractConfig;
 
-
 class Marketplace extends AbstractConfig implements MarketplaceInterface
 {
     /**

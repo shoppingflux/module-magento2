@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">sfm_cron_task_listing.sfm_cron_task_listing_data_source</item>
+        </item>
+    </argument>
+    <settings>
+        <buttons>
+            <button name="create">
+                <url path="*/*/create"/>
+                <class>primary</class>
+                <label translate="true">Add New Task</label>
+            </button>
+        </buttons>
+        <spinner>sfm_cron_task_columns</spinner>
+        <deps>
+            <dep>sfm_cron_task_listing.sfm_cron_task_listing_data_source</dep>
+        </deps>
+    </settings>
+    <dataSource name="sfm_cron_task_listing_data_source" component="Magento_Ui/js/grid/provider">
+        <settings>
+            <storageConfig>
+                <param name="indexField" xsi:type="string">task_id</param>
+            </storageConfig>
+            <updateUrl path="mui/index/render"/>
+        </settings>
+        <aclResource>ShoppingFeed_Manager::cron_tasks</aclResource>
+        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Cron\Task\Listing\DataProvider" name="sfm_cron_task_listing_data_source">
+            <settings>
+                <requestFieldName>id</requestFieldName>
+                <primaryFieldName>task_id</primaryFieldName>
+            </settings>
+        </dataProvider>
+    </dataSource>
+    <listingToolbar name="listing_top">
+        <settings>
+            <sticky>true</sticky>
+        </settings>
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filters name="listing_filters">
+            <argument name="data" xsi:type="array">
+                <item name="observers" xsi:type="array">
+                    <item name="column" xsi:type="string">column</item>
+                </item>
+            </argument>
+        </filters>
+        <paging name="listing_paging"/>
+    </listingToolbar>
+    <columns name="sfm_cron_task_columns">
+        <column name="task_id">
+            <settings>
+                <filter>textRange</filter>
+                <label translate="true">ID</label>
+            </settings>
+        </column>
+        <column name="name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Name</label>
+            </settings>
+        </column>
+        <column name="command_code" component="ShoppingFeed_Manager/js/grid/columns/nestedSelect">
+            <settings>
+                <dataType>select</dataType>
+                <filter>select</filter>
+                <label translate="true">Command</label>
+                <options class="ShoppingFeed\Manager\Model\Command\Source"/>
+            </settings>
+        </column>
+        <column name="schedule_type" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Cron\Task\Schedule">
+            <settings>
+                <dataType>select</dataType>
+                <filter>select</filter>
+                <label translate="true">Schedule</label>
+                <options class="ShoppingFeed\Manager\Model\Cron\Schedule\Type\Source"/>
+            </settings>
+        </column>
+        <column name="is_active" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <dataType>select</dataType>
+                <filter>select</filter>
+                <label translate="true">Active</label>
+                <options class="Magento\Config\Model\Config\Source\Yesno"/>
+            </settings>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Created</label>
+            </settings>
+        </column>
+        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
+            <settings>
+                <filter>dateRange</filter>
+                <dataType>date</dataType>
+                <label translate="true">Modified</label>
+            </settings>
+        </column>
+        <actionsColumn name="actions" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Cron\Task\Actions">
+            <settings>
+                <label translate="true">Actions</label>
+                <indexField>task_id</indexField>
+            </settings>
+        </actionsColumn>
+    </columns>
+</listing>

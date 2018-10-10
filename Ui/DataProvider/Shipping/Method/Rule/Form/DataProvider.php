@@ -19,7 +19,6 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as ConfigOptionHandle
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as MethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\Rule\RegistryConstants;
 
-
 class DataProvider extends BaseDataProvider
 {
     const FORM_NAMESPACE = 'sfm_shipping_method_rule_form';
@@ -30,7 +29,7 @@ class DataProvider extends BaseDataProvider
     const FIELDSET_RULE_INFORMATION = 'rule_information';
     const FIELDSET_CONDITIONS = 'conditions';
     const FIELDSET_SHIPPING_METHOD = 'shipping_method';
-    const FIELDSET_BASE_APPLIER = 'applier_%s';
+    const BASE_FIELDSET_APPLIER_CONFIGURATION = 'applier_%s';
 
     const FIELD_RULE_ID = 'rule_id';
     const FIELD_NAME = 'name';
@@ -71,12 +70,11 @@ class DataProvider extends BaseDataProvider
      * @param RequestInterface $request
      * @param FilterBuilder $filterBuilder
      * @param Registry $coreRegistry
-     * @param ConfigFieldFactoryInterface $generalConfigFieldFactory
+     * @param ConfigFieldFactoryInterface $configFieldFactory
      * @param ConfigValueHandlerFactoryInterface $configValueHandlerFactory
      * @param MethodApplierPoolInterface $methodApplierPool
      * @param array $meta
      * @param array $data
-     * @throws LocalizedException
      */
     public function __construct(
         $name,
@@ -87,14 +85,14 @@ class DataProvider extends BaseDataProvider
         RequestInterface $request,
         FilterBuilder $filterBuilder,
         Registry $coreRegistry,
-        ConfigFieldFactoryInterface $generalConfigFieldFactory,
+        ConfigFieldFactoryInterface $configFieldFactory,
         ConfigValueHandlerFactoryInterface $configValueHandlerFactory,
         MethodApplierPoolInterface $methodApplierPool,
         array $meta = [],
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
-        $this->configFieldFactory = $generalConfigFieldFactory;
+        $this->configFieldFactory = $configFieldFactory;
         $this->configValueHandlerFactory = $configValueHandlerFactory;
         $this->methodApplierPool = $methodApplierPool;
 
@@ -131,7 +129,7 @@ class DataProvider extends BaseDataProvider
         $applierFieldDependencies = [];
 
         foreach ($this->methodApplierPool->getSortedAppliers() as $applierCode => $methodApplier) {
-            $fieldsetName = sprintf(self::FIELDSET_BASE_APPLIER, $applierCode);
+            $fieldsetName = sprintf(self::BASE_FIELDSET_APPLIER_CONFIGURATION, $applierCode);
 
             $applierFieldsets[$fieldsetName] = [
                 'arguments' => [
@@ -198,25 +196,22 @@ class DataProvider extends BaseDataProvider
     /**
      * @param array $data
      * @return array
-     * @throws LocalizedException
      */
-    public function prepareData(array $data)
+    private function prepareData(array $data)
     {
         /** @var RuleInterface $rule */
         $rule = $this->coreRegistry->registry(RegistryConstants::CURRENT_SHIPPING_METHOD_RULE);
         $ruleId = $rule->getId();
 
         if (!empty($ruleId)) {
-            $applierCode = $rule->getApplierCode();
-            $applierConfigData = [];
-            $applierRawConfigData = $rule->getApplierConfiguration()->getData();
-
-            foreach ($rule->getApplier()->getConfig()->getFields() as $field) {
-                $fieldName = $field->getName();
-
-                if (array_key_exists($fieldName, $applierRawConfigData)) {
-                    $applierConfigData[$fieldName] = $field->prepareRawValueForForm($applierRawConfigData[$fieldName]);
-                }
+            try {
+                $applierCode = $rule->getApplierCode();
+                $ruleApplier = $this->methodApplierPool->getApplierByCode($applierCode);
+                $applierConfigData = $ruleApplier->getConfig()
+                    ->prepareRawDataForForm($rule->getApplierConfiguration()->getData());
+            } catch (LocalizedException $e) {
+                $applierCode = '';
+                $applierConfigData = [];
             }
 
             $data[$ruleId] = array_merge(
@@ -232,7 +227,7 @@ class DataProvider extends BaseDataProvider
                         self::FIELD_TO_DATE => $rule->getToDate(),
                         self::FIELD_SORT_ORDER => $rule->getSortOrder(),
                         self::FIELD_CONDITIONS => $rule->getConditions(),
-                        
+
                         self::DATA_SCOPE_APPLIER => array_merge(
                             [ self::FIELD_APPLIER_CODE => $applierCode ],
                             array_filter([ $applierCode => $applierConfigData ])

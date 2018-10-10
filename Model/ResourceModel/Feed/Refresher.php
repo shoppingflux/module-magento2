@@ -5,18 +5,17 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\ProductFactory as FeedProductFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Filter as ProductFilter;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\Filter as SectionFilter;
+use ShoppingFeed\Manager\Model\Feed\ProductFilter;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilter;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProductFactory as RefreshableProductFactory;
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Filter\Applier as ProductFilterApplier;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Filter\Applier as SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
-use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
-
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Refresher extends AbstractDb
 {
@@ -94,9 +93,9 @@ class Refresher extends AbstractDb
             /** @noinspection PhpMissingBreakStatementInspection */
             case FeedProduct::REFRESH_STATE_REQUIRED:
                 $overridableStates[] = FeedProduct::REFRESH_STATE_ADVISED;
+            // Intentional fall-through
             case FeedProduct::REFRESH_STATE_ADVISED:
                 $overridableStates[] = FeedProduct::REFRESH_STATE_UP_TO_DATE;
-
         }
 
         if (null !== $minimumRefreshState) {
@@ -170,7 +169,7 @@ class Refresher extends AbstractDb
         }
 
         // Update product sections on a store-by-store basis, as update() does not handle aliased target table names,
-        // which we would need for filtering products.
+        // which would be needed for filtering products.
         foreach ($storeIds as $storeId) {
             $sectionFilter->setStoreIds([ $storeId ]);
             $productFilter->setStoreIds([ $storeId ]);
@@ -210,8 +209,8 @@ class Refresher extends AbstractDb
     private function getRefreshPriorityWeights($isExportStateRefreshed, $sortedRefreshedSectionTypeIds)
     {
         // Use descending powers of 2 to get weights that can be uniquely associated to a section type or
-        // to the export state, and have each weight be strictly greater than the sum of the lesser weights.
-        // Given that only two refresh states are taken into account here, it can handle 14 different section types.
+        // to the export state and have each weight be strictly greater than the sum of the lesser weights.
+        // Given that only 2 refresh states are being used here, we can handle up to 14 different section types.
         $priorityWeight = pow(2, 31);
         $exportStateWeights = [];
         $sectionTypeWeights = [];

@@ -6,7 +6,6 @@ use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Select as DbSelect;
 use Magento\Framework\Exception\LocalizedException;
 
-
 class Iterator implements \Iterator
 {
     /**

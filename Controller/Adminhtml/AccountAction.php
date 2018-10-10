@@ -11,7 +11,6 @@ use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 
-
 abstract class AccountAction extends Action
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::accounts';

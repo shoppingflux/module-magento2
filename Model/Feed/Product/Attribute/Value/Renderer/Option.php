@@ -6,7 +6,6 @@ use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\AbstractRenderer;
 
-
 class Option extends AbstractRenderer
 {
     public function getSortOrder()

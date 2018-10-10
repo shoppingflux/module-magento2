@@ -13,7 +13,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface as Con
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
-
 /**
  * @method ConfigInterface getConfig()
  */

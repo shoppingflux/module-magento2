@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product;
 use ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface;
 use ShoppingFeed\Manager\DataObject;
 
-
 class Section extends DataObject implements SectionInterface
 {
     protected $timestampFields = [

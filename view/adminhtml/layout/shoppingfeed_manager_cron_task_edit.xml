@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="ShoppingFeed_Manager::css/styles.css"/>
+        <script src="ShoppingFeed_Manager::js/form/validation.js"/>
+    </head>
+    <body>
+        <referenceContainer name="content">
+            <uiComponent name="sfm_cron_task_form"/>
+        </referenceContainer>
+    </body>
+</page>

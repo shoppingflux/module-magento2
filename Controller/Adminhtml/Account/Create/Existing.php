@@ -7,7 +7,6 @@ use Magento\Backend\App\Action\Context;
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Model\Account\Importer as AccountImporter;
 
-
 class Existing extends Action
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_create_existing';

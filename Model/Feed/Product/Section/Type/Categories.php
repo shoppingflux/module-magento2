@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\CategoriesInterface 
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\CategoriesInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type as TypeResource;
 
-
 /**
  * @method AdapterInterface getAdapter()
  * @method ConfigInterface getConfig()

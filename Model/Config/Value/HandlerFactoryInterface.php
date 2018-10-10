@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Config\Value;
 
-
 interface HandlerFactoryInterface
 {
     /**
@@ -12,4 +11,3 @@ interface HandlerFactoryInterface
      */
     public function create($typeCode, array $data = []);
 }
-

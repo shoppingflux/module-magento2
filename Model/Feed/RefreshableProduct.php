@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Feed;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 
-
 class RefreshableProduct
 {
     /**

@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Model\Marketplace\Order\Address;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address as AddressResource;
 
-
 /**
  * @method AddressResource getResource()
  */

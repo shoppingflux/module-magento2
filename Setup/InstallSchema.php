@@ -14,7 +14,6 @@ use ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface as FeedSectionIn
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 
-
 class InstallSchema implements InstallSchemaInterface
 {
     /**

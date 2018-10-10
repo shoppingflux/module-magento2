@@ -13,7 +13,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
-
 class Attributes extends AbstractConfig implements AttributesInterface
 {
     const KEY_USE_PRODUCT_ID_FOR_SKU = 'use_product_id_for_sku';

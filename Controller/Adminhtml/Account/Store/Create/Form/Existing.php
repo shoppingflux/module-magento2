@@ -10,7 +10,6 @@ use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\Account\Importer as AccountImporter;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 
-
 class Existing extends StoreAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_store_create_existing';

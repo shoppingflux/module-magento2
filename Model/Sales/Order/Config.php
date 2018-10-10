@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Sales\Order;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 
-
 class Config extends AbstractConfig implements ConfigInterface
 {
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
@@ -27,7 +26,9 @@ class Config extends AbstractConfig implements ConfigInterface
                         'isCheckedByDefault' => false,
                         'label' => __('Use Item Reference as Product ID'),
                         'checkedNotice' => __('The item references will be considered to correspond to product IDs.'),
-                        'uncheckedNotice' => __('The item references will be considered to correspond to product SKUs.'),
+                        'uncheckedNotice' => __(
+                            'The item references will be considered to correspond to product SKUs.'
+                        ),
                         'sortOrder' => 10,
                     ]
                 ),

@@ -5,26 +5,24 @@ namespace ShoppingFeed\Manager\Observer;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product as FeedProductResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFactory as FeedProductResourceFactory;
 use ShoppingFeed\Manager\Ui\DataProvider\Catalog\Product\Form\Modifier\FeedAttributes as UiAttributesModifier;
-
 
 class SaveProductAttributesObserver implements ObserverInterface
 {
     const EVENT_KEY_PRODUCT = 'product';
 
     /**
-     * @var FeedProductResource
+     * @var FeedProductResourceFactory
      */
-    private $feedProductResource;
+    private $feedProductResourceFactory;
 
     /**
      * @param FeedProductResourceFactory $feedProductResourceFactory
      */
     public function __construct(FeedProductResourceFactory $feedProductResourceFactory)
     {
-        $this->feedProductResource = $feedProductResourceFactory->create();
+        $this->feedProductResourceFactory = $feedProductResourceFactory;
     }
 
     /**
@@ -36,8 +34,10 @@ class SaveProductAttributesObserver implements ObserverInterface
             && ($catalogProduct instanceof CatalogProduct)
             && is_array($feedAttributes = $catalogProduct->getData(UiAttributesModifier::DATA_SCOPE_SFM_MODULE))
         ) {
+            $feedProductResource = $this->feedProductResourceFactory->create();
+
             foreach ($feedAttributes as $storeId => $storeFeedAttributes) {
-                $this->feedProductResource->updateProductFeedAttributes(
+                $feedProductResource->updateProductFeedAttributes(
                     (int) $catalogProduct->getId(),
                     (int) $storeId,
                     $storeFeedAttributes['is_selected'] ?? false,

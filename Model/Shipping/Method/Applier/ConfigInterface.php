@@ -3,22 +3,10 @@
 namespace ShoppingFeed\Manager\Model\Shipping\Method\Applier;
 
 use Magento\Framework\DataObject;
-use ShoppingFeed\Manager\Model\Config\FieldInterface;
+use ShoppingFeed\Manager\Model\Config\Basic\ConfigInterface as BaseConfigInterface;
 
-
-interface ConfigInterface
+interface ConfigInterface extends BaseConfigInterface
 {
-    /**
-     * @return FieldInterface[]
-     */
-    public function getFields();
-
-    /**
-     * @param string $name
-     * @return FieldInterface|null
-     */
-    public function getField($name);
-
     /**
      * @param DataObject $configData
      * @return bool

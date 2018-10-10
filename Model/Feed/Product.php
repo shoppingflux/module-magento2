@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Feed;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface;
 use ShoppingFeed\Manager\DataObject;
 
-
 class Product extends DataObject implements ProductInterface
 {
     protected $timestampFields = [

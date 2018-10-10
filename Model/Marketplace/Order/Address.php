@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address as AddressResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\Collection as AddressCollection;
 
-
 /**
  * @method AddressResource getResource()
  * @method AddressCollection getCollection()

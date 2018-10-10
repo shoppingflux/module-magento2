@@ -13,7 +13,6 @@ use Magento\Framework\Registry;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 
-
 class Grid extends ExtendedGrid
 {
     const FLAG_KEY_LIKELY_UNSYNCED_PRODUCT_LIST = 'likely_unsynced_product_list';

@@ -2,15 +2,15 @@
 
 namespace ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store;
 
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
-
 
 class Actions extends AbstractActions
 {
     const ACL_EDIT = 'ShoppingFeed_Manager::account_store_edit';
     const ACL_DELETE = 'ShoppingFeed_Manager::account_store_delete';
-    
+
     const URL_PATH_EDIT = 'shoppingfeed_manager/account_store/edit';
     const URL_PATH_DELETE = 'shoppingfeed_manager/account_store/delete';
 
@@ -25,7 +25,7 @@ class Actions extends AbstractActions
 
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
-                if (isset($item['store_id'])) {
+                if (isset($item[StoreInterface::STORE_ID])) {
                     $name = $this->getData('name');
                     $item[$name] = [];
 
@@ -33,7 +33,7 @@ class Actions extends AbstractActions
                         $item[$name]['edit'] = [
                             'href' => $this->urlBuilder->getUrl(
                                 static::URL_PATH_EDIT,
-                                [ StoreAction::REQUEST_KEY_STORE_ID => $item['store_id'] ]
+                                [ StoreAction::REQUEST_KEY_STORE_ID => $item[StoreInterface::STORE_ID] ]
                             ),
                             'label' => __('Edit'),
                         ];
@@ -43,7 +43,7 @@ class Actions extends AbstractActions
                         $item[$name]['delete'] = [
                             'href' => $this->urlBuilder->getUrl(
                                 static::URL_PATH_DELETE,
-                                [ StoreAction::REQUEST_KEY_STORE_ID => $item['store_id'] ]
+                                [ StoreAction::REQUEST_KEY_STORE_ID => $item[StoreInterface::STORE_ID] ]
                             ),
                             'label' => __('Delete'),
                             'confirm' => [

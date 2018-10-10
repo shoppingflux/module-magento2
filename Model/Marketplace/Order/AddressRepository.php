@@ -9,7 +9,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address as AddressResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\AddressFactory as AddressResourceFactory;
 
-
 class AddressRepository implements AddressRepositoryInterface
 {
     /**

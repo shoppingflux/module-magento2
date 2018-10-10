@@ -13,7 +13,6 @@ use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface;
 use ShoppingFeed\Manager\Api\Shipping\Method\RuleRepositoryInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\RuleFactory;
 
-
 abstract class RuleAction extends Action
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::shipping_method_rules';

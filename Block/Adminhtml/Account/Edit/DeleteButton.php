@@ -2,6 +2,8 @@
 
 namespace ShoppingFeed\Manager\Block\Adminhtml\Account\Edit;
 
+use ShoppingFeed\Manager\Block\Adminhtml\AbstractButton;
+use ShoppingFeed\Manager\Model\Account\RegistryConstants;
 
 class DeleteButton extends AbstractButton
 {
@@ -30,5 +32,14 @@ class DeleteButton extends AbstractButton
     public function getDeleteUrl()
     {
         return $this->getUrl('*/*/delete', [ 'account_id' => $this->getAccountId() ]);
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getAccountId()
+    {
+        $account = $this->coreRegistry->registry(RegistryConstants::CURRENT_ACCOUNT);
+        return $account ? $account->getId() : null;
     }
 }

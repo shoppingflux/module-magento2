@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product;
 
 use Magento\Catalog\Model\Category as CatalogCategory;
 
-
 class Category
 {
     /**

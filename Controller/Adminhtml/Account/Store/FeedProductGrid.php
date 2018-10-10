@@ -13,7 +13,6 @@ use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid as ProductGridBlock;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 
-
 class FeedProductGrid extends StoreAction
 {
     /**
@@ -60,7 +59,7 @@ class FeedProductGrid extends StoreAction
             return $rawResult->setContents($productGridBlock->toHtml());
         } catch (NoSuchEntityException $e) {
             $redirectResult = $this->resultRedirectFactory->create();
-            return $redirectResult->setPath('*/*/', [ '_current' => true, 'store_id' => null ]);
+            return $redirectResult->setPath('*/*/', [ '_current' => true, self::REQUEST_KEY_STORE_ID => null ]);
         }
     }
 }

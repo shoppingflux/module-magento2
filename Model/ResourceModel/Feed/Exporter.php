@@ -6,14 +6,12 @@ use Magento\Framework\DB\Select as DbSelect;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
 use ShoppingFeed\Manager\Model\Feed\ExportableProductFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Filter\Applier as ProductFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as FeedSectionResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFactory as FeedSectionResourceFactory;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Filter\Applier as SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Query\IteratorFactory as QueryIteratorFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
-use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
-
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Exporter extends AbstractDb
 {

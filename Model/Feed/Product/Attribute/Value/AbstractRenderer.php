@@ -10,7 +10,6 @@ use Magento\Eav\Model\Entity\Attribute\Backend\Datetime as DateTimeBackend;
 use Magento\Catalog\Model\Product\Attribute\Backend\Price as PriceBackend;
 use Magento\Framework\Exception\LocalizedException;
 
-
 abstract class AbstractRenderer implements RendererInterface
 {
     /**

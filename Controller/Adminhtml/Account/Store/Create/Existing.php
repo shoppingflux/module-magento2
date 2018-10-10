@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Controller\Adminhtml\AccountAction;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\Account\Importer as AccountImporter;
 
-
 class Existing extends AccountAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_store_create_existing';

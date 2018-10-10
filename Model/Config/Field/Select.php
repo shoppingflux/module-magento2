@@ -7,7 +7,6 @@ use Magento\Ui\Component\Form\Element\Select as UiSelect;
 use ShoppingFeed\Manager\Model\Config\AbstractField;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 
-
 /**
  * @method OptionHandler getValueHandler()
  */

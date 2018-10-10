@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Config\Value;
 
-
 interface HandlerInterface
 {
     /**

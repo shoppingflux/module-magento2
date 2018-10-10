@@ -9,7 +9,6 @@ use Magento\Framework\View\Element\UiComponent\DataProvider\Document as UiDocume
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule as RuleResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Collection as BaseCollection;
 
-
 class Collection extends BaseCollection implements SearchResultInterface
 {
     /**

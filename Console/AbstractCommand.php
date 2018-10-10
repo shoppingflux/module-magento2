@@ -12,7 +12,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 
-
 class AbstractCommand extends Command
 {
     const OPTION_KEY_STORE_IDS = 'store_id';

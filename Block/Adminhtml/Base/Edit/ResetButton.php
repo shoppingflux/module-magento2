@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Block\Adminhtml\Base\Edit;
 
 use ShoppingFeed\Manager\Block\Adminhtml\AbstractButton;
 
-
 class ResetButton extends AbstractButton
 {
     public function getButtonData()

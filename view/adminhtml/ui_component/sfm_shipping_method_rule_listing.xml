@@ -61,6 +61,14 @@
                 <label translate="true">Name</label>
             </settings>
         </column>
+        <column name="is_active" component="Magento_Ui/js/grid/columns/select">
+            <settings>
+                <dataType>select</dataType>
+                <filter>select</filter>
+                <label translate="true">Active</label>
+                <options class="Magento\Config\Model\Config\Source\Yesno"/>
+            </settings>
+        </column>
         <column name="sort_order">
             <settings>
                 <filter>textRange</filter>

@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Model\Account;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\CollectionFactory as AccountCollectionFactory;
 
-
 class DataProvider extends BaseDataProvider
 {
     const FIELDSET_STORE = 'store';

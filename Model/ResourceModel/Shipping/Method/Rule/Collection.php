@@ -13,7 +13,6 @@ use Psr\Log\LoggerInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\Rule;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule as RuleResource;
 
-
 class Collection extends AbstractCollection
 {
     protected $_idFieldName = 'rule_id';

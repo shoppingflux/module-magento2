@@ -11,7 +11,6 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category as FeedCategory;
 use ShoppingFeed\Manager\Model\Feed\Product\CategoryFactory as FeedCategoryFactory;
 
-
 class Selector implements SelectorInterface
 {
     /**

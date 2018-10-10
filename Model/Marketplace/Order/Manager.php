@@ -12,12 +12,14 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterfaceFactory as Order
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterfaceFactory as OrderTicketInterfaceFactory;
 use ShoppingFeed\Manager\Api\Marketplace\Order\LogRepositoryInterface as OrderLogRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\TicketRepositoryInterface as OrderTicketRepositoryInterface;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\CollectionFactory as OrderCollectionFactory;
+use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track as ShipmentTrack;
+use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector as SalesShipmentTrackCollector;
 use ShoppingFeed\Manager\Model\ShoppingFeed\Api\SessionManager as ApiSessionManager;
 use ShoppingFeed\Sdk\Api\Order\OrderOperation as ApiOrderOperation;
 use ShoppingFeed\Sdk\Api\Order\OrderResource as ApiOrder;
 use ShoppingFeed\Sdk\Api\Task\TicketResource as ApiTicket;
-
 
 class Manager
 {
@@ -61,12 +63,18 @@ class Manager
     private $orderTicketRepository;
 
     /**
+     * @var SalesShipmentTrackCollector
+     */
+    private $salesShipmentTrackCollector;
+
+    /**
      * @param ApiSessionManager $apiSessionManager
      * @param OrderCollectionFactory $orderCollectionFactory
      * @param OrderLogInterfaceFactory $orderLogFactory
      * @param OrderLogRepositoryInterface $orderLogRepository
      * @param OrderTicketInterfaceFactory $orderTicketFactory
      * @param OrderTicketRepositoryInterface $orderTicketRepository
+     * @param SalesShipmentTrackCollector $salesShipmentTrackCollector
      */
     public function __construct(
         ApiSessionManager $apiSessionManager,
@@ -74,7 +82,8 @@ class Manager
         OrderLogInterfaceFactory $orderLogFactory,
         OrderLogRepositoryInterface $orderLogRepository,
         OrderTicketInterfaceFactory $orderTicketFactory,
-        OrderTicketRepositoryInterface $orderTicketRepository
+        OrderTicketRepositoryInterface $orderTicketRepository,
+        SalesShipmentTrackCollector $salesShipmentTrackCollector
     ) {
         $this->apiSessionManager = $apiSessionManager;
         $this->orderCollectionFactory = $orderCollectionFactory;
@@ -82,6 +91,7 @@ class Manager
         $this->orderLogRepository = $orderLogRepository;
         $this->orderTicketFactory = $orderTicketFactory;
         $this->orderTicketRepository = $orderTicketRepository;
+        $this->salesShipmentTrackCollector = $salesShipmentTrackCollector;
     }
 
     /**
@@ -125,7 +135,7 @@ class Manager
     private function registerOrderApiTicket(OrderInterface $order, ApiTicket $apiTicket, $action)
     {
         $ticket = $this->orderTicketFactory->create();
-        $ticket->setShoppingFeedTicketId($apiTicket->getId());
+        $ticket->setShoppingFeedTicketId(trim($apiTicket->getId()));
         $ticket->setOrderId($order->getId());
         $ticket->setAction($action);
         $ticket->setStatus(TicketInterface::STATUS_HANDLED);
@@ -139,8 +149,12 @@ class Manager
      * @param StoreInterface $store
      * @throws \Exception
      */
-    private function notifyOrderImportResult(OrderInterface $order, $storeReference, $action, StoreInterface $store)
-    {
+    private function notifyStoreOrderImportResult(
+        OrderInterface $order,
+        $storeReference,
+        $action,
+        StoreInterface $store
+    ) {
         $apiStore = $this->apiSessionManager->getStoreApiResource($store);
 
         $operation = new ApiOrderOperation();
@@ -153,7 +167,7 @@ class Manager
             $apiStatus = self::API_ACKNOWLEDGEMENT_STATUS_FAILURE;
         }
 
-        $operation->acknowledge($reference, $channelName, $apiStatus, $storeReference);
+        $operation->acknowledge($reference, $channelName, $storeReference, $apiStatus);
 
         $apiTickets = $apiStore->getOrderApi()
             ->execute($operation)
@@ -164,7 +178,7 @@ class Manager
                 $this->registerOrderApiTicket($order, $apiTickets[0], $action);
             } catch (\Exception $e) {
                 $operation = new ApiOrderOperation();
-                $operation->unacknowledge($reference, $channelName, $apiStatus, $storeReference);
+                $operation->unacknowledge($reference, $channelName);
                 $apiStore->getOrderApi()->execute($operation);
                 throw $e;
             }
@@ -177,22 +191,12 @@ class Manager
      * @param StoreInterface $store
      * @throws \Exception
      */
-    public function notifyOrderImportSuccess(OrderInterface $order, $salesIncrementId, StoreInterface $store)
+    public function notifyStoreOrderImportSuccess(OrderInterface $order, $salesIncrementId, StoreInterface $store)
     {
-        $this->notifyOrderImportResult($order, $salesIncrementId, TicketInterface::ACTION_ACKNOWLEDGE_SUCCESS, $store);
-    }
-
-    /**
-     * @param OrderInterface $order
-     * @param StoreInterface $store
-     * @throws \Exception
-     */
-    public function notifyOrderImportFailure(OrderInterface $order, StoreInterface $store)
-    {
-        $this->notifyOrderImportResult(
+        $this->notifyStoreOrderImportResult(
             $order,
-            ((string) $order->getId()),
-            TicketInterface::ACTION_ACKNOWLEDGE_FAILURE,
+            $salesIncrementId,
+            TicketInterface::ACTION_ACKNOWLEDGE_SUCCESS,
             $store
         );
     }
@@ -202,7 +206,41 @@ class Manager
      * @param StoreInterface $store
      * @throws \Exception
      */
-    public function notifyOrderCancellation(OrderInterface $order, StoreInterface $store)
+    public function notifyStoreOrderImportFailure(OrderInterface $order, StoreInterface $store)
+    {
+        $this->notifyStoreOrderImportResult(
+            $order,
+            ((string) $order->getId()),
+            TicketInterface::ACTION_ACKNOWLEDGE_FAILURE,
+            $store
+        );
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    public function notifyStoreOrderImportUpdates(StoreInterface $store)
+    {
+        $importedCollection = $this->orderCollectionFactory->create();
+        $importedCollection->addStoreIdFilter($store->getId());
+        $importedCollection->addNotifiableImportFilter();
+
+        foreach ($importedCollection as $order) {
+            $this->notifyStoreOrderImportSuccess(
+                $order,
+                trim($order->getDataByKey(OrderCollection::KEY_SALES_INCREMENT_ID)),
+                $store
+            );
+        }
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    public function notifyStoreOrderCancellation(OrderInterface $order, StoreInterface $store)
     {
         $apiStore = $this->apiSessionManager->getStoreApiResource($store);
 
@@ -221,18 +259,32 @@ class Manager
     }
 
     /**
-     * @param OrderInterface $order
-     * @param string|null $carrierTitle
-     * @param string|null $trackingNumber
-     * @param string|null $trackingUrl
      * @param StoreInterface $store
      * @throws \Exception
      */
-    public function notifyOrderShipment(
+    public function notifyStoreOrderCancellationUpdates(StoreInterface $store)
+    {
+        $cancelledCollection = $this->orderCollectionFactory->create();
+        $cancelledCollection->addStoreIdFilter($store->getId());
+        $cancelledCollection->addNotifiableCancellationFilter();
+
+        foreach ($cancelledCollection as $order) {
+            $this->notifyStoreOrderCancellation($order, $store);
+        }
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param ShipmentTrack $shipmentTrack
+     * @param StoreInterface $store
+     * @throws CouldNotSaveException
+     * @throws LocalizedException
+     * @throws \ShoppingFeed\Sdk\Order\Exception\TicketNotFoundException
+     * @throws \ShoppingFeed\Sdk\Order\Exception\UnexpectedTypeException
+     */
+    public function notifyStoreOrderShipment(
         OrderInterface $order,
-        $carrierTitle,
-        $trackingNumber,
-        $trackingUrl,
+        ShipmentTrack $shipmentTrack,
         StoreInterface $store
     ) {
         $apiStore = $this->apiSessionManager->getStoreApiResource($store);
@@ -240,7 +292,14 @@ class Manager
         $operation = new ApiOrderOperation();
         $reference = $order->getMarketplaceOrderNumber();
         $channelName = $order->getMarketplaceName();
-        $operation->ship($reference, $channelName, $carrierTitle, $trackingNumber, $trackingUrl);
+
+        $operation->ship(
+            $reference,
+            $channelName,
+            $shipmentTrack->getCarrierTitle(),
+            $shipmentTrack->getTrackingNumber(),
+            $shipmentTrack->getTrackingUrl()
+        );
 
         $apiTickets = $apiStore->getOrderApi()
             ->execute($operation)
@@ -249,6 +308,53 @@ class Manager
         if (isset($apiTickets[0]) && $apiTickets[0]->getId()) {
             $this->registerOrderApiTicket($order, $apiTickets[0], TicketInterface::ACTION_SHIP);
         }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    public function notifyStoreOrderShipmentUpdates(StoreInterface $store)
+    {
+        $shippedCollection = $this->orderCollectionFactory->create();
+        $shippedCollection->addStoreIdFilter($store->getId());
+        $shippedCollection->addNotifiableShipmentFilter();
+        $shippedSalesOrderIds = [];
+
+        foreach ($shippedCollection as $marketplaceOrder) {
+            $shippedSalesOrderIds[] = (int) $marketplaceOrder->getSalesOrderId();
+        }
+
+        $salesShipmentTracks = $this->salesShipmentTrackCollector->getOrdersShipmentTracks($shippedSalesOrderIds);
+
+        foreach ($shippedCollection as $marketplaceOrder) {
+            $salesOrderId = (int) $marketplaceOrder->getSalesOrderId();
+
+            if (isset($salesShipmentTracks[$salesOrderId]) && !empty($salesShipmentTracks[$salesOrderId])) {
+                /** @var ShipmentTrack $chosenTrack */
+                $chosenTrack = null;
+
+                /** @var ShipmentTrack $shipmentTrack */
+                foreach ($salesShipmentTracks as $shipmentTrack) {
+                    if ((null === $chosenTrack) || ($shipmentTrack->getRelevance() >= $chosenTrack->getRelevance())) {
+                        $chosenTrack = $shipmentTrack;
+                    }
+                }
+
+                $this->notifyStoreOrderShipment($marketplaceOrder, $chosenTrack, $store);
+            }
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    public function notifyStoreOrderUpdates(StoreInterface $store)
+    {
+        $this->notifyStoreOrderImportUpdates($store);
+        $this->notifyStoreOrderCancellationUpdates($store);
+        $this->notifyStoreOrderShipmentUpdates($store);
     }
 
     /**
@@ -301,3 +407,4 @@ class Manager
         $this->logOrderMessage($order, LogInterface::TYPE_ERROR, $message, $details);
     }
 }
+

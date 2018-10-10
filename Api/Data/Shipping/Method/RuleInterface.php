@@ -9,7 +9,6 @@ use Magento\Rule\Model\Condition\Combine as CombinedCondition;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierInterface;
 
-
 /**
  * @api
  */
@@ -93,12 +92,6 @@ interface RuleInterface
     public function getApplierConfiguration();
 
     /**
-     * @return ApplierInterface
-     * @throws LocalizedException
-     */
-    public function getApplier();
-
-    /**
      * @return string
      */
     public function getCreatedAt();
@@ -164,10 +157,15 @@ interface RuleInterface
 
     /**
      * @param string $code
-     * @param array $configData
      * @return RuleInterface
      */
-    public function setApplier($code, array $configData);
+    public function setApplierCode($code);
+
+    /**
+     * @param DataObject $configuration
+     * @return RuleInterface
+     */
+    public function setApplierConfiguration(DataObject $configuration);
 
     /**
      * @param string $createdAt

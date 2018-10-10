@@ -2,9 +2,9 @@
 
 namespace ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order;
 
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Marketplace\OrderAction;
 use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
-
 
 class Actions extends AbstractActions
 {
@@ -21,12 +21,12 @@ class Actions extends AbstractActions
 
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
-                if (isset($item['order_id'])) {
+                if (isset($item[OrderInterface::ORDER_ID])) {
                     $item[$this->getData('name')] = [];
                     $salesOrderId = null;
 
-                    if (isset($item['sales_order_id']) && $item['sales_order_id']) {
-                        $salesOrderId = $item['sales_order_id'];
+                    if (isset($item[OrderInterface::SALES_ORDER_ID]) && $item[OrderInterface::SALES_ORDER_ID]) {
+                        $salesOrderId = $item[OrderInterface::SALES_ORDER_ID];
                     }
 
                     if ($salesOrderId && $isSalesOrderViewAllowed) {
@@ -43,7 +43,7 @@ class Actions extends AbstractActions
                         $item[$this->getData('name')]['reset_import_try_count'] = [
                             'href' => $this->urlBuilder->getUrl(
                                 static::URL_PATH_RESET_IMPORT_TRY_COUNT,
-                                [ OrderAction::REQUEST_KEY_ORDER_ID => $item['order_id'] ]
+                                [ OrderAction::REQUEST_KEY_ORDER_ID => $item[OrderInterface::ORDER_ID] ]
                             ),
                             'label' => __('Reset Import Attempts'),
                             'confirm' => [

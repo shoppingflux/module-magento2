@@ -9,7 +9,6 @@ use ShoppingFeed\Manager\Model\Config\AbstractField;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Boolean as BooleanHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 
-
 class Checkbox extends AbstractField
 {
     const TYPE_CODE = 'checkbox';

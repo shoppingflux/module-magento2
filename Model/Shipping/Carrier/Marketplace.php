@@ -9,12 +9,17 @@ use Magento\Shipping\Model\Carrier\AbstractCarrier;
 use Magento\Shipping\Model\Carrier\CarrierInterface;
 use Psr\Log\LoggerInterface;
 
-
 class Marketplace extends AbstractCarrier implements CarrierInterface
 {
     const CARRIER_CODE = 'sfm_marketplace';
     const METHOD_CODE = 'marketplace';
 
+    /**
+     * @param ScopeConfigInterface $scopeConfig
+     * @param RateErrorFactory $rateErrorFactory
+     * @param LoggerInterface $logger
+     * @param array $data
+     */
     public function __construct(
         ScopeConfigInterface $scopeConfig,
         RateErrorFactory $rateErrorFactory,

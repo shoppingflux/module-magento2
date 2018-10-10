@@ -13,7 +13,6 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface as AttributeRendererPoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface as SectionConfig;
 
-
 abstract class AbstractAdapter implements AdapterInterface
 {
     /**

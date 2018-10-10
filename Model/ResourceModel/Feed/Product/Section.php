@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Feed\Product;
 
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 
-
 class Section extends AbstractDb
 {
     protected function _construct()

@@ -7,18 +7,16 @@
     </argument>
     <settings>
         <buttons>
-            <!--
             <button name="create_unexisting">
                 <url path="*/*/create_form_unexisting"/>
                 <class>primary</class>
                 <label translate="true">Add New Account</label>
             </button>
-            -->
-            <button name="create_existing">
+            <!--<button name="create_existing">
                 <url path="*/*/create_form_existing"/>
                 <class>primary</class>
                 <label translate="true">Add Existing Account</label>
-            </button>
+            </button>-->
         </buttons>
         <spinner>sfm_account_columns</spinner>
         <deps>

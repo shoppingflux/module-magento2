@@ -8,7 +8,6 @@ use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 
-
 class Stock extends AbstractConfig implements StockInterface
 {
     const KEY_USE_ACTUAL_STOCK_STATE = 'use_actual_stock_state';
@@ -25,8 +24,12 @@ class Stock extends AbstractConfig implements StockInterface
                         'isRequired' => true,
                         'isCheckedByDefault' => true,
                         'label' => __('Use Actual Stock State'),
-                        'checkedNotice' => __('The default quantity will be used on products for which stock is not managed.'),
-                        'uncheckedNotice' => __('Every product will be assumed to be in stock with the defined default quantity.'),
+                        'checkedNotice' => __(
+                            'The default quantity will be used on products for which stock is not managed.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'Every product will be assumed to be in stock with the defined default quantity.'
+                        ),
                         'sortOrder' => 10,
                     ]
                 ),

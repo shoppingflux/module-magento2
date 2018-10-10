@@ -7,7 +7,6 @@ use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\ConfigInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\Result;
 
-
 interface ApplierInterface
 {
     /**

@@ -25,7 +25,6 @@ use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResour
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 
-
 /**
  * @method StoreResource getResource()
  * @method StoreCollection getCollection()

@@ -7,7 +7,6 @@ use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 
-
 class Order extends AbstractDb
 {
     protected function _construct()
@@ -42,7 +41,7 @@ class Order extends AbstractDb
         $data = parent::prepareDataForUpdate($object);
 
         if (isset($data[OrderInterface::SALES_ORDER_ID])) {
-            // Prevent importing marketplace orders twice by only updating the `sales_order_id` field when it is empty
+            // Prevent importing marketplace orders twice by only updating the `sales_order_id` field when it is empty,
             // or when it has the same value as the one we are saving.
             // If no update does actually take place, the check in _afterSave() will throw an exception.
             $connection = $this->getConnection();
@@ -60,7 +59,6 @@ class Order extends AbstractDb
 
         return $data;
     }
-
 
     /**
      * @param int $orderId

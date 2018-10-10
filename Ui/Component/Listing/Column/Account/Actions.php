@@ -2,9 +2,9 @@
 
 namespace ShoppingFeed\Manager\Ui\Component\Listing\Column\Account;
 
+use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\AccountAction;
 use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
-
 
 class Actions extends AbstractActions
 {
@@ -21,12 +21,12 @@ class Actions extends AbstractActions
 
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
-                if (isset($item['account_id'])) {
+                if (isset($item[AccountInterface::ACCOUNT_ID])) {
                     $item[$this->getData('name')] = [
                         'delete' => [
                             'href' => $this->urlBuilder->getUrl(
                                 static::URL_PATH_DELETE,
-                                [ AccountAction::REQUEST_KEY_ACCOUNT_ID => $item['account_id'] ]
+                                [ AccountAction::REQUEST_KEY_ACCOUNT_ID => $item[AccountInterface::ACCOUNT_ID] ]
                             ),
                             'label' => __('Delete'),
                             'confirm' => [
@@ -42,4 +42,3 @@ class Actions extends AbstractActions
         return $dataSource;
     }
 }
-

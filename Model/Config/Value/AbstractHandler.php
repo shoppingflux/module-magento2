@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Config\Value;
 
-
 abstract class AbstractHandler implements HandlerInterface
 {
     const VALIDATION_CLASS_DIGITS = 'validate-digits';

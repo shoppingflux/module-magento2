@@ -19,7 +19,6 @@ use ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface;
 use ShoppingFeed\Sdk\Api\Order\OrderResource as ApiOrder;
 use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
 
-
 class Importer
 {
     /**

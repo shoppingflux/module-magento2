@@ -8,7 +8,6 @@ use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
 
-
 class OnQuoteSubmitSuccessObserver implements ObserverInterface
 {
     const EVENT_KEY_QUOTE = 'quote';

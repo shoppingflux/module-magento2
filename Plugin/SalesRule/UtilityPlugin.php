@@ -7,7 +7,6 @@ use Magento\SalesRule\Model\Rule;
 use Magento\SalesRule\Model\Utility as SalesRuleUtility;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
 
-
 class UtilityPlugin
 {
     /**

@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Config\Value\Handler;
 use Magento\Ui\Component\Form\Element\DataType\Boolean as UiBoolean;
 use ShoppingFeed\Manager\Model\Config\Value\AbstractHandler;
 
-
 class Boolean extends AbstractHandler
 {
     const TYPE_CODE = 'boolean';

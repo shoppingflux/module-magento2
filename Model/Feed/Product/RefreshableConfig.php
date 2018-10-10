@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveI
 use ShoppingFeed\Manager\Model\Feed\AbstractConfig;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 
-
 abstract class RefreshableConfig extends AbstractConfig implements RefreshableConfigInterface
 {
     const KEY_FORCE_PRODUCT_LOAD_FOR_REFRESH = 'force_product_load_for_refresh';
@@ -80,7 +79,7 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
                 ]
             ),
 
-            // @todo (needs specific filters)
+            // @todo (requires specific filters)
             /*
             $this->fieldFactory->create(
                 Checkbox::TYPE_CODE,

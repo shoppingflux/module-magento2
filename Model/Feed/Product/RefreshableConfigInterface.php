@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 
-
 interface RefreshableConfigInterface
 {
     /**

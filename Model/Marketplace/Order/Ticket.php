@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket as TicketResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket\Collection as TicketCollection;
 
-
 /**
  * @method TicketResource getResource()
  * @method TicketCollection getCollection()
@@ -24,7 +23,7 @@ class Ticket extends AbstractModel implements TicketInterface
 
     public function getShoppingFeedTicketId()
     {
-        return (int) $this->getDataByKey(self::SHOPPING_FEED_TICKET_ID);
+        return trim($this->getDataByKey(self::SHOPPING_FEED_TICKET_ID));
     }
 
     public function getOrderId()
@@ -49,7 +48,7 @@ class Ticket extends AbstractModel implements TicketInterface
 
     public function setShoppingFeedTicketId($ticketId)
     {
-        return $this->setData(self::SHOPPING_FEED_TICKET_ID, (int) $ticketId);
+        return $this->setData(self::SHOPPING_FEED_TICKET_ID, trim($ticketId));
     }
 
     public function setOrderId($orderId)

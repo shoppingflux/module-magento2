@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 
-
 interface AdapterInterface
 {
     /**

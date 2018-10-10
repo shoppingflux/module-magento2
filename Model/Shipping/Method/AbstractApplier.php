@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Shipping\Method;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\ConfigInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\ResultFactory;
 
-
 abstract class AbstractApplier implements ApplierInterface
 {
     /**

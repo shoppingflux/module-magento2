@@ -9,7 +9,6 @@ use Magento\Framework\View\Element\UiComponent\DataProvider\Document as UiDocume
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 
-
 class Collection extends OrderCollection implements SearchResultInterface
 {
     /**

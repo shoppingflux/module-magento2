@@ -14,7 +14,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
-
 class Shipping extends AbstractConfig implements ShippingInterface
 {
     const KEY_CARRIER_NAME_ATTRIBUTE = 'carrier_name_attribute';

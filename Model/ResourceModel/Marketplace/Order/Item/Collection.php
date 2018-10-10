@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Model\Marketplace\Order\Item;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item as ItemResource;
 
-
 /**
  * @method ItemResource getResource()
  */

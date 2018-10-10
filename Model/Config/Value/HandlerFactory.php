@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Config\Value;
 
 use Magento\Framework\Exception\LocalizedException;
 
-
 class HandlerFactory implements HandlerFactoryInterface
 {
     /**
