@@ -8,9 +8,9 @@ use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Sdk\Api\Session\SessionResource as ApiSession;
 use ShoppingFeed\Sdk\Api\Store\StoreResource as ApiStore;
 use ShoppingFeed\Sdk\Client\Client as ApiClient;
+use ShoppingFeed\Sdk\Client\ClientOptions as ApiClientOptions;
 use ShoppingFeed\Sdk\Credential\Password as ApiPasswordCredential;
 use ShoppingFeed\Sdk\Credential\Token as ApiTokenCredential;
-
 
 class SessionManager
 {
@@ -18,6 +18,16 @@ class SessionManager
      * @var ApiSession[]
      */
     private $tokenSessions = [];
+
+    /**
+     * @return ApiClientOptions
+     */
+    private function getApiClientOptions()
+    {
+        $clientOptions = new ApiClientOptions();
+        $clientOptions->addHeaders([ 'User-Agent' => 'magento2-module/0.5.0' ]);
+        return $clientOptions;
+    }
 
     /**
      * @param string $login
@@ -30,7 +40,7 @@ class SessionManager
         $passwordCredential = new ApiPasswordCredential($login, $password);
 
         try {
-            return ApiClient::createSession($passwordCredential);
+            return ApiClient::createSession($passwordCredential, $this->getApiClientOptions());
         } catch (\Exception $e) {
             throw new LocalizedException(
                 __('Could not connect to the API with the login "%1" and given password.', $login)
@@ -52,7 +62,7 @@ class SessionManager
         $tokenCredential = new ApiTokenCredential($token);
 
         try {
-            $this->tokenSessions[$token] = ApiClient::createSession($tokenCredential);
+            $this->tokenSessions[$token] = ApiClient::createSession($tokenCredential, $this->getApiClientOptions());
         } catch (\Exception $e) {
             throw new LocalizedException(__('Could not connect to the API with the token "%1".', $token));
         }

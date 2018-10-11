@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Attribute;
 
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 
-
 interface SourceInterface
 {
     /**

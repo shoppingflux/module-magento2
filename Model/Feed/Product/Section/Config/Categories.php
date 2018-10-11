@@ -16,7 +16,6 @@ use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHand
 use ShoppingFeed\Manager\Model\Feed\Product\Category\SelectorInterface as CategorySelectorInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 
-
 class Categories extends AbstractConfig implements CategoriesInterface
 {
     const KEY_CATEGORY_SELECTION_IDS = 'category_selection_ids';
@@ -114,8 +113,12 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'notice' => implode(
                             '',
                             [
-                                __('The number that will be multiplied with the level of a category to determine its weight.'),
-                                __('The category with the highest weight among all the considered categories will be selected.'),
+                                __(
+                                    'The number that will be multiplied with the level of a category to determine its weight.'
+                                ),
+                                __(
+                                    'The category with the highest weight among all the considered categories will be selected.'
+                                ),
                             ]
                         ),
                         'sortOrder' => 40,
@@ -147,7 +150,9 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'defaultFormValue' => 1,
                         'defaultUseValue' => 1,
                         'label' => __('Includable Parent Count'),
-                        'notice' => __('For each category of a given product, the number of its most immediate parents that will also be considered.'),
+                        'notice' => __(
+                            'For each category of a given product, the number of its most immediate parents that will also be considered.'
+                        ),
                         'sortOrder' => 60,
                     ]
                 ),

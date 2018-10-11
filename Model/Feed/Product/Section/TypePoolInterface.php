@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section;
 
 use Magento\Framework\Exception\LocalizedException;
 
-
 interface TypePoolInterface
 {
     /**

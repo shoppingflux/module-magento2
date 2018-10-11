@@ -5,11 +5,10 @@ namespace ShoppingFeed\Manager\Model\Config\Value\Handler;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use ShoppingFeed\Manager\Model\Config\Value\AbstractHandler;
 
-
 class Number extends AbstractHandler
 {
     const TYPE_CODE = 'number';
-    
+
     public function getFormDataType()
     {
         return UiNumber::NAME;

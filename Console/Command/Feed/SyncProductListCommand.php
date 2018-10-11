@@ -4,24 +4,22 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
-use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\Time\FilterFactory as TimeFilterFactory;
+use ShoppingFeed\Manager\Model\TimeFilterFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-
 class SyncProductListCommand extends AbstractCommand
 {
     /**
-     * @var StoreResource
+     * @var StoreResourceFactory
      */
-    private $storeResource;
+    private $storeResourceFactory;
 
     /**
      * @param AppState $appState
@@ -50,7 +48,7 @@ class SyncProductListCommand extends AbstractCommand
             $feedSectionFilterFactory
         );
 
-        $this->storeResource = $storeResourceFactory->create();
+        $this->storeResourceFactory = $storeResourceFactory;
     }
 
     protected function configure()
@@ -64,16 +62,17 @@ class SyncProductListCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
+        $storeResource = $this->storeResourceFactory->create();
 
         try {
             $storeCollection = $this->getStoresOptionCollection($input);
-            $storeIds = $storeCollection->getAllIds();
+            $storeIds = $storeCollection->getLoadedIds();
 
             $io->title('Synchronizing feed product list for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
-                $this->storeResource->synchronizeFeedProductList($store->getId());
+                $storeResource->synchronizeFeedProductList($store->getId());
                 $io->progressAdvance(1);
             }
 

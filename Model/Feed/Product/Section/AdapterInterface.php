@@ -9,7 +9,6 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as BaseInterface;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
-
 interface AdapterInterface extends BaseInterface
 {
     /**

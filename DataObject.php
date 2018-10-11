@@ -3,8 +3,7 @@
 namespace ShoppingFeed\Manager;
 
 use Magento\Framework\DataObject as BaseDataObject;
-use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
-
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class DataObject extends BaseDataObject
 {

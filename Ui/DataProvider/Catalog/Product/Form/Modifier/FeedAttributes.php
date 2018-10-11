@@ -17,9 +17,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Categories as Categorie
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product as FeedProductResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFactory as FeedProductResourceFactory;
-
 
 class FeedAttributes extends AbstractModifier
 {
@@ -43,14 +41,19 @@ class FeedAttributes extends AbstractModifier
     private $categorySelector;
 
     /**
-     * @var StoreCollection
+     * @var StoreCollectionFactory
      */
-    private $storeCollection;
+    private $storeCollectionFactory;
 
     /**
-     * @var FeedProductResource
+     * @var StoreCollection|null
      */
-    private $feedProductResource;
+    private $fullStoreCollection = null;
+
+    /**
+     * @var FeedProductResourceFactory
+     */
+    private $feedProductResourceFactory;
 
     /**
      * @var SectionTypePoolInterface
@@ -73,20 +76,33 @@ class FeedAttributes extends AbstractModifier
     ) {
         $this->locator = $locator;
         $this->categorySelector = $categorySelector;
-        $this->storeCollection = $storeCollectionFactory->create();
-        $this->storeCollection->load();
-        $this->feedProductResource = $feedProductResourceFactory->create();
+        $this->storeCollectionFactory = $storeCollectionFactory;
+        $this->feedProductResourceFactory = $feedProductResourceFactory;
         $this->sectionTypePool = $sectionTypePool;
+    }
+
+    /**
+     * @return StoreCollection
+     */
+    private function getFullStoreCollection()
+    {
+        if (null === $this->fullStoreCollection) {
+            $this->fullStoreCollection = $this->storeCollectionFactory->create();
+            $this->fullStoreCollection->load();
+        }
+
+        return $this->fullStoreCollection;
     }
 
     public function modifyData(array $data)
     {
         $product = $this->locator->getProduct();
         $productId = $product->getId();
-        $storeAttributes = $this->feedProductResource->getProductFeedAttributes($productId);
+        $feedProductResource = $this->feedProductResourceFactory->create();
+        $storeAttributes = $feedProductResource->getProductFeedAttributes($productId);
 
         /** @var Store $store */
-        foreach ($this->storeCollection as $store) {
+        foreach ($this->getFullStoreCollection() as $store) {
             $storeId = $store->getId();
             $feedAttributes = $storeAttributes[$storeId] ?? [];
 
@@ -107,12 +123,12 @@ class FeedAttributes extends AbstractModifier
      */
     public function modifyMeta(array $meta)
     {
-        /** @var StoreCollection $storeCollection */
-        $isSingleStoreMode = ($this->storeCollection->count() === 1);
+        $storeCollection = $this->getFullStoreCollection();
+        $isSingleStoreMode = ($storeCollection->count() === 1);
         $storeFieldsMeta = [];
 
         /** @var Store $store */
-        foreach ($this->storeCollection as $store) {
+        foreach ($storeCollection as $store) {
             $fieldsetKey = sprintf(self::FIELDSET_STORE, $store->getId());
             $fieldsMeta = $this->getStoreFieldsMeta($store);
 

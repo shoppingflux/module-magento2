@@ -16,7 +16,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\AttributesInterface a
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Attributes as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
-
 /**
  * @method ConfigInterface getConfig()
  */
@@ -165,8 +164,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                 if (isset($productData[self::KEY_CONFIGURABLE_ATTRIBUTES][$attributeCode])) {
                     $exportedVariation->setAttribute(
                         $attributeCode,
-                        $productData[self::KEY_CONFIGURABLE_ATTRIBUTES][$attributeCode],
-                        true
+                        $productData[self::KEY_CONFIGURABLE_ATTRIBUTES][$attributeCode]
                     );
                 }
             }

@@ -6,7 +6,6 @@ use Magento\Catalog\Model\Product as CatalogProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category as FeedCategory;
 
-
 interface SelectorInterface
 {
     const SELECTION_MODE_EXCLUDE = 'exclude';

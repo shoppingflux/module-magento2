@@ -10,18 +10,17 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 
-
 class StoreRepository implements StoreRepositoryInterface
 {
     /**
      * @var StoreResource
      */
-    protected $storeResource;
+    private $storeResource;
 
     /**
      * @var StoreFactory
      */
-    protected $storeFactory;
+    private $storeFactory;
 
     /**
      * @param StoreResourceFactory $resourceFactory

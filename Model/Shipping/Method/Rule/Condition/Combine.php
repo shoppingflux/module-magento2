@@ -4,11 +4,11 @@ namespace ShoppingFeed\Manager\Model\Shipping\Method\Rule\Condition;
 
 use Magento\Framework\Event\ManagerInterface as EventManagerInterface;
 use Magento\Framework\Model\AbstractModel;
+use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use Magento\Rule\Model\Condition\Context;
 use Magento\SalesRule\Model\Rule\Condition\Address as BaseAddressCondition;
 use Magento\SalesRule\Model\Rule\Condition\Combine as CombineBase;
 use ShoppingFeed\Manager\Model\Shipping\Method\Rule\Condition\Marketplace\Order as MarketplaceOrderCondition;
-
 
 class Combine extends CombineBase
 {
@@ -56,11 +56,12 @@ class Combine extends CombineBase
 
         return $conditions;
     }
-    
+
     public function validate(AbstractModel $model)
     {
         $address = $model;
-        if (!$address instanceof \Magento\Quote\Model\Quote\Address) {
+
+        if (!$address instanceof QuoteAddress) {
             if ($model->getQuote()->isVirtual()) {
                 $address = $model->getQuote()->getBillingAddress();
             } else {

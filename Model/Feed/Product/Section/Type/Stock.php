@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\StockInterface as Ad
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type as TypeResource;
 
-
 /**
  * @method AdapterInterface getAdapter()
  * @method ConfigInterface getConfig()

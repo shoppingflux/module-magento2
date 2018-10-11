@@ -3,7 +3,6 @@ define([
     'Magento_Ui/js/form/components/fieldset'
 ], function (_, Fieldset) {
     'use strict';
-
     return Fieldset.extend({
         hide: function () {
             this.visible(false);

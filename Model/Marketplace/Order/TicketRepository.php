@@ -9,7 +9,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket as TicketResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\TicketFactory as TicketResourceFactory;
 
-
 class TicketRepository implements TicketRepositoryInterface
 {
     /**
@@ -53,5 +52,10 @@ class TicketRepository implements TicketRepositoryInterface
         }
 
         return $ticket;
+    }
+
+    public function isExistingId($ticketId)
+    {
+        return $this->ticketResource->isExistingId($ticketId);
     }
 }

@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Framework\Exception\LocalizedException;
 
-
 class RendererPool implements RendererPoolInterface
 {
     /**

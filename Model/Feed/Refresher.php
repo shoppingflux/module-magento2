@@ -13,15 +13,14 @@ use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as ProductAdapterInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface as ExportStateAdapterInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
-use ShoppingFeed\Manager\Model\Feed\Product\Filter as FeedProductFilter;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\Filter as FeedSectionFilter;
+use ShoppingFeed\Manager\Model\Feed\ProductFilter as FeedProductFilter;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilter as FeedSectionFilter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product as FeedProductResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFactory as FeedProductResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as FeedSectionResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFactory as FeedSectionResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher as RefresherResource;
-
 
 class Refresher
 {
@@ -73,7 +72,6 @@ class Refresher
      * @var CatalogProductCollectionFactory
      */
     protected $catalogProductCollectionFactory;
-
 
     /**
      * @param RefresherResource $refresherResource
@@ -177,7 +175,6 @@ class Refresher
         }
     }
 
-
     /**
      * @param RefreshableProduct[] $refreshableProducts
      * @param StoreInterface $store
@@ -199,7 +196,7 @@ class Refresher
         }
 
         $productCollection = $this->catalogProductCollectionFactory->create();
-        // Depending on the configuration, the Magento_CatalogInventory may unwantedly filter the collection.
+        // Depending on the configuration, the Magento_CatalogInventory module may unwantedly filter the collection.
         $productCollection->setFlag(static::PRODUCT_COLLECTION_STOCK_STATUS_FILTER_FLAG, true);
 
         if ($refreshExportState) {

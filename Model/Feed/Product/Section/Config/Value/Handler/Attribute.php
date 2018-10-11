@@ -6,7 +6,6 @@ use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 
-
 class Attribute extends OptionHandler
 {
     const TYPE_CODE = 'product_attribute';

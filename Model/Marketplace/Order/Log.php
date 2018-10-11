@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log as LogResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log\Collection as LogCollection;
 
-
 /**
  * @method LogResource getResource()
  * @method LogCollection getCollection()

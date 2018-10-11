@@ -16,7 +16,6 @@ use ShoppingFeed\Manager\Model\Shipping\Method\Rule as MethodRule;
 use ShoppingFeed\Manager\Model\Shipping\Method\Rule\RegistryConstants;
 use ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Form\DataProvider as RuleFormDataProvider;
 
-
 class ConditionsForm extends GenericForm
 {
     const HTML_ID_PREFIX = 'rule_';

@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ShippingInterface as
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ShippingInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type as TypeResource;
 
-
 /**
  * @method AdapterInterface getAdapter()
  * @method ConfigInterface getConfig()
@@ -30,7 +29,7 @@ class Shipping extends AbstractType
     {
         return __('Shipping');
     }
-    
+
     public function getSortOrder()
     {
         return 60000;

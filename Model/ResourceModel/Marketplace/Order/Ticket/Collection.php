@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Model\Marketplace\Order\Ticket;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket as TicketResource;
 
-
 /**
  * @method TicketResource getResource()
  */

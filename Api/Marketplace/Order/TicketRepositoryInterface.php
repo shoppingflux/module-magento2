@@ -6,7 +6,6 @@ use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 
-
 /**
  * @api
  */
@@ -25,4 +24,10 @@ interface TicketRepositoryInterface
      * @throws NoSuchEntityException
      */
     public function getById($ticketId);
+
+    /**
+     * @param int $ticketId
+     * @return bool
+     */
+    public function isExistingId($ticketId);
 }

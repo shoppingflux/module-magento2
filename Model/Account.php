@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account as AccountResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Collection as AccountCollection;
 
-
 /**
  * @method AccountResource getResource()
  * @method AccountCollection getCollection()

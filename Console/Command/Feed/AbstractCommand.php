@@ -7,19 +7,18 @@ use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Console\AbstractCommand as BaseCommand;
 use ShoppingFeed\Manager\Console\Command\Exception as CommandException;
-use ShoppingFeed\Manager\Model\Feed\Product\Filter as FeedProductFilter;
-use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\Filter as FeedSectionFilter;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilter as FeedProductFilter;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilter as FeedSectionFilter;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractType as SectionType;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\Time\Filter as TimeFilter;
-use ShoppingFeed\Manager\Model\Time\FilterFactory as TimeFilterFactory;
+use ShoppingFeed\Manager\Model\TimeFilter;
+use ShoppingFeed\Manager\Model\TimeFilterFactory;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
-
 
 abstract class AbstractCommand extends BaseCommand
 {
@@ -56,7 +55,7 @@ abstract class AbstractCommand extends BaseCommand
     private $sectionTypePool;
 
     /**
-     * @var
+     * @var TimeFilterFactory
      */
     private $timeFilterFactory;
 

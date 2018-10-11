@@ -6,7 +6,6 @@ use Magento\Framework\Phrase;
 use Magento\Ui\Component\Form\Element\MultiSelect as UiMultiSelect;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 
-
 class MultiSelect extends Select
 {
     const TYPE_CODE = 'multi_select';

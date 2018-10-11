@@ -22,7 +22,6 @@ use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule as RuleResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Collection as RuleCollection;
 
-
 /**
  * @method RuleResource getResource()
  * @method RuleCollection getCollection()
@@ -169,11 +168,6 @@ class Rule extends AbstractModel implements RuleInterface
         return $data;
     }
 
-    public function getApplier()
-    {
-        return $this->applierPool->getApplierByCode($this->getApplierCode());
-    }
-
     public function getCreatedAt()
     {
         return $this->getDataByKey(self::CREATED_AT);
@@ -225,28 +219,14 @@ class Rule extends AbstractModel implements RuleInterface
         return $this->setData(self::CONDITIONS_SERIALIZED, $conditions);
     }
 
-    /**
-     * @param string $code
-     * @param array $configData
-     * @return RuleInterface
-     * @throws LocalizedException
-     */
-    public function setApplier($code, array $configData)
+    public function setApplierCode($code)
     {
-        $applier = $this->applierPool->getApplierByCode($code);
-        $this->setData(self::APPLIER_CODE, $code);
-        $configObject = $this->dataObjectFactory->create();
+        return $this->setData(self::APPLIER_CODE, trim($code));
+    }
 
-        foreach ($applier->getConfig()->getFields() as $field) {
-            $fieldName = $field->getName();
-
-            if (isset($configData[$fieldName])) {
-                $configObject->setData($fieldName, $field->prepareFormValueForSave($configData[$fieldName]));
-            }
-        }
-
-        $this->setData(self::APPLIER_CONFIGURATION, $configObject);
-        return $this;
+    public function setApplierConfiguration(DataObject $configuration)
+    {
+        return $this->setData(self::APPLIER_CONFIGURATION, $configuration);
     }
 
     public function setCreatedAt($createdAt)

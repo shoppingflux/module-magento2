@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Config;
 
 use ShoppingFeed\Manager\Model\Config\Value\HandlerInterface as ValueHandlerInterface;
 
-
 interface FieldInterface
 {
     /**
@@ -46,7 +45,7 @@ interface FieldInterface
      * @return array
      */
     public function getUiMetaConfig();
-    
+
     /**
      * @param mixed $value
      * @return mixed

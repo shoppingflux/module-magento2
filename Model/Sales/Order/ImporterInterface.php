@@ -10,7 +10,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrder
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as MarketplaceItemInterface;
 
-
 interface ImporterInterface
 {
     const QUOTE_KEY_IS_SHOPPING_FEED_ORDER = 'sfm_is_shopping_feed_order';

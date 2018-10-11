@@ -3,47 +3,19 @@
 namespace ShoppingFeed\Manager\Model\Shipping\Method\Applier;
 
 use Magento\Framework\DataObject;
-use Magento\Framework\Exception\LocalizedException;
-use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
+use ShoppingFeed\Manager\Model\Config\Basic\AbstractConfig as BaseConfig;
 use ShoppingFeed\Manager\Model\Config\FieldInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
-use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
 
-
-abstract class AbstractConfig implements ConfigInterface
+abstract class AbstractConfig extends BaseConfig implements ConfigInterface
 {
     const KEY_ONLY_APPLY_IF_AVAILABLE = 'only_apply_if_available';
     const KEY_DEFAULT_CARRIER_TITLE = 'default_carrier_title';
     const KEY_FORCE_DEFAULT_CARRIER_TITLE = 'force_default_carrier_title';
     const KEY_DEFAULT_METHOD_TITLE = 'default_method_title';
     const KEY_FORCE_DEFAULT_METHOD_TITLE = 'force_default_method_title';
-
-    /**
-     * @var FieldFactoryInterface
-     */
-    protected $fieldFactory;
-
-    /**
-     * @var ValueHandlerFactoryInterface
-     */
-    protected $valueHandlerFactory;
-
-    /**
-     * @var FieldInterface[]
-     */
-    private $fields;
-
-    /**
-     * @param FieldFactoryInterface $fieldFactory
-     * @param ValueHandlerFactoryInterface $valueHandlerFactory
-     */
-    public function __construct(FieldFactoryInterface $fieldFactory, ValueHandlerFactoryInterface $valueHandlerFactory)
-    {
-        $this->fieldFactory = $fieldFactory;
-        $this->valueHandlerFactory = $valueHandlerFactory;
-    }
 
     /**
      * @return FieldInterface[]
@@ -107,64 +79,6 @@ abstract class AbstractConfig implements ConfigInterface
                 ]
             ),
         ];
-    }
-
-    /**
-     * @param mixed $field
-     * @throws LocalizedException
-     */
-    private function checkFieldValidity($field)
-    {
-        if (!$field instanceof FieldInterface) {
-            throw new LocalizedException(
-                __(
-                    'Config fields must be of type: ShoppingFeed\Manager\Model\Config\FieldInterface.'
-                )
-            );
-        }
-    }
-
-    /**
-     * @return FieldInterface[]
-     * @throws LocalizedException
-     */
-    final public function getFields()
-    {
-        if (!is_array($this->fields)) {
-            $this->fields = [];
-            $baseFields = $this->getBaseFields();
-
-            foreach ($baseFields as $field) {
-                $this->checkFieldValidity($field);
-                $this->fields[$field->getName()] = $field;
-            }
-        }
-
-        return $this->fields;
-    }
-
-    final public function getField($name)
-    {
-        $fields = $this->getFields();
-        return isset($fields[$name]) ? $fields[$name] : null;
-    }
-
-    /**
-     * @param string $name
-     * @param DataObject $configData
-     * @return mixed|null
-     */
-    protected function getFieldValue($name, DataObject $configData)
-    {
-        $field = $this->getField($name);
-
-        if (null === $field) {
-            return null;
-        }
-
-        return !$configData->hasData($name)
-            ? $field->getDefaultUseValue()
-            : $field->prepareRawValueForUse($configData->getDataByKey($name));
     }
 
     /**

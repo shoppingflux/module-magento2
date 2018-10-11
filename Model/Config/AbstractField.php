@@ -7,7 +7,6 @@ use Magento\Ui\Component\Form\Field as UiField;
 use ShoppingFeed\Manager\Model\Config\Field\Dependency;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerInterface as ValueHandlerInterface;
 
-
 abstract class AbstractField implements FieldInterface
 {
     /**

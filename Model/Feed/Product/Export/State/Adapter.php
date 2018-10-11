@@ -9,8 +9,7 @@ use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableT
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
-use ShoppingFeed\Manager\Model\Time\Helper as TimeHelper;
-
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Adapter implements AdapterInterface
 {

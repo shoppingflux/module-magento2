@@ -7,7 +7,6 @@ use Magento\Quote\Model\Quote\Address\Total as QuoteAddressTotal;
 use Magento\Tax\Api\Data\QuoteDetailsItemInterface;
 use Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector;
 
-
 class CommonTaxCollectorPlugin
 {
     /**
@@ -16,7 +15,10 @@ class CommonTaxCollectorPlugin
      */
     private function isShoppingFeedShippingAssignment(ShippingAssignmentInterface $shippingAssignment)
     {
-        $extensionAttributes = $shippingAssignment->getShipping()->getAddress()->getExtensionAttributes();
+        $extensionAttributes = $shippingAssignment->getShipping()
+            ->getAddress()
+            ->getExtensionAttributes();
+
         return (null !== $extensionAttributes) ? $extensionAttributes->getSfmIsShoppingFeedOrder() : false;
     }
 
@@ -42,8 +44,8 @@ class CommonTaxCollectorPlugin
      * @param CommonTaxCollector $subject
      * @param QuoteDetailsItemInterface[] $itemDataObjects
      * @param ShippingAssignmentInterface $shippingAssignment
-     * @param $priceIncludesTax
-     * @param $useBaseCurrency
+     * @param bool $priceIncludesTax
+     * @param bool $useBaseCurrency
      * @return QuoteDetailsItemInterface[]
      */
     public function afterMapItems(
@@ -69,7 +71,7 @@ class CommonTaxCollectorPlugin
      * @param QuoteDetailsItemInterface $shippingDataObject
      * @param ShippingAssignmentInterface $shippingAssignment
      * @param QuoteAddressTotal $total
-     * @param $useBaseCurrency
+     * @param bool $useBaseCurrency
      * @return mixed
      */
     public function afterGetShippingDataObject(

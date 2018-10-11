@@ -10,7 +10,6 @@ use ShoppingFeed\Manager\Model\Config\AbstractField;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Integer as IntegerHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 
-
 class MultiSelect extends AbstractField
 {
     const TYPE_CODE = 'category_multi_select';
@@ -70,7 +69,8 @@ class MultiSelect extends AbstractField
             'chipsEnabled' => false,
             'disableLabel' => true,
             'showFilteredQuantity' => false,
-            'levelsVisibility' => 3,
+            // @todo adapt to the depth/size of the tree (based on a maximum number of categories visible at the start)
+            'levelsVisibility' => 1,
             'clearBtn' => true,
             'resetBtn' => true,
         ];

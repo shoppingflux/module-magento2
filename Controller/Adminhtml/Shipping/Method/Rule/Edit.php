@@ -6,7 +6,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
 use ShoppingFeed\Manager\Model\Shipping\Method\Rule\RegistryConstants;
 
-
 class Edit extends RuleAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::shipping_method_rule_edit';

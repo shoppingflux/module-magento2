@@ -39,5 +39,52 @@
             <dataScope>account</dataScope>
             <label translate="true">Account</label>
         </settings>
+        <field name="email" formElement="input">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Email</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                    <rule name="validate-email" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="phone" formElement="input">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Phone</label>
+            </settings>
+        </field>
+        <field name="shopping_feed_login" formElement="input">
+            <settings>
+                <dataType>text</dataType>
+                <label translate="true">Shopping Feed Login</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="shopping_feed_password" formElement="input">
+            <settings>
+                <dataType>password</dataType>
+                <elementTmpl>ShoppingFeed_Manager/form/element/password</elementTmpl>
+                <label translate="true">Shopping Feed Password</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
+        <field name="base_store_id" formElement="select">
+            <argument name="data" xsi:type="array">
+                <item name="options" xsi:type="object">Magento\Store\Ui\Component\Listing\Column\Store\Options</item>
+            </argument>
+            <settings>
+                <dataType>int</dataType>
+                <label translate="true">Associated Store View</label>
+                <validation>
+                    <rule name="required-entry" xsi:type="boolean">true</rule>
+                </validation>
+            </settings>
+        </field>
     </fieldset>
 </form>

@@ -8,7 +8,6 @@ use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 
-
 class Images extends AbstractConfig implements ImagesInterface
 {
     const KEY_EXPORT_ALL_IMAGES = 'export_all_images';

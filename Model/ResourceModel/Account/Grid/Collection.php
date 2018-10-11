@@ -9,7 +9,6 @@ use Magento\Framework\View\Element\UiComponent\DataProvider\Document as UiDocume
 use ShoppingFeed\Manager\Model\ResourceModel\Account as AccountResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Collection as AccountCollection;
 
-
 class Collection extends AccountCollection implements SearchResultInterface
 {
     /**

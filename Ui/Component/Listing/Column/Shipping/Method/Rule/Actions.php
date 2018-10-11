@@ -2,14 +2,14 @@
 
 namespace ShoppingFeed\Manager\Ui\Component\Listing\Column\Shipping\Method\Rule;
 
+use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
 use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
-
 
 class Actions extends AbstractActions
 {
     const ACL_EDIT = 'ShoppingFeed_Manager::shipping_method_rule_edit';
-    const ACL_DELETE = 'ShoppingFeed_Manager::shipping_method_rule_edit';
+    const ACL_DELETE = 'ShoppingFeed_Manager::shipping_method_rule_delete';
 
     const URL_PATH_EDIT = 'shoppingfeed_manager/shipping_method_rule/edit';
     const URL_PATH_DELETE = 'shoppingfeed_manager/shipping_method_rule/delete';
@@ -25,7 +25,7 @@ class Actions extends AbstractActions
 
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
-                if (isset($item['rule_id'])) {
+                if (isset($item[RuleInterface::RULE_ID])) {
                     $name = $this->getData('name');
                     $item[$name] = [];
 
@@ -33,7 +33,7 @@ class Actions extends AbstractActions
                         $item[$name]['edit'] = [
                             'href' => $this->urlBuilder->getUrl(
                                 static::URL_PATH_EDIT,
-                                [ RuleAction::REQUEST_KEY_RULE_ID => $item['rule_id'] ]
+                                [ RuleAction::REQUEST_KEY_RULE_ID => $item[RuleInterface::RULE_ID] ]
                             ),
                             'label' => __('Edit'),
                         ];
@@ -43,7 +43,7 @@ class Actions extends AbstractActions
                         $item[$name]['delete'] = [
                             'href' => $this->urlBuilder->getUrl(
                                 static::URL_PATH_DELETE,
-                                [ RuleAction::REQUEST_KEY_RULE_ID => $item['rule_id'] ]
+                                [ RuleAction::REQUEST_KEY_RULE_ID => $item[RuleInterface::RULE_ID] ]
                             ),
                             'label' => __('Delete'),
                             'confirm' => [

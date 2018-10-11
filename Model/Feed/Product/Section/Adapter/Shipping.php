@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ShippingInterface as 
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Shipping as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
-
 /**
  * @method ConfigInterface getConfig()
  */
@@ -89,7 +88,6 @@ class Shipping extends AbstractAdapter implements ShippingInterface
         if (isset($productData[self::KEY_FEES]) && isset($productData[self::KEY_DELAY])) {
             $exportedProduct->addShipping(
                 $productData[self::KEY_FEES],
-                $productData[self::KEY_DELAY],
                 $productData[self::KEY_CARRIER_NAME] ?? ''
             );
         }

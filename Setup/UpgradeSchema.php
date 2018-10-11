@@ -8,13 +8,13 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Cron\TaskInterface as CronTaskInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
-
 
 class UpgradeSchema implements UpgradeSchemaInterface
 {
@@ -59,6 +59,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->addMarketplaceOrderTicketStatusField($setup);
             $this->renameMarketplaceOrderLogOrderIdField($setup);
             $this->addMarketplaceOrderLogDetailsField($setup);
+        }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.5.0') < 0)) {
+            $this->createCronTaskTable($setup);
+            $this->changeMarketplaceOrderTicketShoppingFeedIdFieldType($setup);
         }
     }
 
@@ -904,7 +909,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
                         'nullable' => false,
                         'default' => 0,
                     ],
-                    'To Date'
+                    'Is Active'
                 )
                 ->addColumn(
                     'conditions_serialized',
@@ -962,5 +967,123 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
             $connection->createTable($table);
         }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    private function createCronTaskTable(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $cronTaskTableCode = $this->tableDictionary->getCronTaskTableCode();
+        $cronTaskTableName = $this->tableDictionary->getCronTaskTableName();
+
+        if (!$setup->tableExists($cronTaskTableCode)) {
+            $table = $connection->newTable($cronTaskTableName)
+                ->addColumn(
+                    CronTaskInterface::TASK_ID,
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'primary' => true,
+                        'nullable' => false,
+                        'unsigned' => true,
+                    ],
+                    'Task ID'
+                )
+                ->addColumn(
+                    CronTaskInterface::NAME,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Name'
+                )
+                ->addColumn(
+                    CronTaskInterface::DESCRIPTION,
+                    Table::TYPE_TEXT,
+                    65536,
+                    [ 'nullable' => false ],
+                    'Description'
+                )
+                ->addColumn(
+                    CronTaskInterface::COMMAND_CODE,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Command Code'
+                )
+                ->addColumn(
+                    CronTaskInterface::COMMAND_CONFIGURATION,
+                    Table::TYPE_TEXT,
+                    65536,
+                    [ 'nullable' => true ],
+                    'Command Configuration'
+                )
+                ->addColumn(
+                    CronTaskInterface::SCHEDULE_TYPE,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => false ],
+                    'Schedule Type'
+                )
+                ->addColumn(
+                    CronTaskInterface::CRON_EXPRESSION,
+                    Table::TYPE_TEXT,
+                    255,
+                    [ 'nullable' => true ],
+                    'Cron Expression'
+                )
+                ->addColumn(
+                    CronTaskInterface::IS_ACTIVE,
+                    Table::TYPE_BOOLEAN,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => 1,
+                    ],
+                    'Is Active'
+                )
+                ->addColumn(
+                    CronTaskInterface::CREATED_AT,
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT,
+                    ],
+                    'Created At'
+                )
+                ->addColumn(
+                    CronTaskInterface::UPDATED_AT,
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => false,
+                        'default' => Table::TIMESTAMP_INIT_UPDATE,
+                    ],
+                    'Updated At'
+                )
+                ->setComment('Shopping Feed Cron Task');
+
+            $connection->createTable($table);
+        }
+    }
+
+    public function changeMarketplaceOrderTicketShoppingFeedIdFieldType(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+
+        $connection->modifyColumn(
+            $this->tableDictionary->getMarketplaceOrderTicketTableName(),
+            TicketInterface::SHOPPING_FEED_TICKET_ID,
+            [
+                'type' => Table::TYPE_TEXT,
+                'length' => 32,
+                'nullable' => true,
+                'comment' => 'Shopping Feed Ticket ID',
+            ]
+        );
     }
 }

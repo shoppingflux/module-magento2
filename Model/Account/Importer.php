@@ -5,10 +5,12 @@ namespace ShoppingFeed\Manager\Model\Account;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Model\Store as BaseStore;
 use Magento\Store\Model\StoreManagerInterface;
 use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface as AccountStoreRepositoryInterface;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
+use ShoppingFeed\Manager\Console\Command\Exception;
 use ShoppingFeed\Manager\Model\Account;
 use ShoppingFeed\Manager\Model\AccountFactory;
 use ShoppingFeed\Manager\Model\Account\Store as AccountStore;
@@ -19,12 +21,12 @@ use ShoppingFeed\Manager\Model\ShoppingFeed\Api\SessionManager as ApiSessionMana
 use ShoppingFeed\Sdk\Api\Session\SessionResource as ApiSession;
 use ShoppingFeed\Sdk\Api\Store\StoreResource as ApiStore;
 use ShoppingFeed\Sdk\Credential\Password as ApiPasswordCredential;
-use ShoppingFeed\Sdk\Credential\Token as ApiTokenCredential;
 use ShoppingFeed\Sdk\Client\Client as ApiClient;
-
 
 class Importer
 {
+    const STORE_CREATION_TOKEN = '18eaf020f7a33c08c63591c52df6a8dd3bd30d99';
+
     /**
      * @var StoreManagerInterface
      */
@@ -34,7 +36,7 @@ class Importer
      * @var ApiSessionManager
      */
     private $apiSessionManager;
-    
+
     /**
      * @var AccountRepositoryInterface
      */
@@ -129,10 +131,8 @@ class Importer
      */
     private function getApiSessionByToken($apiToken)
     {
-        $tokenCredential = new ApiTokenCredential($apiToken);
-
         try {
-            return ApiClient::createSession($tokenCredential);
+            return $this->apiSessionManager->getSessionByToken($apiToken);
         } catch (\Exception $e) {
             throw new LocalizedException(
                 __('Shopping Feed account for API token "%1" does not exist.', $apiToken)
@@ -163,7 +163,6 @@ class Importer
             // Everything is fine if the API token is not yet used by another account.
         }
 
-        // @todo use the SessionManager
         $apiSession = $this->getApiSessionByToken($apiToken);
         $transaction = $this->transactionFactory->create();
 
@@ -182,9 +181,13 @@ class Importer
                 );
             }
 
-            $baseStore = $this->storeManager->getStore($baseStoreId);
+            if (empty($baseStoreId)) {
+                $baseStore = null;
+            } else {
+                $baseStore = $this->storeManager->getStore($baseStoreId);
+            }
 
-            if (empty($baseStoreId) || !$baseStore->getId()) {
+            if (empty($baseStoreId) || empty($baseStore) || !$baseStore->getId()) {
                 throw new LocalizedException(
                     __('Could not determine the store view to which associate the Shopping Feed account main store.')
                 );
@@ -277,7 +280,7 @@ class Importer
 
         try {
             $this->accountStoreRepository->getByShoppingFeedStoreId($shoppingFeedStoreId);
-            
+
             throw new LocalizedException(
                 __('An account store already exists for Shopping Feed store ID "%1".', $shoppingFeedStoreId)
             );

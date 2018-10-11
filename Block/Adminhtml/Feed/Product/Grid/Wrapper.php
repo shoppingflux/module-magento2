@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterfac
 use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid as ProductGrid;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 
-
 class Wrapper extends Template
 {
     /**

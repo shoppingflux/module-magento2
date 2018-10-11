@@ -8,7 +8,6 @@ use ShoppingFeed\Manager\Model\Shipping\Carrier\Marketplace as MarketplaceCarrie
 use ShoppingFeed\Manager\Model\Shipping\Method\AbstractApplier;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\MarketplaceInterface as ConfigInterface;
 
-
 /**
  * @method ConfigInterface getConfig()
  */

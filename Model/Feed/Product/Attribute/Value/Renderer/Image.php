@@ -8,7 +8,6 @@ use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\AbstractRenderer;
 use ShoppingFeed\Manager\Model\Feed\Product\Constants as ProductConstants;
 
-
 class Image extends AbstractRenderer
 {
     public function getSortOrder()

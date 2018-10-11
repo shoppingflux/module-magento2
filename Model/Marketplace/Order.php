@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 
-
 /**
  * @method OrderResource getResource()
  * @method OrderCollection getCollection()

@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\Rule;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
 
-
 class Delete extends RuleAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::shipping_method_rule_delete';

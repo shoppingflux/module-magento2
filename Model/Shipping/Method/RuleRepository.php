@@ -10,7 +10,6 @@ use ShoppingFeed\Manager\Api\Shipping\Method\RuleRepositoryInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule as RuleResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\RuleFactory as RuleResourceFactory;
 
-
 class RuleRepository implements RuleRepositoryInterface
 {
     /**

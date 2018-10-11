@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Feed;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 
-
 class Config extends AbstractConfig implements ConfigInterface
 {
     const KEY_USE_GZIP_COMPRESSION = 'use_gzip_compression';

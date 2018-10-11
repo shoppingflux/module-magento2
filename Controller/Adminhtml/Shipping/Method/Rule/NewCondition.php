@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\ConditionsFor
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
 use ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Form\DataProvider as RuleFormDataProvider;
 
-
 class NewCondition extends RuleAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::shipping_method_rule_edit';

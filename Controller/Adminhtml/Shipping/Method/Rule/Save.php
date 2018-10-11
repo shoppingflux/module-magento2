@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\Rule;
 
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Controller\Result\RawFactory as RawResultFactory;
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
@@ -11,24 +12,28 @@ use Magento\Framework\Stdlib\DateTime\Filter\DateFactory as DateFilterFactory;
 use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Shipping\Method\RuleRepositoryInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
+use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\RuleFactory;
 use ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Form\DataProvider as RuleFormDataProvider;
-use Zend_Filter_InputFactory as InputFilterFactory;
-
 
 class Save extends RuleAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::shipping_method_rule_edit';
 
     /**
-     * @var InputFilterFactory
+     * @var DataObjectFactory
      */
-    private $inputFilterFactory;
+    private $dataObjectFactory;
 
     /**
      * @var DateFilterFactory
      */
     private $dateFilterFactory;
+
+    /**
+     * @var ApplierPoolInterface
+     */
+    private $applierPool;
 
     /**
      * @param Context $context
@@ -37,8 +42,9 @@ class Save extends RuleAction
      * @param PageResultFactory $pageResultFactory
      * @param RuleFactory $ruleFactory
      * @param RuleRepositoryInterface $ruleRepository
-     * @param InputFilterFactory $inputFilterFactory
+     * @param DataObjectFactory $dataObjectFactory
      * @param DateFilterFactory $dateFilterFactory
+     * @param ApplierPoolInterface $applierPool
      */
     public function __construct(
         Context $context,
@@ -47,11 +53,13 @@ class Save extends RuleAction
         PageResultFactory $pageResultFactory,
         RuleFactory $ruleFactory,
         RuleRepositoryInterface $ruleRepository,
-        InputFilterFactory $inputFilterFactory,
-        DateFilterFactory $dateFilterFactory
+        DataObjectFactory $dataObjectFactory,
+        DateFilterFactory $dateFilterFactory,
+        ApplierPoolInterface $applierPool
     ) {
-        $this->inputFilterFactory = $inputFilterFactory;
+        $this->dataObjectFactory = $dataObjectFactory;
         $this->dateFilterFactory = $dateFilterFactory;
+        $this->applierPool = $applierPool;
 
         parent::__construct(
             $context,
@@ -95,34 +103,35 @@ class Save extends RuleAction
 
             $applierData = $ruleData[RuleFormDataProvider::DATA_SCOPE_APPLIER];
             $applierCode = $applierData[RuleFormDataProvider::FIELD_APPLIER_CODE];
-            $applierConfigData = (array) ($applierData[$applierCode] ?? []);
+            $applier = $this->applierPool->getApplierByCode($applierCode);
+            $applierConfigData = $applier->getConfig()
+                ->prepareFormDataForSave((array) ($applierData[$applierCode] ?? []));
 
             $dateFilter = $this->dateFilterFactory->create();
-            $inputFilter = $this->inputFilterFactory->create(
+
+            $inputFilter = new \Zend_Filter_Input(
+                array_intersect_key(
+                    [
+                        RuleFormDataProvider::FIELD_FROM_DATE => $dateFilter,
+                        RuleFormDataProvider::FIELD_TO_DATE => $dateFilter,
+                    ],
+                    array_filter($ruleData)
+                ),
                 [
-                    'filterRules' => array_intersect_key(
-                        [
-                            RuleFormDataProvider::FIELD_FROM_DATE => $dateFilter,
-                            RuleFormDataProvider::FIELD_TO_DATE => $dateFilter,
-                        ],
-                        array_filter($ruleData)
-                    ),
-                    'validatorRules' => [
-                        RuleFormDataProvider::FIELD_NAME => 'NotEmpty',
-                        RuleFormDataProvider::FIELD_DESCRIPTION => [],
-                        RuleFormDataProvider::FIELD_IS_ACTIVE => [],
-                        RuleFormDataProvider::FIELD_FROM_DATE => [],
-                        RuleFormDataProvider::FIELD_TO_DATE => [],
-                        RuleFormDataProvider::FIELD_SORT_ORDER => 'NotEmpty',
-                        RuleFormDataProvider::FIELD_CONDITIONS => [
-                            \Zend_Filter_Input::PRESENCE => \Zend_Filter_Input::PRESENCE_OPTIONAL,
-                        ],
+                    RuleFormDataProvider::FIELD_NAME => 'NotEmpty',
+                    RuleFormDataProvider::FIELD_DESCRIPTION => [],
+                    RuleFormDataProvider::FIELD_IS_ACTIVE => [],
+                    RuleFormDataProvider::FIELD_FROM_DATE => [],
+                    RuleFormDataProvider::FIELD_TO_DATE => [],
+                    RuleFormDataProvider::FIELD_SORT_ORDER => 'NotEmpty',
+                    RuleFormDataProvider::FIELD_CONDITIONS => [
+                        \Zend_Filter_Input::PRESENCE => \Zend_Filter_Input::PRESENCE_OPTIONAL,
                     ],
-                    'options' => [
-                        \Zend_Filter_Input::ALLOW_EMPTY => true,
-                        \Zend_Filter_Input::PRESENCE => \Zend_Filter_Input::PRESENCE_REQUIRED,
-                    ],
-                    'data' => $ruleData,
+                ],
+                $ruleData,
+                [
+                    \Zend_Filter_Input::ALLOW_EMPTY => true,
+                    \Zend_Filter_Input::PRESENCE => \Zend_Filter_Input::PRESENCE_REQUIRED,
                 ]
             );
 
@@ -136,7 +145,8 @@ class Save extends RuleAction
             $rule->setToDate($ruleData[RuleFormDataProvider::FIELD_TO_DATE]);
             $rule->setSortOrder($ruleData[RuleFormDataProvider::FIELD_SORT_ORDER]);
             $rule->setRawConditions($ruleData[RuleFormDataProvider::FIELD_CONDITIONS] ?? []);
-            $rule->setApplier($applierCode, $applierConfigData);
+            $rule->setApplierCode($applierCode);
+            $rule->setApplierConfiguration($this->dataObjectFactory->create([ 'data' => $applierConfigData ]));
 
             $this->ruleRepository->save($rule);
             $isSaveSuccessful = true;
@@ -153,7 +163,7 @@ class Save extends RuleAction
         }
 
         if (!$isSaveSuccessful || $this->getRequest()->getParam('back')) {
-            return $redirectResult->setPath('*/*/edit', [ 'rule_id' => $rule->getId() ]);
+            return $redirectResult->setPath('*/*/edit', [ self::REQUEST_KEY_RULE_ID => $rule->getId() ]);
         }
 
         return $redirectResult->setPath('*/*/');

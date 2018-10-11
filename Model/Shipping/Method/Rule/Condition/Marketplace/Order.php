@@ -9,7 +9,6 @@ use Magento\Rule\Model\Condition\Context;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface;
 
-
 /**
  * @method string getAttribute()
  */

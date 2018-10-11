@@ -6,7 +6,6 @@ use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface;
 
-
 interface ShippingInterface extends ConfigInterface
 {
     /**

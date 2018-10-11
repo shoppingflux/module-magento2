@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section;
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 
-
 class Type extends AbstractDb
 {
     /**

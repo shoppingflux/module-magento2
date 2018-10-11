@@ -7,7 +7,6 @@ use Magento\Store\Model\Store as BaseStore;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\DataObject;
 
-
 interface StoreInterface
 {
     /**#@+*/

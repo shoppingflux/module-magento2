@@ -4,24 +4,22 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher as RefresherResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\RefresherFactory as RefresherResourceFactory;
-use ShoppingFeed\Manager\Model\Time\FilterFactory as TimeFilterFactory;
+use ShoppingFeed\Manager\Model\TimeFilterFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-
 class ForceSectionsRefreshCommand extends AbstractCommand
 {
     /**
-     * @var RefresherResource
+     * @var RefresherResourceFactory
      */
-    private $refresherResource;
+    private $refresherResourceFactory;
 
     /**
      * @param AppState $appState
@@ -50,7 +48,7 @@ class ForceSectionsRefreshCommand extends AbstractCommand
             $feedSectionFilterFactory
         );
 
-        $this->refresherResource = $refresherResourceFactory->create();
+        $this->refresherResourceFactory = $refresherResourceFactory;
     }
 
     protected function configure()
@@ -73,12 +71,13 @@ class ForceSectionsRefreshCommand extends AbstractCommand
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
+        $refresherResource = $this->refresherResourceFactory->create();
 
         try {
             $storeCollection = $this->getStoresOptionCollection($input);
-            $storeIds = $storeCollection->getAllIds();
+            $storeIds = $storeCollection->getLoadedIds();
             $refreshState = $this->getRefreshStateArgumentValue($input);
-            $overridableRefreshStates = $this->refresherResource->getOverridableRefreshStates($refreshState);
+            $overridableRefreshStates = $refresherResource->getOverridableRefreshStates($refreshState);
 
             $io->title('Forcing product sections refresh for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
@@ -93,7 +92,7 @@ class ForceSectionsRefreshCommand extends AbstractCommand
 
             foreach ($storeCollection as $store) {
                 $sectionFilter->setStoreIds([ $store->getId() ]);
-                $this->refresherResource->forceProductSectionRefresh($refreshState, $sectionFilter, $productFilter);
+                $refresherResource ->forceProductSectionRefresh($refreshState, $sectionFilter, $productFilter);
                 $io->progressAdvance(1);
             }
 

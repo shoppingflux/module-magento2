@@ -6,7 +6,6 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as BaseConfig;
 use ShoppingFeed\Manager\Model\Feed\Product\RefreshableConfigInterface;
 
-
 interface ConfigInterface extends BaseConfig, RefreshableConfigInterface
 {
     /**

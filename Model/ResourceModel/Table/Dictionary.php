@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Table;
 
 use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 
-
 class Dictionary extends AbstractDb
 {
     protected function _construct()
@@ -41,6 +40,22 @@ class Dictionary extends AbstractDb
     public function getAccountStoreTableName()
     {
         return $this->getTable($this->getAccountStoreTableCode());
+    }
+
+    /**
+     * @return string
+     */
+    public function getCronTaskTableCode()
+    {
+        return 'sfm_cron_task';
+    }
+
+    /**
+     * @return string
+     */
+    public function getCronTaskTableName()
+    {
+        return $this->getTable($this->getCronTaskTableCode());
     }
 
     /**
@@ -154,7 +169,6 @@ class Dictionary extends AbstractDb
     {
         return $this->getTable($this->getMarketplaceOrderTicketTableCode());
     }
-
 
     /**
      * @return string

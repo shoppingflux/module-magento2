@@ -7,7 +7,6 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-
 class ImportSalesOrdersCommand extends AbstractCommand
 {
     protected function configure()
@@ -24,7 +23,7 @@ class ImportSalesOrdersCommand extends AbstractCommand
 
         try {
             $storeCollection = $this->getStoresOptionCollection($input);
-            $storeIds = $storeCollection->getAllIds();
+            $storeIds = $storeCollection->getLoadedIds();
 
             $io->title('Importing marketplace orders for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
@@ -42,3 +41,4 @@ class ImportSalesOrdersCommand extends AbstractCommand
         return Cli::RETURN_SUCCESS;
     }
 }
+

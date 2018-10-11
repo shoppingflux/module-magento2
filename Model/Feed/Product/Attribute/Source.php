@@ -8,13 +8,12 @@ use Magento\ConfigurableProduct\Model\ConfigurableAttributeHandler;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface as AttributeRendererPoolInterface;
 
-
 class Source implements SourceInterface
 {
     /**
-     * @var CatalogProductResource $catalogProductResource
+     * @var CatalogProductResourceFactory
      */
-    private $catalogProductResource;
+    private $catalogProductResourceFactory;
 
     /**
      * @var ConfigurableAttributeHandler
@@ -58,7 +57,7 @@ class Source implements SourceInterface
         AttributeRendererPoolInterface $attributeRendererPool,
         array $excludedRenderableAttributes = []
     ) {
-        $this->catalogProductResource = $catalogProductResourceFactory->create();
+        $this->catalogProductResourceFactory = $catalogProductResourceFactory;
         $this->configurableAttributeHandler = $configurableAttributeHandler;
         $this->attributeRendererPool = $attributeRendererPool;
         $this->excludedRenderableAttributes = array_filter($excludedRenderableAttributes);
@@ -69,11 +68,12 @@ class Source implements SourceInterface
      */
     private function getAttributesByCode()
     {
-        $attributes = $this->catalogProductResource->getAttributesByCode();
+        $catalogProductResource = $this->catalogProductResourceFactory->create();
+        $attributes = $catalogProductResource->getAttributesByCode();
 
         if (empty($attributes)) {
-            $this->catalogProductResource->loadAllAttributes();
-            $attributes = $this->catalogProductResource->getAttributesByCode();
+            $catalogProductResource->loadAllAttributes();
+            $attributes = $catalogProductResource->getAttributesByCode();
         }
 
         return $attributes;

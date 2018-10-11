@@ -4,18 +4,19 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
-use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractType as SectionType;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher as RefresherResource;
-use ShoppingFeed\Manager\Model\Time\Filter as TimeFilter;
-use ShoppingFeed\Manager\Model\Time\FilterFactory as TimeFilterFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\RefresherFactory as RefresherResourceFactory;
+use ShoppingFeed\Manager\Model\TimeFilter;
+use ShoppingFeed\Manager\Model\TimeFilterFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-
 
 class ForceAutomaticRefreshCommand extends AbstractCommand
 {
@@ -28,9 +29,9 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
     private $exportStateConfig;
 
     /**
-     * @var RefresherResource
+     * @var RefresherResourceFactory
      */
-    private $refresherResource;
+    private $refresherResourceFactory;
 
     /**
      * @param AppState $appState
@@ -40,7 +41,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
      * @param FeedProductFilterFactory $feedProductFilterFactory
      * @param FeedSectionFilterFactory $feedSectionFilterFactory
      * @param ExportStateConfigInterface $exportStateConfig
-     * @param RefresherResource $refresherResource
+     * @param RefresherResourceFactory $refresherResourceFactory
      */
     public function __construct(
         AppState $appState,
@@ -50,7 +51,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
         FeedProductFilterFactory $feedProductFilterFactory,
         FeedSectionFilterFactory $feedSectionFilterFactory,
         ExportStateConfigInterface $exportStateConfig,
-        RefresherResource $refresherResource
+        RefresherResourceFactory $refresherResourceFactory
     ) {
         parent::__construct(
             $appState,
@@ -62,7 +63,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
         );
 
         $this->exportStateConfig = $exportStateConfig;
-        $this->refresherResource = $refresherResource;
+        $this->refresherResourceFactory = $refresherResourceFactory;
     }
 
     protected function configure()
@@ -90,70 +91,86 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
         parent::configure();
     }
 
+    /**
+     * @param StoreInterface $store
+     * @param bool $refreshExportState
+     * @param SectionType[] $refreshedSectionTypes
+     */
+    private function forceStoreFeedAutomaticRefresh(
+        StoreInterface $store,
+        $refreshExportState,
+        array $refreshedSectionTypes
+    ) {
+        $refresherResource = $this->refresherResourceFactory->create();
+
+        if ($refreshExportState) {
+            $refreshState = $this->exportStateConfig->getAutomaticRefreshState($store);
+
+            if (false !== $refreshState) {
+                $productFilter = $this->createFeedProductFilter();
+                $overridableRefreshStates = $refresherResource->getOverridableRefreshStates($refreshState);
+
+                if (!empty($overridableRefreshStates)) {
+                    $lastRefreshTimeFilter = $this->createTimeFilter()
+                        ->setMode(TimeFilter::MODE_BEFORE)
+                        ->setSeconds($this->exportStateConfig->getAutomaticRefreshDelay($store));
+
+                    $productFilter
+                        ->setStoreIds([ $store->getId() ])
+                        ->setExportStateRefreshStates($overridableRefreshStates)
+                        ->setLastExportStateRefreshTimeFilter($lastRefreshTimeFilter);
+
+                    $refresherResource->forceProductExportStateRefresh($refreshState, $productFilter);
+                }
+            }
+        }
+
+        $emptyProductFilter = $this->createFeedProductFilter();
+
+        foreach ($refreshedSectionTypes as $sectionType) {
+            $typeConfig = $sectionType->getConfig();
+            $refreshState = $sectionType->getConfig()->getAutomaticRefreshState($store);
+
+            if (false !== $refreshState) {
+                $sectionFilter = $this->createFeedSectionFilter();
+                $overridableRefreshStates = $refresherResource->getOverridableRefreshStates($refreshState);
+
+                if (!empty($overridableRefreshStates)) {
+                    $lastRefreshTimeFilter = $this->createTimeFilter()
+                        ->setMode(TimeFilter::MODE_BEFORE)
+                        ->setSeconds($typeConfig->getAutomaticRefreshDelay($store));
+
+                    $sectionFilter
+                        ->setStoreIds([ $store->getId() ])
+                        ->setRefreshStates($overridableRefreshStates)
+                        ->setLastRefreshTimeFilter($lastRefreshTimeFilter);
+
+                    $refresherResource->forceProductSectionRefresh(
+                        $refreshState,
+                        $sectionFilter,
+                        $emptyProductFilter
+                    );
+                }
+            }
+        }
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
 
         try {
             $storeCollection = $this->getStoresOptionCollection($input);
-            $storeIds = $storeCollection->getAllIds();
+            $storeIds = $storeCollection->getLoadedIds();
 
             $io->title('Forcing automatic refresh for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
+            $refreshExportState = $this->getFlagOptionValue($input, self::OPTION_KEY_FORCE_EXPORT_STATE_REFRESH);
+            $sectionTypes = $this->getSectionTypesOptionValue($input, self::OPTION_KEY_FORCE_SECTION_TYPES_REFRESH);
+
             foreach ($storeCollection as $store) {
-                if ($this->getFlagOptionValue($input, self::OPTION_KEY_FORCE_EXPORT_STATE_REFRESH)) {
-                    $refreshState = $this->exportStateConfig->getAutomaticRefreshState($store);
-
-                    if (false !== $refreshState) {
-                        $productFilter = $this->createFeedProductFilter();
-                        $overridableRefreshStates = $this->refresherResource->getOverridableRefreshStates($refreshState);
-
-                        if (!empty($overridableRefreshStates)) {
-                            $lastRefreshTimeFilter = $this->createTimeFilter()
-                                ->setMode(TimeFilter::MODE_BEFORE)
-                                ->setSeconds($this->exportStateConfig->getAutomaticRefreshDelay($store));
-
-                            $productFilter
-                                ->setStoreIds([ $store->getId() ])
-                                ->setExportStateRefreshStates($overridableRefreshStates)
-                                ->setLastExportStateRefreshTimeFilter($lastRefreshTimeFilter);
-
-                            $this->refresherResource->forceProductExportStateRefresh($refreshState, $productFilter);
-                        }
-                    }
-                }
-
-                $emptyProductFilter = $this->createFeedProductFilter();
-                $sectionTypes = $this->getSectionTypesOptionValue($input, self::OPTION_KEY_FORCE_SECTION_TYPES_REFRESH);
-
-                foreach ($sectionTypes as $sectionType) {
-                    $typeConfig = $sectionType->getConfig();
-                    $refreshState = $sectionType->getConfig()->getAutomaticRefreshState($store);
-
-                    if (false !== $refreshState) {
-                        $sectionFilter = $this->createFeedSectionFilter();
-                        $overridableRefreshStates = $this->refresherResource->getOverridableRefreshStates($refreshState);
-
-                        if (!empty($overridableRefreshStates)) {
-                            $lastRefreshTimeFilter = $this->createTimeFilter()
-                                ->setMode(TimeFilter::MODE_BEFORE)
-                                ->setSeconds($typeConfig->getAutomaticRefreshDelay($store));
-
-                            $sectionFilter
-                                ->setStoreIds([ $store->getId() ])
-                                ->setRefreshStates($overridableRefreshStates)
-                                ->setLastRefreshTimeFilter($lastRefreshTimeFilter);
-
-                            $this->refresherResource->forceProductSectionRefresh(
-                                $refreshState,
-                                $sectionFilter,
-                                $emptyProductFilter
-                            );
-                        }
-                    }
-                }
-
+                $this->forceStoreFeedAutomaticRefresh($store, $refreshExportState, $sectionTypes);
                 $io->progressAdvance(1);
             }
 

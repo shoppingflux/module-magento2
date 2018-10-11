@@ -6,7 +6,6 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 
-
 class Edit extends StoreAction
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::account_store_edit';

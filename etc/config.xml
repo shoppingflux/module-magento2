@@ -12,7 +12,7 @@
                 <specificerrmsg>This shipping method is not available. To use this shipping method, please contact us.</specificerrmsg>
             </sfm_marketplace>
         </carriers>
-        
+
         <payment>
             <sfm_shopping_feed_order>
                 <model>ShoppingFeedManagerPaymentFacade</model>

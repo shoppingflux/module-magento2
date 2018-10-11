@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Config\Value\Handler;
 
 use ShoppingFeed\Manager\Model\Config\Value\AbstractHandler;
 
-
 class Option extends AbstractHandler
 {
     const TYPE_CODE = 'option';

@@ -16,7 +16,6 @@ use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHand
 use ShoppingFeed\Manager\Model\Feed\Exporter as FeedExporter;
 use ShoppingFeed\Manager\Model\Feed\Product\RefreshableConfig;
 
-
 class Config extends RefreshableConfig implements ConfigInterface
 {
     const SUB_SCOPE = 'export_state';

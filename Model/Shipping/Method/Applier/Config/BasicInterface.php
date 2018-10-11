@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config;
 use Magento\Framework\DataObject;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\ConfigInterface;
 
-
 interface BasicInterface extends ConfigInterface
 {
     /**

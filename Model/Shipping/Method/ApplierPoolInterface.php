@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Shipping\Method;
 
-
 use Magento\Framework\Exception\LocalizedException;
 
 interface ApplierPoolInterface

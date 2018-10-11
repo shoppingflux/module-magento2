@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section;
 
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type as TypeResource;
 
-
 abstract class AbstractType
 {
     /**

@@ -10,7 +10,6 @@ use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 
-
 abstract class OrderAction extends Action
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::marketplace_orders';

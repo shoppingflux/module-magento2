@@ -17,16 +17,14 @@ use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as Expo
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 
-
 class DataProvider extends BaseDataProvider
 {
     const FIELDSET_FEED_GENERAL = 'feed_general';
     const FIELDSET_FEED_EXPORT_STATE = 'feed_export_state';
-    const FIELDSET_BASE_FEED_SECTION_TYPE = 'feed_%s';
     const FIELDSET_ORDER_GENERAL = 'order_general';
+    const BASE_FIELDSET_FEED_SECTION_TYPE = 'feed_%s';
 
     const SORT_ORDER_PRODUCT_LIST_FIELDSET = 1000;
-
 
     /**
      * @var Registry
@@ -62,7 +60,7 @@ class DataProvider extends BaseDataProvider
      * @param RequestInterface $request
      * @param FilterBuilder $filterBuilder
      * @param Registry $coreRegistry
-     * @param FeedConfigInterface $feedGeneralConfig
+     * @param FeedConfigInterface $feedConfig
      * @param ExportStateConfigInterface $feedExportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
      * @param OrderConfigInterface $orderGeneralConfig
@@ -78,7 +76,7 @@ class DataProvider extends BaseDataProvider
         RequestInterface $request,
         FilterBuilder $filterBuilder,
         Registry $coreRegistry,
-        FeedConfigInterface $feedGeneralConfig,
+        FeedConfigInterface $feedConfig,
         ExportStateConfigInterface $feedExportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
         OrderConfigInterface $orderGeneralConfig,
@@ -86,7 +84,7 @@ class DataProvider extends BaseDataProvider
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
-        $this->feedGeneralConfig = $feedGeneralConfig;
+        $this->feedGeneralConfig = $feedConfig;
         $this->feedExportStateConfig = $feedExportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
         $this->orderGeneralConfig = $orderGeneralConfig;
@@ -163,7 +161,7 @@ class DataProvider extends BaseDataProvider
         $sortOrder = 30;
 
         foreach ($this->sectionTypePool->getSortedTypes() as $sectionType) {
-            $fieldsetName = sprintf(static::FIELDSET_BASE_FEED_SECTION_TYPE, $sectionType->getCode());
+            $fieldsetName = sprintf(static::BASE_FIELDSET_FEED_SECTION_TYPE, $sectionType->getCode());
 
             $this->meta[$fieldsetName] = $this->getStoreConfigFieldsetMeta(
                 $store,

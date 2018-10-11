@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Api\Data\Feed\Product;
 
-
 /**
  * @api
  */

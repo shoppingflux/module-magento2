@@ -7,7 +7,6 @@ use ShoppingFeed\Manager\Model\Account;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Account as AccountResource;
 
-
 /**
  * @method AccountResource getResource()
  */

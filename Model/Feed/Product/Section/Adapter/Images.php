@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ImagesInterface as Co
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Images as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
-
 /**
  * @method ConfigInterface getConfig()
  */

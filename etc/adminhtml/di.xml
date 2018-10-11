@@ -1,5 +1,29 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Account\Edit\SaveButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
+        <arguments>
+            <argument name="label" xsi:type="string" translate="true">Save Account</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\SaveButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
+        <arguments>
+            <argument name="label" xsi:type="string" translate="true">Save Store</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Cron\Task\Edit\SaveButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
+        <arguments>
+            <argument name="label" xsi:type="string" translate="true">Save Task</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\SaveButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
+        <arguments>
+            <argument name="label" xsi:type="string" translate="true">Save Rule</argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\Pool">
         <arguments>
             <argument name="modifiers" xsi:type="array">

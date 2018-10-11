@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Account\Store;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\FieldInterface;
 
-
 interface ConfigInterface
 {
     /**

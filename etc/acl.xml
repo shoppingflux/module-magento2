@@ -6,7 +6,7 @@
                 <resource id="ShoppingFeed_Manager::main" title="Shopping Feed" translate="title" sortOrder="100000">
                     <resource id="ShoppingFeed_Manager::accounts" title="Accounts" translate="title" sortOrder="10000">
                         <resource id="ShoppingFeed_Manager::account_create_existing" title="Create Existing Account" translate="title" sortOrder="10000"/>
-                        <!--<resource id="ShoppingFeed_Manager::account_create_unexisting" title="Create New Account" translate="title" sortOrder="20000"/>-->
+                        <resource id="ShoppingFeed_Manager::account_create_unexisting" title="Create New Account" translate="title" sortOrder="20000"/>
                         <resource id="ShoppingFeed_Manager::account_delete" title="Delete Account" translate="title" sortOrder="30000"/>
                     </resource>
 
@@ -23,6 +23,12 @@
 
                     <resource id="ShoppingFeed_Manager::marketplace_orders" title="Marketplace Orders" translate="title" sortOrder="40000">
                         <resource id="ShoppingFeed_Manager::marketplace_order_reset_import_try_count" title="Reset Import Attempts" translate="title" sortOrder="10000"/>
+                    </resource>
+
+                    <resource id="ShoppingFeed_Manager::cron_tasks" title="Cron Tasks" translate="title" sortOrder="30000">
+                        <resource id="ShoppingFeed_Manager::cron_task_run" title="Run Cron Task" translate="title" sortOrder="10000"/>
+                        <resource id="ShoppingFeed_Manager::cron_task_edit" title="Edit Cron Task" translate="title" sortOrder="20000"/>
+                        <resource id="ShoppingFeed_Manager::cron_task_delete" title="Delete Cron Task" translate="title" sortOrder="30000"/>
                     </resource>
                 </resource>
             </resource>

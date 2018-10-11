@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Api\Data\Feed;
 
-
 /**
  * @api
  */
@@ -16,7 +15,7 @@ interface ProductInterface
     const REFRESH_STATE_UP_TO_DATE = 1;
     const REFRESH_STATE_ADVISED = 2;
     const REFRESH_STATE_REQUIRED = 3;
-    
+
     /**#@+*/
     const PRODUCT_ID = 'product_id';
     const STORE_ID = 'store_id';

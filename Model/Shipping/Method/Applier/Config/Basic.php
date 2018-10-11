@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Shipping\Carrier\Marketplace as MarketplaceCarrier;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\AbstractConfig;
 
-
 class Basic extends AbstractConfig implements BasicInterface
 {
     const KEY_FULL_SHIPPING_METHOD_CODE = 'full_shipping_method_code';
@@ -91,7 +90,7 @@ class Basic extends AbstractConfig implements BasicInterface
      * @param int $index
      * @return string|null
      */
-    private function getShippingMethodPart(DataObject $configData, $index)
+    private function getShippingMethodCodePart(DataObject $configData, $index)
     {
         $methodParts = array_filter(explode('_', $this->getShippingMethodFullCode($configData)));
         return (2 === count($methodParts)) && isset($methodParts[$index]) ? $methodParts[$index] : null;
@@ -99,11 +98,11 @@ class Basic extends AbstractConfig implements BasicInterface
 
     public function getShippingCarrierCode(DataObject $configData)
     {
-        return $this->getShippingMethodPart($configData, 0) ?? MarketplaceCarrier::CARRIER_CODE;
+        return $this->getShippingMethodCodePart($configData, 0) ?? MarketplaceCarrier::CARRIER_CODE;
     }
 
     public function getShippingMethodCode(DataObject $configData)
     {
-        return $this->getShippingMethodPart($configData, 1) ?? MarketplaceCarrier::METHOD_CODE;
+        return $this->getShippingMethodCodePart($configData, 1) ?? MarketplaceCarrier::METHOD_CODE;
     }
 }

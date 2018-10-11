@@ -13,7 +13,6 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\CategoriesInterface a
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Categories as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
-
 /**
  * @method ConfigInterface getConfig()
  */

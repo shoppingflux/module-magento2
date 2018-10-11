@@ -8,7 +8,6 @@ use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\FieldInterface;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 
-
 abstract class AbstractConfig implements ConfigInterface
 {
     /**

@@ -8,7 +8,6 @@ use Magento\Quote\Model\Quote\Address\Rate as QuoteShippingRate;
 use ShoppingFeed\Manager\Model\Shipping\Method\AbstractApplier;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\BasicInterface as ConfigInterface;
 
-
 /**
  * @method ConfigInterface getConfig()
  */

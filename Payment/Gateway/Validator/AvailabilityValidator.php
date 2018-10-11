@@ -7,7 +7,6 @@ use Magento\Payment\Gateway\Data\PaymentDataObject;
 use Magento\Payment\Gateway\Validator\AbstractValidator;
 use Magento\Quote\Model\Quote\Payment as QuotePayment;
 
-
 class AvailabilityValidator extends AbstractValidator
 {
     public function validate(array $validationSubject)

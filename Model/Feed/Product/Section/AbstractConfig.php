@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section;
 
 use ShoppingFeed\Manager\Model\Feed\Product\RefreshableConfig;
 
-
 abstract class AbstractConfig extends RefreshableConfig implements ConfigInterface
 {
     const SUB_SCOPE = 'section';

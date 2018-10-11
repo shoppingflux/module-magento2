@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 
-
 class Product extends AbstractDb
 {
     protected function _construct()

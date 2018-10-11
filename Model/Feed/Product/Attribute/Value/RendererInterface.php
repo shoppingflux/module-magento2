@@ -5,7 +5,6 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 
-
 interface RendererInterface
 {
     /**

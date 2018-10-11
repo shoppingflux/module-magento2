@@ -4,18 +4,19 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Console\Cli;
+use Magento\Framework\Exception\LocalizedException;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Model\Feed\Exporter as FeedExporter;
-use ShoppingFeed\Manager\Model\Feed\Product\FilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\FilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\Time\FilterFactory as TimeFilterFactory;
+use ShoppingFeed\Manager\Model\TimeFilterFactory;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-
 
 class ExportCommand extends AbstractCommand
 {
@@ -70,38 +71,47 @@ class ExportCommand extends AbstractCommand
         parent::configure();
     }
 
+    /**
+     * @param StoreInterface $store
+     * @throws \Exception
+     * @throws LocalizedException
+     */
+    private function exportStoreFeed(StoreInterface $store)
+    {
+        $exportStateProductFilter = $this->createFeedProductFilter();
+
+        $exportStateProductFilter->setExportStateRefreshStates(
+            [ FeedProductInterface::REFRESH_STATE_REQUIRED ]
+        );
+
+        $sectionTypeIds = $this->getSectionTypeIds();
+        $sectionTypeProductFilter = $this->createFeedProductFilter();
+        $sectionTypeSectionFilter = $this->createFeedSectionFilter();
+        $sectionTypeSectionFilter->setRefreshStates([ FeedProductInterface::REFRESH_STATE_REQUIRED ]);
+
+        $this->feedRefresher->refreshProducts(
+            $store,
+            $exportStateProductFilter,
+            array_fill_keys($sectionTypeIds, $sectionTypeProductFilter),
+            array_fill_keys($sectionTypeIds, $sectionTypeSectionFilter)
+        );
+
+        $this->feedExporter->exportStoreFeed($store);
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
 
         try {
             $storeCollection = $this->getStoresOptionCollection($input);
-            $storeIds = $storeCollection->getAllIds();
+            $storeIds = $storeCollection->getLoadedIds();
 
             $io->title('Exporting feed for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
-                // @todo customizable pre-requisites
-                $exportStateProductFilter = $this->createFeedProductFilter();
-
-                $exportStateProductFilter->setExportStateRefreshStates(
-                    [ FeedProductInterface::REFRESH_STATE_REQUIRED ]
-                );
-
-                $sectionTypeIds = $this->getSectionTypeIds();
-                $sectionTypeProductFilter = $this->createFeedProductFilter();
-                $sectionTypeSectionFilter = $this->createFeedSectionFilter();
-                $sectionTypeSectionFilter->setRefreshStates([ FeedProductInterface::REFRESH_STATE_REQUIRED ]);
-
-                $this->feedRefresher->refreshProducts(
-                    $store,
-                    $exportStateProductFilter,
-                    array_fill_keys($sectionTypeIds, $sectionTypeProductFilter),
-                    array_fill_keys($sectionTypeIds, $sectionTypeSectionFilter)
-                );
-
-                $this->feedExporter->exportStoreFeed($store);
+                $this->exportStoreFeed($store);
                 $io->progressAdvance(1);
             }
         } catch (\Exception $e) {
