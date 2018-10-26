@@ -2,8 +2,11 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 
+use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Framework\DataObject;
+use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
@@ -22,13 +25,19 @@ use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 class Attributes extends AbstractAdapter implements AttributesInterface
 {
     const KEY_SKU = 'sku';
+    const KEY_NAME = 'name';
+    const KEY_GTIN = 'gtin';
     const KEY_BRAND = 'brand';
     const KEY_DESCRIPTION = 'description';
     const KEY_SHORT_DESCRIPTION = 'short_description';
-    const KEY_GTIN = 'gtin';
-    const KEY_NAME = 'name';
+    const KEY_URL = 'url';
     const KEY_ATTRIBUTE_MAP = 'attribute_map';
     const KEY_CONFIGURABLE_ATTRIBUTES = 'configurable_attributes';
+
+    /**
+     * @var UrlInterface
+     */
+    private $frontendUrlBuilder;
 
     /**
      * @var AttributeSourceInterface
@@ -38,13 +47,16 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     /**
      * @param StoreManagerInterface $storeManager
      * @param AttributeRendererPoolInterface $attributeRendererPool
+     * @param UrlInterface $frontendUrlBuilder
      * @param AttributeSourceInterface $attributeSource
      */
     public function __construct(
         StoreManagerInterface $storeManager,
         AttributeRendererPoolInterface $attributeRendererPool,
+        UrlInterface $frontendUrlBuilder,
         AttributeSourceInterface $attributeSource
     ) {
+        $this->frontendUrlBuilder = $frontendUrlBuilder;
         $this->attributeSource = $attributeSource;
         parent::__construct($storeManager, $attributeRendererPool);
     }
@@ -56,7 +68,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
 
     public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
     {
-        $productCollection->addAttributeToSelect([ 'sku', 'name' ]);
+        $productCollection->addAttributeToSelect([ 'sku', 'name', 'url_key' ]);
 
         foreach ($this->getConfig()->getAllAttributes($store) as $attribute) {
             $productCollection->addAttributeToSelect($attribute->getAttributeCode());
@@ -65,6 +77,48 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         foreach ($this->attributeSource->getConfigurableAttributes() as $key => $attribute) {
             $productCollection->addAttributeToSelect($attribute->getAttributeCode());
         }
+
+        $productCollection->addUrlRewrite();
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param CatalogProduct $product
+     * @return string
+     */
+    public function getCatalogProductFrontendUrl(StoreInterface $store, CatalogProduct $product)
+    {
+        $this->frontendUrlBuilder->setScope($store->getBaseStoreId());
+
+        $requestPath = null;
+        $urlDataObject = $product->getDataByKey('url_data_object');
+
+        if ($urlDataObject instanceof DataObject) {
+            $requestPath = trim($urlDataObject->getData('url_rewrite'));
+        }
+
+        if (empty($requestPath)) {
+            // Force the initialization of the request path, if possible.
+            /** @see \Magento\Catalog\Model\Product\Url::getUrl() */
+            $product->getProductUrl(false);
+            $requestPath = trim($product->getRequestPath());
+        }
+
+        $routeParameters = [
+            '_nosid' => true,
+            '_scope' => $store->getBaseStoreId(),
+        ];
+
+        if (!empty($requestPath)) {
+            $routePath = '';
+            $routeParameters['_direct'] = $requestPath;
+        } else {
+            $routePath = 'catalog/product/view';
+            $routeParameters['id'] = $product->getId();
+            $routeParameters['s'] = $product->getUrlKey();
+        }
+
+        return $this->frontendUrlBuilder->getUrl($routePath, $routeParameters);
     }
 
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
@@ -77,6 +131,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         $data = [
             self::KEY_SKU => $config->shouldUseProductIdForSku($store) ? $productId : $productSku,
             self::KEY_NAME => $catalogProduct->getName(),
+            self::KEY_URL => $this->getCatalogProductFrontendUrl($store, $catalogProduct),
         ];
 
         if ($attribute = $config->getBrandAttribute($store)) {
@@ -137,6 +192,10 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         array $productData,
         ExportedProduct $exportedProduct
     ) {
+        if (isset($productData[self::KEY_NAME])) {
+            $exportedProduct->setName($productData[self::KEY_NAME]);
+        }
+
         if (isset($productData[self::KEY_BRAND])) {
             $exportedProduct->setBrand($productData[self::KEY_BRAND]);
         }
@@ -148,8 +207,8 @@ class Attributes extends AbstractAdapter implements AttributesInterface
             );
         }
 
-        if (isset($productData[self::KEY_NAME])) {
-            $exportedProduct->setName($productData[self::KEY_NAME]);
+        if (isset($productData[self::KEY_URL])) {
+            $exportedProduct->setAttribute('url', $productData[self::KEY_URL]);
         }
     }
 
