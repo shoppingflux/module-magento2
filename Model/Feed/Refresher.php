@@ -6,8 +6,10 @@ use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
+use Magento\Framework\App\Area as AppArea;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Store\Model\App\Emulation as AppEmulation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as ProductAdapterInterface;
@@ -32,6 +34,11 @@ class Refresher
     const MAXIMUM_TIME_SPENT = 1800;
 
     const PRODUCT_COLLECTION_STOCK_STATUS_FILTER_FLAG = 'has_stock_status_filter';
+
+    /**
+     * @var AppEmulation
+     */
+    private $appEmulation;
 
     /**
      * @var RefresherResource
@@ -74,6 +81,7 @@ class Refresher
     protected $catalogProductCollectionFactory;
 
     /**
+     * @param AppEmulation $appEmulation
      * @param RefresherResource $refresherResource
      * @param ExportStateAdapterInterface $exportStateAdapter
      * @param ExportStateConfigInterface $exportStateConfig
@@ -84,6 +92,7 @@ class Refresher
      * @param CatalogProductCollectionFactory $catalogProductCollectionFactory
      */
     public function __construct(
+        AppEmulation $appEmulation,
         RefresherResource $refresherResource,
         ExportStateAdapterInterface $exportStateAdapter,
         ExportStateConfigInterface $exportStateConfig,
@@ -93,6 +102,7 @@ class Refresher
         CatalogProductRepository $catalogProductRepository,
         CatalogProductCollectionFactory $catalogProductCollectionFactory
     ) {
+        $this->appEmulation = $appEmulation;
         $this->refresherResource = $refresherResource;
         $this->exportStateAdapter = $exportStateAdapter;
         $this->exportStateConfig = $exportStateConfig;
@@ -118,6 +128,7 @@ class Refresher
     ) {
         $productId = $refreshableProduct->getId();
         $storeId = $store->getId();
+        $refreshableProduct->getCatalogProduct()->setStoreId($store->getBaseStoreId());
 
         if ($refreshExportState) {
             $previousBaseExportState = $refreshableProduct->getFeedProduct()->getExportState();
@@ -196,6 +207,8 @@ class Refresher
         }
 
         $productCollection = $this->catalogProductCollectionFactory->create();
+        $productCollection->setStoreId($store->getBaseStoreId());
+
         // Depending on the configuration, the Magento_CatalogInventory module may unwantedly filter the collection.
         $productCollection->setFlag(static::PRODUCT_COLLECTION_STOCK_STATUS_FILTER_FLAG, true);
 
@@ -285,6 +298,10 @@ class Refresher
         array $refreshedSectionTypeProductFilters = [],
         array $refreshedSectionTypeSectionFilters = []
     ) {
+        $this->appEmulation->startEnvironmentEmulation($store->getBaseStoreId());
+        $this->feedProductResource->startExportStateUpdateBatching();
+        $this->feedSectionResource->startSectionDataUpdateBatching();
+
         $isExportStateRefreshed = (null !== $exportStateRefreshProductFilter);
 
         $refreshedSectionTypeIds = array_intersect(
@@ -365,7 +382,7 @@ class Refresher
                 $sliceNonRefreshableSectionTypeIds
             );
 
-            // Find out the most efficient way to refresh the products from the current slice.
+            // Find out the most efficient strategies to refresh the products from the current slice.
 
             $isProductLoadingRequiredForSections = false;
             $isProductLoadingRequiredForExportState =
@@ -382,6 +399,8 @@ class Refresher
                     break;
                 }
             }
+
+            // Refresh products.
 
             if ((!$refreshSliceExportState && !$isProductLoadingRequiredForSections)
                 || ($refreshSliceExportState && !$isProductLoadingRequiredForExportState)
@@ -405,6 +424,10 @@ class Refresher
                 );
             }
         }
+
+        $this->feedProductResource->stopExportStateUpdateBatching();
+        $this->feedSectionResource->stopSectionDataUpdateBatching();
+        $this->appEmulation->stopEnvironmentEmulation();
 
         return $this;
     }
