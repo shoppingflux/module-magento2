@@ -6,6 +6,18 @@ use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 
 class Section extends AbstractDb
 {
+    const SECTION_DATA_UPDATE_BATCH_SIZE = 500;
+
+    /**
+     * @var array|null
+     */
+    private $sectionDataBatchedUpdates = null;
+
+    /**
+     * @var int
+     */
+    private $sectionDataBatchedUpdateCount = 0;
+
     protected function _construct()
     {
         $this->_init('sfm_feed_product_section', 'section_id');
@@ -42,21 +54,60 @@ class Section extends AbstractDb
         $connection = $this->getConnection();
         $now = $this->timeHelper->utcDate();
 
-        $connection->update(
-            $this->tableDictionary->getFeedProductSectionTableName(),
-            [
-                'data' => $this->serializeSectionData($data),
-                'refreshed_at' => $now,
-                'refresh_state' => $newRefreshState,
-                'refresh_state_updated_at' => $now,
-            ],
-            $connection->quoteInto('type_id = ?', $sectionTypeId)
-            . ' AND '
-            . $connection->quoteInto('product_id = ?', $productId)
-            . ' AND '
-            . $connection->quoteInto('store_id = ?', $storeId)
-        );
+        $values = [
+            'data' => $this->serializeSectionData($data),
+            'refreshed_at' => $now,
+            'refresh_state' => $newRefreshState,
+            'refresh_state_updated_at' => $now,
+        ];
+
+        if (is_array($this->sectionDataBatchedUpdates)) {
+            $values['type_id'] = $sectionTypeId;
+            $values['product_id'] = $productId;
+            $values['store_id'] = $storeId;
+            $this->sectionDataBatchedUpdates[] = $values;
+
+            if (++$this->sectionDataBatchedUpdateCount > static::SECTION_DATA_UPDATE_BATCH_SIZE) {
+                $this->flushSectionDataBatchedUpdates();
+            }
+        } else {
+            $connection->update(
+                $this->tableDictionary->getFeedProductSectionTableName(),
+                $values,
+                $connection->quoteInto('type_id = ?', $sectionTypeId)
+                . ' AND '
+                . $connection->quoteInto('product_id = ?', $productId)
+                . ' AND '
+                . $connection->quoteInto('store_id = ?', $storeId)
+            );
+        }
 
         return $this;
+    }
+
+    private function flushSectionDataBatchedUpdates()
+    {
+        if (is_array($this->sectionDataBatchedUpdates) && !empty($this->sectionDataBatchedUpdates)) {
+            $this->getConnection()
+                ->insertOnDuplicate(
+                    $this->tableDictionary->getFeedProductSectionTableName(),
+                    $this->sectionDataBatchedUpdates
+                );
+
+            $this->sectionDataBatchedUpdates = [];
+            $this->sectionDataBatchedUpdateCount = 0;
+        }
+    }
+
+    public function startSectionDataUpdateBatching()
+    {
+        $this->sectionDataBatchedUpdates = [];
+        $this->sectionDataBatchedUpdateCount = 0;
+    }
+
+    public function stopSectionDataUpdateBatching()
+    {
+        $this->flushSectionDataBatchedUpdates();
+        $this->sectionDataBatchedUpdates = null;
     }
 }
