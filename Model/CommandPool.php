@@ -7,11 +7,6 @@ use Magento\Framework\Exception\LocalizedException;
 class CommandPool implements CommandPoolInterface
 {
     /**
-     * @var CommandGroupFactory
-     */
-    private $groupFactory;
-
-    /**
      * @var CommandGroup[]
      */
     private $groups = [];
@@ -56,7 +51,7 @@ class CommandPool implements CommandPoolInterface
             $this->groups[$code] = $groupFactory->create(
                 [
                     'code' => $code,
-                    'label' => $label,
+                    'label' => __($label),
                     'commands' => $groupCommands[$code] ?? [],
                 ]
             );

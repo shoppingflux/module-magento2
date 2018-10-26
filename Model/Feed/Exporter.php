@@ -3,7 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Feed;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
-use Magento\Framework\App\ProductMetadataInterface;
+use Magento\Framework\App\ProductMetadataInterface as AppMetadataInterface;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
@@ -31,9 +31,9 @@ class Exporter
     private $resource;
 
     /**
-     * @var ProductMetadataInterface
+     * @var AppMetadataInterface
      */
-    private $productMetaData;
+    private $appMetadata;
 
     /**
      * @var FileSystem
@@ -83,7 +83,7 @@ class Exporter
     /**
      * @param FileSystem $fileSystem
      * @param ExporterResource $resource
-     * @param ProductMetadataInterface $productMetadata
+     * @param AppMetadataInterface $appMetadata
      * @param FeedGeneratorFactory $feedGeneratorFactory
      * @param ConfigInterface $generalConfig
      * @param ExportStateConfigInterface $exportStateConfig
@@ -94,7 +94,7 @@ class Exporter
     public function __construct(
         FileSystem $fileSystem,
         ExporterResource $resource,
-        ProductMetadataInterface $productMetadata,
+        AppMetadataInterface $appMetadata,
         FeedGeneratorFactory $feedGeneratorFactory,
         FeedConfigInterface $generalConfig,
         ExportStateConfigInterface $exportStateConfig,
@@ -104,7 +104,7 @@ class Exporter
     ) {
         $this->fileSystem = $fileSystem;
         $this->resource = $resource;
-        $this->productMetaData = $productMetadata;
+        $this->appMetadata = $appMetadata;
         $this->feedGeneratorFactory = $feedGeneratorFactory;
         $this->generalConfig = $generalConfig;
         $this->exportStateConfig = $exportStateConfig;
@@ -196,8 +196,8 @@ class Exporter
         $childrenExportMode = $this->exportStateConfig->getChildrenExportMode($store);
 
         $feedGenerator->setPlatform(
-            $this->productMetaData->getName() . ' ' . $this->productMetaData->getEdition(),
-            $this->productMetaData->getVersion()
+            $this->appMetadata->getName() . ' ' . $this->appMetadata->getEdition(),
+            $this->appMetadata->getVersion()
         );
 
         $baseStore = $store->getBaseStore();
