@@ -74,6 +74,13 @@
                 <label translate="true">Shopping Feed Name</label>
             </settings>
         </column>
+        <column name="base_store_id" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store\BaseStore">
+            <settings>
+                <label translate="true">Store View</label>
+                <bodyTmpl>ui/grid/cells/html</bodyTmpl>
+                <sortable>false</sortable>
+            </settings>
+        </column>
         <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date" component="Magento_Ui/js/grid/columns/date">
             <settings>
                 <filter>dateRange</filter>

@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\ShoppingFeed\Api;
 
+use Magento\Framework\App\ProductMetadataInterface as AppMetadataInterface;
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
@@ -15,9 +16,22 @@ use ShoppingFeed\Sdk\Credential\Token as ApiTokenCredential;
 class SessionManager
 {
     /**
+     * @var AppMetadataInterface
+     */
+    private $appMetadata;
+
+    /**
      * @var ApiSession[]
      */
     private $tokenSessions = [];
+
+    /**
+     * @param AppMetadataInterface $appMetadata
+     */
+    public function __construct(AppMetadataInterface $appMetadata)
+    {
+        $this->appMetadata = $appMetadata;
+    }
 
     /**
      * @return ApiClientOptions
@@ -25,7 +39,12 @@ class SessionManager
     private function getApiClientOptions()
     {
         $clientOptions = new ApiClientOptions();
-        $clientOptions->addHeaders([ 'User-Agent' => 'magento2-module/0.5.0' ]);
+
+        $clientOptions->setPlatform(
+            $this->appMetadata->getName() . ' ' . $this->appMetadata->getEdition(),
+            $this->appMetadata->getVersion()
+        );
+
         return $clientOptions;
     }
 

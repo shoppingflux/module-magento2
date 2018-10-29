@@ -34,4 +34,10 @@
             </argument>
         </arguments>
     </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store\BaseStore" type="Magento\Store\Ui\Component\Listing\Column\Store">
+        <arguments>
+            <argument name="storeKey" xsi:type="string">base_store_id</argument>
+        </arguments>
+    </virtualType>
 </config>

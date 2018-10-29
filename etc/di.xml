@@ -77,9 +77,9 @@
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Categories"/>
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Shipping"/>
 
-    <type name="ShoppingFeed\Manager\Model\Config\AbstractField">
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Attributes">
         <arguments>
-            <argument name="config" xsi:type="object">moduleConfig</argument>
+            <argument name="frontendUrlBuilder" xsi:type="object">ShoppingFeed\Manager\FrontendUrl</argument>
         </arguments>
     </type>
 
@@ -311,4 +311,16 @@
     <type name="Magento\Cron\Model\ConfigInterface">
         <plugin name="sfm_cron_config_plugin" type="ShoppingFeed\Manager\Plugin\Cron\ConfigPlugin" sortOrder="0"/>
     </type>
+
+    <virtualType name="ShoppingFeed\Manager\Url\FrontendScopeResolver" type="Magento\Framework\Url\ScopeResolver">
+        <arguments>
+            <argument name="areaCode" xsi:type="const">Magento\Framework\App\Area::AREA_FRONTEND</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\FrontendUrl" type="Magento\Framework\Url">
+        <arguments>
+            <argument name="scopeResolver" xsi:type="object">ShoppingFeed\Manager\Url\FrontendScopeResolver</argument>
+        </arguments>
+    </virtualType>
 </config>

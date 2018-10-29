@@ -61,7 +61,6 @@
                 <visible>true</visible>
             </settings>
         </field>
-
         <field name="schedule_type" formElement="select">
             <argument name="data" xsi:type="array">
                 <item name="options" xsi:type="object">ShoppingFeed\Manager\Model\Cron\Schedule\Type\Source</item>

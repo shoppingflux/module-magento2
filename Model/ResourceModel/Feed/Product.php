@@ -6,6 +6,18 @@ use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 
 class Product extends AbstractDb
 {
+    const EXPORT_STATE_UPDATE_BATCH_SIZE = 1000;
+
+    /**
+     * @var array|null
+     */
+    private $exportStateBatchedUpdates = null;
+
+    /**
+     * @var int
+     */
+    private $exportStateBatchedUpdateCount = 0;
+
     protected function _construct()
     {
         $this->_init('sfm_feed_product', 'product_id');
@@ -103,14 +115,50 @@ class Product extends AbstractDb
             $values['export_retention_started_at'] = $now;
         }
 
-        $connection->update(
-            $this->tableDictionary->getFeedProductTableName(),
-            $values,
-            $connection->quoteInto('product_id = ?', $productId)
-            . ' AND '
-            . $connection->quoteInto('store_id = ?', $storeId)
-        );
+        if (is_array($this->exportStateBatchedUpdates)) {
+            $values['product_id'] = $productId;
+            $values['store_id'] = $storeId;
+            $this->exportStateBatchedUpdates[] = $values;
+
+            if (++$this->exportStateBatchedUpdateCount > static::EXPORT_STATE_UPDATE_BATCH_SIZE) {
+                $this->flushExportStateBatchedUpdates();
+            }
+        } else {
+            $connection->update(
+                $this->tableDictionary->getFeedProductTableName(),
+                $values,
+                $connection->quoteInto('product_id = ?', $productId)
+                . ' AND '
+                . $connection->quoteInto('store_id = ?', $storeId)
+            );
+        }
 
         return $this;
+    }
+
+    private function flushExportStateBatchedUpdates()
+    {
+        if (is_array($this->exportStateBatchedUpdates) && !empty($this->exportStateBatchedUpdates)) {
+            $this->getConnection()
+                ->insertOnDuplicate(
+                    $this->tableDictionary->getFeedProductTableName(),
+                    $this->exportStateBatchedUpdates
+                );
+
+            $this->exportStateBatchedUpdates = [];
+            $this->exportStateBatchedUpdateCount = 0;
+        }
+    }
+
+    public function startExportStateUpdateBatching()
+    {
+        $this->exportStateBatchedUpdates = [];
+        $this->exportStateBatchedUpdateCount = 0;
+    }
+
+    public function stopExportStateUpdateBatching()
+    {
+        $this->flushExportStateBatchedUpdates();
+        $this->exportStateBatchedUpdates = null;
     }
 }
