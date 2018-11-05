@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Account\Store;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Config\FieldInterface;
 
 interface ConfigInterface
@@ -34,4 +35,12 @@ interface ConfigInterface
      * @return string
      */
     public function getFieldsetLabel();
+
+    /**
+     * @param StoreInterface $store
+     * @param DataObject $dataA
+     * @param DataObject $dataB
+     * @return bool
+     */
+    public function isEqualStoreData(StoreInterface $store, DataObject $dataA, DataObject $dataB);
 }

@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Account\Store;
 
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\FieldInterface;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
@@ -116,30 +117,76 @@ abstract class AbstractConfig implements ConfigInterface
     }
 
     /**
+     * @param FieldInterface $field
+     * @param string $valuePath
+     * @param DataObject $data
+     * @return mixed
+     */
+    private function getDataFieldValue(FieldInterface $field, $valuePath, DataObject $data)
+    {
+        return !$data->hasDataForPath($valuePath)
+            ? $field->getDefaultUseValue()
+            : $field->prepareRawValueForUse($data->getDataByPath($valuePath));
+    }
+
+    /**
+     * @param string $fieldName
+     * @return string
+     */
+    protected function getFieldValuePath($fieldName)
+    {
+        return $this->getScope() . '/' . implode('/', $this->getScopeSubPath()) . '/' . $fieldName;
+    }
+
+    /**
      * @param StoreInterface $store
-     * @param string $name
+     * @param string $fieldName
      * @return mixed|null
      */
-    protected function getFieldValue(StoreInterface $store, $name)
+    protected function getFieldValue(StoreInterface $store, $fieldName)
     {
         $storeId = $store->getId();
-        $field = $this->getField($store, $name);
+        $field = $this->getField($store, $fieldName);
 
         if (null === $field) {
             return null;
         }
 
-        if (isset($this->valueCache[$storeId]) && array_key_exists($name, $this->valueCache[$storeId])) {
-            return $this->valueCache[$storeId][$name];
+        if (isset($this->valueCache[$storeId]) && array_key_exists($fieldName, $this->valueCache[$storeId])) {
+            return $this->valueCache[$storeId][$fieldName];
         }
 
-        $configuration = $store->getConfiguration();
-        $path = $this->getScope() . '/' . implode('/', $this->getScopeSubPath()) . '/' . $name;
+        $this->valueCache[$storeId][$fieldName] = $this->getDataFieldValue(
+            $field,
+            $this->getFieldValuePath($fieldName),
+            $store->getConfiguration()
+        );
 
-        $this->valueCache[$storeId][$name] = !$configuration->hasDataForPath($path)
-            ? $field->getDefaultUseValue()
-            : $field->prepareRawValueForUse($configuration->getDataByPath($path));
+        return $this->valueCache[$storeId][$fieldName];
+    }
 
-        return $this->valueCache[$storeId][$name];
+    /**
+     * @param StoreInterface $store
+     * @param DataObject $dataA
+     * @param DataObject $dataB
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isEqualStoreData(StoreInterface $store, DataObject $dataA, DataObject $dataB)
+    {
+        $isEqualStoreData = true;
+        $baseValuePath = $this->getScope() . '/' . implode('/', $this->getScopeSubPath()) . '/';
+
+        foreach ($this->getFields($store) as $fieldName => $field) {
+            $valueA = $this->getDataFieldValue($field, $baseValuePath . $fieldName, $dataA);
+            $valueB = $this->getDataFieldValue($field, $baseValuePath . $fieldName, $dataB);
+
+            if (!$field->isEqualValues($valueA, $valueB)) {
+                $isEqualStoreData = false;
+                break;
+            }
+        }
+
+        return $isEqualStoreData;
     }
 }

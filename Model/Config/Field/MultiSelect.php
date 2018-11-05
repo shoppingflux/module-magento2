@@ -71,6 +71,16 @@ class MultiSelect extends Select
         );
     }
 
+    public function isEqualValues($valueA, $valueB)
+    {
+        if (is_array($valueA) && is_array($valueB)) {
+            sort($valueA);
+            sort($valueB);
+        }
+
+        return $valueA === $valueB;
+    }
+
     /**
      * @param mixed $value
      * @param mixed $defaultValue

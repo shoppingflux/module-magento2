@@ -133,6 +133,16 @@ class MultiSelect extends AbstractField
         return $value;
     }
 
+    public function isEqualValues($valueA, $valueB)
+    {
+        if (is_array($valueA) && is_array($valueB)) {
+            sort($valueA);
+            sort($valueB);
+        }
+
+        return $valueA === $valueB;
+    }
+
     public function prepareRawValueForForm($value)
     {
         return $this->prepareRawValue($value, [], 'prepareRawValueForForm', [ null, $this->isRequired() ]);

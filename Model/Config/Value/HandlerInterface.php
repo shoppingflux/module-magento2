@@ -21,6 +21,13 @@ interface HandlerInterface
     public function isUndefinedValue($value);
 
     /**
+     * @param mixed $valueA
+     * @param mixed $valueB
+     * @return bool
+     */
+    public function isEqualValues($valueA, $valueB);
+
+    /**
      * @param mixed $value
      * @param mixed $defaultValue
      * @param bool $isRequired

@@ -56,23 +56,23 @@ class DataObject extends BaseDataObject
     }
 
     /**
-     * @param string $key
+     * @param string $path
      * @param mixed $value
      * @return $this
      */
-    public function setDataByPath($key, $value = null)
+    public function setDataByPath($path, $value = null)
     {
         $data = &$this->_data;
-        $keys = explode('/', $key);
+        $keys = explode('/', $path);
 
         foreach ($keys as $key) {
             if (!isset($data[$key])
-                || !(is_array($data[$key]) || ($data[$key] instanceof DataObject))
+                || !(is_array($data[$key]) || ($data[$key] instanceof BaseDataObject))
             ) {
                 $data[$key] = [];
             }
 
-            if ($data[$key] instanceof DataObject) {
+            if ($data[$key] instanceof BaseDataObject) {
                 $data = &$data[$key]->_data;
             } else {
                 $data = &$data[$key];
@@ -84,19 +84,52 @@ class DataObject extends BaseDataObject
     }
 
     /**
-     * @param string $key
-     * @return bool
+     * @param string $path
+     * @return $this
      */
-    public function hasDataForPath($key)
+    public function unsetDataByPath($path)
     {
         $data = &$this->_data;
-        $keys = explode('/', $key);
-        $lastKey = array_pop($keys);
+        $pathKeys = explode('/', $path);
+        $valueKey = array_pop($pathKeys);
+        $isExistingPath = true;
+
+        foreach ($pathKeys as $key) {
+            if (isset($data[$key])) {
+                if (is_array($data[$key])) {
+                    $data = &$data[$key];
+                    continue;
+                } elseif ($data[$key] instanceof BaseDataObject) {
+                    $data = &$data[$key]->_data;
+                    continue;
+                }
+            }
+
+            $isExistingPath = false;
+            break;
+        }
+
+        if ($isExistingPath && isset($data[$valueKey])) {
+            unset($data[$valueKey]);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param string $path
+     * @return bool
+     */
+    public function hasDataForPath($path)
+    {
+        $data = &$this->_data;
+        $pathKeys = explode('/', $path);
+        $valueKey = array_pop($pathKeys);
         $hasData = true;
 
-        foreach ($keys as $key) {
-            if (isset($data[$key]) && (is_array($data[$key]) || ($data[$key] instanceof DataObject))) {
-                if ($data[$key] instanceof DataObject) {
+        foreach ($pathKeys as $key) {
+            if (isset($data[$key]) && (is_array($data[$key]) || ($data[$key] instanceof BaseDataObject))) {
+                if ($data[$key] instanceof BaseDataObject) {
                     $data = &$data[$key]->_data;
                 } else {
                     $data = &$data[$key];
@@ -108,7 +141,7 @@ class DataObject extends BaseDataObject
         }
 
         if ($hasData) {
-            $hasData = array_key_exists($lastKey, $data);
+            $hasData = array_key_exists($valueKey, $data);
         }
 
         return $hasData;

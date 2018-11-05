@@ -2,8 +2,10 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
@@ -22,8 +24,8 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
 
     protected function getBaseFields()
     {
-        // Note: we can not use big sort orders here because each index between 1 and the defined value will
-        // actually be tested on the browser side, multiple times.
+        // Note: we can not use big sort orders here because each index between 1 and the defined value
+        // will actually be tested on the browser side, multiple times.
 
         return [
             $this->fieldFactory->create(
@@ -129,5 +131,34 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
     public function getAdvisedRefreshRequirementDelay(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_ADVISED_REFRESH_REQUIREMENT_DELAY) * 60;
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param DataObject $dataA
+     * @param DataObject $dataB
+     * @return bool
+     * @throws LocalizedException
+     */
+    public function isRefreshNeededForStoreDataChange(StoreInterface $store, DataObject $dataA, DataObject $dataB)
+    {
+        $irrelevantFieldNames = [
+            self::KEY_FORCE_PRODUCT_LOAD_FOR_REFRESH,
+            self::KEY_AUTOMATIC_REFRESH_STATE,
+            self::KEY_AUTOMATIC_REFRESH_DELAY,
+            self::KEY_ENABLE_ADVISED_REFRESH_REQUIREMENT,
+            self::KEY_ADVISED_REFRESH_REQUIREMENT_DELAY,
+        ];
+
+        $cleanDataA = clone $dataA;
+        $cleanDataB = clone $dataB;
+
+        foreach ($irrelevantFieldNames as $fieldName) {
+            $fieldValuePath = $this->getFieldValuePath($fieldName);
+            $cleanDataA->unsetDataByPath($fieldValuePath);
+            $cleanDataB->unsetDataByPath($fieldValuePath);
+        }
+
+        return !$this->isEqualStoreData($store, $cleanDataA, $cleanDataB);
     }
 }

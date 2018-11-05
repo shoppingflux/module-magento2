@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\DataObject;
 
 interface RefreshableConfigInterface
 {
@@ -35,6 +36,14 @@ interface RefreshableConfigInterface
      * @return int
      */
     public function getAdvisedRefreshRequirementDelay(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @param DataObject $dataA
+     * @param DataObject $dataB
+     * @return bool
+     */
+    public function isRefreshNeededForStoreDataChange(StoreInterface $store, DataObject $dataA, DataObject $dataB);
 }
 
 // @todo on save/import some adapters can partially/fully detect what has changed
