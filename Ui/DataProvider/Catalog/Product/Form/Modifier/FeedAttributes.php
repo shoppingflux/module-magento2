@@ -254,7 +254,7 @@ class FeedAttributes extends AbstractModifier
                                     'chipsEnabled' => false,
                                     'disableLabel' => true,
                                     'showFilteredQuantity' => false,
-                                    'levelsVisibility' => 3,
+                                    'levelsVisibility' => 1,
                                     'closeBtn' => true,
                                     'clearBtn' => true,
                                     'resetBtn' => true,

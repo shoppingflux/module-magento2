@@ -6,7 +6,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 
 class Section extends AbstractDb
 {
-    const SECTION_DATA_UPDATE_BATCH_SIZE = 500;
+    const SECTION_DATA_UPDATE_BATCH_SIZE = 250;
 
     /**
      * @var array|null

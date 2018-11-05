@@ -69,7 +69,6 @@ class MultiSelect extends AbstractField
             'chipsEnabled' => false,
             'disableLabel' => true,
             'showFilteredQuantity' => false,
-            // @todo adapt to the depth/size of the tree (based on a maximum number of categories visible at the start)
             'levelsVisibility' => 1,
             'clearBtn' => true,
             'resetBtn' => true,
