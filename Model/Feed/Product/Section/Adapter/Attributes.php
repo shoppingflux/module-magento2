@@ -208,6 +208,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         }
 
         if (isset($productData[self::KEY_URL])) {
+            $exportedProduct->setLink($productData[self::KEY_URL]);
             $exportedProduct->setAttribute('url', $productData[self::KEY_URL]);
         }
     }
