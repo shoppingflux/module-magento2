@@ -127,10 +127,6 @@ class Store extends AbstractDb
             ->from($this->tableDictionary->getFeedProductTableName(), [ 'product_id' ])
             ->where('store_id = ?', $storeId);
 
-        if (is_array($productIds)) {
-            $existingListSelect->where('product_id IN (?)', $productIds);
-        }
-
         $entityIdFieldName = $this->catalogProductResource->getEntityIdField();
 
         $insertableListSelect = $connection->select()
@@ -140,8 +136,14 @@ class Store extends AbstractDb
                     'product_id' => $entityIdFieldName,
                     'store_id' => new \Zend_Db_Expr($storeId),
                 ]
-            )
-            ->where(
+            );
+
+        if (is_array($productIds) && !empty($productIds)) {
+            $insertableListSelect->where($entityIdFieldName . ' IN (?)', $productIds);
+            $existingListSelect->where('product_id IN (?)', $productIds);
+        }
+
+        $insertableListSelect->where(
                 $connection->quoteIdentifier($entityIdFieldName) . ' NOT IN (?)',
                 new \Zend_Db_Expr($existingListSelect->assemble())
             );
@@ -160,10 +162,6 @@ class Store extends AbstractDb
                 ->where('type_id = ?', $sectionTypeId)
                 ->where('store_id = ?', $storeId);
 
-            if (is_array($productIds)) {
-                $existingListSelect->where('product_id IN (?)', $productIds);
-            }
-
             $insertableListSelect = $connection->select()
                 ->from(
                     $this->tableDictionary->getFeedProductTableName(),
@@ -173,8 +171,14 @@ class Store extends AbstractDb
                         'store_id' => 'store_id',
                     ]
                 )
-                ->where('store_id = ?', $storeId)
-                ->where('product_id NOT IN (?)', new \Zend_Db_Expr($existingListSelect->assemble()));
+                ->where('store_id = ?', $storeId);
+
+            if (is_array($productIds) && !empty($productIds)) {
+                $insertableListSelect->where('product_id IN (?)', $productIds);
+                $existingListSelect->where('product_id IN (?)', $productIds);
+            }
+
+            $insertableListSelect->where('product_id NOT IN (?)', new \Zend_Db_Expr($existingListSelect->assemble()));
 
             $connection->query(
                 $connection->insertFromSelect(
