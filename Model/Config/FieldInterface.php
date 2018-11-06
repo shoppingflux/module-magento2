@@ -47,6 +47,13 @@ interface FieldInterface
     public function getUiMetaConfig();
 
     /**
+     * @param mixed $valueA
+     * @param mixed $valueB
+     * @return bool
+     */
+    public function isEqualValues($valueA, $valueB);
+
+    /**
      * @param mixed $value
      * @return mixed
      */

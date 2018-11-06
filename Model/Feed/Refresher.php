@@ -6,17 +6,19 @@ use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
-use Magento\Framework\App\Area as AppArea;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\App\Emulation as AppEmulation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as ProductAdapterInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface as ExportStateAdapterInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\ProductFilter as FeedProductFilter;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\SectionFilter as FeedSectionFilter;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product as FeedProductResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFactory as FeedProductResourceFactory;
@@ -61,6 +63,16 @@ class Refresher
     private $exportStateConfig;
 
     /**
+     * @var FeedProductFilterFactory
+     */
+    private $feedProductFilterFactory;
+
+    /**
+     * @var FeedSectionFilterFactory
+     */
+    private $feedSectionFilterFactory;
+
+    /**
      * @var FeedProductResource
      */
     private $feedProductResource;
@@ -78,7 +90,7 @@ class Refresher
     /**
      * @var CatalogProductCollectionFactory
      */
-    protected $catalogProductCollectionFactory;
+    private $catalogProductCollectionFactory;
 
     /**
      * @param AppEmulation $appEmulation
@@ -86,6 +98,8 @@ class Refresher
      * @param ExportStateAdapterInterface $exportStateAdapter
      * @param ExportStateConfigInterface $exportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
+     * @param ProductFilterFactory $feedProductFilterFactory
+     * @param FeedSectionFilterFactory $feedSectionFilterFactory
      * @param FeedProductResourceFactory $feedProductResourceFactory
      * @param FeedSectionResourceFactory $feedSectionResourceFactory
      * @param CatalogProductRepository $catalogProductRepository
@@ -97,6 +111,8 @@ class Refresher
         ExportStateAdapterInterface $exportStateAdapter,
         ExportStateConfigInterface $exportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
+        FeedProductFilterFactory $feedProductFilterFactory,
+        FeedSectionFilterFactory $feedSectionFilterFactory,
         FeedProductResourceFactory $feedProductResourceFactory,
         FeedSectionResourceFactory $feedSectionResourceFactory,
         CatalogProductRepository $catalogProductRepository,
@@ -107,10 +123,55 @@ class Refresher
         $this->exportStateAdapter = $exportStateAdapter;
         $this->exportStateConfig = $exportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
+        $this->feedProductFilterFactory = $feedProductFilterFactory;
+        $this->feedSectionFilterFactory = $feedSectionFilterFactory;
         $this->feedProductResource = $feedProductResourceFactory->create();
         $this->feedSectionResource = $feedSectionResourceFactory->create();
         $this->catalogProductRepository = $catalogProductRepository;
         $this->catalogProductCollectionFactory = $catalogProductCollectionFactory;
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param DataObject $oldConfiguration
+     * @param DataObject $newConfiguration
+     */
+    public function forceOutdatedStoreProductSectionsRefresh(
+        StoreInterface $store,
+        DataObject $oldConfiguration,
+        DataObject $newConfiguration
+    ) {
+        $productFilter = $this->feedProductFilterFactory->create();
+        $productFilter->setStoreIds([ $store->getId() ]);
+
+        if ($this->exportStateConfig->isRefreshNeededForStoreDataChange($store, $oldConfiguration, $newConfiguration)) {
+            $this->refresherResource->forceProductExportStateRefresh(
+                FeedProduct::REFRESH_STATE_REQUIRED,
+                $productFilter
+            );
+        }
+
+        $outdatedSectionTypeIds = [];
+
+        foreach ($this->sectionTypePool->getTypes() as $sectionType) {
+            $config = $sectionType->getConfig();
+
+            if ($config->isRefreshNeededForStoreDataChange($store, $oldConfiguration, $newConfiguration)) {
+                $outdatedSectionTypeIds[] = $sectionType->getId();
+            }
+        }
+
+        if (!empty($outdatedSectionTypeIds)) {
+            $sectionFilter = $this->feedSectionFilterFactory->create();
+            $sectionFilter->setStoreIds([ $store->getId() ]);
+            $sectionFilter->setTypeIds($outdatedSectionTypeIds);
+
+            $this->refresherResource->forceProductSectionRefresh(
+                FeedProduct::REFRESH_STATE_REQUIRED,
+                $sectionFilter,
+                $productFilter
+            );
+        }
     }
 
     /**

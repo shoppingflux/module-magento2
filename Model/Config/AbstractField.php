@@ -271,6 +271,11 @@ abstract class AbstractField implements FieldInterface
         ];
     }
 
+    public function isEqualValues($valueA, $valueB)
+    {
+        return $this->getValueHandler()->isEqualValues($valueA, $valueB);
+    }
+
     public function prepareRawValueForForm($value)
     {
         return $this->getValueHandler()

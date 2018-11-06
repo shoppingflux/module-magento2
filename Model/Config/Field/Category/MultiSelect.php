@@ -69,7 +69,6 @@ class MultiSelect extends AbstractField
             'chipsEnabled' => false,
             'disableLabel' => true,
             'showFilteredQuantity' => false,
-            // @todo adapt to the depth/size of the tree (based on a maximum number of categories visible at the start)
             'levelsVisibility' => 1,
             'clearBtn' => true,
             'resetBtn' => true,
@@ -132,6 +131,16 @@ class MultiSelect extends AbstractField
         }
 
         return $value;
+    }
+
+    public function isEqualValues($valueA, $valueB)
+    {
+        if (is_array($valueA) && is_array($valueB)) {
+            sort($valueA);
+            sort($valueB);
+        }
+
+        return $valueA === $valueB;
     }
 
     public function prepareRawValueForForm($value)

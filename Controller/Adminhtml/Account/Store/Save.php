@@ -9,6 +9,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
+use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 
@@ -22,20 +23,28 @@ class Save extends StoreAction
     private $storeResourceFactory;
 
     /**
+     * @var FeedRefresher
+     */
+    private $feedRefresher;
+
+    /**
      * @param Context $context
      * @param Registry $coreRegistry
      * @param PageResultFactory $pageResultFactory
      * @param StoreRepositoryInterface $storeRepository
      * @param StoreResourceFactory $storeResourceFactory
+     * @param FeedRefresher $feedRefresher
      */
     public function __construct(
         Context $context,
         Registry $coreRegistry,
         PageResultFactory $pageResultFactory,
         StoreRepositoryInterface $storeRepository,
-        StoreResourceFactory $storeResourceFactory
+        StoreResourceFactory $storeResourceFactory,
+        FeedRefresher $feedRefresher
     ) {
         $this->storeResourceFactory = $storeResourceFactory;
+        $this->feedRefresher = $feedRefresher;
         parent::__construct($context, $coreRegistry, $pageResultFactory, $storeRepository);
     }
 
@@ -54,8 +63,16 @@ class Save extends StoreAction
         $isSaveSuccessful = false;
 
         try {
+            $oldConfiguration = clone $store->getConfiguration();
+
             $store->importConfigurationData($data);
             $this->storeRepository->save($store);
+
+            $this->feedRefresher->forceOutdatedStoreProductSectionsRefresh(
+                $store,
+                $oldConfiguration,
+                $store->getConfiguration()
+            );
 
             if (isset($data['selected_product_ids']) && is_string($data['selected_product_ids'])) {
                 /** @var StoreResource $storeResource */
