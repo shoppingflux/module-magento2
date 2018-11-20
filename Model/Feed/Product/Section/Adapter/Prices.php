@@ -7,6 +7,7 @@ use Magento\Catalog\Model\Product\Type as CatalogProductType;
 use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Catalog\Model\ResourceModel\ProductFactory as CatalogProductResourceFactory;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProductType;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Tax\Api\TaxCalculationInterface\Proxy as TaxCalculationProxy;
 use Magento\Tax\Model\Config as TaxConfig;
@@ -35,17 +36,31 @@ class Prices extends AbstractAdapter implements PricesInterface
     private $catalogProductResource;
 
     /**
+     * @var ConfigurableProductType
+     */
+    private $configurableProductType;
+
+    /**
      * @var TaxCalculationProxy
      */
     private $taxCalculatorProxy;
 
+    /**
+     * @param StoreManagerInterface $storeManager
+     * @param AttributeRendererPoolInterface $attributeRendererPool
+     * @param CatalogProductResourceFactory $catalogProductResourceFactory
+     * @param ConfigurableProductType $configurableProductType
+     * @param TaxCalculationProxy $taxCalculatorProxy
+     */
     public function __construct(
         StoreManagerInterface $storeManager,
         AttributeRendererPoolInterface $attributeRendererPool,
         CatalogProductResourceFactory $catalogProductResourceFactory,
+        ConfigurableProductType $configurableProductType,
         TaxCalculationProxy $taxCalculatorProxy
     ) {
         $this->catalogProductResource = $catalogProductResourceFactory->create();
+        $this->configurableProductType = $configurableProductType;
         $this->taxCalculatorProxy = $taxCalculatorProxy;
         parent::__construct($storeManager, $attributeRendererPool);
     }
@@ -89,42 +104,96 @@ class Prices extends AbstractAdapter implements PricesInterface
     }
 
     /**
-     * @param CatalogProduct $catalogProduct
-     * @return bool
+     * @param CatalogProduct $product
+     * @param StoreInterface $store
+     * @return array
      */
-    public function hasCatalogProductPrices(CatalogProduct $catalogProduct)
+    private function getSimpleProductPriceData(CatalogProduct $product, StoreInterface $store)
     {
-        return $catalogProduct->getTypeId() === CatalogProductType::TYPE_SIMPLE;
-    }
-
-    public function getProductData(StoreInterface $store, RefreshableProduct $product)
-    {
-        $catalogProduct = $product->getCatalogProduct();
-
-        if (!$this->hasCatalogProductPrices($catalogProduct)) {
-            return [];
-        }
-
         $taxRate = false;
         $isPriceIncludingTax = (bool) $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_PRICE_INCLUDES_TAX);
 
         if (!$isPriceIncludingTax) {
-            if ($taxClassId = (int) $catalogProduct->getData('tax_class_id')) {
+            if ($taxClassId = (int) $product->getData('tax_class_id')) {
                 $taxRate = $this->taxCalculatorProxy->getCalculatedRate($taxClassId, null, $store->getBaseStoreId());
             }
         }
 
-        $basePrice = $this->applyTaxRateOnPrice($catalogProduct->getPrice(), $taxRate);
-        $specialPrice = $this->applyTaxRateOnPrice($catalogProduct->getSpecialPrice(), $taxRate);
-        $finalPrice = $this->applyTaxRateOnPrice($catalogProduct->getFinalPrice(), $taxRate);
+        $basePrice = $this->applyTaxRateOnPrice($product->getPrice(), $taxRate);
+        $specialPrice = $this->applyTaxRateOnPrice($product->getSpecialPrice(), $taxRate);
+        $finalPrice = $this->applyTaxRateOnPrice($product->getFinalPrice(), $taxRate);
 
         return [
             self::KEY_BASE_PRICE => round($basePrice, 2),
             self::KEY_SPECIAL_PRICE => ($specialPrice > 0) ? round($specialPrice, 2) : '',
             self::KEY_FINAL_PRICE => round($finalPrice, 2),
-            self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($catalogProduct, 'special_from_date'),
-            self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($catalogProduct, 'special_to_date'),
+            self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($product, 'special_from_date'),
+            self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($product, 'special_to_date'),
         ];
+    }
+
+    /**
+     * @param float $priceA
+     * @param float $priceB
+     * @param string $priceMode
+     * @return int
+     */
+    private function compareVariationPricesPriority($priceA, $priceB, $priceMode)
+    {
+        return (ConfigInterface::CONFIGURABLES_PRICE_MODE_VARIATIONS_MINIMUM === $priceMode)
+            ? $priceB <=> $priceA
+            : $priceA <=> $priceB;
+    }
+
+    /**
+     * @param CatalogProduct $product
+     * @param StoreInterface $store
+     * @param string $priceMode
+     * @return array
+     */
+    private function getConfigurablePriceData(CatalogProduct $product, StoreInterface $store, $priceMode)
+    {
+        $variationCollection = $this->configurableProductType->getUsedProductCollection($product);
+        $variationCollection->addStoreFilter($store->getBaseStoreId());
+        $this->prepareLoadableProductCollection($store, $variationCollection);
+        $priceData = [];
+        $currentFinalPrice = 0;
+
+        /** @var CatalogProduct $variation */
+        foreach ($variationCollection as $variation) {
+            $variationPriceData = $this->getSimpleProductPriceData($variation, $store);
+            $variationFinalPrice = $variationPriceData[self::KEY_FINAL_PRICE] ?? 0;
+
+            if (!empty($variationFinalPrice)) {
+                if (empty($priceData)
+                    || (0 < $this->compareVariationPricesPriority($variationFinalPrice, $currentFinalPrice, $priceMode))
+                ) {
+                    $priceData = $variationPriceData;
+                    $currentFinalPrice = $variationFinalPrice;
+                }
+            }
+        }
+
+        return $priceData;
+    }
+
+    public function getProductData(StoreInterface $store, RefreshableProduct $product)
+    {
+        $catalogProduct = $product->getCatalogProduct();
+        $productTypeId = $catalogProduct->getTypeId();
+        $productData = [];
+
+        if (CatalogProductType::TYPE_SIMPLE === $productTypeId) {
+            $productData = $this->getSimpleProductPriceData($catalogProduct, $store);
+        } elseif (ConfigurableProductType::TYPE_CODE === $productTypeId) {
+            $priceMode = $this->getConfig()->getConfigurablesPriceMode($store);
+
+            if (ConfigInterface::CONFIGURABLES_PRICE_MODE_NONE !== $priceMode) {
+                $productData = $this->getConfigurablePriceData($catalogProduct, $store, $priceMode);
+            }
+        }
+
+        return $productData;
     }
 
     public function exportBaseProductData(
