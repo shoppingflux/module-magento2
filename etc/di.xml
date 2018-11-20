@@ -156,7 +156,11 @@
     </type>
 
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Category\SelectorInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Category\Selector"/>
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Category\Selector" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Category\Selector" shared="true">
+        <arguments>
+            <argument name="frontendUrlBuilder" xsi:type="object">ShoppingFeed\Manager\FrontendUrl</argument>
+        </arguments>
+    </type>
 
     <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order"/>
     <preference for="ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\OrderRepository"/>
