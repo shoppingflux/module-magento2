@@ -135,12 +135,12 @@ class Prices extends AbstractAdapter implements PricesInterface
     /**
      * @param float $priceA
      * @param float $priceB
-     * @param string $priceMode
+     * @param string $priceType
      * @return int
      */
-    private function compareVariationPricesPriority($priceA, $priceB, $priceMode)
+    private function compareVariationPricesPriority($priceA, $priceB, $priceType)
     {
-        return (ConfigInterface::CONFIGURABLES_PRICE_MODE_VARIATIONS_MINIMUM === $priceMode)
+        return (ConfigInterface::CONFIGURABLE_PRODUCT_PRICE_TYPE_VARIATIONS_MINIMUM === $priceType)
             ? $priceB <=> $priceA
             : $priceA <=> $priceB;
     }
@@ -148,10 +148,10 @@ class Prices extends AbstractAdapter implements PricesInterface
     /**
      * @param CatalogProduct $product
      * @param StoreInterface $store
-     * @param string $priceMode
+     * @param string $priceType
      * @return array
      */
-    private function getConfigurablePriceData(CatalogProduct $product, StoreInterface $store, $priceMode)
+    private function getConfigurablePriceData(CatalogProduct $product, StoreInterface $store, $priceType)
     {
         $variationCollection = $this->configurableProductType->getUsedProductCollection($product);
         $variationCollection->addStoreFilter($store->getBaseStoreId());
@@ -166,7 +166,7 @@ class Prices extends AbstractAdapter implements PricesInterface
 
             if (!empty($variationFinalPrice)) {
                 if (empty($priceData)
-                    || (0 < $this->compareVariationPricesPriority($variationFinalPrice, $currentFinalPrice, $priceMode))
+                    || (0 < $this->compareVariationPricesPriority($variationFinalPrice, $currentFinalPrice, $priceType))
                 ) {
                     $priceData = $variationPriceData;
                     $currentFinalPrice = $variationFinalPrice;
@@ -186,10 +186,10 @@ class Prices extends AbstractAdapter implements PricesInterface
         if (CatalogProductType::TYPE_SIMPLE === $productTypeId) {
             $productData = $this->getSimpleProductPriceData($catalogProduct, $store);
         } elseif (ConfigurableProductType::TYPE_CODE === $productTypeId) {
-            $priceMode = $this->getConfig()->getConfigurablesPriceMode($store);
+            $priceType = $this->getConfig()->getConfigurableProductPriceType($store);
 
-            if (ConfigInterface::CONFIGURABLES_PRICE_MODE_NONE !== $priceMode) {
-                $productData = $this->getConfigurablePriceData($catalogProduct, $store, $priceMode);
+            if (ConfigInterface::CONFIGURABLE_PRODUCT_PRICE_TYPE_NONE !== $priceType) {
+                $productData = $this->getConfigurablePriceData($catalogProduct, $store, $priceType);
             }
         }
 
