@@ -2,7 +2,10 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
+use Magento\Framework\DB\Adapter\AdapterInterface as DbAdapterInterface;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface as FeedSectionInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\ProductFactory as FeedProductFactory;
 use ShoppingFeed\Manager\Model\Feed\ProductFilter;
@@ -12,7 +15,6 @@ use ShoppingFeed\Manager\Model\Feed\RefreshableProductFactory as RefreshableProd
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 use ShoppingFeed\Manager\Model\TimeHelper;
@@ -122,50 +124,105 @@ class Refresher extends AbstractDb
     }
 
     /**
-     * @param int $refreshState
-     * @param ProductFilter $productFilter
-     * @return $this
+     * @param string $productIdFieldName
+     * @param string $checkedDateFieldName
+     * @param int|null $minimumDelay
+     * @return \Zend_Db_Expr
      */
-    public function forceProductExportStateRefresh($refreshState, ProductFilter $productFilter)
+    private function getUpdatedInCatalogProductCondition($productIdFieldName, $checkedDateFieldName, $minimumDelay)
     {
         $connection = $this->getConnection();
-        $overridableRefreshStates = $this->getOverridableRefreshStates($refreshState);
+
+        if (null !== $minimumDelay) {
+            $catalogUpdateDateField = $connection->getDateSubSql(
+                'updated_at',
+                (int) $minimumDelay,
+                DbAdapterInterface::INTERVAL_SECOND
+            );
+        } else {
+            $catalogUpdateDateField = 'updated_at';
+        }
+
+        $updatedCatalogIdSelect = $connection->select()
+            ->from($this->tableDictionary->getCatalogProductTableName(), [ 'entity_id' ])
+            ->where('entity_id = ' . $productIdFieldName)
+            ->where($catalogUpdateDateField . ' > ' . $checkedDateFieldName);
+
+        return new \Zend_Db_Expr('EXISTS (' . $updatedCatalogIdSelect->assemble() . ')');
+    }
+
+    /**
+     * @param int $refreshState
+     * @param ProductFilter $productFilter
+     * @param bool $updatedInCatalogOnly
+     * @param int|null $catalogUpdateMinimumDelay
+     */
+    public function forceProductExportStateRefresh(
+        $refreshState,
+        ProductFilter $productFilter,
+        $updatedInCatalogOnly = false,
+        $catalogUpdateMinimumDelay = null
+    ) {
+        $connection = $this->getConnection();
+        $conditions = $this->productFilterApplier->getFilterConditions($productFilter);
+
+        $conditions[] = $connection->quoteInto(
+            FeedProductInterface::EXPORT_STATE_REFRESH_STATE . ' IN (?)',
+            $this->getOverridableRefreshStates($refreshState)
+        );
+
+        if ($updatedInCatalogOnly) {
+            $conditions[] = $this->getUpdatedInCatalogProductCondition(
+                FeedProductInterface::PRODUCT_ID,
+                FeedProductInterface::EXPORT_STATE_REFRESHED_AT,
+                $catalogUpdateMinimumDelay
+            );
+        }
 
         $connection->update(
             $this->tableDictionary->getFeedProductTableName(),
             [
-                'export_state_refresh_state' => $refreshState,
-                'export_state_refresh_state_updated_at' => $this->timeHelper->utcDate(),
+                FeedProductInterface::EXPORT_STATE_REFRESH_STATE => $refreshState,
+                FeedProductInterface::EXPORT_STATE_REFRESH_STATE_UPDATED_AT => $this->timeHelper->utcDate(),
             ],
-            implode(
-                ' AND ',
-                array_merge(
-                    $this->productFilterApplier->getFilterConditions($productFilter),
-                    [ $connection->quoteInto('export_state_refresh_state IN (?)', $overridableRefreshStates) ]
-                )
-            )
+            implode(' AND ', $conditions)
         );
-
-        return $this;
     }
 
     /**
      * @param int $refreshState
      * @param SectionFilter $sectionFilter
      * @param ProductFilter $productFilter
-     * @return $this
+     * @param bool $updatedInCatalogOnly
+     * @param int|null $catalogUpdateMinimumDelay
      */
     public function forceProductSectionRefresh(
         $refreshState,
         SectionFilter $sectionFilter,
-        ProductFilter $productFilter
+        ProductFilter $productFilter,
+        $updatedInCatalogOnly = false,
+        $catalogUpdateMinimumDelay = null
     ) {
         $connection = $this->getConnection();
         $storeIds = $sectionFilter->getStoreIds();
-        $overridableRefreshStates = $this->getOverridableRefreshStates($refreshState);
 
         if (null === $storeIds) {
             $storeIds = $this->getAllStoreIds();
+        }
+
+        $baseConditions = [
+            $connection->quoteInto(
+                FeedSectionInterface::REFRESH_STATE . ' IN (?)',
+                $this->getOverridableRefreshStates($refreshState)
+            ),
+        ];
+
+        if ($updatedInCatalogOnly) {
+            $baseConditions[] = $this->getUpdatedInCatalogProductCondition(
+                FeedSectionInterface::PRODUCT_ID,
+                FeedSectionInterface::REFRESHED_AT,
+                $catalogUpdateMinimumDelay
+            );
         }
 
         // Update product sections on a store-by-store basis, as update() does not handle aliased target table names,
@@ -182,23 +239,19 @@ class Refresher extends AbstractDb
             $connection->update(
                 $this->tableDictionary->getFeedProductSectionTableName(),
                 [
-                    'refresh_state' => $refreshState,
-                    'refresh_state_updated_at' => $this->timeHelper->utcDate(),
+                    FeedSectionInterface::REFRESH_STATE => $refreshState,
+                    FeedSectionInterface::REFRESH_STATE_UPDATED_AT => $this->timeHelper->utcDate(),
                 ],
                 implode(
                     ' AND ',
                     array_merge(
-                        [
-                            'product_id IN (' . $productSelect->assemble() . ')',
-                            $connection->quoteInto('refresh_state IN (?)', $overridableRefreshStates),
-                        ],
+                        [ 'product_id IN (' . $productSelect->assemble() . ')' ],
+                        $baseConditions,
                         $this->sectionFilterApplier->getFilterConditions($sectionFilter)
                     )
                 )
             );
         }
-
-        return $this;
     }
 
     /**

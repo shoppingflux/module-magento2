@@ -21,6 +21,8 @@ class ForceExportStateRefreshCommand extends AbstractCommand
      */
     private $refresherResourceFactory;
 
+    const OPTION_KEY_UPDATED_IN_CATALOG_ONLY = 'updated_in_catalog_only';
+
     /**
      * @param AppState $appState
      * @param StoreCollectionFactory $storeCollectionFactory
@@ -60,8 +62,12 @@ class ForceExportStateRefreshCommand extends AbstractCommand
             [
                 $this->getRefreshStateArgument('The refresh state to force (%s)'),
                 $this->getStoresOption('Only force refresh for those store IDs'),
-                $this->getExportStatesOption('Only refresh products with those export states (%s)'),
-                $this->getSelectedOnlyOption('Only refresh selected products'),
+                $this->getExportStatesOption('Only force refresh for products with those export states (%s)'),
+                $this->getSelectedOnlyOption('Only force refresh for selected products'),
+                $this->getFlagOption(
+                    self::OPTION_KEY_UPDATED_IN_CATALOG_ONLY,
+                    'Only force refresh for products which have been updated in the catalog'
+                ),
             ]
         );
 
@@ -78,6 +84,7 @@ class ForceExportStateRefreshCommand extends AbstractCommand
             $storeIds = $storeCollection->getLoadedIds();
             $refreshState = $this->getRefreshStateArgumentValue($input);
             $overridableRefreshStates = $refresherResource->getOverridableRefreshStates($refreshState);
+            $updatedInCatalogOnly = $this->getFlagOptionValue($input, self::OPTION_KEY_UPDATED_IN_CATALOG_ONLY);
 
             $io->title('Forcing export state refresh for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
@@ -89,7 +96,13 @@ class ForceExportStateRefreshCommand extends AbstractCommand
 
             foreach ($storeCollection as $store) {
                 $productFilter->setStoreIds([ $store->getId() ]);
-                $refresherResource->forceProductExportStateRefresh($refreshState, $productFilter);
+
+                $refresherResource->forceProductExportStateRefresh(
+                    $refreshState,
+                    $productFilter,
+                    $updatedInCatalogOnly
+                );
+
                 $io->progressAdvance(1);
             }
 
