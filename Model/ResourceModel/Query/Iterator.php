@@ -19,6 +19,11 @@ class Iterator implements \Iterator
     private $itemCallback;
 
     /**
+     * @var callable|null
+     */
+    private $rewindCallback;
+
+    /**
      * @var AdapterInterface|null $connection
      */
     private $connection = null;
@@ -46,12 +51,18 @@ class Iterator implements \Iterator
     /**
      * @param DbSelect|string $query
      * @param callable $itemCallback
+     * @param callable|null $rewindCallback
      * @param AdapterInterface|null $connection
      */
-    public function __construct($query, callable $itemCallback, AdapterInterface $connection = null)
-    {
+    public function __construct(
+        $query,
+        callable $itemCallback,
+        callable $rewindCallback = null,
+        AdapterInterface $connection = null
+    ) {
         $this->query = $query;
         $this->itemCallback = $itemCallback;
+        $this->rewindCallback = $rewindCallback;
         $this->connection = $connection;
     }
 
@@ -105,6 +116,11 @@ class Iterator implements \Iterator
         }
 
         $this->currentItemIndex = -1;
+
+        if (is_callable($this->rewindCallback)) {
+            call_user_func($this->rewindCallback);
+        }
+
         $this->next();
     }
 }

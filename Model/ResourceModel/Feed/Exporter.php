@@ -287,7 +287,7 @@ class Exporter extends AbstractDb
         $childrenSelect->order('parent_id ASC');
 
         $parentConfigurableAttributeCodes = $this->getParentConfigurableAttributeCodes();
-        $childrenQuery = $connection->query($childrenSelect);
+        $childrenQuery = null;
         $previousChildRow = null;
 
         return $this->queryIteratorFactory->create(
@@ -296,25 +296,32 @@ class Exporter extends AbstractDb
                 'itemCallback' => function ($args) use (
                     $sectionTypeIds,
                     $parentConfigurableAttributeCodes,
-                    $childrenQuery,
+                    &$childrenQuery,
                     &$previousChildRow
                 ) {
                     $parentRow = $args['row'];
                     $parentId = (int) $parentRow['product_id'];
                     $childRows = [];
 
-                    if (null !== $previousChildRow) {
-                        $childRows[] = $previousChildRow;
+                    if (is_array($previousChildRow)) {
+                        if ($previousChildRow['parent_id'] === $parentId) {
+                            $childRows[] = $previousChildRow;
+                            $previousChildRow = null;
+                        } elseif ($previousChildRow['parent_id'] < $parentId) {
+                            $previousChildRow = null;
+                        }
                     }
 
-                    while (is_array($childRow = $childrenQuery->fetch())) {
-                        $childParentId = (int) $childRow['parent_id'];
+                    if ((null === $previousChildRow) && ($childrenQuery instanceof \Zend_Db_Statement_Interface)) {
+                        while (is_array($childRow = $childrenQuery->fetch())) {
+                            $childRow['parent_id'] = (int) $childRow['parent_id'];
 
-                        if ($childParentId !== $parentId) {
-                            $previousChildRow = $childRow;
-                            break;
-                        } else {
-                            $childRows[] = $childRow;
+                            if ($childRow['parent_id'] !== $parentId) {
+                                $previousChildRow = $childRow;
+                                break;
+                            } else {
+                                $childRows[] = $childRow;
+                            }
                         }
                     }
 
@@ -334,6 +341,15 @@ class Exporter extends AbstractDb
                         ->setSectionsData($this->prepareRowSectionsData($parentRow, $sectionTypeIds));
 
                     return $parent;
+                },
+                'rewindCallback' => function () use (
+                    $connection,
+                    $childrenSelect,
+                    &$childrenQuery,
+                    &$previousChildRow
+                ) {
+                    $childrenQuery = $connection->query($childrenSelect);
+                    $previousChildRow = null;
                 },
             ]
         );
