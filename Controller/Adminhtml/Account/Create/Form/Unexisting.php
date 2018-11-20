@@ -10,9 +10,14 @@ class Unexisting extends AccountAction
 
     public function execute()
     {
+        $redirectResult = $this->resultRedirectFactory->create();
+        return $redirectResult->setPath('*/*/create_form_existing');
+
+        /*
         $pageResult = $this->initPage();
         $pageResult->addBreadcrumb(__('New Account - Registration'), __('New Account - Registration'));
         $pageResult->getConfig()->getTitle()->prepend(__('New Account - Registration'));
         return $pageResult;
+        */
     }
 }
