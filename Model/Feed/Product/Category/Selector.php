@@ -6,6 +6,7 @@ use Magento\Catalog\Model\Category as CatalogCategory;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category as FeedCategory;
@@ -17,6 +18,11 @@ class Selector implements SelectorInterface
      * @var BaseStoreManagerInterface
      */
     private $baseStoreManager;
+
+    /**
+     * @var UrlInterface
+     */
+    private $frontendUrlBuilder;
 
     /**
      * @var CategoryCollectionFactory
@@ -40,17 +46,42 @@ class Selector implements SelectorInterface
 
     /**
      * @param BaseStoreManagerInterface $baseStoreManager
+     * @param UrlInterface $frontendUrlBuilder
      * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param FeedCategoryFactory $feedCategoryFactory
      */
     public function __construct(
         BaseStoreManagerInterface $baseStoreManager,
+        UrlInterface $frontendUrlBuilder,
         CategoryCollectionFactory $categoryCollectionFactory,
         FeedCategoryFactory $feedCategoryFactory
     ) {
         $this->baseStoreManager = $baseStoreManager;
+        $this->frontendUrlBuilder = $frontendUrlBuilder;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->feedCategoryFactory = $feedCategoryFactory;
+    }
+
+    /**
+     * @param CatalogCategory $category
+     */
+    private function initializeCategoryUrl(CatalogCategory $category)
+    {
+        if ($category->hasData('request_path') && ('' !== $category->getRequestPath())) {
+            $url = $this->frontendUrlBuilder->getDirectUrl($category->getRequestPath());
+        } else {
+            $url = $this->frontendUrlBuilder->getUrl(
+                'catalog/category/view',
+                [
+                    'id' => (int) $category->getId(),
+                    's' => $category->getUrlKey()
+                        ? $category->getUrlKey()
+                        : $category->formatUrlKey($category->getName()),
+                ]
+            );
+        }
+
+        $category->setData('url', $url);
     }
 
     /**
@@ -74,8 +105,12 @@ class Selector implements SelectorInterface
             $categoryCollection->addUrlRewriteToResult();
             $categoryCollection->addAttributeToSelect('is_active');
 
+            $this->frontendUrlBuilder->setScope($store->getBaseStoreId());
+
             /** @var CatalogCategory $category */
             foreach ($categoryCollection as $category) {
+                // Force the category URL as the URL instance does not use the emulated scope (if any).
+                $this->initializeCategoryUrl($category);
                 $feedCategory = $this->feedCategoryFactory->create([ 'catalogCategory' => $category ]);
                 $this->storeCategoryList[$storeId][$category->getId()] = $feedCategory;
             }

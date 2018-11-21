@@ -21,6 +21,8 @@ class ForceSectionsRefreshCommand extends AbstractCommand
      */
     private $refresherResourceFactory;
 
+    const OPTION_KEY_UPDATED_IN_CATALOG_ONLY = 'updated_in_catalog_only';
+
     /**
      * @param AppState $appState
      * @param StoreCollectionFactory $storeCollectionFactory
@@ -63,8 +65,13 @@ class ForceSectionsRefreshCommand extends AbstractCommand
                 $this->getSectionTypesOption('Only force refresh for those section types (%s)'),
                 $this->getExportStatesOption('Only force refresh for products with those export states (%s)'),
                 $this->getSelectedOnlyOption('Only force refresh for selected products'),
+                $this->getFlagOption(
+                    self::OPTION_KEY_UPDATED_IN_CATALOG_ONLY,
+                    'Only force refresh for products which have been updated in the catalog'
+                ),
             ]
         );
+
         parent::configure();
     }
 
@@ -78,6 +85,7 @@ class ForceSectionsRefreshCommand extends AbstractCommand
             $storeIds = $storeCollection->getLoadedIds();
             $refreshState = $this->getRefreshStateArgumentValue($input);
             $overridableRefreshStates = $refresherResource->getOverridableRefreshStates($refreshState);
+            $updatedInCatalogOnly = $this->getFlagOptionValue($input, self::OPTION_KEY_UPDATED_IN_CATALOG_ONLY);
 
             $io->title('Forcing product sections refresh for store IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
@@ -92,7 +100,14 @@ class ForceSectionsRefreshCommand extends AbstractCommand
 
             foreach ($storeCollection as $store) {
                 $sectionFilter->setStoreIds([ $store->getId() ]);
-                $refresherResource ->forceProductSectionRefresh($refreshState, $sectionFilter, $productFilter);
+
+                $refresherResource->forceProductSectionRefresh(
+                    $refreshState,
+                    $sectionFilter,
+                    $productFilter,
+                    $updatedInCatalogOnly
+                );
+
                 $io->progressAdvance(1);
             }
 

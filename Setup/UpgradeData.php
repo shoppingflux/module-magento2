@@ -81,7 +81,7 @@ class UpgradeData implements UpgradeDataInterface
             ],
             [
                 CronTaskInterface::NAME => __('Send State Updates'),
-                CronTaskInterface::COMMAND_CODE => 'orders/import_sales_orders',
+                CronTaskInterface::COMMAND_CODE => 'orders/send_state_updates',
                 CronTaskInterface::COMMAND_CONFIGURATION => $emptyConfiguration,
                 CronTaskInterface::SCHEDULE_TYPE => CronTaskInterface::SCHEDULE_TYPE_EVERY_30_MINUTES,
                 CronTaskInterface::CRON_EXPRESSION => '',
