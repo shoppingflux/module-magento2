@@ -61,7 +61,7 @@
                 <label translate="true">Marketplace Number</label>
             </settings>
         </column>
-        <column name="sales_order_number">
+        <column name="sales_increment_id">
             <settings>
                 <filter>text</filter>
                 <label translate="true">Magento Number</label>
