@@ -8,6 +8,7 @@ use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 class Config extends AbstractConfig implements ConfigInterface
 {
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
+    const KEY_SYNC_NON_IMPORTED_ADDRESSES = 'sync_non_imported_addresses';
     const KEY_CREATE_INVOICE = 'create_invoice';
 
     public function getScopeSubPath()
@@ -17,8 +18,7 @@ class Config extends AbstractConfig implements ConfigInterface
 
     protected function getBaseFields()
     {
-        return array_merge(
-            [
+        return [
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
@@ -36,19 +36,33 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                    'name' => self::KEY_SYNC_NON_IMPORTED_ADDRESSES,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Synchronize Addresses of Non-Imported Orders with Shopping Feed'),
+                    'sortOrder' => 20,
+                ]
+            ),
+
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
                         'name' => self::KEY_CREATE_INVOICE,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Invoice'),
-                        'sortOrder' => 20,
+                    'sortOrder' => 30,
                     ]
                 ),
-            ]
-        );
+        ];
     }
 
     public function shouldUseItemReferenceAsProductId(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID);
+    }
+
+    public function shouldSyncNonImportedAddresses(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_SYNC_NON_IMPORTED_ADDRESSES);
     }
 
     public function shouldCreateInvoice(StoreInterface $store)

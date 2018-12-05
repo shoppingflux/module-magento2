@@ -53,4 +53,23 @@ class AddressRepository implements AddressRepositoryInterface
 
         return $address;
     }
+
+    public function getByOrderIdAndType($orderId, $type)
+    {
+        $address = $this->addressFactory->create();
+
+        $this->addressResource->load(
+            $address,
+            [ $orderId, $type ],
+            [ AddressInterface::ORDER_ID, AddressInterface::TYPE ]
+        );
+
+        if (!$address->getId()) {
+            throw new NoSuchEntityException(
+                __('Marketplace order address for order ID "%1" and type "%2" does not exist.', $orderId, $type)
+            );
+        }
+
+        return $address;
+    }
 }
