@@ -64,16 +64,15 @@ abstract class AbstractDb extends BaseDb
         if (!is_array($field) || !is_array($value)) {
             return parent::_getLoadSelect($field, $value, $object);
         }
-        
+
         $connection = $this->getConnection();
         $mainTable = $this->getMainTable();
         $select = $connection->select()->from($mainTable);
-        
+
         foreach ($field as $subFieldName) {
             $subField = $connection->quoteIdentifier(sprintf('%s.%s', $mainTable, $subFieldName));
-            $subValue = array_shift ($value);
+            $subValue = array_shift($value);
             $select->where($subField . ' = ?', $subValue);
-            
         }
 
         return $select;

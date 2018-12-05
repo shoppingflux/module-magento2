@@ -19,23 +19,23 @@ class Config extends AbstractConfig implements ConfigInterface
     protected function getBaseFields()
     {
         return [
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Use Item Reference as Product ID'),
-                        'checkedNotice' => __('The item references will be considered to correspond to product IDs.'),
-                        'uncheckedNotice' => __(
-                            'The item references will be considered to correspond to product SKUs.'
-                        ),
-                        'sortOrder' => 10,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Use Item Reference as Product ID'),
+                    'checkedNotice' => __('The item references will be considered to correspond to product IDs.'),
+                    'uncheckedNotice' => __(
+                        'The item references will be considered to correspond to product SKUs.'
+                    ),
+                    'sortOrder' => 10,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
                     'name' => self::KEY_SYNC_NON_IMPORTED_ADDRESSES,
                     'isCheckedByDefault' => true,
                     'label' => __('Synchronize Addresses of Non-Imported Orders with Shopping Feed'),
@@ -46,12 +46,12 @@ class Config extends AbstractConfig implements ConfigInterface
             $this->fieldFactory->create(
                 Checkbox::TYPE_CODE,
                 [
-                        'name' => self::KEY_CREATE_INVOICE,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Create Invoice'),
+                    'name' => self::KEY_CREATE_INVOICE,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Create Invoice'),
                     'sortOrder' => 30,
-                    ]
-                ),
+                ]
+            ),
         ];
     }
 
