@@ -59,6 +59,25 @@ abstract class AbstractDb extends BaseDb
         parent::__construct($context, $connectionName);
     }
 
+    protected function _getLoadSelect($field, $value, $object)
+    {
+        if (!is_array($field) || !is_array($value)) {
+            return parent::_getLoadSelect($field, $value, $object);
+        }
+
+        $connection = $this->getConnection();
+        $mainTable = $this->getMainTable();
+        $select = $connection->select()->from($mainTable);
+
+        foreach ($field as $subFieldName) {
+            $subField = $connection->quoteIdentifier(sprintf('%s.%s', $mainTable, $subFieldName));
+            $subValue = array_shift($value);
+            $select->where($subField . ' = ?', $subValue);
+        }
+
+        return $select;
+    }
+
     protected function _prepareDataForSave(AbstractModel $object)
     {
         return $this->prepareDataForSaveWithSerialized(

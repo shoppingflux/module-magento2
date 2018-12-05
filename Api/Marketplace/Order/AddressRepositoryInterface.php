@@ -24,4 +24,12 @@ interface AddressRepositoryInterface
      * @throws NoSuchEntityException
      */
     public function getById($addressId);
+
+    /**
+     * @param int $orderId
+     * @param string $type
+     * @return AddressInterface
+     * @throws NoSuchEntityException
+     */
+    public function getByOrderIdAndType($orderId, $type);
 }

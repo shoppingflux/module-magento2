@@ -7,6 +7,7 @@ use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterfaceFactory;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceOrderAddressInterface;
@@ -16,6 +17,7 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterfaceFactory;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\AddressRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Sdk\Api\Order\OrderResource as ApiOrder;
 use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
 
@@ -25,6 +27,11 @@ class Importer
      * @var TimezoneInterface
      */
     private $localeDate;
+
+    /**
+     * @var OrderConfigInterface
+     */
+    private $orderGeneralConfig;
 
     /**
      * @var OrderInterfaceFactory
@@ -63,6 +70,7 @@ class Importer
 
     /**
      * @param TimezoneInterface $localeDate
+     * @param OrderConfigInterface $orderGeneralConfig
      * @param OrderInterfaceFactory $orderFactory
      * @param OrderRepositoryInterface $orderRepository
      * @param AddressInterfaceFactory $addressFactory
@@ -73,6 +81,7 @@ class Importer
      */
     public function __construct(
         TimezoneInterface $localeDate,
+        OrderConfigInterface $orderGeneralConfig,
         OrderInterfaceFactory $orderFactory,
         OrderRepositoryInterface $orderRepository,
         AddressInterfaceFactory $addressFactory,
@@ -82,6 +91,7 @@ class Importer
         TransactionFactory $transactionFactory
     ) {
         $this->localeDate = $localeDate;
+        $this->orderGeneralConfig = $orderGeneralConfig;
         $this->orderFactory = $orderFactory;
         $this->orderRepository = $orderRepository;
         $this->addressFactory = $addressFactory;
@@ -235,16 +245,24 @@ class Importer
      * @param string $type
      * @param array $apiAddressData
      * @param StoreInterface $store
+     * @param MarketplaceOrderAddressInterface|null $address
      * @return MarketplaceOrderAddressInterface
      */
-    public function importApiOrderAddress($type, array $apiAddressData, StoreInterface $store)
-    {
+    public function importApiOrderAddress(
+        $type,
+        array $apiAddressData,
+        StoreInterface $store,
+        AddressInterface $address = null
+    ) {
         $streetLines = [
             $apiAddressData['street'] ?? '',
             $apiAddressData['street2'] ?? '',
         ];
 
-        $address = $this->addressFactory->create();
+        if (null === $address) {
+            $address = $this->addressFactory->create();
+        }
+
         $address->setType($type);
         $address->setFirstName($apiAddressData['firstName'] ?? '');
         $address->setLastName($apiAddressData['lastName'] ?? '');
@@ -279,15 +297,75 @@ class Importer
      * @param ApiOrder $apiOrder
      * @param MarketplaceOrderInterface $marketplaceOrder
      * @param StoreInterface $store
-     * @throws CouldNotSaveException
+     * @throws \Exception
      */
     public function importExistingApiOrder(
         ApiOrder $apiOrder,
         MarketplaceOrderInterface $marketplaceOrder,
         StoreInterface $store
     ) {
-        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt());
+        if (!$marketplaceOrder->getSalesOrderId()
+            && $this->orderGeneralConfig->shouldSyncNonImportedAddresses($store)
+        ) {
+            $orderId = $marketplaceOrder->getId();
+
+            try {
+                $billingAddress = $this->addressRepository->getByOrderIdAndType(
+                    $orderId,
+                    AddressInterface::TYPE_BILLING
+                );
+            } catch (NoSuchEntityException $e) {
+                $billingAddress = $this->addressFactory->create();
+                $billingAddress->setOrderId($orderId);
+            }
+
+            try {
+                $shippingAddress = $this->addressRepository->getByOrderIdAndType(
+                    $marketplaceOrder->getId(),
+                    AddressInterface::TYPE_SHIPPING
+                );
+            } catch (NoSuchEntityException $e) {
+                $shippingAddress = $this->addressFactory->create();
+                $shippingAddress->setOrderId($orderId);
+            }
+
+            $this->importApiOrderAddress(
+                AddressInterface::TYPE_BILLING,
+                $apiOrder->getBillingAddress(),
+                $store,
+                $billingAddress
+            );
+
+            $this->importApiOrderAddress(
+                AddressInterface::TYPE_SHIPPING,
+                $apiOrder->getShippingAddress(),
+                $store,
+                $shippingAddress
+            );
+        } else {
+            $billingAddress = null;
+            $shippingAddress = null;
+        }
+
         $marketplaceOrder->setShoppingFeedStatus($apiOrder->getStatus());
-        $this->orderRepository->save($marketplaceOrder);
+        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt());
+
+        $transaction = $this->transactionFactory->create();
+
+        $transaction->addCommitCallback(
+            function () use ($marketplaceOrder, $billingAddress, $shippingAddress) {
+                $this->orderRepository->save($marketplaceOrder);
+
+                if (null !== $billingAddress) {
+                    $this->addressRepository->save($billingAddress);
+                }
+
+                if (null !== $shippingAddress) {
+                    $this->addressRepository->save($shippingAddress);
+                }
+            }
+        );
+
+        $transaction->save();
     }
 }
