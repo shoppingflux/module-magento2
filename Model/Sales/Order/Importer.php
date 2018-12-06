@@ -378,8 +378,18 @@ class Importer implements ImporterInterface
         $quoteAddress->setPostcode($marketplaceAddress->getPostalCode());
         $quoteAddress->setCity($marketplaceAddress->getCity());
         $quoteAddress->setCountryId($marketplaceAddress->getCountryCode());
-        $quoteAddress->setTelephone($marketplaceAddress->getPhone());
         $quoteAddress->setEmail($marketplaceAddress->getEmail());
+        $phone = $marketplaceAddress->getPhone();
+        $mobilePhone = $marketplaceAddress->getMobilePhone();
+
+        if (($phone === '')
+            || ($this->orderGeneralConfig->shouldUseMobilePhoneNumberFirst($store) && ($mobilePhone !== ''))
+        ) {
+            $quoteAddress->setTelephone($mobilePhone);
+        } else {
+            $quoteAddress->setTelephone($phone);
+        }
+
         $this->tagImportedQuoteAddress($quoteAddress);
     }
 
