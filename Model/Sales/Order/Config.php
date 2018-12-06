@@ -9,6 +9,7 @@ class Config extends AbstractConfig implements ConfigInterface
 {
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_SYNC_NON_IMPORTED_ADDRESSES = 'sync_non_imported_addresses';
+    const KEY_USE_MOBILE_PHONE_NUMBER_FIRST = 'use_mobile_phone_number_first';
     const KEY_CREATE_INVOICE = 'create_invoice';
 
     public function getScopeSubPath()
@@ -46,10 +47,20 @@ class Config extends AbstractConfig implements ConfigInterface
             $this->fieldFactory->create(
                 Checkbox::TYPE_CODE,
                 [
+                    'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Use Mobile Phone Number First (If Available)'),
+                    'sortOrder' => 30,
+                ]
+            ),
+
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
                     'name' => self::KEY_CREATE_INVOICE,
                     'isCheckedByDefault' => true,
                     'label' => __('Create Invoice'),
-                    'sortOrder' => 30,
+                    'sortOrder' => 40,
                 ]
             ),
         ];
@@ -63,6 +74,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldSyncNonImportedAddresses(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_SYNC_NON_IMPORTED_ADDRESSES);
+    }
+
+    public function shouldUseMobilePhoneNumberFirst(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST);
     }
 
     public function shouldCreateInvoice(StoreInterface $store)

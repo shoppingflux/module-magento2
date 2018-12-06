@@ -285,6 +285,7 @@
 "Use Actual Stock State","Utiliser l'état du stock réel"
 "Use Gzip Compression","Utiliser la compression Gzip"
 "Use Item References as Product IDs","Utiliser les références d'articles comme IDs produits"
+"Use Mobile Phone Number First (If Available)","Utiliser en priorité le numéro de téléphone portable (si disponible)"
 "Use Parent Categories","Utiliser les catégories parent"
 "Use Product ID for SKU","Utiliser l'ID produit à la place du SKU"
 "Value handler factory ""%1"" must create instances of type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.","La factory de handlers de valeurs ""%1" doit créer des instances du type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface."
