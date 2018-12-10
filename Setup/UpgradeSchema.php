@@ -65,6 +65,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->createCronTaskTable($setup);
             $this->changeMarketplaceOrderTicketShoppingFeedIdFieldType($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.10.0') < 0)) {
+            $this->changeMarketplaceOrderTicketShoppingFeedIdFieldType($setup);
+        }
     }
 
     /**
@@ -1080,7 +1084,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             TicketInterface::SHOPPING_FEED_TICKET_ID,
             [
                 'type' => Table::TYPE_TEXT,
-                'length' => 32,
+                'length' => 255,
                 'nullable' => true,
                 'comment' => 'Shopping Feed Ticket ID',
             ]

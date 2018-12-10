@@ -129,6 +129,7 @@ class Collection extends AbstractCollection
             new \Zend_Db_Expr($shipmentSelect->assemble())
         );
 
+        $this->addHandledTicketAbsenceFilter(TicketInterface::ACTION_SHIP);
         return $this;
     }
 }
