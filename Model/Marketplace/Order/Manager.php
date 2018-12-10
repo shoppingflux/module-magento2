@@ -335,7 +335,7 @@ class Manager
                 $chosenTrack = null;
 
                 /** @var ShipmentTrack $shipmentTrack */
-                foreach ($salesShipmentTracks as $shipmentTrack) {
+                foreach ($salesShipmentTracks[$salesOrderId] as $shipmentTrack) {
                     if ((null === $chosenTrack) || ($shipmentTrack->getRelevance() >= $chosenTrack->getRelevance())) {
                         $chosenTrack = $shipmentTrack;
                     }
