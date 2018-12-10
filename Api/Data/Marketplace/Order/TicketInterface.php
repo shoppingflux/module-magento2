@@ -31,7 +31,7 @@ interface TicketInterface
     public function getId();
 
     /**
-     * @return int
+     * @return string
      */
     public function getShoppingFeedTicketId();
 
@@ -56,7 +56,7 @@ interface TicketInterface
     public function getCreatedAt();
 
     /**
-     * @param int $ticketId
+     * @param string $ticketId
      * @return TicketInterface
      */
     public function setShoppingFeedTicketId($ticketId);
