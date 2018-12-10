@@ -124,7 +124,11 @@ class Collection extends AbstractCollection
                 [ 'order_id' ]
             );
 
-        $this->getSelect()->where('_sales_order_table.entity_id IN (?)', $shipmentSelect->assemble());
+        $this->getSelect()->where(
+            '_sales_order_table.entity_id IN (?)',
+            new \Zend_Db_Expr($shipmentSelect->assemble())
+        );
+
         return $this;
     }
 }
