@@ -75,6 +75,7 @@ class Collection extends AbstractCollection
     public function addImportableFilter()
     {
         $this->addFieldToFilter(OrderInterface::IMPORT_REMAINING_TRY_COUNT, [ 'gt' => 0 ]);
+        $this->addFieldToFilter(OrderInterface::SHOPPING_FEED_STATUS, OrderInterface::STATUS_WAITING_SHIPMENT);
         return $this;
     }
 

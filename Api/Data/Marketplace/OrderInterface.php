@@ -30,6 +30,16 @@ interface OrderInterface
     const ACKNOWLEDGED_AT = 'acknowledged_at';
     /**#@+*/
 
+    const STATUS_CREATED = 'created';
+    const STATUS_WAITING_STORE_ACCEPTANCE = 'waiting_store_acceptance';
+    const STATUS_REFUSED = 'refused';
+    const STATUS_WAITING_SHIPMENT = 'waiting_shipment';
+    const STATUS_SHIPPED = 'shipped';
+    const STATUS_CANCELLED = 'cancelled';
+    const STATUS_REFUNDED = 'refunded';
+    const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
+    const STATUS_PARTIALLY_SHIPPED = 'partial_shipped';
+
     const DEFAULT_IMPORT_TRY_COUNT = 3;
 
     /**
