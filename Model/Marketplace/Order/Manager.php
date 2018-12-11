@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
@@ -25,12 +26,18 @@ class Manager
 {
     const API_FILTER_STATUS = 'status';
     const API_FILTER_ACKNOWLEDGEMENT = 'acknowledgment';
+    const API_FILTER_SINCE = 'since';
 
     const API_ACKNOWLEDGEMENT_STATUS_SUCCESS = 'success';
     const API_ACKNOWLEDGEMENT_STATUS_FAILURE = 'error';
 
     const API_ACKNOWLEDGED = 'acknowledged';
     const API_UNACKNOWLEDGED = 'unacknowledged';
+
+    /**
+     * @var TimezoneInterface
+     */
+    private $localeDate;
 
     /**
      * @var ApiSessionManager
@@ -68,6 +75,7 @@ class Manager
     private $salesShipmentTrackCollector;
 
     /**
+     * @param TimezoneInterface $localeDate
      * @param ApiSessionManager $apiSessionManager
      * @param OrderCollectionFactory $orderCollectionFactory
      * @param OrderLogInterfaceFactory $orderLogFactory
@@ -77,6 +85,7 @@ class Manager
      * @param SalesShipmentTrackCollector $salesShipmentTrackCollector
      */
     public function __construct(
+        TimezoneInterface $localeDate,
         ApiSessionManager $apiSessionManager,
         OrderCollectionFactory $orderCollectionFactory,
         OrderLogInterfaceFactory $orderLogFactory,
@@ -85,6 +94,7 @@ class Manager
         OrderTicketRepositoryInterface $orderTicketRepository,
         SalesShipmentTrackCollector $salesShipmentTrackCollector
     ) {
+        $this->localeDate = $localeDate;
         $this->apiSessionManager = $apiSessionManager;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->orderLogFactory = $orderLogFactory;
@@ -102,7 +112,16 @@ class Manager
     public function getStoreImportableApiOrders(StoreInterface $store)
     {
         $apiStore = $this->apiSessionManager->getStoreApiResource($store);
-        return $apiStore->getOrderApi()->getAll([ self::API_FILTER_ACKNOWLEDGEMENT => self::API_UNACKNOWLEDGED ]);
+        $sinceDate = $this->localeDate->scopeDate($store->getBaseStore());
+        $sinceDate->sub(new \DateInterval('P15D'));
+
+        return $apiStore->getOrderApi()
+            ->getAll(
+                [
+                    self::API_FILTER_SINCE => $sinceDate,
+                    self::API_FILTER_ACKNOWLEDGEMENT => self::API_UNACKNOWLEDGED,
+                ]
+            );
     }
 
     /**
