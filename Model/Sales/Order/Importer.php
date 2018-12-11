@@ -372,13 +372,15 @@ class Importer implements ImporterInterface
         StoreInterface $store
     ) {
         // @todo import rules
-        $quoteAddress->setFirstname($marketplaceAddress->getFirstName());
+        $firstName = $marketplaceAddress->getFirstName();
+        $quoteAddress->setFirstname('' !== $firstName ? $firstName : '__');
         $quoteAddress->setLastname($marketplaceAddress->getLastName());
         $quoteAddress->setStreet($marketplaceAddress->getStreet());
         $quoteAddress->setPostcode($marketplaceAddress->getPostalCode());
         $quoteAddress->setCity($marketplaceAddress->getCity());
         $quoteAddress->setCountryId($marketplaceAddress->getCountryCode());
         $quoteAddress->setEmail($marketplaceAddress->getEmail());
+
         $phone = $marketplaceAddress->getPhone();
         $mobilePhone = $marketplaceAddress->getMobilePhone();
 
