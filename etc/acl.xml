@@ -16,6 +16,12 @@
                         <resource id="ShoppingFeed_Manager::account_store_delete" title="Delete Account Store" translate="title" sortOrder="30000"/>
                     </resource>
 
+                    <resource id="ShoppingFeed_Manager::cron_tasks" title="Cron Tasks" translate="title" sortOrder="30000">
+                        <resource id="ShoppingFeed_Manager::cron_task_run" title="Run Cron Task" translate="title" sortOrder="10000"/>
+                        <resource id="ShoppingFeed_Manager::cron_task_edit" title="Edit Cron Task" translate="title" sortOrder="20000"/>
+                        <resource id="ShoppingFeed_Manager::cron_task_delete" title="Delete Cron Task" translate="title" sortOrder="30000"/>
+                    </resource>
+
                     <resource id="ShoppingFeed_Manager::shipping_method_rules" title="Shipping Method Rules" translate="title" sortOrder="30000">
                         <resource id="ShoppingFeed_Manager::shipping_method_rule_edit" title="Edit Shipping Method Rule" translate="title" sortOrder="10000"/>
                         <resource id="ShoppingFeed_Manager::shipping_method_rule_delete" title="Delete Shipping Method Rule" translate="title" sortOrder="20000"/>
@@ -25,11 +31,7 @@
                         <resource id="ShoppingFeed_Manager::marketplace_order_reset_import_try_count" title="Reset Import Attempts" translate="title" sortOrder="10000"/>
                     </resource>
 
-                    <resource id="ShoppingFeed_Manager::cron_tasks" title="Cron Tasks" translate="title" sortOrder="30000">
-                        <resource id="ShoppingFeed_Manager::cron_task_run" title="Run Cron Task" translate="title" sortOrder="10000"/>
-                        <resource id="ShoppingFeed_Manager::cron_task_edit" title="Edit Cron Task" translate="title" sortOrder="20000"/>
-                        <resource id="ShoppingFeed_Manager::cron_task_delete" title="Delete Cron Task" translate="title" sortOrder="30000"/>
-                    </resource>
+                    <resource id="ShoppingFeed_Manager::marketplace_order_logs" title="Order Logs" translate="title" sortOrder="50000"/>
                 </resource>
             </resource>
         </resources>
