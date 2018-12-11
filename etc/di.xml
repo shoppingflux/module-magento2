@@ -286,6 +286,7 @@
                 <item name="sfm_account_store_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid\Collection</item>
                 <item name="sfm_shipping_method_rule_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Grid\Collection</item>
                 <item name="sfm_marketplace_order_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Grid\Collection</item>
+                <item name="sfm_marketplace_order_log_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log\Grid\Collection</item>
                 <item name="sfm_cron_task_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Cron\Task\Grid\Collection</item>
             </argument>
         </arguments>
@@ -294,6 +295,7 @@
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Log\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Cron\Task\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
 
     <type name="Magento\Framework\Console\CommandList">
