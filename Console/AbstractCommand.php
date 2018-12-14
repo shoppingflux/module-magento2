@@ -11,8 +11,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
 
-class AbstractCommand extends Command
+abstract class AbstractCommand extends Command
 {
     const OPTION_KEY_STORE_IDS = 'store_id';
     const OPTION_VALUE_ALL = 'all';
@@ -34,27 +35,25 @@ class AbstractCommand extends Command
     public function __construct(AppState $appState, StoreCollectionFactory $storeCollectionFactory)
     {
         $this->appState = $appState;
-
-        try {
-            $appState->setAreaCode(AppArea::AREA_FRONTEND);
-        } catch (\Exception $e) {
-            // Area code is most likely already set.
-        }
-
         $this->storeCollectionFactory = $storeCollectionFactory;
         parent::__construct();
     }
 
-    protected function configure()
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
-        try {
-            $this->appState->setAreaCode(AppArea::AREA_FRONTEND);
-        } catch (\Exception $e) {
-            // Area code is most likely already set.
-        }
-
-        parent::configure();
+        return $this->appState->emulateAreaCode(
+            AppArea::AREA_FRONTEND,
+            function () use ($input, $output) {
+                return $this->executeActions($input, $output);
+            }
+        );
     }
+
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    abstract protected function executeActions(InputInterface $input, OutputInterface $output);
 
     /**
      * @return InputArgument[]

@@ -74,7 +74,7 @@ class ForceExportStateRefreshCommand extends AbstractCommand
         parent::configure();
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function executeActions(InputInterface $input, OutputInterface $output)
     {
         $io = new SymfonyStyle($input, $output);
         $refresherResource = $this->refresherResourceFactory->create();
