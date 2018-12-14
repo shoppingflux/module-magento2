@@ -287,11 +287,11 @@
 "This account does no longer exist.","Ce compte n'existe plus."
 "This account store does no longer exist.","Ce magasin n'existe plus."
 "This cron task does no longer exist.","Cette tâche cron n'existe plus."
-This email address will be used when none is available for a given address.,Cette adresse email sera utilisée quand aucune n'est disponible pour une adresse donnée.
+"This email address will be used when none is available for a given address.","Cette adresse email sera utilisée quand aucune n'est disponible pour une adresse donnée."
 "This marketplace order does no longer exist.","Cette commande place de marché n'existe plus."
-This phone number will be used when none is available for a given address.,Ce numéro de téléphone sera utilisé quand aucun n'est disponible pour une adresse donnée.
+"This phone number will be used when none is available for a given address.","Ce numéro de téléphone sera utilisé quand aucun n'est disponible pour une adresse donnée."
 "This shipping method rule does no longer exist.","Cette règle de mode de livraison n'existe plus."
-This value will be used as the default for other missing required fields.,Cette valeur sera utilisée par défaut pour les autres champs obligatoires manquants.
+"This value will be used as the default for other missing required fields.","Cette valeur sera utilisée par défaut pour les autres champs obligatoires manquants."
 "To","Jusque"
 "Total Amount","Montant total"
 "Use Actual Stock State","Utiliser l'état du stock réel"
@@ -300,9 +300,9 @@ This value will be used as the default for other missing required fields.,Cette 
 "Use Mobile Phone Number First (If Available)","Utiliser en priorité le numéro de téléphone portable (si disponible)"
 "Use Parent Categories","Utiliser les catégories parent"
 "Use Product ID for SKU","Utiliser l'ID produit à la place du SKU"
-"Value handler factory ""%1"" must create instances of type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.",La factory de handler de valeurs "%1 doit créer des instances du type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.
-Value handler factory "%1" must implement a callable create() method.,La factory de handler de valeurs "%1" doit implémenter une méthode create() appelable.
-Value handler type "%1" is not supported.,Le type de handler de valeurs "%1" n'est pas supporté.
+"Value handler factory ""%1"" must create instances of type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.",La factory de handler de valeurs ""%1"" doit créer des instances du type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface."
+"Value handler factory ""%1"" must implement a callable create() method.","La factory de handler de valeurs ""%1"" doit implémenter une méthode create() appelable."
+"Value handler type ""%1"" is not supported.","Le type de handler de valeurs ""%1"" n'est pas supporté."
 "View Magento Order","Voir la commande Magento"
 "Whether parent categories should also be considered.","Selon que les catégories parent doivent également être considérées."
 "Within Parents","Avec leurs parents"
