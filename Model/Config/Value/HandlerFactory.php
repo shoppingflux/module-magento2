@@ -37,7 +37,7 @@ class HandlerFactory implements HandlerFactoryInterface
     public function create($typeCode, array $data = [])
     {
         if (!isset($this->typeFactories[$typeCode])) {
-            throw new LocalizedException(__('Value handler type "%1" is not (yet) supported.'));
+            throw new LocalizedException(__('Value handler type "%1" is not supported.', $typeCode));
         }
 
         $handler = $this->typeFactories[$typeCode]->create($data);

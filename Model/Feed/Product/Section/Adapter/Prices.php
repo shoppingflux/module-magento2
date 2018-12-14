@@ -8,6 +8,7 @@ use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Catalog\Model\ResourceModel\ProductFactory as CatalogProductResourceFactory;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProductType;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable\Proxy as ConfigurableProductTypeProxy;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Tax\Api\TaxCalculationInterface\Proxy as TaxCalculationProxy;
 use Magento\Tax\Model\Config as TaxConfig;
@@ -31,37 +32,42 @@ class Prices extends AbstractAdapter implements PricesInterface
     const KEY_SPECIAL_PRICE_TO_DATE = 'special_price_to_date';
 
     /**
-     * @var CatalogProductResource
+     * @var CatalogProductResourceFactory
      */
-    private $catalogProductResource;
+    private $catalogProductResourceFactory;
 
     /**
-     * @var ConfigurableProductType
+     * @var CatalogProductResource|null
+     */
+    private $catalogProductResource = null;
+
+    /**
+     * @var ConfigurableProductTypeProxy
      */
     private $configurableProductType;
 
     /**
      * @var TaxCalculationProxy
      */
-    private $taxCalculatorProxy;
+    private $taxCalculator;
 
     /**
      * @param StoreManagerInterface $storeManager
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param CatalogProductResourceFactory $catalogProductResourceFactory
-     * @param ConfigurableProductType $configurableProductType
+     * @param ConfigurableProductTypeProxy $configurableProductTypeProxy
      * @param TaxCalculationProxy $taxCalculatorProxy
      */
     public function __construct(
         StoreManagerInterface $storeManager,
         AttributeRendererPoolInterface $attributeRendererPool,
         CatalogProductResourceFactory $catalogProductResourceFactory,
-        ConfigurableProductType $configurableProductType,
+        ConfigurableProductTypeProxy $configurableProductTypeProxy,
         TaxCalculationProxy $taxCalculatorProxy
     ) {
-        $this->catalogProductResource = $catalogProductResourceFactory->create();
-        $this->configurableProductType = $configurableProductType;
-        $this->taxCalculatorProxy = $taxCalculatorProxy;
+        $this->catalogProductResourceFactory = $catalogProductResourceFactory;
+        $this->configurableProductType = $configurableProductTypeProxy;
+        $this->taxCalculator = $taxCalculatorProxy;
         parent::__construct($storeManager, $attributeRendererPool);
     }
 
@@ -75,6 +81,18 @@ class Prices extends AbstractAdapter implements PricesInterface
         $productCollection->addMinimalPrice();
         $productCollection->addFinalPrice();
         $productCollection->addTaxPercents();
+    }
+
+    /**
+     * @return CatalogProductResource
+     */
+    private function getCatalogProductResource()
+    {
+        if (null === $this->catalogProductResource) {
+            $this->catalogProductResource = $this->catalogProductResourceFactory->create();
+        }
+
+        return $this->catalogProductResource;
     }
 
     /**
@@ -94,7 +112,7 @@ class Prices extends AbstractAdapter implements PricesInterface
      */
     private function getDateValue(CatalogProduct $catalogProduct, $attributeCode)
     {
-        if ($attribute = $this->catalogProductResource->getAttribute($attributeCode)) {
+        if ($attribute = $this->getCatalogProductResource()->getAttribute($attributeCode)) {
             return !empty($dateValue = $this->getCatalogProductAttributeValue($catalogProduct, $attribute))
                 ? $dateValue
                 : (string) $catalogProduct->getData($attributeCode);
@@ -115,7 +133,7 @@ class Prices extends AbstractAdapter implements PricesInterface
 
         if (!$isPriceIncludingTax) {
             if ($taxClassId = (int) $product->getData('tax_class_id')) {
-                $taxRate = $this->taxCalculatorProxy->getCalculatedRate($taxClassId, null, $store->getBaseStoreId());
+                $taxRate = $this->taxCalculator->getCalculatedRate($taxClassId, null, $store->getBaseStoreId());
             }
         }
 

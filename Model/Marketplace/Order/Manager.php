@@ -4,7 +4,7 @@ namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy as TimezoneProxy;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
@@ -35,7 +35,7 @@ class Manager
     const API_UNACKNOWLEDGED = 'unacknowledged';
 
     /**
-     * @var TimezoneInterface
+     * @var TimezoneProxy
      */
     private $localeDate;
 
@@ -75,7 +75,7 @@ class Manager
     private $salesShipmentTrackCollector;
 
     /**
-     * @param TimezoneInterface $localeDate
+     * @param TimezoneProxy $localeDateProxy
      * @param ApiSessionManager $apiSessionManager
      * @param OrderCollectionFactory $orderCollectionFactory
      * @param OrderLogInterfaceFactory $orderLogFactory
@@ -85,7 +85,7 @@ class Manager
      * @param SalesShipmentTrackCollector $salesShipmentTrackCollector
      */
     public function __construct(
-        TimezoneInterface $localeDate,
+        TimezoneProxy $localeDateProxy,
         ApiSessionManager $apiSessionManager,
         OrderCollectionFactory $orderCollectionFactory,
         OrderLogInterfaceFactory $orderLogFactory,
@@ -94,7 +94,7 @@ class Manager
         OrderTicketRepositoryInterface $orderTicketRepository,
         SalesShipmentTrackCollector $salesShipmentTrackCollector
     ) {
-        $this->localeDate = $localeDate;
+        $this->localeDate = $localeDateProxy;
         $this->apiSessionManager = $apiSessionManager;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->orderLogFactory = $orderLogFactory;

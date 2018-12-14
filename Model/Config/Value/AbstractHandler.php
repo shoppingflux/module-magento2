@@ -7,6 +7,7 @@ abstract class AbstractHandler implements HandlerInterface
     const VALIDATION_CLASS_DIGITS = 'validate-digits';
     const VALIDATION_CLASS_GREATER_THAN_ZERO = 'validate-greater-than-zero';
     const VALIDATION_CLASS_NUMBER = 'validate-number';
+    const VALIDATION_CLASS_EMAIL = 'validate-email';
 
     abstract public function getFormDataType();
 

@@ -2,14 +2,18 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
-use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepositoryInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface\Proxy as CatalogProductRepositoryProxy;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
 use Magento\Checkout\Model\Session\Proxy as CheckoutSessionProxy;
+use Magento\Directory\Helper\Data\Proxy as DirectoryHelperProxy;
+use Magento\Directory\Model\Region;
+use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
+use Magento\Quote\Api\CartManagementInterface\Proxy as QuoteManagerProxy;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
@@ -51,6 +55,16 @@ class Importer implements ImporterInterface
     private $dataObjectFactory;
 
     /**
+     * @var DirectoryHelperProxy
+     */
+    private $directoryHelper;
+
+    /**
+     * @var RegionCollectionFactory
+     */
+    private $regionCollectionFactory;
+
+    /**
      * @var TimeHelper
      */
     private $timeHelper;
@@ -66,17 +80,17 @@ class Importer implements ImporterInterface
     private $orderGeneralConfig;
 
     /**
-     * @var CatalogProductRepositoryInterface
+     * @var CatalogProductRepositoryProxy
      */
     private $catalogProductRepository;
 
     /**
      * @var CheckoutSessionProxy
      */
-    private $checkoutSessionProxy;
+    private $checkoutSession;
 
     /**
-     * @var QuoteManagerInterface
+     * @var QuoteManagerProxy
      */
     private $quoteManager;
 
@@ -151,14 +165,21 @@ class Importer implements ImporterInterface
     private $currentlyImportedQuoteId = null;
 
     /**
+     * @var int[]
+     */
+    private $countryDefaultRegionIds = [];
+
+    /**
      * @param TransactionFactory $transactionFactory
      * @param DataObjectFactory $dataObjectFactory
+     * @param DirectoryHelperProxy $directoryHelperProxy
+     * @param RegionCollectionFactory $regionCollectionFactory
      * @param TimeHelper $timeHelper
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
-     * @param CatalogProductRepositoryInterface $catalogProductRepository
+     * @param CatalogProductRepositoryProxy $catalogProductRepositoryProxy
      * @param CheckoutSessionProxy $checkoutSessionProxy
-     * @param QuoteManagerInterface $quoteManager
+     * @param QuoteManagerProxy $quoteManagerProxy
      * @param QuoteRepositoryInterface $quoteRepository
      * @param QuoteAddressExtensionFactory $quoteAddressExtensionFactory
      * @param ShippingRateMethodFactory $shippingRateMethodFactory
@@ -174,12 +195,14 @@ class Importer implements ImporterInterface
     public function __construct(
         TransactionFactory $transactionFactory,
         DataObjectFactory $dataObjectFactory,
+        DirectoryHelperProxy $directoryHelperProxy,
+        RegionCollectionFactory $regionCollectionFactory,
         TimeHelper $timeHelper,
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
-        CatalogProductRepositoryInterface $catalogProductRepository,
+        CatalogProductRepositoryProxy $catalogProductRepositoryProxy,
         CheckoutSessionProxy $checkoutSessionProxy,
-        QuoteManagerInterface $quoteManager,
+        QuoteManagerProxy $quoteManagerProxy,
         QuoteRepositoryInterface $quoteRepository,
         QuoteAddressExtensionFactory $quoteAddressExtensionFactory,
         ShippingRateMethodFactory $shippingRateMethodFactory,
@@ -194,12 +217,14 @@ class Importer implements ImporterInterface
     ) {
         $this->transactionFactory = $transactionFactory;
         $this->dataObjectFactory = $dataObjectFactory;
+        $this->directoryHelper = $directoryHelperProxy;
+        $this->regionCollectionFactory = $regionCollectionFactory;
         $this->timeHelper = $timeHelper;
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
-        $this->catalogProductRepository = $catalogProductRepository;
-        $this->checkoutSessionProxy = $checkoutSessionProxy;
-        $this->quoteManager = $quoteManager;
+        $this->catalogProductRepository = $catalogProductRepositoryProxy;
+        $this->checkoutSession = $checkoutSessionProxy;
+        $this->quoteManager = $quoteManagerProxy;
         $this->quoteRepository = $quoteRepository;
         $this->quoteAddressExtensionFactory = $quoteAddressExtensionFactory;
         $this->shippingRateMethodFactory = $shippingRateMethodFactory;
@@ -316,7 +341,7 @@ class Importer implements ImporterInterface
                     );
 
                     $transaction->save();
-                    $salesIncrementId = $this->checkoutSessionProxy->getData('last_real_order_id');
+                    $salesIncrementId = $this->checkoutSession->getData('last_real_order_id');
 
                     if (!empty($salesIncrementId)) {
                         try {
@@ -366,30 +391,70 @@ class Importer implements ImporterInterface
         }
     }
 
+    /**
+     * @param string $marketplaceValue
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getAddressRequiredFieldValue($marketplaceValue, StoreInterface $store)
+    {
+        return ('' !== trim($marketplaceValue))
+            ? $marketplaceValue
+            : $this->orderGeneralConfig->getAddressFieldPlaceholder($store);
+    }
+
+    /**
+     * @param int $countryId
+     * @param StoreInterface $store
+     * @return int|null
+     */
+    public function getCountryDefaultRegionId($countryId, StoreInterface $store)
+    {
+        if (!array_key_exists($countryId, $this->countryDefaultRegionIds)) {
+            $regionCollection = $this->regionCollectionFactory->create();
+            $regionCollection->addCountryFilter($countryId);
+            $regionCollection->setPageSize(1);
+            $regionCollection->setCurPage(1);
+
+            /** @var Region $defaultRegion */
+            $defaultRegion = $regionCollection->getFirstItem();
+            $this->countryDefaultRegionIds[$countryId] = $defaultRegion ? (int) $defaultRegion->getId() : null;
+        }
+
+        return $this->countryDefaultRegionIds[$countryId];
+    }
+
     public function importQuoteAddress(
         QuoteAddressInterface $quoteAddress,
         MarketplaceAddressInterface $marketplaceAddress,
         StoreInterface $store
     ) {
-        // @todo import rules
-        $firstName = $marketplaceAddress->getFirstName();
-        $quoteAddress->setFirstname('' !== $firstName ? $firstName : '__');
-        $quoteAddress->setLastname($marketplaceAddress->getLastName());
-        $quoteAddress->setStreet($marketplaceAddress->getStreet());
-        $quoteAddress->setPostcode($marketplaceAddress->getPostalCode());
-        $quoteAddress->setCity($marketplaceAddress->getCity());
-        $quoteAddress->setCountryId($marketplaceAddress->getCountryCode());
-        $quoteAddress->setEmail($marketplaceAddress->getEmail());
+        $quoteAddress->setFirstname($this->getAddressRequiredFieldValue($marketplaceAddress->getFirstName(), $store));
+        $quoteAddress->setLastname($this->getAddressRequiredFieldValue($marketplaceAddress->getLastName(), $store));
+        $quoteAddress->setStreet($this->getAddressRequiredFieldValue($marketplaceAddress->getStreet(), $store));
+        $quoteAddress->setPostcode($this->getAddressRequiredFieldValue($marketplaceAddress->getPostalCode(), $store));
+        $quoteAddress->setCity($this->getAddressRequiredFieldValue($marketplaceAddress->getCity(), $store));
+        $countryId = $marketplaceAddress->getCountryCode();
+        $quoteAddress->setCountryId($countryId);
 
+        if (in_array($countryId, $this->directoryHelper->getCountriesWithStatesRequired(), true)) {
+            $quoteAddress->setRegionId($this->getCountryDefaultRegionId($countryId, $store));
+        }
+
+        $email = $marketplaceAddress->getEmail();
         $phone = $marketplaceAddress->getPhone();
         $mobilePhone = $marketplaceAddress->getMobilePhone();
 
-        if (($phone === '')
-            || ($this->orderGeneralConfig->shouldUseMobilePhoneNumberFirst($store) && ($mobilePhone !== ''))
+        $quoteAddress->setEmail('' !== $email ? $email : $this->orderGeneralConfig->getDefaultEmailAddress($store));
+
+        if ((('' === $phone) || $this->orderGeneralConfig->shouldUseMobilePhoneNumberFirst($store))
+            && ('' !== $mobilePhone)
         ) {
             $quoteAddress->setTelephone($mobilePhone);
-        } else {
+        } elseif ('' !== $phone) {
             $quoteAddress->setTelephone($phone);
+        } else {
+            $quoteAddress->setTelephone($this->orderGeneralConfig->getDefaultPhoneNumber($store));
         }
 
         $this->tagImportedQuoteAddress($quoteAddress);
