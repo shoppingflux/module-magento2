@@ -2,7 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
-use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepositoryInterface;
+use Magento\Catalog\Api\ProductRepositoryInterface\Proxy as CatalogProductRepositoryProxy;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
 use Magento\Checkout\Model\Session\Proxy as CheckoutSessionProxy;
@@ -10,6 +10,7 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
+use Magento\Quote\Api\CartManagementInterface\Proxy as QuoteManagerProxy;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
@@ -66,17 +67,17 @@ class Importer implements ImporterInterface
     private $orderGeneralConfig;
 
     /**
-     * @var CatalogProductRepositoryInterface
+     * @var CatalogProductRepositoryProxy
      */
     private $catalogProductRepository;
 
     /**
      * @var CheckoutSessionProxy
      */
-    private $checkoutSessionProxy;
+    private $checkoutSession;
 
     /**
-     * @var QuoteManagerInterface
+     * @var QuoteManagerProxy
      */
     private $quoteManager;
 
@@ -156,9 +157,9 @@ class Importer implements ImporterInterface
      * @param TimeHelper $timeHelper
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
-     * @param CatalogProductRepositoryInterface $catalogProductRepository
+     * @param CatalogProductRepositoryProxy $catalogProductRepositoryProxy
      * @param CheckoutSessionProxy $checkoutSessionProxy
-     * @param QuoteManagerInterface $quoteManager
+     * @param QuoteManagerProxy $quoteManagerProxy
      * @param QuoteRepositoryInterface $quoteRepository
      * @param QuoteAddressExtensionFactory $quoteAddressExtensionFactory
      * @param ShippingRateMethodFactory $shippingRateMethodFactory
@@ -177,9 +178,9 @@ class Importer implements ImporterInterface
         TimeHelper $timeHelper,
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
-        CatalogProductRepositoryInterface $catalogProductRepository,
+        CatalogProductRepositoryProxy $catalogProductRepositoryProxy,
         CheckoutSessionProxy $checkoutSessionProxy,
-        QuoteManagerInterface $quoteManager,
+        QuoteManagerProxy $quoteManagerProxy,
         QuoteRepositoryInterface $quoteRepository,
         QuoteAddressExtensionFactory $quoteAddressExtensionFactory,
         ShippingRateMethodFactory $shippingRateMethodFactory,
@@ -197,9 +198,9 @@ class Importer implements ImporterInterface
         $this->timeHelper = $timeHelper;
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
-        $this->catalogProductRepository = $catalogProductRepository;
-        $this->checkoutSessionProxy = $checkoutSessionProxy;
-        $this->quoteManager = $quoteManager;
+        $this->catalogProductRepository = $catalogProductRepositoryProxy;
+        $this->checkoutSession = $checkoutSessionProxy;
+        $this->quoteManager = $quoteManagerProxy;
         $this->quoteRepository = $quoteRepository;
         $this->quoteAddressExtensionFactory = $quoteAddressExtensionFactory;
         $this->shippingRateMethodFactory = $shippingRateMethodFactory;
@@ -316,7 +317,7 @@ class Importer implements ImporterInterface
                     );
 
                     $transaction->save();
-                    $salesIncrementId = $this->checkoutSessionProxy->getData('last_real_order_id');
+                    $salesIncrementId = $this->checkoutSession->getData('last_real_order_id');
 
                     if (!empty($salesIncrementId)) {
                         try {

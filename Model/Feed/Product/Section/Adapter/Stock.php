@@ -2,7 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 
-use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\CatalogInventory\Api\StockRegistryInterface\Proxy as StockRegistryProxy;
 use Magento\CatalogInventory\Model\Stock\Item as StockItem;
 use Magento\Store\Model\StoreManagerInterface;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
@@ -21,21 +21,21 @@ class Stock extends AbstractAdapter implements StockInterface
     const KEY_QUANTITY = 'qty';
 
     /**
-     * @var StockRegistryInterface $stockRegistry
+     * @var StockRegistryProxy $stockRegistry
      */
     protected $stockRegistry;
 
     /**
      * @param StoreManagerInterface $storeManager
      * @param AttributeRendererPoolInterface $attributeRendererPool
-     * @param StockRegistryInterface $stockRegistry
+     * @param StockRegistryProxy $stockRegistryProxy
      */
     public function __construct(
         StoreManagerInterface $storeManager,
         AttributeRendererPoolInterface $attributeRendererPool,
-        StockRegistryInterface $stockRegistry
+        StockRegistryProxy $stockRegistryProxy
     ) {
-        $this->stockRegistry = $stockRegistry;
+        $this->stockRegistry = $stockRegistryProxy;
         parent::__construct($storeManager, $attributeRendererPool);
     }
 
