@@ -79,11 +79,14 @@
 "Cron Tasks","Tâches cron"
 "Currency","Devise"
 "Custom","Personnalisée"
+"Default Address Field Value","Valeur de champ d'adresse par défaut"
 "Default Carrier Name","Nom du transporteur par défaut"
 "Default Carrier Title","Titre du transporteur par défaut"
 "Default Delay","Délai par défaut"
+"Default Email Address","Adresse email par défaut"
 "Default Fees","Frais par défaut"
 "Default Method Title","Titre du mode par défaut"
+"Default Phone Number","Numéro de téléphone par défaut"
 "Default Quantity","Quantité par défaut"
 "Default shipping method applier with code ""%1"" does not exist.","Aucun applicateur de mode de livraison par défaut n'existe pour le code""%1""."
 "Delay Attribute","Attribut délai"
@@ -160,6 +163,9 @@
 "Is there a corresponding cron job scheduled regularly?","Y a-t-il une tâche cron correspondante programmée régulièrement ?"
 "It seems that the store product list is not in sync with the catalog product list.","Il semble que la liste de produits du magasin n'est pas synchronisée avec la liste de produits du catalogue."
 "Leave empty if all the categories of a given product should be considered.","Laisser vide si toutes les catégories d'un produit donné doivent être considérées."
+"Leave empty to use the ""%1"" store email address (""%2"").","Laisser vide pour utiliser l'adresse email du magasin ""%1"" (""%2"")."
+"Leave empty to use the store phone number (""%1"").","Laisser vide pour utiliser le numéro de téléphone du magasin (""%1"")."
+"Leave empty to use the store phone number (if available), or ""%1"".","Laisser vide pour utiliser le numéro de téléphone du magasin (si disponible), ou ""%1""."
 "Level Weight Multiplier","Multiplicateur de poids par niveau"
 "Magento Number","Numéro Magento"
 "Marketplace","Place de marché"
@@ -281,8 +287,11 @@
 "This account does no longer exist.","Ce compte n'existe plus."
 "This account store does no longer exist.","Ce magasin n'existe plus."
 "This cron task does no longer exist.","Cette tâche cron n'existe plus."
+This email address will be used when none is available for a given address.,Cette adresse email sera utilisée quand aucune n'est disponible pour une adresse donnée.
 "This marketplace order does no longer exist.","Cette commande place de marché n'existe plus."
+This phone number will be used when none is available for a given address.,Ce numéro de téléphone sera utilisé quand aucun n'est disponible pour une adresse donnée.
 "This shipping method rule does no longer exist.","Cette règle de mode de livraison n'existe plus."
+This value will be used as the default for other missing required fields.,Cette valeur sera utilisée par défaut pour les autres champs obligatoires manquants.
 "To","Jusque"
 "Total Amount","Montant total"
 "Use Actual Stock State","Utiliser l'état du stock réel"
@@ -291,9 +300,9 @@
 "Use Mobile Phone Number First (If Available)","Utiliser en priorité le numéro de téléphone portable (si disponible)"
 "Use Parent Categories","Utiliser les catégories parent"
 "Use Product ID for SKU","Utiliser l'ID produit à la place du SKU"
-"Value handler factory ""%1"" must create instances of type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.","La factory de handlers de valeurs ""%1" doit créer des instances du type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface."
-"Value handler factory ""%1"" must implement a callable create() method."La factory de handlers de valeurs ""%1"" doit implémenter une méthode create() appelable."
-"Value handler type ""%1"" is not (yet) supported.","Le type de handler de valeurs ""%1"" n'est pas (encore) supporté."
+"Value handler factory ""%1"" must create instances of type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.",La factory de handler de valeurs "%1 doit créer des instances du type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.
+Value handler factory "%1" must implement a callable create() method.,La factory de handler de valeurs "%1" doit implémenter une méthode create() appelable.
+Value handler type "%1" is not supported.,Le type de handler de valeurs "%1" n'est pas supporté.
 "View Magento Order","Voir la commande Magento"
 "Whether parent categories should also be considered.","Selon que les catégories parent doivent également être considérées."
 "Within Parents","Avec leurs parents"

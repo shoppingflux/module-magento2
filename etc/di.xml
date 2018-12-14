@@ -48,6 +48,7 @@
                 <item name="positive_integer" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveIntegerFactory</item>
                 <item name="positive_number" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveNumberFactory</item>
                 <item name="text" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\TextFactory</item>
+                <item name="email" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\EmailFactory</item>
                 <item name="product_attribute" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\AttributeFactory</item>
             </argument>
         </arguments>
