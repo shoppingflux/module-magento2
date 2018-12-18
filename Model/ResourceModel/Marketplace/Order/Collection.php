@@ -37,6 +37,7 @@ class Collection extends AbstractCollection
         $this->addFilterToMap(OrderInterface::STORE_ID, 'main_table.' . OrderInterface::STORE_ID);
         $this->addFilterToMap(OrderInterface::SHIPPING_AMOUNT, 'main_table.' . OrderInterface::SHIPPING_AMOUNT);
         $this->addFilterToMap(OrderInterface::CREATED_AT, 'main_table.' . OrderInterface::CREATED_AT);
+        $this->addFilterToMap(self::KEY_SALES_INCREMENT_ID, '_sales_order_table.increment_id');
 
         return $this;
     }

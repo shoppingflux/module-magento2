@@ -46,7 +46,7 @@ class DataObject extends BaseDataObject
             $updatedDateTimes = array_intersect_key($this->timestampFields, $key);
 
             foreach ($updatedDateTimes as $baseKey => $timestampKey) {
-                $this->setData($timestampKey, $key[$baseKey]);
+                $this->setData($baseKey, $key[$baseKey]);
             }
         } elseif (isset($this->timestampFields[$key])) {
             $this->setData($this->timestampFields[$key], $this->getDateTimeTimestamp($value));
