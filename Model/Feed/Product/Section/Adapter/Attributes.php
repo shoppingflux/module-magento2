@@ -5,6 +5,8 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Eav\Model\Entity\Type as EavEntityType;
+use Magento\Eav\Model\Entity\TypeFactory as EavEntityTypeFactory;
 use Magento\Framework\DataObject;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface;
@@ -33,6 +35,12 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     const KEY_URL = 'url';
     const KEY_ATTRIBUTE_MAP = 'attribute_map';
     const KEY_CONFIGURABLE_ATTRIBUTES = 'configurable_attributes';
+    const KEY_ATTRIBUTE_SET = 'attribute_set';
+
+    /**
+     * @var EavEntityTypeFactory
+     */
+    private $eavEntityTypeFactory;
 
     /**
      * @var UrlInterface
@@ -45,17 +53,30 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     private $attributeSource;
 
     /**
+     * @var EavEntityType|null
+     */
+    private $productEavEntityType = null;
+
+    /**
+     * @var string[]|null
+     */
+    private $attributeSetNames = null;
+
+    /**
      * @param StoreManagerInterface $storeManager
+     * @param EavEntityTypeFactory $eavEntityTypeFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param UrlInterface $frontendUrlBuilder
      * @param AttributeSourceInterface $attributeSource
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        EavEntityTypeFactory $eavEntityTypeFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         UrlInterface $frontendUrlBuilder,
         AttributeSourceInterface $attributeSource
     ) {
+        $this->eavEntityTypeFactory = $eavEntityTypeFactory;
         $this->frontendUrlBuilder = $frontendUrlBuilder;
         $this->attributeSource = $attributeSource;
         parent::__construct($storeManager, $attributeRendererPool);
@@ -121,6 +142,34 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         return $this->frontendUrlBuilder->getUrl($routePath, $routeParameters);
     }
 
+    /**
+     * @return EavEntityType
+     */
+    private function getProductEavEntityType()
+    {
+        if (null === $this->productEavEntityType) {
+            $this->productEavEntityType = $this->eavEntityTypeFactory->create();
+            $this->productEavEntityType->loadByCode(CatalogProduct::ENTITY);
+        }
+
+        return $this->productEavEntityType;
+    }
+
+    /**
+     * @param int $attributeSetId
+     * @return string
+     */
+    public function getAttributeSetName($attributeSetId)
+    {
+        if (null === $this->attributeSetNames) {
+            $this->attributeSetNames = $this->getProductEavEntityType()
+                ->getAttributeSetCollection()
+                ->toOptionHash();
+        }
+
+        return isset($this->attributeSetNames[$attributeSetId]) ? trim($this->attributeSetNames[$attributeSetId]) : '';
+    }
+
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
         $config = $this->getConfig();
@@ -162,6 +211,10 @@ class Attributes extends AbstractAdapter implements AttributesInterface
             }
         }
 
+        if ($config->shouldExportAttributeSetName($store)) {
+            $data[self::KEY_ATTRIBUTE_SET] = $this->getAttributeSetName($catalogProduct->getAttributeSetId());
+        }
+
         return $data;
     }
 
@@ -184,6 +237,10 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                     $exportedProduct->setAttribute($key, $productData[self::KEY_ATTRIBUTE_MAP][$key]);
                 }
             }
+        }
+
+        if (isset($productData[self::KEY_ATTRIBUTE_SET])) {
+            $exportedProduct->setAttribute(self::KEY_ATTRIBUTE_SET, $productData[self::KEY_ATTRIBUTE_SET]);
         }
     }
 

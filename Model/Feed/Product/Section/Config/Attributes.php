@@ -22,6 +22,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
     const KEY_GTIN_ATTRIBUTE = 'gtin_attribute';
     const KEY_BASE_MAPPED_ATTRIBUTE = 'attribute_for_%s';
     const KEY_ADDITIONAL_ATTRIBUTES = 'additional_attributes';
+    const KEY_EXPORT_ATTRIBUTE_SET_NAME = 'export_attribute_set_name';
 
     /**
      * @var AttributeSourceInterface
@@ -138,7 +139,16 @@ class Attributes extends AbstractConfig implements AttributesInterface
                 'valueHandler' => $attributeValueHandler,
                 'defaultUseValue' => [],
                 'label' => __('Additional Attributes'),
-                'sortOrder' => $sortOrder,
+                'sortOrder' => $sortOrder += 10,
+            ]
+        );
+
+        $fields[] = $this->fieldFactory->create(
+            Checkbox::TYPE_CODE,
+            [
+                'name' => self::KEY_EXPORT_ATTRIBUTE_SET_NAME,
+                'label' => __('Export Attribute Set Name'),
+                'sortOrder' => $sortOrder += 10,
             ]
         );
 
@@ -213,5 +223,10 @@ class Attributes extends AbstractConfig implements AttributesInterface
                 )
             )
         );
+    }
+
+    public function shouldExportAttributeSetName(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_EXPORT_ATTRIBUTE_SET_NAME);
     }
 }
