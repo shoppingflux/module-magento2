@@ -118,7 +118,12 @@ class Product extends AbstractDb
         if (is_array($this->exportStateBatchedUpdates)) {
             $values['product_id'] = $productId;
             $values['store_id'] = $storeId;
-            $this->exportStateBatchedUpdates[] = $values;
+
+            if (array_key_exists('export_retention_started_at', $values)) {
+                $this->exportStateBatchedUpdates['with_retention'][] = $values;
+            } else {
+                $this->exportStateBatchedUpdates['without_retention'][] = $values;
+            }
 
             if (++$this->exportStateBatchedUpdateCount > static::EXPORT_STATE_UPDATE_BATCH_SIZE) {
                 $this->flushExportStateBatchedUpdates();
@@ -138,21 +143,39 @@ class Product extends AbstractDb
 
     private function flushExportStateBatchedUpdates()
     {
-        if (is_array($this->exportStateBatchedUpdates) && !empty($this->exportStateBatchedUpdates)) {
-            $this->getConnection()
-                ->insertOnDuplicate(
-                    $this->tableDictionary->getFeedProductTableName(),
-                    $this->exportStateBatchedUpdates
-                );
+        if (is_array($this->exportStateBatchedUpdates)) {
+            if (!empty($this->exportStateBatchedUpdates['with_retention'])) {
+                $this->getConnection()
+                    ->insertOnDuplicate(
+                        $this->tableDictionary->getFeedProductTableName(),
+                        $this->exportStateBatchedUpdates['with_retention']
+                    );
+            }
 
-            $this->exportStateBatchedUpdates = [];
+            if (!empty($this->exportStateBatchedUpdates['without_retention'])) {
+                $this->getConnection()
+                    ->insertOnDuplicate(
+                        $this->tableDictionary->getFeedProductTableName(),
+                        $this->exportStateBatchedUpdates['without_retention']
+                    );
+            }
+
+            $this->exportStateBatchedUpdates = [
+                'with_retention' => [],
+                'without_retention' => [],
+            ];
+
             $this->exportStateBatchedUpdateCount = 0;
         }
     }
 
     public function startExportStateUpdateBatching()
     {
-        $this->exportStateBatchedUpdates = [];
+        $this->exportStateBatchedUpdates = [
+            'with_retention' => [],
+            'without_retention' => [],
+        ];
+
         $this->exportStateBatchedUpdateCount = 0;
     }
 
