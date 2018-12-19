@@ -115,7 +115,7 @@ class Config extends AbstractConfig implements ConfigInterface
 
     protected function getStoreFields(StoreInterface $store)
     {
-        $defaultEmailNotice = __('This email address will be used when none is available in a given address.')
+        $defaultEmailNotice = __('This email address will be used when none is available for a given address.')
             . "\n"
             . __(
                 'Leave empty to use the "%1" store email address ("%2").',
@@ -124,7 +124,7 @@ class Config extends AbstractConfig implements ConfigInterface
             );
 
         $storePhone = $this->getStoreDefaultPhoneNumber($store);
-        $defaultPhoneNotice = __('This phone number will be used when none is available in a given address.') . "\n";
+        $defaultPhoneNotice = __('This phone number will be used when none is available for a given address.') . "\n";
 
         if ('' !== $storePhone) {
             $defaultPhoneNotice .= __('Leave empty to use the store phone number ("%1").', $storePhone);

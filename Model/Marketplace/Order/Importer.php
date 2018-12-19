@@ -16,6 +16,7 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterfaceFactory;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\AddressRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface;
+use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Sdk\Api\Order\OrderResource as ApiOrder;
 use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
@@ -26,6 +27,11 @@ class Importer
      * @var TimezoneProxy
      */
     private $localeDate;
+
+    /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
 
     /**
      * @var OrderConfigInterface
@@ -69,6 +75,7 @@ class Importer
 
     /**
      * @param TimezoneProxy $localeDateProxy
+     * @param DataObjectFactory $dataObjectFactory
      * @param OrderConfigInterface $orderGeneralConfig
      * @param OrderInterfaceFactory $orderFactory
      * @param OrderRepositoryInterface $orderRepository
@@ -80,6 +87,7 @@ class Importer
      */
     public function __construct(
         TimezoneProxy $localeDateProxy,
+        DataObjectFactory $dataObjectFactory,
         OrderConfigInterface $orderGeneralConfig,
         OrderInterfaceFactory $orderFactory,
         OrderRepositoryInterface $orderRepository,
@@ -90,6 +98,7 @@ class Importer
         TransactionFactory $transactionFactory
     ) {
         $this->localeDate = $localeDateProxy;
+        $this->dataObjectFactory = $dataObjectFactory;
         $this->orderGeneralConfig = $orderGeneralConfig;
         $this->orderFactory = $orderFactory;
         $this->orderRepository = $orderRepository;
@@ -180,6 +189,14 @@ class Importer
 
         foreach ($apiOrder->getItems() as $apiItem) {
             $items[] = $this->importApiOrderItem($apiItem, $store);
+        }
+
+        $apiOrderData = $apiOrder->toArray();
+
+        if (!empty($apiOrderData['additionalFields']) && is_array($apiOrderData['additionalFields'])) {
+            $additionalFields = $this->dataObjectFactory->create();
+            $additionalFields->setData($apiOrderData['additionalFields']);
+            $marketplaceOrder->setAdditionalFields($additionalFields);
         }
 
         $transaction = $this->transactionFactory->create();

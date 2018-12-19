@@ -3,7 +3,11 @@
 namespace ShoppingFeed\Manager\Model\Marketplace;
 
 use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Registry;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
+use ShoppingFeed\Manager\DataObject;
+use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 
@@ -15,6 +19,31 @@ class Order extends AbstractModel implements OrderInterface
 {
     protected $_eventPrefix = 'shoppingfeed_manager_marketplace_order';
     protected $_eventObject = 'sales_order';
+
+    /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
+     * @param Context $context
+     * @param Registry $registry
+     * @param DataObjectFactory $dataObjectFactory
+     * @param OrderResource|null $resource
+     * @param OrderCollection|null $resourceCollection
+     * @param array $data
+     */
+    public function __construct(
+        Context $context,
+        Registry $registry,
+        DataObjectFactory $dataObjectFactory,
+        OrderResource $resource = null,
+        OrderCollection $resourceCollection = null,
+        array $data = []
+    ) {
+        $this->dataObjectFactory = $dataObjectFactory;
+        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
+    }
 
     protected function _construct()
     {
@@ -90,6 +119,24 @@ class Order extends AbstractModel implements OrderInterface
     public function getShipmentCarrier()
     {
         return trim($this->getDataByKey(self::SHIPMENT_CARRIER));
+    }
+
+    public function getAdditionalFields()
+    {
+        $data = $this->getData(self::ADDITIONAL_FIELDS);
+
+        if (!$data instanceof DataObject) {
+            $data = is_string($data) ? json_decode($data, true) : [];
+            $data = $this->dataObjectFactory->create([ 'data' => is_array($data) ? $data : [] ]);
+            $this->setAdditionalFields($data);
+        }
+
+        return $data;
+    }
+
+    public function isBusinessOrder()
+    {
+        return (bool) $this->getAdditionalFields()->getData(self::ADDITIONAL_FIELD_IS_BUSINESS_ORDER);
     }
 
     public function getImportRemainingTryCount()
@@ -185,6 +232,11 @@ class Order extends AbstractModel implements OrderInterface
     public function setShipmentCarrier($shipmentCarrier)
     {
         return $this->setData(self::SHIPMENT_CARRIER, trim($shipmentCarrier));
+    }
+
+    public function setAdditionalFields(DataObject $additionalFields)
+    {
+        return $this->setData(self::ADDITIONAL_FIELDS, $additionalFields);
     }
 
     public function resetImportRemainingTryCount()

@@ -37,6 +37,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\Collectio
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item\CollectionFactory as MarketplaceItemCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Collection as ShippingMethodRuleCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\CollectionFactory as ShippingMethodRuleCollectionFactory;
+use ShoppingFeed\Manager\Model\Sales\Order\Business\TaxManager as BusinessTaxManager;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingMethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\TimeHelper;
@@ -105,6 +106,11 @@ class Importer implements ImporterInterface
     private $quoteAddressExtensionFactory;
 
     /**
+     * @var BusinessTaxManager
+     */
+    private $businessTaxManager;
+
+    /**
      * @var ShippingRateMethodFactory
      */
     private $shippingRateMethodFactory;
@@ -165,6 +171,11 @@ class Importer implements ImporterInterface
     private $currentlyImportedQuoteId = null;
 
     /**
+     * @var bool
+     */
+    private $isCurrentlyImportedBusinessQuote = false;
+
+    /**
      * @var int[]
      */
     private $countryDefaultRegionIds = [];
@@ -182,6 +193,7 @@ class Importer implements ImporterInterface
      * @param QuoteManagerProxy $quoteManagerProxy
      * @param QuoteRepositoryInterface $quoteRepository
      * @param QuoteAddressExtensionFactory $quoteAddressExtensionFactory
+     * @param BusinessTaxManager $businessTaxManager
      * @param ShippingRateMethodFactory $shippingRateMethodFactory
      * @param ShippingAddressRateFactory $shippingAddressRateFactory
      * @param ShippingMethodApplierPoolInterface $shippingMethodApplierPool
@@ -205,6 +217,7 @@ class Importer implements ImporterInterface
         QuoteManagerProxy $quoteManagerProxy,
         QuoteRepositoryInterface $quoteRepository,
         QuoteAddressExtensionFactory $quoteAddressExtensionFactory,
+        BusinessTaxManager $businessTaxManager,
         ShippingRateMethodFactory $shippingRateMethodFactory,
         ShippingAddressRateFactory $shippingAddressRateFactory,
         ShippingMethodApplierPoolInterface $shippingMethodApplierPool,
@@ -227,6 +240,7 @@ class Importer implements ImporterInterface
         $this->quoteManager = $quoteManagerProxy;
         $this->quoteRepository = $quoteRepository;
         $this->quoteAddressExtensionFactory = $quoteAddressExtensionFactory;
+        $this->businessTaxManager = $businessTaxManager;
         $this->shippingRateMethodFactory = $shippingRateMethodFactory;
         $this->shippingAddressRateFactory = $shippingAddressRateFactory;
         $this->shippingMethodApplierPool = $shippingMethodApplierPool;
@@ -292,6 +306,15 @@ class Importer implements ImporterInterface
                     $quote->setCheckoutMethod(QuoteManagerInterface::METHOD_GUEST);
                     $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
 
+                    if ($marketplaceOrder->isBusinessOrder()) {
+                        $this->isCurrentlyImportedBusinessQuote = true;
+                        $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
+                        $quote->setCustomerGroupId($this->businessTaxManager->getCustomerGroup()->getId());
+                        $quote->setCustomerTaxClassId($this->businessTaxManager->getCustomerTaxClass()->getClassId());
+                    } else {
+                        $this->isCurrentlyImportedBusinessQuote = false;
+                    }
+
                     $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
                     $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
 
@@ -320,7 +343,12 @@ class Importer implements ImporterInterface
                     }
 
                     if (isset($orderItems[$marketplaceOrderId])) {
-                        $this->importQuoteItems($quote, $orderItems[$marketplaceOrderId], $store);
+                        $this->importQuoteItems(
+                            $quote,
+                            $orderItems[$marketplaceOrderId],
+                            $marketplaceOrder->isBusinessOrder(),
+                            $store
+                        );
                     } else {
                         throw new LocalizedException(__('The marketplace order has no item.'));
                     }
@@ -364,6 +392,7 @@ class Importer implements ImporterInterface
         } finally {
             $this->currentImportStore = null;
             $this->currentlyImportedQuoteId = null;
+            $this->isCurrentlyImportedBusinessQuote = false;
             $baseStore->setCurrentCurrencyCode($originalBaseStoreCurrencyCode);
             $this->baseStoreManager->setCurrentStore($originalCurrentBaseStore);
         }
@@ -463,10 +492,11 @@ class Importer implements ImporterInterface
     /**
      * @param Quote $quote
      * @param MarketplaceItemInterface[] $marketplaceItems
+     * @param bool $isBusinessOrder
      * @param StoreInterface $store
      * @throws LocalizedException
      */
-    public function importQuoteItems(Quote $quote, array $marketplaceItems, StoreInterface $store)
+    public function importQuoteItems(Quote $quote, array $marketplaceItems, $isBusinessOrder, StoreInterface $store)
     {
         /** @var MarketplaceItemInterface $marketplaceItem */
         foreach ($marketplaceItems as $marketplaceItem) {
@@ -492,6 +522,10 @@ class Importer implements ImporterInterface
                 );
 
                 $product->setData('cart_qty', $marketplaceItem->getQuantity());
+
+                if ($isBusinessOrder) {
+                    $product->setData('tax_class_id', $this->businessTaxManager->getProductTaxClass()->getClassId());
+                }
 
                 $quote->addProduct(
                     $product,
@@ -616,14 +650,16 @@ class Importer implements ImporterInterface
 
     /**
      * @param QuoteAddressInterface $quoteAddress
+     * @param bool $isBusinessOrder
      */
-    private function tagImportedQuoteAddress(QuoteAddressInterface $quoteAddress)
+    private function tagImportedQuoteAddress(QuoteAddressInterface $quoteAddress, $isBusinessOrder)
     {
         if (!$extensionAttributes = $quoteAddress->getExtensionAttributes()) {
             $extensionAttributes = $this->quoteAddressExtensionFactory->create();
         }
 
         $extensionAttributes->setSfmIsShoppingFeedOrder(true);
+        $extensionAttributes->setSfmIsShoppingFeedBusinessOrder($isBusinessOrder);
         $quoteAddress->setExtensionAttributes($extensionAttributes);
     }
 
@@ -631,12 +667,16 @@ class Importer implements ImporterInterface
     {
         $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
 
+        if ($this->isCurrentlyImportedBusinessQuote) {
+            $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
+        }
+
         if ($quoteAddress = $quote->getBillingAddress()) {
-            $this->tagImportedQuoteAddress($quoteAddress);
+            $this->tagImportedQuoteAddress($quoteAddress, $this->isCurrentlyImportedBusinessQuote);
         }
 
         if ($quoteAddress = $quote->getShippingAddress()) {
-            $this->tagImportedQuoteAddress($quoteAddress);
+            $this->tagImportedQuoteAddress($quoteAddress, $this->isCurrentlyImportedBusinessQuote);
         }
     }
 
