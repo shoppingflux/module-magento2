@@ -2,6 +2,8 @@
 
 namespace ShoppingFeed\Manager\Api\Data\Marketplace;
 
+use ShoppingFeed\Manager\DataObject;
+
 /**
  * @api
  */
@@ -22,6 +24,7 @@ interface OrderInterface
     const TOTAL_AMOUNT = 'total_amount';
     const PAYMENT_METHOD = 'payment_method';
     const SHIPMENT_CARRIER = 'shipment_carrier';
+    const ADDITIONAL_FIELDS = 'additional_fields';
     const IMPORT_REMAINING_TRY_COUNT = 'import_remaining_try_count';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -39,6 +42,8 @@ interface OrderInterface
     const STATUS_REFUNDED = 'refunded';
     const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
     const STATUS_PARTIALLY_SHIPPED = 'partial_shipped';
+
+    const ADDITIONAL_FIELD_IS_BUSINESS_ORDER = 'is_business_order';
 
     const DEFAULT_IMPORT_TRY_COUNT = 3;
 
@@ -111,6 +116,16 @@ interface OrderInterface
      * @return string
      */
     public function getShipmentCarrier();
+
+    /**
+     * @return DataObject
+     */
+    public function getAdditionalFields();
+
+    /**
+     * @return bool
+     */
+    public function isBusinessOrder();
 
     /**
      * @return int
@@ -219,6 +234,12 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setShipmentCarrier($shipmentCarrier);
+
+    /**
+     * @param DataObject $additionalFields
+     * @return OrderInterface
+     */
+    public function setAdditionalFields(DataObject $additionalFields);
 
     /**
      * @return OrderInterface

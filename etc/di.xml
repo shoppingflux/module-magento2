@@ -199,6 +199,7 @@
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Config"/>
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Importer" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\Sales\Order\Business\TaxManager" shared="true"/>
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector" shared="true"/>
 
     <type name="Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector">

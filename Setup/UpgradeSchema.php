@@ -69,6 +69,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.10.0') < 0)) {
             $this->changeMarketplaceOrderTicketShoppingFeedIdFieldType($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.13.0') < 0)) {
+            $this->addMarketplaceOrderAdditionalFieldsField($setup);
+        }
     }
 
     /**
@@ -1089,5 +1093,28 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'comment' => 'Shopping Feed Ticket ID',
             ]
         );
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderAdditionalFieldsField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTableName, OrderInterface::ADDITIONAL_FIELDS)) {
+            $connection->addColumn(
+                $marketplaceOrderTableName,
+                OrderInterface::ADDITIONAL_FIELDS,
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => 65536,
+                    'nullable' => true,
+                    'comment' => 'Additional Fields',
+                    'after' => OrderInterface::SHIPMENT_CARRIER,
+                ]
+            );
+        }
     }
 }

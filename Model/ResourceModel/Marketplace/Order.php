@@ -4,11 +4,13 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Marketplace;
 
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\AbstractModel;
-use Magento\Framework\Model\ResourceModel\Db\AbstractDb;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
+use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 
 class Order extends AbstractDb
 {
+    const DATA_OBJECT_FIELD_NAMES = [ OrderInterface::ADDITIONAL_FIELDS ];
+
     protected function _construct()
     {
         $this->_init('sfm_marketplace_order', OrderInterface::ORDER_ID);
@@ -42,7 +44,7 @@ class Order extends AbstractDb
 
         if (isset($data[OrderInterface::SALES_ORDER_ID])) {
             // Prevent importing marketplace orders twice by only updating the `sales_order_id` field when it is empty,
-            // or when it has the same value as the one we are saving.
+            // or when it has the same value as the one that we are saving.
             // If no update does actually take place, the check in _afterSave() will throw an exception.
             $connection = $this->getConnection();
             $salesOrderId = $data[OrderInterface::SALES_ORDER_ID];

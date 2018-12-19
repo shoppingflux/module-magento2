@@ -13,6 +13,7 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as Marketplace
 interface ImporterInterface
 {
     const QUOTE_KEY_IS_SHOPPING_FEED_ORDER = 'sfm_is_shopping_feed_order';
+    const QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER = 'sfm_is_shopping_feed_business_order';
     const QUOTE_KEY_STORE = 'sfm_store';
 
     /**
@@ -35,9 +36,10 @@ interface ImporterInterface
     /**
      * @param Quote $quote
      * @param MarketplaceItemInterface[] $marketplaceItems
+     * @param bool $isBusinessOrder
      * @param StoreInterface $store
      */
-    public function importQuoteItems(Quote $quote, array $marketplaceItems, StoreInterface $store);
+    public function importQuoteItems(Quote $quote, array $marketplaceItems, $isBusinessOrder, StoreInterface $store);
 
     /**
      * @param Quote $quote
