@@ -112,6 +112,7 @@
 "Every product will be assumed to be in stock with the defined default quantity.","Chaque produit sera supposé être en stock avec la quantité par défaut définie."
 "Exclude","Exclure"
 "Export All Images","Exporter toutes les images"
+"Export Attribute Set Name","Exporter le nom du jeu d'attributs"
 "Export Child Products","Exporter les variations"
 "Export Feed","Exporter le flux"
 "Export Not Salable Products","Exporter les produits non vendables"
