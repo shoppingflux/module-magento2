@@ -324,6 +324,7 @@ class Importer implements ImporterInterface
                         $this->importQuoteAddress(
                             $quoteAddress,
                             $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
+                            $marketplaceOrder->isBusinessOrder(),
                             $store
                         );
                     } else {
@@ -336,6 +337,7 @@ class Importer implements ImporterInterface
                         $this->importQuoteAddress(
                             $quoteAddress,
                             $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING],
+                            $marketplaceOrder->isBusinessOrder(),
                             $store
                         );
                     } else {
@@ -456,6 +458,7 @@ class Importer implements ImporterInterface
     public function importQuoteAddress(
         QuoteAddressInterface $quoteAddress,
         MarketplaceAddressInterface $marketplaceAddress,
+        $isBusinessOrder,
         StoreInterface $store
     ) {
         $quoteAddress->setFirstname($this->getAddressRequiredFieldValue($marketplaceAddress->getFirstName(), $store));
@@ -486,7 +489,7 @@ class Importer implements ImporterInterface
             $quoteAddress->setTelephone($this->orderGeneralConfig->getDefaultPhoneNumber($store));
         }
 
-        $this->tagImportedQuoteAddress($quoteAddress);
+        $this->tagImportedQuoteAddress($quoteAddress, $isBusinessOrder);
     }
 
     /**

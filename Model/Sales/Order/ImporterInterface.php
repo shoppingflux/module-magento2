@@ -25,11 +25,13 @@ interface ImporterInterface
     /**
      * @param QuoteAddressInterface $quoteAddress
      * @param MarketplaceAddressInterface $marketplaceAddress
+     * @param bool $isBusinessOrder
      * @param StoreInterface $store
      */
     public function importQuoteAddress(
         QuoteAddressInterface $quoteAddress,
         MarketplaceAddressInterface $marketplaceAddress,
+        $isBusinessOrder,
         StoreInterface $store
     );
 
