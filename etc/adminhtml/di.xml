@@ -24,6 +24,12 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store\BaseStore" type="Magento\Store\Ui\Component\Listing\Column\Store">
+        <arguments>
+            <argument name="storeKey" xsi:type="string">base_store_id</argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="Magento\Catalog\Ui\DataProvider\Product\Form\Modifier\Pool">
         <arguments>
             <argument name="modifiers" xsi:type="array">
@@ -35,9 +41,14 @@
         </arguments>
     </virtualType>
 
-    <virtualType name="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store\BaseStore" type="Magento\Store\Ui\Component\Listing\Column\Store">
-        <arguments>
-            <argument name="storeKey" xsi:type="string">base_store_id</argument>
-        </arguments>
-    </virtualType>
+    <type name="ShoppingFeed\Manager\Plugin\Sales\Order\Grid\CollectionPlugin" shared="true"/>
+    <type name="ShoppingFeed\Manager\Plugin\Sales\Order\Grid\FulltextFilterPlugin" shared="true"/>
+
+    <type name="Magento\Sales\Model\ResourceModel\Order\Grid\Collection">
+        <plugin name="sfm_sales_order_grid_collection_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\Grid\CollectionPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter">
+        <plugin name="sfm_sales_order_grid_fulltext_filter_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\Grid\FulltextFilterPlugin" sortOrder="0"/>
+    </type>
 </config>
