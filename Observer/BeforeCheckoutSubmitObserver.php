@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Observer;
 
+use Magento\Catalog\Helper\Product\Proxy as CatalogProductHelperProxy;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Model\Quote;
@@ -12,15 +13,24 @@ class BeforeCheckoutSubmitObserver implements ObserverInterface
     const EVENT_KEY_QUOTE = 'quote';
 
     /**
+     * @var CatalogProductHelperProxy
+     */
+    private $catalogProductHelper;
+
+    /**
      * @var OrderImporterInterface
      */
     private $orderImporter;
 
     /**
+     * @param CatalogProductHelperProxy $catalogProductHelperProxy
      * @param OrderImporterInterface $orderImporter
      */
-    public function __construct(OrderImporterInterface $orderImporter)
-    {
+    public function __construct(
+        CatalogProductHelperProxy $catalogProductHelperProxy,
+        OrderImporterInterface $orderImporter
+    ) {
+        $this->catalogProductHelper = $catalogProductHelperProxy;
         $this->orderImporter = $orderImporter;
     }
 
@@ -34,6 +44,8 @@ class BeforeCheckoutSubmitObserver implements ObserverInterface
             && $this->orderImporter->isCurrentlyImportedQuote($quote)
         ) {
             $this->orderImporter->tagImportedQuote($quote);
+            $quote->setIsSuperMode(true);
+            $this->catalogProductHelper->setSkipSaleableCheck(true);
             $quote->collectTotals();
         }
     }
