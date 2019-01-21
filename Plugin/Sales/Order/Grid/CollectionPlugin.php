@@ -65,13 +65,14 @@ class CollectionPlugin
                 $subject->addFilterToMap($fieldAlias, $tableAlias . '.' . $fieldName);
             }
 
-            $subject->join(
-                [ $tableAlias => $this->tableDictionary->getMarketplaceOrderTableName() ],
-                $connection->quoteIdentifier('main_table.entity_id')
-                . '='
-                . $connection->quoteIdentifier($tableAlias . '.' . MarketplaceOrderInterface::SALES_ORDER_ID),
-                $joinedFields
-            );
+            $subject->getSelect()
+                ->joinLeft(
+                    [ $tableAlias => $this->tableDictionary->getMarketplaceOrderTableName() ],
+                    $connection->quoteIdentifier('main_table.entity_id')
+                    . '='
+                    . $connection->quoteIdentifier($tableAlias . '.' . MarketplaceOrderInterface::SALES_ORDER_ID),
+                    $joinedFields
+                );
         }
 
         return $select;
