@@ -46,6 +46,7 @@ class BeforeCheckoutSubmitObserver implements ObserverInterface
             $this->orderImporter->tagImportedQuote($quote);
             $quote->setIsSuperMode(true);
             $this->catalogProductHelper->setSkipSaleableCheck(true);
+            $quote->setIgnoreOldQty(true);
             $quote->collectTotals();
         }
     }

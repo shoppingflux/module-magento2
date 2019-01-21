@@ -320,6 +320,17 @@ class Importer implements ImporterInterface
                         $this->catalogProductHelper->setSkipSaleableCheck(false);
                     }
 
+                    /**
+                     * This is mostly useful when the super mode is enabled, but as old quantities are irrelevant here
+                     * anyway, ignoring them is always the best way to go.
+                     *
+                     * The "ignore_old_qty" flag is required with the super mode because of the changes brought by
+                     * this commit: https://github.com/magento/magento2/commit/9addb449f372b66b2b73af6dafcbf1fb1b672f94,
+                     * which allows this method to be called even when the "is_super_mode" flag is set:
+                     * @see \Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\Initializer\StockItem::initialize()
+                     */
+                    $quote->setIgnoreOldQty(true);
+
                     $quote->setCustomerIsGuest(true);
                     $quote->setCheckoutMethod(QuoteManagerInterface::METHOD_GUEST);
                     $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
