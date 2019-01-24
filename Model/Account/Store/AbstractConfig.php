@@ -71,9 +71,7 @@ abstract class AbstractConfig implements ConfigInterface
     {
         if (!$field instanceof FieldInterface) {
             throw new LocalizedException(
-                __(
-                    'Config fields must be of type: ShoppingFeed\Manager\Model\Config\FieldInterface.'
-                )
+                __('Config fields must be of type: ShoppingFeed\Manager\Model\Config\FieldInterface.')
             );
         }
     }
@@ -117,6 +115,15 @@ abstract class AbstractConfig implements ConfigInterface
     }
 
     /**
+     * @param string $fieldName
+     * @return string
+     */
+    protected function getFieldValuePath($fieldName)
+    {
+        return $this->getScope() . '/' . implode('/', $this->getScopeSubPath()) . '/' . $fieldName;
+    }
+
+    /**
      * @param FieldInterface $field
      * @param string $valuePath
      * @param DataObject $data
@@ -127,15 +134,6 @@ abstract class AbstractConfig implements ConfigInterface
         return !$data->hasDataForPath($valuePath)
             ? $field->getDefaultUseValue()
             : $field->prepareRawValueForUse($data->getDataByPath($valuePath));
-    }
-
-    /**
-     * @param string $fieldName
-     * @return string
-     */
-    protected function getFieldValuePath($fieldName)
-    {
-        return $this->getScope() . '/' . implode('/', $this->getScopeSubPath()) . '/' . $fieldName;
     }
 
     /**
@@ -167,6 +165,27 @@ abstract class AbstractConfig implements ConfigInterface
 
     /**
      * @param StoreInterface $store
+     * @param string $fieldName
+     * @param mixed $value
+     */
+    protected function setFieldValue(StoreInterface $store, $fieldName, $value)
+    {
+        $storeId = $store->getId();
+        $field = $this->getField($store, $fieldName);
+
+        if (null === $field) {
+            return;
+        }
+
+        $store->getConfiguration()->setDataByPath($this->getFieldValuePath($fieldName), $value);
+
+        if (isset($this->valueCache[$storeId]) && array_key_exists($fieldName, $this->valueCache[$storeId])) {
+            unset($this->valueCache[$storeId][$fieldName]);
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
      * @param DataObject $dataA
      * @param DataObject $dataB
      * @return bool
@@ -188,5 +207,9 @@ abstract class AbstractConfig implements ConfigInterface
         }
 
         return $isEqualStoreData;
+    }
+
+    public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)
+    {
     }
 }

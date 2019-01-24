@@ -9,6 +9,7 @@ use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
+use ShoppingFeed\Manager\Model\Account\Store\ConfigManager as StoreConfigManager;
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
@@ -23,6 +24,11 @@ class Save extends StoreAction
     private $storeResourceFactory;
 
     /**
+     * @var StoreConfigManager
+     */
+    private $storeConfigManager;
+
+    /**
      * @var FeedRefresher
      */
     private $feedRefresher;
@@ -33,6 +39,7 @@ class Save extends StoreAction
      * @param PageResultFactory $pageResultFactory
      * @param StoreRepositoryInterface $storeRepository
      * @param StoreResourceFactory $storeResourceFactory
+     * @param StoreConfigManager $storeConfigManager
      * @param FeedRefresher $feedRefresher
      */
     public function __construct(
@@ -41,9 +48,11 @@ class Save extends StoreAction
         PageResultFactory $pageResultFactory,
         StoreRepositoryInterface $storeRepository,
         StoreResourceFactory $storeResourceFactory,
+        StoreConfigManager $storeConfigManager,
         FeedRefresher $feedRefresher
     ) {
         $this->storeResourceFactory = $storeResourceFactory;
+        $this->storeConfigManager = $storeConfigManager;
         $this->feedRefresher = $feedRefresher;
         parent::__construct($context, $coreRegistry, $pageResultFactory, $storeRepository);
     }
@@ -65,7 +74,7 @@ class Save extends StoreAction
         try {
             $oldConfiguration = clone $store->getConfiguration();
 
-            $store->importConfigurationData($data);
+            $this->storeConfigManager->importStoreData($store, $data);
             $this->storeRepository->save($store);
 
             $this->feedRefresher->forceOutdatedStoreProductSectionsRefresh(

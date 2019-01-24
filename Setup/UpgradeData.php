@@ -6,6 +6,9 @@ use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\UpgradeDataInterface;
 use ShoppingFeed\Manager\Api\Data\Cron\TaskInterface as CronTaskInterface;
+use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
+use ShoppingFeed\Manager\Model\Account\Store\ConfigManager\Proxy as StoreConfigManager;
+use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 
 class UpgradeData implements UpgradeDataInterface
@@ -16,11 +19,36 @@ class UpgradeData implements UpgradeDataInterface
     private $tableDictionary;
 
     /**
-     * @param TableDictionary $tableDictionary
+     * @var StoreConfigManager
      */
-    public function __construct(TableDictionary $tableDictionary)
-    {
+    private $storeConfigManager;
+
+    /**
+     * @var StoreRepositoryInterface
+     */
+    private $storeRepository;
+
+    /**
+     * @var StoreCollectionFactory
+     */
+    private $storeCollectionFactory;
+
+    /**
+     * @param TableDictionary $tableDictionary
+     * @param StoreConfigManager $storeConfigManager
+     * @param StoreRepositoryInterface $storeRepository
+     * @param StoreCollectionFactory $storeCollectionFactory
+     */
+    public function __construct(
+        TableDictionary $tableDictionary,
+        StoreConfigManager $storeConfigManager,
+        StoreRepositoryInterface $storeRepository,
+        StoreCollectionFactory $storeCollectionFactory
+    ) {
         $this->tableDictionary = $tableDictionary;
+        $this->storeConfigManager = $storeConfigManager;
+        $this->storeRepository = $storeRepository;
+        $this->storeCollectionFactory = $storeCollectionFactory;
     }
 
     /**
@@ -101,6 +129,16 @@ class UpgradeData implements UpgradeDataInterface
                 $this->tableDictionary->getCronTaskTableName(),
                 $this->getDefaultCronTasksData()
             );
+        }
+
+        if (!empty($moduleVersion)) {
+            $storeCollection = $this->storeCollectionFactory->create();
+
+            foreach ($storeCollection as $store) {
+                if ($this->storeConfigManager->upgradeStoreData($store, $moduleVersion)) {
+                    $this->storeRepository->save($store);
+                }
+            }
         }
     }
 }

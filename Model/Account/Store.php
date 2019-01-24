@@ -16,14 +16,9 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
-use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as StoreConfigInterface;
-use ShoppingFeed\Manager\Model\Feed\ConfigInterface as FeedConfigInterface;
-use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
-use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 
 /**
  * @method StoreResource getResource()
@@ -60,26 +55,6 @@ class Store extends AbstractModel implements StoreInterface
     private $account = null;
 
     /**
-     * @var FeedConfigInterface
-     */
-    private $feedGeneralConfig;
-
-    /**
-     * @var ExportStateConfigInterface
-     */
-    private $feedExportStateConfig;
-
-    /**
-     * @var SectionTypePoolInterface
-     */
-    private $sectionTypePool;
-
-    /**
-     * @var OrderConfigInterface
-     */
-    private $orderGeneralConfig;
-
-    /**
      * @var StoreResource
      */
     private $storeResource;
@@ -91,10 +66,6 @@ class Store extends AbstractModel implements StoreInterface
      * @param StoreManagerInterface $storeManager
      * @param DataObjectFactory $dataObjectFactory
      * @param AccountRepositoryInterface $accountRepository
-     * @param FeedConfigInterface $feedGeneralConfig
-     * @param ExportStateConfigInterface $feedExportStateConfig
-     * @param SectionTypePoolInterface $sectionTypePool
-     * @param OrderConfigInterface $orderGeneralConfig
      * @param StoreResourceFactory $storeResourceFactory
      * @param StoreResource|null $resource
      * @param StoreCollection|null $resourceCollection
@@ -107,10 +78,6 @@ class Store extends AbstractModel implements StoreInterface
         StoreManagerInterface $storeManager,
         DataObjectFactory $dataObjectFactory,
         AccountRepositoryInterface $accountRepository,
-        FeedConfigInterface $feedGeneralConfig,
-        ExportStateConfigInterface $feedExportStateConfig,
-        SectionTypePoolInterface $sectionTypePool,
-        OrderConfigInterface $orderGeneralConfig,
         StoreResourceFactory $storeResourceFactory,
         StoreResource $resource = null,
         StoreCollection $resourceCollection = null,
@@ -120,10 +87,6 @@ class Store extends AbstractModel implements StoreInterface
         $this->storeManager = $storeManager;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->accountRepository = $accountRepository;
-        $this->feedGeneralConfig = $feedGeneralConfig;
-        $this->feedExportStateConfig = $feedExportStateConfig;
-        $this->sectionTypePool = $sectionTypePool;
-        $this->orderGeneralConfig = $orderGeneralConfig;
         $this->storeResource = $storeResourceFactory->create();
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
@@ -265,55 +228,10 @@ class Store extends AbstractModel implements StoreInterface
         return $this->setData(self::UPDATED_AT, $updatedAt);
     }
 
-    /**
-     * @param StoreConfigInterface $configModel
-     * @param array $data
-     */
-    private function importSubConfigurationData(StoreConfigInterface $configModel, array $data)
-    {
-        $configObject = $this->getConfiguration();
-
-        if (isset($data[$configModel->getScope()])) {
-            $subScopePath = $configModel->getScopeSubPath();
-            $subData = $data[$configModel->getScope()];
-
-            foreach ($subScopePath as $pathPart) {
-                if (!empty($subData[$pathPart]) && is_array($subData[$pathPart])) {
-                    $subData = $subData[$pathPart];
-                } else {
-                    $subData = false;
-                    break;
-                }
-            }
-
-            if (is_array($subData)) {
-                foreach ($subData as $fieldName => $fieldValue) {
-                    $field = $configModel->getField($this, $fieldName);
-
-                    if ($field) {
-                        $subData[$fieldName] = $field->prepareFormValueForSave($fieldValue);
-                    }
-                }
-
-                $configObject->setDataByPath(
-                    $configModel->getScope() . '/' . implode('/', $subScopePath),
-                    $subData
-                );
-            }
-        }
-    }
-
     public function importConfigurationData(array $data)
     {
-        $this->importSubConfigurationData($this->feedGeneralConfig, $data);
-        $this->importSubConfigurationData($this->feedExportStateConfig, $data);
-
-        foreach ($this->sectionTypePool->getTypes() as $sectionType) {
-            $this->importSubConfigurationData($sectionType->getConfig(), $data);
-        }
-
-        $this->importSubConfigurationData($this->orderGeneralConfig, $data);
-
-        return $this;
+        throw new LocalizedException(
+            __('This method is deprecated, use \ShoppingFeed\Manager\Model\Account\Store::importStoreData() instead.')
+        );
     }
 }

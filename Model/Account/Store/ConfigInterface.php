@@ -43,4 +43,11 @@ interface ConfigInterface
      * @return bool
      */
     public function isEqualStoreData(StoreInterface $store, DataObject $dataA, DataObject $dataB);
+
+    /**
+     * @param StoreInterface $store
+     * @param ConfigManager $configManager
+     * @param string $moduleVersion
+     */
+    public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion);
 }

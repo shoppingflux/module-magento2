@@ -13,17 +13,6 @@
     <preference for="ShoppingFeed\Manager\Api\Data\Feed\ProductInterface" type="ShoppingFeed\Manager\Model\Feed\Product"/>
     <preference for="ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section"/>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Refresher" shared="true"/>
-    <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher" shared="true"/>
-
-    <type name="ShoppingFeed\Manager\Model\Feed\Exporter" shared="true">
-        <arguments>
-            <argument name="feedDirectory" xsi:type="string">shoppingfeed</argument>
-            <argument name="feedBaseFileName" xsi:type="string">feed_%d.xml</argument>
-        </arguments>
-    </type>
-    <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter" shared="true"/>
-
     <preference for="ShoppingFeed\Manager\Model\Config\FieldFactoryInterface" type="ShoppingFeed\Manager\Model\Config\FieldFactory"/>
     <type name="ShoppingFeed\Manager\Model\Config\FieldFactory" shared="true">
         <arguments>
@@ -53,6 +42,19 @@
             </argument>
         </arguments>
     </type>
+
+    <type name="ShoppingFeed\Manager\Model\Account\Store\ConfigManager" shared="true"/>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Refresher" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher" shared="true"/>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Exporter" shared="true">
+        <arguments>
+            <argument name="feedDirectory" xsi:type="string">shoppingfeed</argument>
+            <argument name="feedBaseFileName" xsi:type="string">feed_%d.xml</argument>
+        </arguments>
+    </type>
+    <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter" shared="true"/>
 
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePool"/>
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" shared="true">
