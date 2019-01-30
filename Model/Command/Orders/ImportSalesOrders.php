@@ -3,7 +3,6 @@
 namespace ShoppingFeed\Manager\Model\Command\Orders;
 
 use Magento\Framework\DataObject;
-use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Model\AbstractCommand;
 use ShoppingFeed\Manager\Model\Command\ConfigInterface;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;

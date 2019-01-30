@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Sales\Order;
 
 use Magento\Catalog\Api\ProductRepositoryInterface\Proxy as CatalogProductRepositoryProxy;
 use Magento\Catalog\Model\Product as CatalogProduct;
+use Magento\Catalog\Helper\Product\Proxy as CatalogProductHelperProxy;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
 use Magento\Checkout\Model\Session\Proxy as CheckoutSessionProxy;
 use Magento\Directory\Helper\Data\Proxy as DirectoryHelperProxy;
@@ -79,6 +80,11 @@ class Importer implements ImporterInterface
      * @var OrderConfigInterface
      */
     private $orderGeneralConfig;
+
+    /**
+     * @var CatalogProductHelperProxy
+     */
+    private $catalogProductHelper;
 
     /**
      * @var CatalogProductRepositoryProxy
@@ -188,6 +194,7 @@ class Importer implements ImporterInterface
      * @param TimeHelper $timeHelper
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
+     * @param CatalogProductHelperProxy $catalogProductHelperProxy
      * @param CatalogProductRepositoryProxy $catalogProductRepositoryProxy
      * @param CheckoutSessionProxy $checkoutSessionProxy
      * @param QuoteManagerProxy $quoteManagerProxy
@@ -212,6 +219,7 @@ class Importer implements ImporterInterface
         TimeHelper $timeHelper,
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
+        CatalogProductHelperProxy $catalogProductHelperProxy,
         CatalogProductRepositoryProxy $catalogProductRepositoryProxy,
         CheckoutSessionProxy $checkoutSessionProxy,
         QuoteManagerProxy $quoteManagerProxy,
@@ -235,6 +243,7 @@ class Importer implements ImporterInterface
         $this->timeHelper = $timeHelper;
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
+        $this->catalogProductHelper = $catalogProductHelperProxy;
         $this->catalogProductRepository = $catalogProductRepositoryProxy;
         $this->checkoutSession = $checkoutSessionProxy;
         $this->quoteManager = $quoteManagerProxy;
@@ -302,6 +311,26 @@ class Importer implements ImporterInterface
 
                     /** @var Quote $quote */
                     $quote = $this->quoteRepository->get($quoteId);
+
+                    if (!$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)) {
+                        $quote->setIsSuperMode(true);
+                        $this->catalogProductHelper->setSkipSaleableCheck(true);
+                    } else {
+                        $quote->setIsSuperMode(false);
+                        $this->catalogProductHelper->setSkipSaleableCheck(false);
+                    }
+
+                    /**
+                     * This is mostly useful when the super mode is enabled, but as old quantities are irrelevant here
+                     * anyway, ignoring them is always the best way to go.
+                     *
+                     * The "ignore_old_qty" flag is required with the super mode because of the changes brought by
+                     * this commit: https://github.com/magento/magento2/commit/9addb449f372b66b2b73af6dafcbf1fb1b672f94,
+                     * which allows this method to be called even when the "is_super_mode" flag is set:
+                     * @see \Magento\CatalogInventory\Model\Quote\Item\QuantityValidator\Initializer\StockItem::initialize()
+                     */
+                    $quote->setIgnoreOldQty(true);
+
                     $quote->setCustomerIsGuest(true);
                     $quote->setCheckoutMethod(QuoteManagerInterface::METHOD_GUEST);
                     $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
@@ -537,11 +566,17 @@ class Importer implements ImporterInterface
                 );
             } catch (LocalizedException $e) {
                 throw new LocalizedException(
-                    __('Could not add the product with reference "%1" to the quote (%2).', $reference, $e->getMessage())
+                    __(
+                        'Could not add the product with reference "%1" to the quote (%2).',
+                        $reference,
+                        $e->getMessage()
+                    ),
+                    $e
                 );
             } catch (\Exception $e) {
                 throw new LocalizedException(
-                    __('Could not add the product with reference "%1" to the quote (%2).', $reference, (string) $e)
+                    __('Could not add the product with reference "%1" to the quote (%2).', $reference, (string) $e),
+                    $e
                 );
             }
         }
@@ -554,6 +589,7 @@ class Importer implements ImporterInterface
     {
         if (null === $this->shippingMethodRuleCollection) {
             $this->shippingMethodRuleCollection = $this->shippingMethodRuleCollectionFactory->create();
+            $this->shippingMethodRuleCollection->addActiveFilter();
             $this->shippingMethodRuleCollection->addEnabledAtFilter();
             $this->shippingMethodRuleCollection->addSortOrderOrder();
             $this->shippingMethodRuleCollection->load();

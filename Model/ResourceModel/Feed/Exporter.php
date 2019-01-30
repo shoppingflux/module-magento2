@@ -74,27 +74,38 @@ class Exporter extends AbstractDb
     }
 
     /**
+     * @param int[]|null $productIds
      * @return \Zend_Db_Expr
      */
-    private function getConfigurableParentIdsQuery()
+    private function getConfigurableParentIdsQuery($productIds = null)
     {
-        return new \Zend_Db_Expr(
-            $this->getConnection()
-                ->select()
-                ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'parent_id' ])
-        );
+        $idsSelect = $this->getConnection()
+            ->select()
+            ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'parent_id' ]);
+
+        if (is_array($productIds)) {
+            $idsSelect->where('parent_id IN (?)', $productIds);
+            $idsSelect->orWhere('product_id IN (?)', $productIds);
+        }
+
+        return new \Zend_Db_Expr($idsSelect);
     }
 
     /**
+     * @param int[]|null $productIds
      * @return \Zend_Db_Expr
      */
-    private function getConfigurableChildrenIdsQuery()
+    private function getConfigurableChildrenIdsQuery($productIds = null)
     {
-        return new \Zend_Db_Expr(
-            $this->getConnection()
-                ->select()
-                ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'product_id' ])
-        );
+        $idsSelect = $this->getConnection()
+            ->select()
+            ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'product_id' ]);
+
+        if (is_array($productIds)) {
+            $idsSelect->where('product_id IN (?)', $productIds);
+        }
+
+        return new \Zend_Db_Expr($idsSelect);
     }
 
     /**
@@ -224,6 +235,7 @@ class Exporter extends AbstractDb
      * @param int[] $exportStates
      * @param bool $includeParentProducts
      * @param bool $includeChildProducts
+     * @param int[]|null $productIds
      * @return \Iterator
      */
     public function getExportableProductsIterator(
@@ -231,7 +243,8 @@ class Exporter extends AbstractDb
         array $sectionTypeIds,
         array $exportStates,
         $includeParentProducts,
-        $includeChildProducts
+        $includeChildProducts,
+        $productIds = null
     ) {
         $productSelect = $this->getExportableProductBaseSelect($storeId, $exportStates);
         $this->joinSectionTablesToProductSelect($productSelect, $sectionTypeIds);
@@ -242,6 +255,10 @@ class Exporter extends AbstractDb
 
         if (!$includeChildProducts) {
             $productSelect->where('product_table.product_id NOT IN (?)', $this->getConfigurableChildrenIdsQuery());
+        }
+
+        if (is_array($productIds)) {
+            $productSelect->where('product_table.product_id IN (?)', $productIds);
         }
 
         return $this->queryIteratorFactory->create(
@@ -266,18 +283,22 @@ class Exporter extends AbstractDb
      * @param int[] $sectionTypeIds
      * @param int[] $parentExportStates
      * @param int[] $childExportStates
+     * @param int[]|null $productIds
+     * @param bool $exportAllChildren
      * @return \Iterator
      */
     public function getExportableParentProductsIterator(
         $storeId,
         array $sectionTypeIds,
         array $parentExportStates,
-        array $childExportStates
+        array $childExportStates,
+        $productIds = null,
+        $exportAllChildren = false
     ) {
         $connection = $this->getConnection();
 
         $parentSelect = $this->getExportableProductBaseSelect($storeId, $parentExportStates);
-        $parentSelect->where('product_table.product_id IN (?)', $this->getConfigurableParentIdsQuery());
+        $parentSelect->where('product_table.product_id IN (?)', $this->getConfigurableParentIdsQuery($productIds));
         $this->joinSectionTablesToProductSelect($parentSelect, $sectionTypeIds);
         $parentSelect->order('product_id ASC');
 
@@ -285,6 +306,10 @@ class Exporter extends AbstractDb
         $this->joinChildParentIdToProductSelect($childrenSelect);
         $this->joinSectionTablesToProductSelect($childrenSelect, $sectionTypeIds);
         $childrenSelect->order('parent_id ASC');
+
+        if (is_array($productIds) && !$exportAllChildren) {
+            $childrenSelect->where('product_table.product_id IN (?)', $productIds);
+        }
 
         $parentConfigurableAttributeCodes = $this->getParentConfigurableAttributeCodes();
         $childrenQuery = null;

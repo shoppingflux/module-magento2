@@ -360,8 +360,6 @@ class Refresher
         array $refreshedSectionTypeSectionFilters = []
     ) {
         $this->appEmulation->startEnvironmentEmulation($store->getBaseStoreId());
-        $this->feedProductResource->startExportStateUpdateBatching();
-        $this->feedSectionResource->startSectionDataUpdateBatching();
 
         $isExportStateRefreshed = (null !== $exportStateRefreshProductFilter);
 
@@ -373,6 +371,9 @@ class Refresher
         if (!$isExportStateRefreshed && empty($refreshedSectionTypeIds)) {
             return $this;
         }
+
+        $this->feedProductResource->startExportStateUpdateBatching();
+        $this->feedSectionResource->startSectionDataUpdateBatching();
 
         $sortedRefreshedSectionTypeIds = [];
 
@@ -409,7 +410,8 @@ class Refresher
                 break;
             }
 
-            $refreshedProductCount += count($refreshableProducts);
+            $refreshedSliceSize = count($refreshableProducts);
+            $refreshedProductCount += $refreshedSliceSize;
 
             // Check which parts are to be refreshed for the products of the current slice.
 
@@ -481,8 +483,12 @@ class Refresher
                     $refreshableProducts,
                     $store,
                     $refreshSliceExportState && $isProductLoadingRequiredForExportState,
-                    $isProductLoadingRequiredForSections ? $sliceRefreshableSectionTypeIds : []
+                    $sliceRefreshableSectionTypeIds
                 );
+            }
+
+            if ($refreshedSliceSize < $refreshableSliceSize) {
+                break;
             }
         }
 

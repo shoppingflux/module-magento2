@@ -11,6 +11,7 @@ use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface;
 
 /**
  * @method string getAttribute()
+ * @method $this setAttribute(string $attribute)
  */
 class Order extends AbstractCondition
 {
@@ -20,6 +21,10 @@ class Order extends AbstractCondition
     const ATTRIBUTE_KEY_PRODUCT_AMOUNT = 'product_amount';
     const ATTRIBUTE_KEY_SHIPPING_AMOUNT = 'shipping_amount';
     const ATTRIBUTE_KEY_TOTAL_AMOUNT = 'total_amount';
+    const ATTRIBUTE_KEY_RAW_SHIPMENT_CARRIER = 'raw_shipment_carrier';
+    const ATTRIBUTE_KEY_RAW_PAYMENT_METHOD = 'raw_payment_method';
+    const ATTRIBUTE_KEY_SHIPMENT_CARRIER = 'shipment_carrier';
+    const ATTRIBUTE_KEY_PAYMENT_METHOD = 'payment_method';
 
     /**
      * @var CurrencySource
@@ -48,6 +53,8 @@ class Order extends AbstractCondition
                 self::ATTRIBUTE_KEY_PRODUCT_AMOUNT => __('Product Amount'),
                 self::ATTRIBUTE_KEY_SHIPPING_AMOUNT => __('Shipping Amount'),
                 self::ATTRIBUTE_KEY_TOTAL_AMOUNT => __('Total Amount'),
+                self::ATTRIBUTE_KEY_RAW_SHIPMENT_CARRIER => __('Shipment Carrier'),
+                self::ATTRIBUTE_KEY_RAW_PAYMENT_METHOD => __('Payment Method'),
             ]
         );
 
@@ -114,6 +121,12 @@ class Order extends AbstractCondition
 
         if (!$marketplaceOrder instanceof MarketplaceOrderInterface) {
             return false;
+        }
+
+        if ($this->getAttribute() === self::ATTRIBUTE_KEY_RAW_SHIPMENT_CARRIER) {
+            $this->setAttribute(self::ATTRIBUTE_KEY_SHIPMENT_CARRIER);
+        } elseif ($this->getAttribute() === self::ATTRIBUTE_KEY_RAW_PAYMENT_METHOD) {
+            $this->setAttribute(self::ATTRIBUTE_KEY_RAW_PAYMENT_METHOD);
         }
 
         return parent::validate($marketplaceOrder);

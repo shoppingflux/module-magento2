@@ -44,11 +44,20 @@ class Stock extends AbstractAdapter implements StockInterface
         return Type::CODE;
     }
 
+    public function requiresLoadedProduct(StoreInterface $store)
+    {
+        return $this->getConfig()->shouldForceZeroQuantityForNonSalable($store);
+    }
+
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
         $quantity = $this->getConfig()->getDefaultQuantity($store);
 
-        if ($this->getConfig()->shouldUseActualStockState($store)) {
+        if ($this->getConfig()->shouldForceZeroQuantityForNonSalable($store)
+            && !$product->getCatalogProduct()->isSalable()
+        ) {
+            $quantity = 0;
+        } elseif ($this->getConfig()->shouldUseActualStockState($store)) {
             $stockItem = $this->stockRegistry->getStockItem(
                 $product->getCatalogProduct()->getId(),
                 $this->getStoreBaseWebsiteId($store)

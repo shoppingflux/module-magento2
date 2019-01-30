@@ -137,6 +137,7 @@ interface StoreInterface
     /**
      * @param array $data
      * @return StoreInterface
+     * @deprecated 1.0.0
      */
     public function importConfigurationData(array $data);
 }

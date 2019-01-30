@@ -9,10 +9,13 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
 use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
+use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
+use ShoppingFeed\Feed\ProductGenerator as FeedGenerator;
 use ShoppingFeed\Feed\ProductGeneratorFactory as FeedGeneratorFactory;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\ConfigInterface as FeedConfigInterface;
+use ShoppingFeed\Manager\Model\Feed\Exporter\ProductListWriter;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
@@ -24,6 +27,8 @@ class Exporter
     const CHILDREN_EXPORT_MODE_SEPARATELY = 'separately';
     const CHILDREN_EXPORT_MODE_WITHIN_PARENTS = 'within_parents';
     const CHILDREN_EXPORT_MODE_BOTH = 'both';
+
+    const PRODUCT_ID_ATTRIBUTE_NAME = 'id';
 
     /**
      * @var ExporterResource
@@ -177,41 +182,15 @@ class Exporter
 
     /**
      * @param StoreInterface $store
+     * @param FeedGenerator $feedGenerator
+     * @param \Iterator $productsIterator
      * @throws \Exception
      */
-    public function exportStoreFeed(StoreInterface $store)
-    {
-        $mediaDirectoryReader = $this->getMediaDirectoryReader();
-        $feedMediaPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory) . '/';
-        $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
-        $feedFilePath = $feedMediaPath . $feedFileName;
-        $feedTempFilePath = $feedFilePath . '.tmp';
-
-        if (!$mediaDirectoryReader->isExist($feedMediaPath)) {
-            $mediaDirectoryWriter = $this->getMediaDirectoryWriter();
-            $mediaDirectoryWriter->create($feedMediaPath);
-        }
-
-        $feedGenerator = $this->feedGeneratorFactory->create();
-        $childrenExportMode = $this->exportStateConfig->getChildrenExportMode($store);
-
-        $feedGenerator->setPlatform(
-            $this->appMetadata->getName() . ' ' . $this->appMetadata->getEdition(),
-            $this->appMetadata->getVersion()
-        );
-
-        $baseStore = $store->getBaseStore();
-        $feedGenerator->setAttribute('storeName', $baseStore->getName());
-        $feedGenerator->setAttribute('storeUrl', $baseStore->getUrl());
-
-        if ($this->generalConfig->shouldUseGzipCompression($store)) {
-            $feedFilePath .= '.gz';
-            $feedTempFilePath .= '.gz';
-            $feedGenerator->setUri('compress.zlib://' . $feedTempFilePath);
-        } else {
-            $feedGenerator->setUri('file://' . $feedTempFilePath);
-        }
-
+    private function writeStoreProductsToGenerator(
+        StoreInterface $store,
+        FeedGenerator $feedGenerator,
+        \Iterator $productsIterator
+    ) {
         $feedGenerator->addProcessor(
             function (ExportableProduct $product) use ($store) {
                 $isParent = $product->hasChildren();
@@ -239,6 +218,8 @@ class Exporter
 
         $feedGenerator->addMapper(
             function (ExportableProduct $product, ExportedProduct $exportedProduct) use ($store) {
+                $exportedProduct->setAttribute(self::PRODUCT_ID_ATTRIBUTE_NAME, $product->getId());
+
                 foreach ($this->sectionTypePool->getTypes() as $sectionType) {
                     $sectionType->getAdapter()->exportBaseProductData(
                         $store,
@@ -258,6 +239,7 @@ class Exporter
 
                     foreach ($product->getChildren() as $childProduct) {
                         $exportedVariation = $exportedProduct->createVariation();
+                        $exportedVariation->setAttribute(self::PRODUCT_ID_ATTRIBUTE_NAME, $childProduct->getId());
 
                         foreach ($this->sectionTypePool->getTypes() as $sectionType) {
                             $sectionType->getAdapter()->exportBaseProductData(
@@ -278,9 +260,21 @@ class Exporter
             }
         );
 
-        $productIterators = new \AppendIterator();
+        $feedGenerator->write($productsIterator);
+    }
 
-        $productIterators->append(
+    /**
+     * @param StoreInterface $store
+     * @param int[]|null $productIds
+     * @return \Iterator
+     */
+    private function getStoreProductsIterator(StoreInterface $store, $productIds = null)
+    {
+        $childrenExportMode = $this->exportStateConfig->getChildrenExportMode($store);
+
+        $productsIterator = new \AppendIterator();
+
+        $productsIterator->append(
             $this->resource->getExportableProductsIterator(
                 $store->getId(),
                 $this->sectionTypePool->getTypeIds(),
@@ -294,24 +288,122 @@ class Exporter
                     $childrenExportMode,
                     [ self::CHILDREN_EXPORT_MODE_BOTH, self::CHILDREN_EXPORT_MODE_SEPARATELY ],
                     true
-                )
+                ),
+                $productIds
             )
         );
 
         if ((self::CHILDREN_EXPORT_MODE_BOTH === $childrenExportMode)
             || (self::CHILDREN_EXPORT_MODE_WITHIN_PARENTS === $childrenExportMode)
         ) {
-            $productIterators->append(
+            $productsIterator->append(
                 $this->resource->getExportableParentProductsIterator(
                     $store->getId(),
                     $this->sectionTypePool->getTypeIds(),
                     [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
-                    [ FeedProduct::STATE_EXPORTED ]
+                    [ FeedProduct::STATE_EXPORTED ],
+                    $productIds,
+                    true
                 )
             );
         }
 
-        $feedGenerator->write($productIterators);
+        return $productsIterator;
+    }
+
+    /**
+     * @param AbstractExportedProduct $product
+     * @return int|null
+     */
+    private function getExportedProductId(AbstractExportedProduct $product)
+    {
+        $attributes = $product->getAttributes();
+
+        return !isset($attributes[self::PRODUCT_ID_ATTRIBUTE_NAME])
+            ? null
+            : (int) $attributes[self::PRODUCT_ID_ATTRIBUTE_NAME]->getValue();
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param int[] $productIds
+     * @return AbstractExportedProduct[]
+     * @throws \Exception
+     */
+    public function exportStoreProducts(StoreInterface $store, array $productIds)
+    {
+        FeedGenerator::registerWriter(ProductListWriter::ALIAS, ProductListWriter::class);
+
+        $feedGenerator = $this->feedGeneratorFactory->create();
+        $uri = uniqid('', true);
+        $feedGenerator->setUri($uri);
+        $feedGenerator->setWriter(ProductListWriter::ALIAS);
+
+        $this->writeStoreProductsToGenerator(
+            $store,
+            $feedGenerator,
+            $this->getStoreProductsIterator($store, $productIds)
+        );
+
+        $products = ProductListWriter::getUriProducts($uri);
+        $exportableProducts = [];
+
+        foreach ($products as $product) {
+            $productId = $this->getExportedProductId($product);
+
+            if (in_array($productId, $productIds, true)) {
+                $exportableProducts[] = $product;
+            }
+
+            foreach ($product->getVariations() as $childProduct) {
+                $childProductId = $this->getExportedProductId($childProduct);
+
+                if (in_array($childProductId, $productIds, true)) {
+                    $exportableProducts[] = $childProduct;
+                }
+            }
+        }
+
+        return $exportableProducts;
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    public function exportStoreFeed(StoreInterface $store)
+    {
+        $mediaDirectoryReader = $this->getMediaDirectoryReader();
+        $feedMediaPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory) . '/';
+        $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
+        $feedFilePath = $feedMediaPath . $feedFileName;
+        $feedTempFilePath = $feedFilePath . '.tmp';
+
+        if (!$mediaDirectoryReader->isExist($feedMediaPath)) {
+            $mediaDirectoryWriter = $this->getMediaDirectoryWriter();
+            $mediaDirectoryWriter->create($feedMediaPath);
+        }
+
+        $feedGenerator = $this->feedGeneratorFactory->create();
+
+        $feedGenerator->setPlatform(
+            $this->appMetadata->getName() . ' ' . $this->appMetadata->getEdition(),
+            $this->appMetadata->getVersion()
+        );
+
+        $baseStore = $store->getBaseStore();
+        $feedGenerator->setAttribute('storeName', $baseStore->getName());
+        $feedGenerator->setAttribute('storeUrl', $baseStore->getUrl());
+
+        if ($this->generalConfig->shouldUseGzipCompression($store)) {
+            $feedFilePath .= '.gz';
+            $feedTempFilePath .= '.gz';
+            $feedGenerator->setUri('compress.zlib://' . $feedTempFilePath);
+        } else {
+            $feedGenerator->setUri('file://' . $feedTempFilePath);
+        }
+
+        $this->writeStoreProductsToGenerator($store, $feedGenerator, $this->getStoreProductsIterator($store));
 
         if (false === $this->getMediaDirectoryWriter()->renameFile($feedTempFilePath, $feedFilePath)) {
             throw new LocalizedException(

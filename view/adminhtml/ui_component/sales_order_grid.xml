@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <columns name="sales_order_columns">
+        <column name="sfm_marketplace_name">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Marketplace</label>
+            </settings>
+        </column>
+        <column name="sfm_marketplace_order_number">
+            <settings>
+                <filter>text</filter>
+                <label translate="true">Marketplace Number</label>
+            </settings>
+        </column>
+    </columns>
+</listing>
