@@ -18,4 +18,16 @@ interface StockInterface extends ConfigInterface
      * @return int
      */
     public function getDefaultQuantity(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldForceZeroQuantityForNonSalable(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldUpdateQuantityInRealTime(StoreInterface $store);
 }

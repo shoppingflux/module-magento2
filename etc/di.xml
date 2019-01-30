@@ -56,6 +56,8 @@
     </type>
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter" shared="true"/>
 
+    <type name="ShoppingFeed\Manager\Model\Feed\RealTimeUpdater" shared="true"/>
+
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePool"/>
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" shared="true">
         <arguments>

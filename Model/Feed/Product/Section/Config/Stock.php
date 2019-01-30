@@ -12,6 +12,8 @@ class Stock extends AbstractConfig implements StockInterface
 {
     const KEY_USE_ACTUAL_STOCK_STATE = 'use_actual_stock_state';
     const KEY_DEFAULT_QUANTITY = 'default_quantity';
+    const KEY_FORCE_ZERO_QUANTITY_FOR_NON_SALABLE = 'force_zero_quantity_for_non_salable';
+    const KEY_UPDATE_QUANTITY_IN_REAL_TIME = 'update_quantity_in_real_time';
 
     protected function getBaseFields()
     {
@@ -46,6 +48,31 @@ class Stock extends AbstractConfig implements StockInterface
                         'sortOrder' => 20,
                     ]
                 ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_FORCE_ZERO_QUANTITY_FOR_NON_SALABLE,
+                        'isRequired' => true,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Force Zero Quantity for Non Salable Products'),
+                        'sortOrder' => 30,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_UPDATE_QUANTITY_IN_REAL_TIME,
+                        'isRequired' => true,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Update Quantity in Real Time'),
+                        'checkedNotice' => __(
+                            'The product quantities will be updated in real-time on Shopping Feed when changes are detected. This may slow down product and inventory updates.'
+                        ),
+                        'sortOrder' => 40,
+                    ]
+                ),
             ],
             parent::getBaseFields()
         );
@@ -64,5 +91,15 @@ class Stock extends AbstractConfig implements StockInterface
     public function getDefaultQuantity(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_DEFAULT_QUANTITY);
+    }
+
+    public function shouldForceZeroQuantityForNonSalable(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_FORCE_ZERO_QUANTITY_FOR_NON_SALABLE);
+    }
+
+    public function shouldUpdateQuantityInRealTime(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_UPDATE_QUANTITY_IN_REAL_TIME);
     }
 }

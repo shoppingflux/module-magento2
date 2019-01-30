@@ -115,7 +115,8 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
 
     public function getAutomaticRefreshState(StoreInterface $store)
     {
-        return $this->getFieldValue($store, self::KEY_AUTOMATIC_REFRESH_STATE);
+        $state = $this->getFieldValue($store, self::KEY_AUTOMATIC_REFRESH_STATE);
+        return empty($state) ? false : $state;
     }
 
     public function getAutomaticRefreshDelay(StoreInterface $store)
