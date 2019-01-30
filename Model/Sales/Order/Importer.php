@@ -589,6 +589,7 @@ class Importer implements ImporterInterface
     {
         if (null === $this->shippingMethodRuleCollection) {
             $this->shippingMethodRuleCollection = $this->shippingMethodRuleCollectionFactory->create();
+            $this->shippingMethodRuleCollection->addActiveFilter();
             $this->shippingMethodRuleCollection->addEnabledAtFilter();
             $this->shippingMethodRuleCollection->addSortOrderOrder();
             $this->shippingMethodRuleCollection->load();

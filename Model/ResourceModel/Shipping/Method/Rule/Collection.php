@@ -50,6 +50,15 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @return $this
+     */
+    public function addActiveFilter()
+    {
+        $this->addFieldToFilter(Rule::IS_ACTIVE, 1);
+        return $this;
+    }
+
+    /**
      * @param string|null $date
      * @return $this
      */
