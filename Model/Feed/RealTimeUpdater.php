@@ -150,22 +150,19 @@ class RealTimeUpdater
     }
 
     /**
-     * @param StockItem $stockItem
+     * @param int[] $productIds
      * @throws LocalizedException
-     * @throws \Exception
      */
-    public function handleStockItemSave(StockItem $stockItem)
+    public function handleProductsQuantityChange(array $productIds)
     {
-        if (!$productId = (int) $stockItem->getProductId()) {
-            return;
-        }
+        $productIds = array_filter(array_unique($productIds));
 
         $stockSectionType = $this->sectionTypePool->getTypeByCode(StockSectionType::CODE);
         $stockSectionTypeId = $stockSectionType->getId();
         $stockSectionConfig = $stockSectionType->getConfig();
 
         $productFilter = $this->productFilterFactory->create();
-        $productFilter->setProductIds([ $productId ]);
+        $productFilter->setProductIds($productIds);
 
         $sectionFilter = $this->sectionFilterFactory->create();
         $sectionFilter->setTypeIds([ $stockSectionTypeId ]);
@@ -193,7 +190,7 @@ class RealTimeUpdater
                         [ $stockSectionTypeId => $sectionFilter ]
                     );
 
-                    $updatableProducts = $this->exporter->exportStoreProducts($store, [ $productId ]);
+                    $updatableProducts = $this->exporter->exportStoreProducts($store, $productIds);
 
                     $apiStore = $this->apiSessionManager->getStoreApiResource($store);
                     $inventoryApi = $apiStore->getInventoryApi();
@@ -209,5 +206,18 @@ class RealTimeUpdater
                 }
             }
         }
+    }
+
+    /**
+     * @param StockItem $stockItem
+     * @throws LocalizedException
+     */
+    public function handleStockItemSave(StockItem $stockItem)
+    {
+        if (!$productId = (int) $stockItem->getProductId()) {
+            return;
+        }
+
+        $this->handleProductsQuantityChange([ $productId ]);
     }
 }
