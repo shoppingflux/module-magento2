@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
-    <event name="cataloginventory_stock_item_save_after">
-        <observer name="sfm_after_stock_item_save" instance="ShoppingFeed\Manager\Observer\AfterStockItemSaveObserver"/>
+    <event name="cataloginventory_stock_item_save_commit_after">
+        <observer name="sfm_after_stock_item_save_commit" instance="ShoppingFeed\Manager\Observer\AfterStockItemSaveObserver"/>
     </event>
 
     <event name="checkout_submit_before">
