@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer;
 
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\AbstractRenderer;
 
 class Number extends AbstractRenderer
@@ -19,7 +20,7 @@ class Number extends AbstractRenderer
                 && in_array($attribute->getFrontendClass(), [ 'validate-digits', 'validate-number' ], true));
     }
 
-    public function renderAttributeValue(AbstractAttribute $attribute, $value)
+    public function renderAttributeValue(StoreInterface $store, AbstractAttribute $attribute, $value)
     {
         return (null !== $value) && ('' !== $value) ? (string) (float) $value : $value;
     }

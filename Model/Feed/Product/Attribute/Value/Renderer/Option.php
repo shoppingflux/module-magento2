@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer;
 
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Framework\Exception\LocalizedException;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\AbstractRenderer;
 
 class Option extends AbstractRenderer
@@ -19,12 +20,13 @@ class Option extends AbstractRenderer
     }
 
     /**
+     * @param StoreInterface $store
      * @param AbstractAttribute $attribute
      * @param mixed $value
      * @return string|null
      * @throws LocalizedException
      */
-    public function renderAttributeValue(AbstractAttribute $attribute, $value)
+    public function renderAttributeValue(StoreInterface $store, AbstractAttribute $attribute, $value)
     {
         return !$this->isUndefinedValue($value) ? (string) $attribute->getSource()->getOptionText($value) : null;
     }

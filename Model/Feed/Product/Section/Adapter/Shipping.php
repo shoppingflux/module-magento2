@@ -34,17 +34,18 @@ class Shipping extends AbstractAdapter implements ShippingInterface
     }
 
     /**
+     * @param StoreInterface $store
      * @param CatalogProduct $product
      * @param AbstractAttribute|null $attribute
      * @param mixed|null $defaultValue
      * @return mixed|null
      */
-    protected function getCatalogProductValue(CatalogProduct $product, $attribute, $defaultValue)
+    protected function getCatalogProductValue(StoreInterface $store, CatalogProduct $product, $attribute, $defaultValue)
     {
         $value = null;
 
         if ($attribute instanceof AbstractAttribute) {
-            $value = $this->getCatalogProductAttributeValue($product, $attribute);
+            $value = $this->getCatalogProductAttributeValue($store, $product, $attribute);
         }
 
         return (null !== $value)
@@ -58,12 +59,14 @@ class Shipping extends AbstractAdapter implements ShippingInterface
         $catalogProduct = $product->getCatalogProduct();
 
         $fees = $this->getCatalogProductValue(
+            $store,
             $catalogProduct,
             $config->getFeesAttribute($store),
             $config->getDefaultFees($store)
         );
 
         $delay = $this->getCatalogProductValue(
+            $store,
             $catalogProduct,
             $config->getDelayAttribute($store),
             $config->getDefaultDelay($store)
@@ -71,6 +74,7 @@ class Shipping extends AbstractAdapter implements ShippingInterface
 
         return [
             self::KEY_CARRIER_NAME => (string) $this->getCatalogProductValue(
+                $store,
                 $catalogProduct,
                 $config->getCarrierNameAttribute($store),
                 $config->getDefaultCarrierName($store)

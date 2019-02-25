@@ -184,29 +184,33 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         ];
 
         if ($attribute = $config->getBrandAttribute($store)) {
-            $data[self::KEY_BRAND] = $this->getCatalogProductAttributeValue($catalogProduct, $attribute);
+            $data[self::KEY_BRAND] = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
         }
 
         if ($attribute = $config->getDescriptionAttribute($store)) {
-            $data[self::KEY_DESCRIPTION] = $this->getCatalogProductAttributeValue($catalogProduct, $attribute);
+            $data[self::KEY_DESCRIPTION] = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
         }
 
         if ($attribute = $config->getShortDescriptionAttribute($store)) {
-            $data[self::KEY_SHORT_DESCRIPTION] = $this->getCatalogProductAttributeValue($catalogProduct, $attribute);
+            $data[self::KEY_SHORT_DESCRIPTION] = $this->getCatalogProductAttributeValue(
+                $store,
+                $catalogProduct,
+                $attribute
+            );
         }
 
         if ($attribute = $config->getGtinAttribute($store)) {
-            $data[self::KEY_GTIN] = $this->getCatalogProductAttributeValue($catalogProduct, $attribute);
+            $data[self::KEY_GTIN] = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
         }
 
         foreach ($config->getAttributeMap($store) as $key => $attribute) {
-            $value = $this->getCatalogProductAttributeValue($catalogProduct, $attribute);
+            $value = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
             $data[self::KEY_ATTRIBUTE_MAP][$key] = $value;
         }
 
         if (ProductType::TYPE_SIMPLE === $catalogProduct->getTypeId()) {
             foreach ($this->attributeSource->getConfigurableAttributes() as $key => $attribute) {
-                $value = $this->getCatalogProductAttributeValue($catalogProduct, $attribute);
+                $value = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
                 $data[self::KEY_CONFIGURABLE_ATTRIBUTES][$key] = $value;
             }
         }
@@ -234,7 +238,15 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         if (isset($productData[self::KEY_ATTRIBUTE_MAP])) {
             foreach ($this->getConfig()->getAttributeMap($store) as $key => $attribute) {
                 if (isset($productData[self::KEY_ATTRIBUTE_MAP][$key])) {
-                    $exportedProduct->setAttribute($key, $productData[self::KEY_ATTRIBUTE_MAP][$key]);
+                    $value = $productData[self::KEY_ATTRIBUTE_MAP][$key];
+
+                    if (is_array($value)) {
+                        foreach ($value as $subKey => $subValue) {
+                            $exportedProduct->setAttribute($key . '-' . $subKey, $subValue);
+                        }
+                    } else {
+                        $exportedProduct->setAttribute($key, $productData[self::KEY_ATTRIBUTE_MAP][$key]);
+                    }
                 }
             }
         }
