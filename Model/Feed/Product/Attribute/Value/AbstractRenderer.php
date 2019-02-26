@@ -9,6 +9,7 @@ use Magento\Eav\Model\Entity\Attribute\Backend\ArrayBackend;
 use Magento\Eav\Model\Entity\Attribute\Backend\Datetime as DateTimeBackend;
 use Magento\Catalog\Model\Product\Attribute\Backend\Price as PriceBackend;
 use Magento\Framework\Exception\LocalizedException;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 
 abstract class AbstractRenderer implements RendererInterface
 {
@@ -40,21 +41,25 @@ abstract class AbstractRenderer implements RendererInterface
     }
 
     /**
+     * @param StoreInterface $store
      * @param AbstractAttribute $attribute
      * @param $value
      * @return string
      */
-    protected function renderAttributeValue(AbstractAttribute $attribute, $value)
+    protected function renderAttributeValue(StoreInterface $store, AbstractAttribute $attribute, $value)
     {
         return (string) $value;
     }
 
-    public function getProductAttributeValue(CatalogProduct $product, AbstractAttribute $attribute)
-    {
+    public function getProductAttributeValue(
+        StoreInterface $store,
+        CatalogProduct $product,
+        AbstractAttribute $attribute
+    ) {
         $attributeCode = $attribute->getAttributeCode();
         return !$product->hasData($attributeCode)
             ? $this->getAttributeDefaultValue($attribute)
-            : $this->renderAttributeValue($attribute, $product->getData($attributeCode));
+            : $this->renderAttributeValue($store, $attribute, $product->getData($attributeCode));
     }
 
     /**

@@ -26,6 +26,9 @@ use Magento\Sales\Api\Data\OrderInterface as SalesOrderInterface;
 use Magento\Sales\Model\Order as SalesOrder;
 use Magento\Store\Model\Store as BaseStore;
 use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
+use Magento\Tax\Model\Config as TaxConfig;
+use Magento\Weee\Helper\Data as WeeeHelper;
+use Magento\Weee\Helper\Data\Proxy as WeeeHelperProxy;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
@@ -43,6 +46,7 @@ use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterfa
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingMethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\TimeHelper;
 use ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider as PaymentConfigProvider;
+use ShoppingFeed\Manager\Plugin\Weee\TaxPlugin as WeeeTaxPlugin;
 
 class Importer implements ImporterInterface
 {
@@ -115,6 +119,16 @@ class Importer implements ImporterInterface
      * @var BusinessTaxManager
      */
     private $businessTaxManager;
+
+    /**
+     * @var WeeeHelper
+     */
+    private $weeeHelper;
+
+    /**
+     * @var WeeeTaxPlugin
+     */
+    private $weeeTaxPlugin;
 
     /**
      * @var ShippingRateMethodFactory
@@ -201,6 +215,8 @@ class Importer implements ImporterInterface
      * @param QuoteRepositoryInterface $quoteRepository
      * @param QuoteAddressExtensionFactory $quoteAddressExtensionFactory
      * @param BusinessTaxManager $businessTaxManager
+     * @param WeeeHelperProxy $weeeHelper
+     * @param WeeeTaxPlugin $weeeTaxPlugin
      * @param ShippingRateMethodFactory $shippingRateMethodFactory
      * @param ShippingAddressRateFactory $shippingAddressRateFactory
      * @param ShippingMethodApplierPoolInterface $shippingMethodApplierPool
@@ -226,6 +242,8 @@ class Importer implements ImporterInterface
         QuoteRepositoryInterface $quoteRepository,
         QuoteAddressExtensionFactory $quoteAddressExtensionFactory,
         BusinessTaxManager $businessTaxManager,
+        WeeeHelperProxy $weeeHelper,
+        WeeeTaxPlugin $weeeTaxPlugin,
         ShippingRateMethodFactory $shippingRateMethodFactory,
         ShippingAddressRateFactory $shippingAddressRateFactory,
         ShippingMethodApplierPoolInterface $shippingMethodApplierPool,
@@ -250,6 +268,8 @@ class Importer implements ImporterInterface
         $this->quoteRepository = $quoteRepository;
         $this->quoteAddressExtensionFactory = $quoteAddressExtensionFactory;
         $this->businessTaxManager = $businessTaxManager;
+        $this->weeeHelper = $weeeHelper;
+        $this->weeeTaxPlugin = $weeeTaxPlugin;
         $this->shippingRateMethodFactory = $shippingRateMethodFactory;
         $this->shippingAddressRateFactory = $shippingAddressRateFactory;
         $this->shippingMethodApplierPool = $shippingMethodApplierPool;
@@ -522,6 +542,77 @@ class Importer implements ImporterInterface
     }
 
     /**
+     * @param CatalogProduct $product
+     * @param Quote $quote
+     * @param bool $isBusinessOrder
+     * @param StoreInterface $store
+     * @return float
+     */
+    private function getCatalogProductWeeeAmount(
+        CatalogProduct $product,
+        Quote $quote,
+        $isBusinessOrder,
+        StoreInterface $store
+    ) {
+        $weeeAmountExclTax = 0.0;
+        $weeeAmount = 0.0;
+        $weeeTaxAmount = 0.0;
+        $isCatalogPriceIncludingTax = (bool) $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_PRICE_INCLUDES_TAX);
+
+        $weeeAttributes = $this->weeeHelper->getProductWeeeAttributes(
+            $product,
+            $quote->getShippingAddress(),
+            $quote->getBillingAddress(),
+            $store->getBaseStore()->getWebsiteId(),
+            true
+        );
+
+        foreach ($weeeAttributes as $weeeAttribute) {
+            $weeeAmountExclTax += $weeeAttribute->getAmountExclTax();
+            $weeeAmount += $weeeAttribute->getAmount();
+            $weeeTaxAmount += $weeeAttribute->getTaxAmount();
+        }
+
+        $this->weeeTaxPlugin->resetProductLockedAttributes($product->getId());
+
+        if ($isBusinessOrder) {
+            if ($isCatalogPriceIncludingTax) {
+                $lockedAttributes = [];
+
+                foreach ($weeeAttributes as $weeeAttribute) {
+                    /** @see \Magento\Weee\Model\Total\Quote\Weee::process() */
+                    $lockedAttribute = clone $weeeAttribute;
+                    $amountExclTax = $weeeAttribute->getAmountExclTax();
+                    $lockedAttribute->setTaxAmount(0);
+                    $lockedAttribute->setAmount($amountExclTax);
+                    $lockedAttribute->setAmountExclTax($amountExclTax);
+                    $lockedAttributes[] = $lockedAttribute;
+                }
+
+                $this->weeeTaxPlugin->setProductLockedAttributes($product->getId(), $lockedAttributes);
+                return $weeeAmountExclTax;
+            }
+        } elseif (!$isCatalogPriceIncludingTax) {
+            $lockedAttributes = [];
+
+            foreach ($weeeAttributes as $weeeAttribute) {
+                /** @see \Magento\Weee\Model\Total\Quote\Weee::process() */
+                $lockedAttribute = clone $weeeAttribute;
+                $amountInclTax = $lockedAttribute->getAmount() + $weeeAttribute->getTaxAmount();
+                $lockedAttribute->setTaxAmount(0);
+                $lockedAttribute->setAmount($amountInclTax);
+                $lockedAttribute->setAmountExclTax($amountInclTax);
+                $lockedAttributes[] = $lockedAttribute;
+            }
+
+            $this->weeeTaxPlugin->setProductLockedAttributes($product->getId(), $lockedAttributes);
+            return $weeeAmountExclTax + $weeeTaxAmount;
+        }
+
+        return $weeeAmount;
+    }
+
+    /**
      * @param Quote $quote
      * @param MarketplaceItemInterface[] $marketplaceItems
      * @param bool $isBusinessOrder
@@ -544,11 +635,17 @@ class Importer implements ImporterInterface
                     $product = $this->catalogProductRepository->get($reference, false, $quoteStoreId, false);
                 }
 
+                $itemPrice = $marketplaceItem->getPrice();
+
+                if ($this->weeeHelper->isEnabled($store->getBaseStore())) {
+                    $itemPrice -= $this->getCatalogProductWeeeAmount($product, $quote, $isBusinessOrder, $store);
+                }
+
                 $buyRequest = $this->dataObjectFactory->create(
                     [
                         'data' => [
                             'qty' => $marketplaceItem->getQuantity(),
-                            'custom_price' => $marketplaceItem->getPrice(),
+                            'custom_price' => $itemPrice,
                         ],
                     ]
                 );

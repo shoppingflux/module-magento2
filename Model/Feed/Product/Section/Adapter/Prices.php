@@ -106,14 +106,15 @@ class Prices extends AbstractAdapter implements PricesInterface
     }
 
     /**
+     * @param StoreInterface $store
      * @param CatalogProduct $catalogProduct
      * @param string $attributeCode
      * @return string
      */
-    private function getDateValue(CatalogProduct $catalogProduct, $attributeCode)
+    private function getDateValue(StoreInterface $store, CatalogProduct $catalogProduct, $attributeCode)
     {
         if ($attribute = $this->getCatalogProductResource()->getAttribute($attributeCode)) {
-            return !empty($dateValue = $this->getCatalogProductAttributeValue($catalogProduct, $attribute))
+            return !empty($dateValue = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute))
                 ? $dateValue
                 : (string) $catalogProduct->getData($attributeCode);
         }
@@ -145,8 +146,8 @@ class Prices extends AbstractAdapter implements PricesInterface
             self::KEY_BASE_PRICE => round($basePrice, 2),
             self::KEY_SPECIAL_PRICE => ($specialPrice > 0) ? round($specialPrice, 2) : '',
             self::KEY_FINAL_PRICE => round($finalPrice, 2),
-            self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($product, 'special_from_date'),
-            self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($product, 'special_to_date'),
+            self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($store, $product, 'special_from_date'),
+            self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($store, $product, 'special_to_date'),
         ];
     }
 

@@ -116,17 +116,21 @@ abstract class AbstractAdapter implements AdapterInterface
     }
 
     /**
+     * @param StoreInterface $store
      * @param CatalogProduct $product
      * @param AbstractAttribute $attribute
      * @return string|null
      */
-    protected function getCatalogProductAttributeValue(CatalogProduct $product, AbstractAttribute $attribute)
-    {
+    protected function getCatalogProductAttributeValue(
+        StoreInterface $store,
+        CatalogProduct $product,
+        AbstractAttribute $attribute
+    ) {
         $attributeValue = null;
 
         foreach ($this->attributeRendererPool->getSortedRenderers() as $attributeRenderer) {
             if ($attributeRenderer->isAppliableToAttribute($attribute)) {
-                $attributeValue = $attributeRenderer->getProductAttributeValue($product, $attribute);
+                $attributeValue = $attributeRenderer->getProductAttributeValue($store, $product, $attribute);
                 break;
             }
         }

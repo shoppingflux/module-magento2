@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer;
 
 use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\AbstractRenderer;
 
 class Date extends AbstractRenderer
@@ -17,7 +18,7 @@ class Date extends AbstractRenderer
         return $this->isDateAttribute($attribute);
     }
 
-    public function renderAttributeValue(AbstractAttribute $attribute, $value)
+    public function renderAttributeValue(StoreInterface $store, AbstractAttribute $attribute, $value)
     {
         return $value;
     }
