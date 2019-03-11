@@ -73,6 +73,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.13.0') < 0)) {
             $this->addMarketplaceOrderAdditionalFieldsField($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.17.0') < 0)) {
+            $this->augmentMarketplaceOrderShoppingFeedIdFieldType($setup);
+        }
     }
 
     /**
@@ -1116,5 +1120,24 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ]
             );
         }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function augmentMarketplaceOrderShoppingFeedIdFieldType(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+
+        $connection->modifyColumn(
+            $this->tableDictionary->getMarketplaceOrderTableName(),
+            OrderInterface::SHOPPING_FEED_ORDER_ID,
+            [
+                'type' => Table::TYPE_BIGINT,
+                'nullable' => false,
+                'unsigned' => true,
+                'comment' => 'Shopping Feed Order ID',
+            ]
+        );
     }
 }
