@@ -47,6 +47,16 @@ class CollectionPlugin
     }
 
     /**
+     * @param OrderGridCollection $collection
+     */
+    public function disambiguateOrderGridCollectionFilters(OrderGridCollection $collection)
+    {
+        $collection->addFilterToMap('store_id', 'main_table.store_id');
+        $collection->addFilterToMap('created_at', 'main_table.created_at');
+        $collection->addFilterToMap('updated_at', 'main_table.updated_at');
+    }
+
+    /**
      * @param OrderGridCollection $subject
      * @param DbSelect|null $select
      * @return DbSelect|null
@@ -54,6 +64,8 @@ class CollectionPlugin
     public function afterGetSelect(OrderGridCollection $subject, $select)
     {
         if ((null !== $select) && !$this->isAppliedToOrderGridCollection($subject)) {
+            $this->disambiguateOrderGridCollectionFilters($subject);
+
             $subject->setFlag(self::COLLECTION_FLAG_JOINED_SFM_TABLES, true);
             $connection = $subject->getResource()->getConnection();
             $tableAlias = self::SFM_ORDER_TABLE_ALIAS;
