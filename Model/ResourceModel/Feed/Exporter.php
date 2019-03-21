@@ -341,10 +341,10 @@ class Exporter extends AbstractDb
                         while (is_array($childRow = $childrenQuery->fetch())) {
                             $childRow['parent_id'] = (int) $childRow['parent_id'];
 
-                            if ($childRow['parent_id'] !== $parentId) {
+                            if ($childRow['parent_id'] > $parentId) {
                                 $previousChildRow = $childRow;
                                 break;
-                            } else {
+                            } elseif ($childRow['parent_id'] === $parentId) {
                                 $childRows[] = $childRow;
                             }
                         }
