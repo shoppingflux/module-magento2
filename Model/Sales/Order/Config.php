@@ -22,6 +22,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_DEFAULT_PHONE_NUMBER = 'default_phone_number';
     const KEY_ADDRESS_FIELD_PLACEHOLDER = 'address_field_placeholder';
     const KEY_USE_MOBILE_PHONE_NUMBER_FIRST = 'use_mobile_phone_number_first';
+    const KEY_FORCE_CROSS_BORDER_TRADE = 'force_border_trade';
     const KEY_CREATE_INVOICE = 'create_invoice';
 
     /**
@@ -113,10 +114,28 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_FORCE_CROSS_BORDER_TRADE,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Force Cross Border Trade'),
+                        'sortOrder' => 80,
+                        'checkedNotice' =>
+                            __('Prevents amount mismatches due to tax computations using different address rates.')
+                            . "\n"
+                            . __('Only disable this if you know what you are doing.'),
+                        'uncheckedNotice' =>
+                            __('Prevents amount mismatches due to tax computations using different address rates.')
+                            . "\n"
+                            . __('Unless you know what you are doing, this option should probably be enabled.'),
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_CREATE_INVOICE,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Invoice'),
-                        'sortOrder' => 80,
+                        'sortOrder' => 90,
                     ]
                 ),
             ],
@@ -258,6 +277,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldUseMobilePhoneNumberFirst(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST);
+    }
+
+    public function shouldForceCrossBorderTrade(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_FORCE_CROSS_BORDER_TRADE);
     }
 
     public function shouldCreateInvoice(StoreInterface $store)

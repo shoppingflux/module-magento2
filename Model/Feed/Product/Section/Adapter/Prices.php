@@ -224,6 +224,8 @@ class Prices extends AbstractAdapter implements PricesInterface
             $exportedProduct->setPrice($productData[self::KEY_FINAL_PRICE]);
         }
 
-        // @todo discounts (from special prices and catalog price rules)
+        if (isset($productData[self::KEY_BASE_PRICE])) {
+            $exportedProduct->setAttribute('price_before_discount', $productData[self::KEY_BASE_PRICE]);
+        }
     }
 }
