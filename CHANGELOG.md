@@ -5,7 +5,7 @@
 - Add "price_before_discount" and "shipping_delay" attributes to the feed
 
 ### Changed
-- Force cross border trade when import orders
+- Force cross border trade when importing orders (togglable off)
 
 ## [0.17.1] - 2019-03-21
 ### Fixed
