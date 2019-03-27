@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0] - 2019-03-27
+### Added
+- Add "price_before_discount" and "shipping_delay" attributes to the feed
+
+### Changed
+- Force cross border trade when import orders
+
 ## [0.17.1] - 2019-03-21
 ### Fixed
 - Fix ambiguous filters in the orders listing
