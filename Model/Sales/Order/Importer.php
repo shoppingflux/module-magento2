@@ -46,6 +46,7 @@ use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterfa
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingMethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\TimeHelper;
 use ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider as PaymentConfigProvider;
+use ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin as TaxConfigPlugin;
 use ShoppingFeed\Manager\Plugin\Weee\TaxPlugin as WeeeTaxPlugin;
 
 class Importer implements ImporterInterface
@@ -119,6 +120,11 @@ class Importer implements ImporterInterface
      * @var BusinessTaxManager
      */
     private $businessTaxManager;
+
+    /**
+     * @var TaxConfigPlugin
+     */
+    private $taxConfigPlugin;
 
     /**
      * @var WeeeHelper
@@ -217,6 +223,7 @@ class Importer implements ImporterInterface
      * @param BusinessTaxManager $businessTaxManager
      * @param WeeeHelperProxy $weeeHelper
      * @param WeeeTaxPlugin $weeeTaxPlugin
+     * @param TaxConfigPlugin $taxConfigPlugin
      * @param ShippingRateMethodFactory $shippingRateMethodFactory
      * @param ShippingAddressRateFactory $shippingAddressRateFactory
      * @param ShippingMethodApplierPoolInterface $shippingMethodApplierPool
@@ -244,6 +251,7 @@ class Importer implements ImporterInterface
         BusinessTaxManager $businessTaxManager,
         WeeeHelperProxy $weeeHelper,
         WeeeTaxPlugin $weeeTaxPlugin,
+        TaxConfigPlugin $taxConfigPlugin,
         ShippingRateMethodFactory $shippingRateMethodFactory,
         ShippingAddressRateFactory $shippingAddressRateFactory,
         ShippingMethodApplierPoolInterface $shippingMethodApplierPool,
@@ -270,6 +278,7 @@ class Importer implements ImporterInterface
         $this->businessTaxManager = $businessTaxManager;
         $this->weeeHelper = $weeeHelper;
         $this->weeeTaxPlugin = $weeeTaxPlugin;
+        $this->taxConfigPlugin = $taxConfigPlugin;
         $this->shippingRateMethodFactory = $shippingRateMethodFactory;
         $this->shippingAddressRateFactory = $shippingAddressRateFactory;
         $this->shippingMethodApplierPool = $shippingMethodApplierPool;
@@ -297,6 +306,10 @@ class Importer implements ImporterInterface
         }
 
         $this->currentImportStore = $store;
+
+        if ($this->orderGeneralConfig->shouldForceCrossBorderTrade($store)) {
+            $this->taxConfigPlugin->enableForcedCrossBorderTrade();
+        }
 
         /** @var BaseStore $baseStore */
         $baseStore = $store->getBaseStore();
@@ -441,6 +454,7 @@ class Importer implements ImporterInterface
         } catch (\Exception $e) {
             throw $e;
         } finally {
+            $this->taxConfigPlugin->disableForcedCrossBorderTrade();
             $this->currentImportStore = null;
             $this->currentlyImportedQuoteId = null;
             $this->isCurrentlyImportedBusinessQuote = false;

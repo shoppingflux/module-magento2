@@ -212,6 +212,11 @@
     </type>
     <type name="ShoppingFeed\Manager\Plugin\Weee\TaxPlugin" shared="true"/>
 
+    <type name="Magento\Tax\Model\Config">
+        <plugin name="sfm_tax_config_plugin" type="ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin" sortOrder="999999999"/>
+    </type>
+    <type name="ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin" shared="true"/>
+
     <type name="Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector">
         <plugin name="sfm_tax_sales_total_quote_common_tax_collector_plugin" type="ShoppingFeed\Manager\Plugin\Tax\Sales\Total\Quote\CommonTaxCollectorPlugin" sortOrder="0"/>
     </type>
