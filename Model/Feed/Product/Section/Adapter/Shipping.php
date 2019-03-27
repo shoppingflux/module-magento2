@@ -89,11 +89,15 @@ class Shipping extends AbstractAdapter implements ShippingInterface
         array $productData,
         AbstractExportedProduct $exportedProduct
     ) {
-        if (isset($productData[self::KEY_FEES]) && isset($productData[self::KEY_DELAY])) {
+        if (isset($productData[self::KEY_FEES])) {
             $exportedProduct->addShipping(
                 $productData[self::KEY_FEES],
                 $productData[self::KEY_CARRIER_NAME] ?? ''
             );
+        }
+
+        if (isset($productData[self::KEY_DELAY])) {
+            $exportedProduct->setAttribute('shipping_delay', $productData[self::KEY_DELAY]);
         }
     }
 }
