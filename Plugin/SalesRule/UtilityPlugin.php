@@ -11,13 +11,15 @@ class UtilityPlugin
 {
     /**
      * @param SalesRuleUtility $subject
-     * @param bool $result
+     * @param callable $proceed
      * @param Rule $rule
      * @param QuoteAddress $address
      * @return bool
      */
-    public function afterCanProcessRule(SalesRuleUtility $subject, $result, $rule, $address)
+    public function aroundCanProcessRule(SalesRuleUtility $subject, callable $proceed, $rule, $address)
     {
+        $result = (bool) $proceed($rule, $address);
+
         if (($address instanceof QuoteAddress)
             && ($quote = $address->getQuote())
             && $quote->getDataByKey(OrderImporterInterface::QUOTE_KEY_IS_SHOPPING_FEED_ORDER)

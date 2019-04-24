@@ -60,7 +60,7 @@ class Existing extends AccountAction
             } catch (NoSuchEntityException $e) {
                 $this->messageManager->addErrorMessage(__('This account does no longer exist.'));
             } catch (LocalizedException $e) {
-                $this->messageManager->addExceptionMessage($e->getPrevious() ?: $e);
+                $this->messageManager->addExceptionMessage($e, $e->getMessage());
             } catch (\Exception $e) {
                 $this->messageManager->addExceptionMessage(
                     $e,

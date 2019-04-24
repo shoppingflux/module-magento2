@@ -59,25 +59,7 @@ class CommonTaxCollectorPlugin
 
     /**
      * @param CommonTaxCollector $subject
-     * @param ShippingAssignmentInterface $shippingAssignment
-     * @param bool $priceIncludesTax
-     * @param bool $useBaseCurrency
-     * @return array|null
-     */
-    public function beforeMapItems(
-        CommonTaxCollector $subject,
-        ShippingAssignmentInterface $shippingAssignment,
-        $priceIncludesTax,
-        $useBaseCurrency
-    ) {
-        return !$priceIncludesTax && $this->isShoppingFeedShippingAssignment($shippingAssignment)
-            ? [ $shippingAssignment, true, $useBaseCurrency ]
-            : null;
-    }
-
-    /**
-     * @param CommonTaxCollector $subject
-     * @param QuoteDetailsItemInterface[] $itemDataObjects
+     * @param callable $proceed
      * @param ShippingAssignmentInterface $shippingAssignment
      * @param bool $priceIncludesTax
      * @param bool $useBaseCurrency
@@ -85,13 +67,20 @@ class CommonTaxCollectorPlugin
      * @throws InputException
      * @throws LocalizedException
      */
-    public function afterMapItems(
+    public function aroundMapItems(
         CommonTaxCollector $subject,
-        array $itemDataObjects,
+        callable $proceed,
         ShippingAssignmentInterface $shippingAssignment,
         $priceIncludesTax,
         $useBaseCurrency
     ) {
+        if ($this->isShoppingFeedShippingAssignment($shippingAssignment)) {
+            $priceIncludesTax = true;
+        }
+
+        /** @var QuoteDetailsItemInterface[] $itemDataObjects */
+        $itemDataObjects = $proceed($shippingAssignment, $priceIncludesTax, $useBaseCurrency);
+
         if ($this->isShoppingFeedShippingAssignment($shippingAssignment)) {
             $isBusinessAssignment = $this->isShoppingFeedBusinessShippingAssignment($shippingAssignment);
 
@@ -118,7 +107,7 @@ class CommonTaxCollectorPlugin
 
     /**
      * @param CommonTaxCollector $subject
-     * @param QuoteDetailsItemInterface $shippingDataObject
+     * @param callable $proceed
      * @param ShippingAssignmentInterface $shippingAssignment
      * @param QuoteAddressTotal $total
      * @param bool $useBaseCurrency
@@ -126,13 +115,16 @@ class CommonTaxCollectorPlugin
      * @throws InputException
      * @throws LocalizedException
      */
-    public function afterGetShippingDataObject(
+    public function aroundGetShippingDataObject(
         CommonTaxCollector $subject,
-        $shippingDataObject,
+        callable $proceed,
         ShippingAssignmentInterface $shippingAssignment,
         QuoteAddressTotal $total,
         $useBaseCurrency
     ) {
+        /** @var QuoteDetailsItemInterface $shippingDataObject */
+        $shippingDataObject = $proceed($shippingAssignment, $total, $useBaseCurrency);
+
         if ($this->isShoppingFeedShippingAssignment($shippingAssignment)) {
             if ($shippingDataObject instanceof QuoteDetailsItemInterface) {
                 $shippingDataObject->setIsTaxIncluded(true);

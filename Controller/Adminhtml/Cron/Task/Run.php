@@ -50,7 +50,7 @@ class Run extends TaskAction
         } catch (NoSuchEntityException $e) {
             $this->messageManager->addErrorMessage(__('This cron task does no longer exist.'));
         } catch (LocalizedException $e) {
-            $this->messageManager->addExceptionMessage($e->getPrevious() ?: $e);
+            $this->messageManager->addExceptionMessage($e, $e->getMessage());
         } catch (\Exception $e) {
             $this->messageManager->addExceptionMessage($e, __('An error occurred while running the cron task.'));
         }

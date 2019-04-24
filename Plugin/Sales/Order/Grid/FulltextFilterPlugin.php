@@ -38,13 +38,16 @@ class FulltextFilterPlugin
 
     /**
      * @param FulltextFilter $subject
-     * @param mixed $result
+     * @param callable $proceed
      * @param Collection $collection
      * @param Filter $filter
      * @return mixed
+     * @throws \Zend_Db_Select_Exception
      */
-    public function afterApply(FulltextFilter $subject, $result, Collection $collection, Filter $filter)
+    public function aroundApply(FulltextFilter $subject, callable $proceed, Collection $collection, Filter $filter)
     {
+        $result = $proceed($collection, $filter);
+
         if (($collection instanceof OrderGridCollection)
             && $this->orderGridCollectionPlugin->isAppliedToOrderGridCollection($collection)
         ) {

@@ -1,10 +1,38 @@
 define([
     'underscore',
-    'Magento_Ui/js/grid/columns/select'
-], function (_, SelectColumn) {
+    'Magento_Ui/js/grid/columns/column'
+], function (_, Column) {
     'use strict';
 
-    return SelectColumn.extend({
+    return Column.extend({
+        getLabel: function () {
+            var options = this.options || [],
+                values = this._super(),
+                label = [];
+
+            if (_.isString(values)) {
+                values = values.split(',');
+            }
+
+            if (!_.isArray(values)) {
+                values = [values];
+            }
+
+            values = values.map(function (value) {
+                return value + '';
+            });
+
+            options = this.flatOptions(options);
+
+            options.forEach(function (item) {
+                if (_.contains(values, item.value + '')) {
+                    label.push(item.label);
+                }
+            });
+
+            return label.join(', ');
+        },
+
         flatOptions: function (options) {
             var self = this;
 

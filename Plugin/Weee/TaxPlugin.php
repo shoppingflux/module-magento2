@@ -16,8 +16,8 @@ class TaxPlugin
     private $lockedProductAttributes = array();
 
     /**
-     * @param WeeeTax $weeeTax
-     * @param array $productAttributes
+     * @param WeeeTax $subject
+     * @param callable $proceed
      * @param CatalogProduct $product
      * @param DataObject $shipping
      * @param DataObject $billing
@@ -26,9 +26,9 @@ class TaxPlugin
      * @param bool $round
      * @return array
      */
-    public function afterGetProductWeeeAttributes(
-        WeeeTax $weeeTax,
-        $productAttributes,
+    public function aroundGetProductWeeeAttributes(
+        WeeeTax $subject,
+        callable $proceed,
         $product,
         $shipping,
         $billing,
@@ -36,6 +36,8 @@ class TaxPlugin
         $calculateTax,
         $round
     ) {
+        $productAttributes = $proceed($product, $shipping, $billing, $website, $calculateTax, $round);
+
         if (($product instanceof DataObject)
             && ($productId = (int) $product->getId())
             && isset($this->lockedProductAttributes[$productId])
