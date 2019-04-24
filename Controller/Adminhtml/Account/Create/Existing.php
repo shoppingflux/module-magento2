@@ -65,7 +65,7 @@ class Existing extends Action
                 $this->messageManager->addSuccessMessage(__('The account has been successfully created.'));
                 return $redirectResult->setPath('*/*/');
             } catch (LocalizedException $e) {
-                $this->messageManager->addExceptionMessage($e->getPrevious() ?: $e);
+                $this->messageManager->addExceptionMessage($e, $e->getMessage());
             } catch (\Exception $e) {
                 $this->messageManager->addExceptionMessage($e, __('An error occurred while creating the account.'));
             }

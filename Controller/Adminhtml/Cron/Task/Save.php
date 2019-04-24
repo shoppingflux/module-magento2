@@ -101,7 +101,7 @@ class Save extends TaskAction
             $isSaveSuccessful = true;
             $this->messageManager->addSuccessMessage(__('The cron task has been successfully saved.'));
         } catch (LocalizedException $e) {
-            $this->messageManager->addExceptionMessage($e->getPrevious() ?: $e);
+            $this->messageManager->addExceptionMessage($e, $e->getMessage());
         } catch (\Exception $e) {
             $this->messageManager->addExceptionMessage($e, __('An error occurred while saving the cron task.'));
         }

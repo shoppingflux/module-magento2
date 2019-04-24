@@ -6,7 +6,6 @@ use Magento\Backend\Block\Template;
 use Magento\Backend\Block\Template\Context;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Registry;
-use Magento\Framework\Serialize\Serializer\Json as JsonSerializer;
 use Magento\Framework\View\Element\Messages as MessagesBlock;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterface;
 use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid as ProductGrid;
@@ -25,11 +24,6 @@ class Wrapper extends Template
     private $coreRegistry;
 
     /**
-     * @var JsonSerializer
-     */
-    protected $jsonSerializer;
-
-    /**
      * @var MessagesBlock|null
      */
     private $messagesBlock = null;
@@ -42,17 +36,14 @@ class Wrapper extends Template
     /**
      * @param Context $context
      * @param Registry $coreRegistry
-     * @param JsonSerializer $jsonSerializer
      * @param array $data
      */
     public function __construct(
         Context $context,
         Registry $coreRegistry,
-        JsonSerializer $jsonSerializer,
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
-        $this->jsonSerializer = $jsonSerializer;
         parent::__construct($context, $data);
     }
 
@@ -130,6 +121,6 @@ class Wrapper extends Template
      */
     public function getSelectedProductIdsJsonList()
     {
-        return $this->jsonSerializer->serialize($this->getAccountStore()->getSelectedFeedProductIds());
+        return json_encode($this->getAccountStore()->getSelectedFeedProductIds());
     }
 }

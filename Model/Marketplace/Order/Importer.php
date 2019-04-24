@@ -252,8 +252,8 @@ class Importer
         $shipmentData = $apiOrder->getShipment();
         $marketplaceOrder->setShipmentCarrier($shipmentData['carrier'] ?? $this->getDefaultShippingMethod($store));
 
-        $marketplaceOrder->setCreatedAt($apiOrder->getCreatedAt());
-        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt());
+        $marketplaceOrder->setCreatedAt($apiOrder->getCreatedAt()->format('Y-m-d H:i:s'));
+        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt()->format('Y-m-d H:i:s'));
         $marketplaceOrder->setFetchedAt($this->localeDate->date(null, null, false)->format('Y-m-d H:i:s'));
     }
 

@@ -1,161 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
     <argument name="data" xsi:type="array">
+        <item name="buttons" xsi:type="array">
+            <item name="back" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\BackButton</item>
+            <item name="reset" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\ResetButton</item>
+            <item name="save" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\SaveButton</item>
+            <item name="save_and_continue" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveAndContinueButton</item>
+        </item>
+        <item name="config" xsi:type="array">
+            <item name="dataScope" xsi:type="string">data</item>
+            <item name="namespace" xsi:type="string">sfm_shipping_method_rule_form</item>
+        </item>
         <item name="js_config" xsi:type="array">
+            <item name="deps" xsi:type="string">sfm_shipping_method_rule_form.shipping_method_rule_form_data_source</item>
             <item name="provider" xsi:type="string">sfm_shipping_method_rule_form.shipping_method_rule_form_data_source</item>
         </item>
         <item name="template" xsi:type="string">templates/form/collapsible</item>
     </argument>
-    <settings>
-        <buttons>
-            <button name="back" class="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\BackButton"/>
-            <button name="reset" class="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\ResetButton"/>
-            <button name="save" class="ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\SaveButton"/>
-            <button name="save_and_continue" class="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveAndContinueButton"/>
-        </buttons>
-        <dataScope>data</dataScope>
-        <deps>
-            <dep>sfm_shipping_method_rule_form.shipping_method_rule_form_data_source</dep>
-        </deps>
-        <namespace>sfm_shipping_method_rule_form</namespace>
-    </settings>
     <dataSource name="shipping_method_rule_form_data_source">
         <argument name="data" xsi:type="array">
             <item name="js_config" xsi:type="array">
                 <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
             </item>
         </argument>
-        <settings>
-            <submitUrl path="shoppingfeed_manager/shipping_method_rule/save"/>
-        </settings>
-        <dataProvider class="ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Form\DataProvider" name="shipping_method_rule_form_data_source">
-            <settings>
-                <requestFieldName>rule_id</requestFieldName>
-                <primaryFieldName>rule_id</primaryFieldName>
-            </settings>
-        </dataProvider>
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Form\DataProvider</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="*/*/save"/>
+                </item>
+            </argument>
+            <argument name="name" xsi:type="string">shipping_method_rule_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">rule_id</argument>
+            <argument name="requestFieldName" xsi:type="string">rule_id</argument>
+        </argument>
     </dataSource>
-    <fieldset name="rule_information" sortOrder="10">
-        <settings>
-            <collapsible>true</collapsible>
-            <dataScope>rule</dataScope>
-            <opened>true</opened>
-            <label translate="true">Rule Information</label>
-        </settings>
-        <field name="name" formElement="input">
-            <settings>
-                <dataScope>name</dataScope>
-                <dataType>text</dataType>
-                <label translate="true">Name</label>
-                <validation>
-                    <rule name="required-entry" xsi:type="boolean">true</rule>
-                </validation>
-                <visible>true</visible>
-            </settings>
-        </field>
-        <field name="description" formElement="textarea">
+    <fieldset name="rule_information">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="dataScope" xsi:type="string">rule</item>
+                <item name="label" xsi:type="string" translate="true">Rule Information</item>
+                <item name="opened" xsi:type="boolean">true</item>
+                <item name="sortOrder" xsi:type="number">10</item>
+            </item>
+        </argument>
+        <field name="name">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="source" xsi:type="string">shipping_method_rule</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="label" xsi:type="string" translate="true">Name</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
-            <settings>
-                <dataScope>description</dataScope>
-                <dataType>text</dataType>
-                <label translate="true">Description</label>
-                <visible>true</visible>
-            </settings>
         </field>
-        <field name="is_active" formElement="checkbox">
+        <field name="description">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="source" xsi:type="string">shipping_method_rule</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">textarea</item>
+                    <item name="label" xsi:type="string" translate="true">Description</item>
+                </item>
+            </argument>
+        </field>
+        <field name="is_active">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">boolean</item>
                     <item name="default" xsi:type="number">1</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="label" xsi:type="string" translate="true">Active</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="false" xsi:type="number">0</item>
+                        <item name="true" xsi:type="number">1</item>
+                    </item>
                 </item>
             </argument>
-            <settings>
-                <dataScope>is_active</dataScope>
-                <dataType>boolean</dataType>
-                <label translate="true">Active</label>
-                <validation>
-                    <rule name="required-entry" xsi:type="boolean">true</rule>
-                </validation>
-            </settings>
-            <formElements>
-                <checkbox>
-                    <settings>
-                        <valueMap>
-                            <map name="false" xsi:type="number">0</map>
-                            <map name="true" xsi:type="number">1</map>
-                        </valueMap>
-                        <prefer>toggle</prefer>
-                    </settings>
-                </checkbox>
-            </formElements>
         </field>
-        <field name="from_date" formElement="date">
+        <field name="from_date">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="source" xsi:type="string">shipping_method_rule</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">date</item>
+                    <item name="label" xsi:type="string" translate="true">From</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-date" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
-            <settings>
-                <dataScope>from_date</dataScope>
-                <dataType>text</dataType>
-                <label translate="true">From</label>
-                <validation>
-                    <rule name="validate-date" xsi:type="boolean">true</rule>
-                </validation>
-                <visible>true</visible>
-            </settings>
         </field>
-        <field name="to_date" formElement="date">
+        <field name="to_date">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="source" xsi:type="string">shipping_method_rule</item>
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">date</item>
+                    <item name="label" xsi:type="string" translate="true">To</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="validate-date" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
-            <settings>
-                <dataScope>to_date</dataScope>
-                <dataType>text</dataType>
-                <label translate="true">To</label>
-                <validation>
-                    <rule name="validate-date" xsi:type="boolean">true</rule>
-                </validation>
-                <visible>true</visible>
-            </settings>
         </field>
-        <field name="sort_order" formElement="input">
+        <field name="sort_order">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="source" xsi:type="string">shipping_method_rule</item>
+                    <item name="dataType" xsi:type="string">text</item>
                     <item name="default" xsi:type="number">0</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="label" xsi:type="string" translate="true">Priority</item>
                 </item>
             </argument>
-            <settings>
-                <dataScope>sort_order</dataScope>
-                <dataType>text</dataType>
-                <label translate="true">Priority</label>
-            </settings>
         </field>
     </fieldset>
-    <fieldset name="conditions" sortOrder="20">
-        <settings>
-            <collapsible>true</collapsible>
-            <label translate="true">Conditions</label>
-        </settings>
-        <container name="conditions_apply_to" sortOrder="10">
+    <fieldset name="conditions">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="label" xsi:type="string" translate="true">Conditions</item>
+                <item name="sortOrder" xsi:type="number">20</item>
+            </item>
+        </argument>
+        <container name="conditions_apply_to">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="sortOrder" xsi:type="number">10</item>
+                </item>
+            </argument>
             <htmlContent name="html_content">
-                <block name="conditions_apply_to" class="ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\ConditionsForm"/>
+                <argument name="block" xsi:type="object">ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\ConditionsForm</argument>
             </htmlContent>
         </container>
     </fieldset>
-    <fieldset name="shipping_method" sortOrder="30">
-        <settings>
-            <collapsible>true</collapsible>
-            <dataScope>rule.applier</dataScope>
-            <label translate="true">Shipping Method</label>
-            <opened>true</opened>
-        </settings>
+    <fieldset name="shipping_method">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="dataScope" xsi:type="string">rule.applier</item>
+                <item name="label" xsi:type="string" translate="true">Shipping Method</item>
+                <item name="sortOrder" xsi:type="number">30</item>
+            </item>
+        </argument>
     </fieldset>
 </form>

@@ -152,7 +152,7 @@ class Save extends RuleAction
             $isSaveSuccessful = true;
             $this->messageManager->addSuccessMessage(__('The shipping method rule has been successfully saved.'));
         } catch (LocalizedException $e) {
-            $this->messageManager->addExceptionMessage($e->getPrevious() ?: $e);
+            $this->messageManager->addExceptionMessage($e, $e->getMessage());
         } catch (\Zend_Filter_Exception $e) {
             $this->messageManager->addExceptionMessage($e, __($e->getMessage()));
         } catch (\Exception $e) {

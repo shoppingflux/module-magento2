@@ -374,14 +374,18 @@ class Exporter
     public function exportStoreFeed(StoreInterface $store)
     {
         $mediaDirectoryReader = $this->getMediaDirectoryReader();
-        $feedMediaPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory) . '/';
-        $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
-        $feedFilePath = $feedMediaPath . $feedFileName;
-        $feedTempFilePath = $feedFilePath . '.tmp';
+        $feedAbsoluteMediaPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory) . '/';
+        $feedRelativeMediaPath = $mediaDirectoryReader->getRelativePath($this->feedDirectory) . '/';
 
-        if (!$mediaDirectoryReader->isExist($feedMediaPath)) {
+        $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
+        $feedAbsoluteFilePath = $feedAbsoluteMediaPath . '/' . $feedFileName;
+        $feedAbsoluteTempFilePath = $feedAbsoluteFilePath . '.tmp';
+        $feedRelativeFilePath = $feedRelativeMediaPath . '/' . $feedFileName;
+        $feedRelativeTempFilePath = $feedRelativeFilePath . '.tmp';
+
+        if (!$mediaDirectoryReader->isExist($feedRelativeMediaPath)) {
             $mediaDirectoryWriter = $this->getMediaDirectoryWriter();
-            $mediaDirectoryWriter->create($feedMediaPath);
+            $mediaDirectoryWriter->create($feedRelativeMediaPath);
         }
 
         $feedGenerator = $this->feedGeneratorFactory->create();
@@ -396,18 +400,20 @@ class Exporter
         $feedGenerator->setAttribute('storeUrl', $baseStore->getUrl());
 
         if ($this->generalConfig->shouldUseGzipCompression($store)) {
-            $feedFilePath .= '.gz';
-            $feedTempFilePath .= '.gz';
-            $feedGenerator->setUri('compress.zlib://' . $feedTempFilePath);
+            $feedAbsoluteFilePath .= '.gz';
+            $feedAbsoluteTempFilePath .= '.gz';
+            $feedRelativeFilePath .= '.gz';
+            $feedRelativeTempFilePath .= '.gz';
+            $feedGenerator->setUri('compress.zlib://' . $feedAbsoluteTempFilePath);
         } else {
-            $feedGenerator->setUri('file://' . $feedTempFilePath);
+            $feedGenerator->setUri('file://' . $feedAbsoluteTempFilePath);
         }
 
         $this->writeStoreProductsToGenerator($store, $feedGenerator, $this->getStoreProductsIterator($store));
 
-        if (false === $this->getMediaDirectoryWriter()->renameFile($feedTempFilePath, $feedFilePath)) {
+        if (false === $this->getMediaDirectoryWriter()->renameFile($feedRelativeTempFilePath, $feedRelativeFilePath)) {
             throw new LocalizedException(
-                __('Could not copy file "%1" to file "%2".', $feedTempFilePath, $feedFilePath)
+                __('Could not copy file "%1" to file "%2".', $feedAbsoluteTempFilePath, $feedAbsoluteFilePath)
             );
         }
     }
