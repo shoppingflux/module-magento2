@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.19.0] - 2019-04-24
+### Fixed
+- Fix compatibility problems with Magento 2.1.x
+
 ## [0.18.0] - 2019-03-27
 ### Added
 - Add "price_before_discount" and "shipping_delay" attributes to the feed
