@@ -28,6 +28,18 @@ class Option extends AbstractRenderer
      */
     public function renderAttributeValue(StoreInterface $store, AbstractAttribute $attribute, $value)
     {
-        return !$this->isUndefinedValue($value) ? (string) $attribute->getSource()->getOptionText($value) : null;
+        if (!$this->isUndefinedValue($value)) {
+            $label = $attribute->getSource()->getOptionText($value);
+
+            if (false !== $label) {
+                if (!is_array($label)) {
+                    return (string) $label;
+                } elseif (isset($label['label'])) {
+                    return (string) $label['label'];
+                }
+            }
+        }
+
+        return null;
     }
 }
