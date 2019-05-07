@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.20.0] - 2019-05-07
+### Added
+- Fetch the tax amount for marketplace order items
+
+### Changed
+- Bumped `shoppingfeed/php-sdk` dependency from **0.2.4** to **0.2.6**
+- Improve the detection of untaxed (business) orders
+
+### Fixed
+- Fix rendering for options-based attributes with non-text labels
+
 ## [0.19.0] - 2019-04-24
 ### Fixed
 - Fix compatibility problems with Magento 2.1.x
@@ -131,7 +142,7 @@
 - Force feed refresh in case of meaningful configuration change
 
 ### Changed
-- Use the latest version of the feed generator
+- Bumped `shoppingfeed/php-feed-generator` dependency from **1.0.0** to **1.0.2**
 - Tweak various constants (database / UI)
 
 ### Fixed
