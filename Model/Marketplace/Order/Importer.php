@@ -306,6 +306,7 @@ class Importer
         $item->setReference($apiItem->getReference());
         $item->setQuantity($apiItem->getQuantity());
         $item->setPrice($apiItem->getUnitPrice());
+        $item->setTaxAmount($apiItem->getTaxAmount());
         return $item;
     }
 

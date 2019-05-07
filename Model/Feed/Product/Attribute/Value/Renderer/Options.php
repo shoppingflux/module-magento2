@@ -35,9 +35,23 @@ class Options extends AbstractRenderer
         $source = $attribute->getSource();
 
         foreach ($value as $key => $subValue) {
-            $value[$key] = (string) $source->getOptionText($subValue);
+            $subLabel = $source->getOptionText($subValue);
+
+            if (is_array($subLabel)) {
+                if (isset($subLabel['label'])) {
+                    $subLabel = $subLabel['label'];
+                } else {
+                    $subLabel = false;
+                }
+            }
+
+            if (false !== $subLabel) {
+                $value[$key] = (string) $subLabel;
+            } else {
+                unset($value[$key]);
+            }
         }
 
-        return implode(', ', $value);
+        return empty($value) ? null : implode(', ', $value);
     }
 }

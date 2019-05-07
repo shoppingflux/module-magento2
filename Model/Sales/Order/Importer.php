@@ -291,6 +291,29 @@ class Importer implements ImporterInterface
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceItemInterface[] $orderItems
+     * @return bool
+     */
+    public function isUntaxedBusinessOrder(MarketplaceOrderInterface $order, array $orderItems)
+    {
+        if ($order->isBusinessOrder()) {
+            $isUntaxed = true;
+
+            foreach ($orderItems as $orderItem) {
+                if ($orderItem->getTaxAmount() > 0) {
+                    $isUntaxed = false;
+                    break;
+                }
+            }
+
+            return $isUntaxed;
+        }
+
+        return false;
+    }
+
+    /**
      * @param MarketplaceOrderInterface[] $marketplaceOrders
      * @param StoreInterface $store
      * @throws \Exception
@@ -368,7 +391,16 @@ class Importer implements ImporterInterface
                     $quote->setCheckoutMethod(QuoteManagerInterface::METHOD_GUEST);
                     $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
 
-                    if ($marketplaceOrder->isBusinessOrder()) {
+                    if (isset($orderItems[$marketplaceOrderId])) {
+                        $isUntaxedBusinessOrder = $this->isUntaxedBusinessOrder(
+                            $marketplaceOrder,
+                            $orderItems[$marketplaceOrderId]
+                        );
+                    } else {
+                        throw new LocalizedException(__('The marketplace order has no item.'));
+                    }
+
+                    if ($isUntaxedBusinessOrder) {
                         $this->isCurrentlyImportedBusinessQuote = true;
                         $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
                         $quote->setCustomerGroupId($this->businessTaxManager->getCustomerGroup()->getId());
@@ -386,7 +418,7 @@ class Importer implements ImporterInterface
                         $this->importQuoteAddress(
                             $quoteAddress,
                             $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
-                            $marketplaceOrder->isBusinessOrder(),
+                            $isUntaxedBusinessOrder,
                             $store
                         );
                     } else {
@@ -399,23 +431,19 @@ class Importer implements ImporterInterface
                         $this->importQuoteAddress(
                             $quoteAddress,
                             $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING],
-                            $marketplaceOrder->isBusinessOrder(),
+                            $isUntaxedBusinessOrder,
                             $store
                         );
                     } else {
                         throw new LocalizedException(__('The marketplace order has no shipping address.'));
                     }
 
-                    if (isset($orderItems[$marketplaceOrderId])) {
-                        $this->importQuoteItems(
-                            $quote,
-                            $orderItems[$marketplaceOrderId],
-                            $marketplaceOrder->isBusinessOrder(),
-                            $store
-                        );
-                    } else {
-                        throw new LocalizedException(__('The marketplace order has no item.'));
-                    }
+                    $this->importQuoteItems(
+                        $quote,
+                        $orderItems[$marketplaceOrderId],
+                        $isUntaxedBusinessOrder,
+                        $store
+                    );
 
                     $this->importQuoteShippingMethod($quote, $marketplaceOrder, $store);
                     $this->importQuotePaymentMethod($quote, $store);
@@ -521,7 +549,7 @@ class Importer implements ImporterInterface
     public function importQuoteAddress(
         QuoteAddressInterface $quoteAddress,
         MarketplaceAddressInterface $marketplaceAddress,
-        $isBusinessOrder,
+        $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
         $quoteAddress->setFirstname($this->getAddressRequiredFieldValue($marketplaceAddress->getFirstName(), $store));
@@ -552,20 +580,20 @@ class Importer implements ImporterInterface
             $quoteAddress->setTelephone($this->orderGeneralConfig->getDefaultPhoneNumber($store));
         }
 
-        $this->tagImportedQuoteAddress($quoteAddress, $isBusinessOrder);
+        $this->tagImportedQuoteAddress($quoteAddress, $isUntaxedBusinessOrder);
     }
 
     /**
      * @param CatalogProduct $product
      * @param Quote $quote
-     * @param bool $isBusinessOrder
+     * @param bool $isUntaxedBusinessOrder
      * @param StoreInterface $store
      * @return float
      */
     private function getCatalogProductWeeeAmount(
         CatalogProduct $product,
         Quote $quote,
-        $isBusinessOrder,
+        $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
         $weeeAmountExclTax = 0.0;
@@ -589,7 +617,7 @@ class Importer implements ImporterInterface
 
         $this->weeeTaxPlugin->resetProductLockedAttributes($product->getId());
 
-        if ($isBusinessOrder) {
+        if ($isUntaxedBusinessOrder) {
             if ($isCatalogPriceIncludingTax) {
                 $lockedAttributes = [];
 
@@ -629,12 +657,16 @@ class Importer implements ImporterInterface
     /**
      * @param Quote $quote
      * @param MarketplaceItemInterface[] $marketplaceItems
-     * @param bool $isBusinessOrder
+     * @param bool $isUntaxedBusinessOrder
      * @param StoreInterface $store
      * @throws LocalizedException
      */
-    public function importQuoteItems(Quote $quote, array $marketplaceItems, $isBusinessOrder, StoreInterface $store)
-    {
+    public function importQuoteItems(
+        Quote $quote,
+        array $marketplaceItems,
+        $isUntaxedBusinessOrder,
+        StoreInterface $store
+    ) {
         /** @var MarketplaceItemInterface $marketplaceItem */
         foreach ($marketplaceItems as $marketplaceItem) {
             $reference = $marketplaceItem->getReference();
@@ -652,7 +684,7 @@ class Importer implements ImporterInterface
                 $itemPrice = $marketplaceItem->getPrice();
 
                 if ($this->weeeHelper->isEnabled($store->getBaseStore())) {
-                    $itemPrice -= $this->getCatalogProductWeeeAmount($product, $quote, $isBusinessOrder, $store);
+                    $itemPrice -= $this->getCatalogProductWeeeAmount($product, $quote, $isUntaxedBusinessOrder, $store);
                 }
 
                 $buyRequest = $this->dataObjectFactory->create(
@@ -666,7 +698,7 @@ class Importer implements ImporterInterface
 
                 $product->setData('cart_qty', $marketplaceItem->getQuantity());
 
-                if ($isBusinessOrder) {
+                if ($isUntaxedBusinessOrder) {
                     $product->setData('tax_class_id', $this->businessTaxManager->getProductTaxClass()->getClassId());
                 }
 
@@ -800,16 +832,16 @@ class Importer implements ImporterInterface
 
     /**
      * @param QuoteAddressInterface $quoteAddress
-     * @param bool $isBusinessOrder
+     * @param bool $isUntaxedBusinessOrder
      */
-    private function tagImportedQuoteAddress(QuoteAddressInterface $quoteAddress, $isBusinessOrder)
+    private function tagImportedQuoteAddress(QuoteAddressInterface $quoteAddress, $isUntaxedBusinessOrder)
     {
         if (!$extensionAttributes = $quoteAddress->getExtensionAttributes()) {
             $extensionAttributes = $this->quoteAddressExtensionFactory->create();
         }
 
         $extensionAttributes->setSfmIsShoppingFeedOrder(true);
-        $extensionAttributes->setSfmIsShoppingFeedBusinessOrder($isBusinessOrder);
+        $extensionAttributes->setSfmIsShoppingFeedBusinessOrder($isUntaxedBusinessOrder);
         $quoteAddress->setExtensionAttributes($extensionAttributes);
     }
 

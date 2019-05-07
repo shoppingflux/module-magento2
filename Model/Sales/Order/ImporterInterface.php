@@ -25,23 +25,28 @@ interface ImporterInterface
     /**
      * @param QuoteAddressInterface $quoteAddress
      * @param MarketplaceAddressInterface $marketplaceAddress
-     * @param bool $isBusinessOrder
+     * @param bool $isUntaxedBusinessOrder
      * @param StoreInterface $store
      */
     public function importQuoteAddress(
         QuoteAddressInterface $quoteAddress,
         MarketplaceAddressInterface $marketplaceAddress,
-        $isBusinessOrder,
+        $isUntaxedBusinessOrder,
         StoreInterface $store
     );
 
     /**
      * @param Quote $quote
      * @param MarketplaceItemInterface[] $marketplaceItems
-     * @param bool $isBusinessOrder
+     * @param bool $isUntaxedBusinessOrder
      * @param StoreInterface $store
      */
-    public function importQuoteItems(Quote $quote, array $marketplaceItems, $isBusinessOrder, StoreInterface $store);
+    public function importQuoteItems(
+        Quote $quote,
+        array $marketplaceItems,
+        $isUntaxedBusinessOrder,
+        StoreInterface $store
+    );
 
     /**
      * @param Quote $quote
