@@ -41,6 +41,12 @@ class Item extends AbstractModel implements ItemInterface
         return (float) $this->getDataByKey(self::PRICE);
     }
 
+    public function getTaxAmount()
+    {
+        $taxAmount = $this->getDataByKey(self::TAX_AMOUNT);
+        return (null !== $taxAmount) ? (float) $taxAmount : null;
+    }
+
     public function setOrderId($orderId)
     {
         return $this->setData(self::ORDER_ID, (int) $orderId);
@@ -59,5 +65,10 @@ class Item extends AbstractModel implements ItemInterface
     public function setPrice($price)
     {
         return $this->setData(self::PRICE, (float) $price);
+    }
+
+    public function setTaxAmount($taxAmount)
+    {
+        return $this->setData(self::TAX_AMOUNT, (null !== $taxAmount) ? (float) $taxAmount : null);
     }
 }

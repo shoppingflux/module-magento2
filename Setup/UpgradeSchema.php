@@ -77,6 +77,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.17.0') < 0)) {
             $this->augmentMarketplaceOrderShoppingFeedIdFieldType($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.20.0') < 0)) {
+            $this->addMarketplaceOrderItemTaxAmountField($setup);
+        }
     }
 
     /**
@@ -1139,5 +1143,27 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'comment' => 'Shopping Feed Order ID',
             ]
         );
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderItemTaxAmountField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderItemTableName = $this->tableDictionary->getMarketplaceOrderItemTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderItemTableName, ItemInterface::TAX_AMOUNT)) {
+            $connection->addColumn(
+                $marketplaceOrderItemTableName,
+                ItemInterface::TAX_AMOUNT,
+                [
+                    'type' => Table::TYPE_DECIMAL,
+                    [ 12, 4 ],
+                    'nullable' => true,
+                    'comment' => 'Tax Amount',
+                ]
+            );
+        }
     }
 }

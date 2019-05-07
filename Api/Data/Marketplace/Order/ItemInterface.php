@@ -13,6 +13,7 @@ interface ItemInterface
     const REFERENCE = 'reference';
     const QUANTITY = 'quantity';
     const PRICE = 'price';
+    const TAX_AMOUNT = 'tax_amount';
     /**#@+*/
 
     /**
@@ -41,6 +42,11 @@ interface ItemInterface
     public function getPrice();
 
     /**
+     * @return float|null
+     */
+    public function getTaxAmount();
+
+    /**
      * @param int $orderId
      * @return ItemInterface
      */
@@ -63,4 +69,10 @@ interface ItemInterface
      * @return ItemInterface
      */
     public function setPrice($price);
+
+    /**
+     * @param float|null $taxAmount
+     * @return ItemInterface
+     */
+    public function setTaxAmount($taxAmount);
 }
