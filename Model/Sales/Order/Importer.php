@@ -365,6 +365,9 @@ class Importer implements ImporterInterface
                     $quoteId = (int) $this->quoteManager->createEmptyCart();
                     $this->currentlyImportedQuoteId = $quoteId;
 
+                    $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
+                    $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
+
                     /** @var Quote $quote */
                     $quote = $this->quoteRepository->get($quoteId);
 
@@ -408,9 +411,6 @@ class Importer implements ImporterInterface
                     } else {
                         $this->isCurrentlyImportedBusinessQuote = false;
                     }
-
-                    $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
-                    $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
 
                     if (($quoteAddress = $quote->getBillingAddress())
                         && isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING])
