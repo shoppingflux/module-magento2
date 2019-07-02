@@ -41,7 +41,7 @@ interface OrderInterface
     const STATUS_CANCELLED = 'cancelled';
     const STATUS_REFUNDED = 'refunded';
     const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
-    const STATUS_PARTIALLY_SHIPPED = 'partial_shipped';
+    const STATUS_PARTIALLY_SHIPPED = 'partially_shipped';
 
     const ADDITIONAL_FIELD_IS_BUSINESS_ORDER = 'is_business_order';
 
