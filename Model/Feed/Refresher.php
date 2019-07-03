@@ -2,13 +2,13 @@
 
 namespace ShoppingFeed\Manager\Model\Feed;
 
-use Magento\Catalog\Api\ProductRepositoryInterface\Proxy as CatalogProductRepositoryProxy;
+use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Store\Model\App\Emulation\Proxy as AppEmulationProxy;
+use Magento\Store\Model\App\Emulation as AppEmulation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
@@ -38,7 +38,7 @@ class Refresher
     const PRODUCT_COLLECTION_STOCK_STATUS_FILTER_FLAG = 'has_stock_status_filter';
 
     /**
-     * @var AppEmulationProxy
+     * @var AppEmulation
      */
     private $appEmulation;
 
@@ -83,7 +83,7 @@ class Refresher
     private $feedSectionResource;
 
     /**
-     * @var CatalogProductRepositoryProxy
+     * @var CatalogProductRepository
      */
     private $catalogProductRepository;
 
@@ -93,7 +93,7 @@ class Refresher
     private $catalogProductCollectionFactory;
 
     /**
-     * @param AppEmulationProxy $appEmulationProxy
+     * @param AppEmulation $appEmulation
      * @param RefresherResource $refresherResource
      * @param ExportStateAdapterInterface $exportStateAdapter
      * @param ExportStateConfigInterface $exportStateConfig
@@ -102,11 +102,11 @@ class Refresher
      * @param FeedSectionFilterFactory $feedSectionFilterFactory
      * @param FeedProductResourceFactory $feedProductResourceFactory
      * @param FeedSectionResourceFactory $feedSectionResourceFactory
-     * @param CatalogProductRepositoryProxy $catalogProductRepositoryProxy
+     * @param CatalogProductRepository $catalogProductRepository
      * @param CatalogProductCollectionFactory $catalogProductCollectionFactory
      */
     public function __construct(
-        AppEmulationProxy $appEmulationProxy,
+        AppEmulation $appEmulation,
         RefresherResource $refresherResource,
         ExportStateAdapterInterface $exportStateAdapter,
         ExportStateConfigInterface $exportStateConfig,
@@ -115,10 +115,10 @@ class Refresher
         FeedSectionFilterFactory $feedSectionFilterFactory,
         FeedProductResourceFactory $feedProductResourceFactory,
         FeedSectionResourceFactory $feedSectionResourceFactory,
-        CatalogProductRepositoryProxy $catalogProductRepositoryProxy,
+        CatalogProductRepository $catalogProductRepository,
         CatalogProductCollectionFactory $catalogProductCollectionFactory
     ) {
-        $this->appEmulation = $appEmulationProxy;
+        $this->appEmulation = $appEmulation;
         $this->refresherResource = $refresherResource;
         $this->exportStateAdapter = $exportStateAdapter;
         $this->exportStateConfig = $exportStateConfig;
@@ -127,7 +127,7 @@ class Refresher
         $this->feedSectionFilterFactory = $feedSectionFilterFactory;
         $this->feedProductResource = $feedProductResourceFactory->create();
         $this->feedSectionResource = $feedSectionResourceFactory->create();
-        $this->catalogProductRepository = $catalogProductRepositoryProxy;
+        $this->catalogProductRepository = $catalogProductRepository;
         $this->catalogProductCollectionFactory = $catalogProductCollectionFactory;
     }
 

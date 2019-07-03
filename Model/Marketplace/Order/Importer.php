@@ -4,7 +4,7 @@ namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy as TimezoneProxy;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
@@ -24,7 +24,7 @@ use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
 class Importer
 {
     /**
-     * @var TimezoneProxy
+     * @var TimezoneInterface
      */
     private $localeDate;
 
@@ -74,7 +74,7 @@ class Importer
     private $transactionFactory;
 
     /**
-     * @param TimezoneProxy $localeDateProxy
+     * @param TimezoneInterface $localeDate
      * @param DataObjectFactory $dataObjectFactory
      * @param OrderConfigInterface $orderGeneralConfig
      * @param OrderInterfaceFactory $orderFactory
@@ -86,7 +86,7 @@ class Importer
      * @param TransactionFactory $transactionFactory
      */
     public function __construct(
-        TimezoneProxy $localeDateProxy,
+        TimezoneInterface $localeDate,
         DataObjectFactory $dataObjectFactory,
         OrderConfigInterface $orderGeneralConfig,
         OrderInterfaceFactory $orderFactory,
@@ -97,7 +97,7 @@ class Importer
         ItemRepositoryInterface $itemRepository,
         TransactionFactory $transactionFactory
     ) {
-        $this->localeDate = $localeDateProxy;
+        $this->localeDate = $localeDate;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->orderGeneralConfig = $orderGeneralConfig;
         $this->orderFactory = $orderFactory;

@@ -2,19 +2,19 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
-use Magento\Catalog\Api\ProductRepositoryInterface\Proxy as CatalogProductRepositoryProxy;
+use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
-use Magento\Catalog\Helper\Product\Proxy as CatalogProductHelperProxy;
+use Magento\Catalog\Helper\Product as CatalogProductHelper;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
-use Magento\Checkout\Model\Session\Proxy as CheckoutSessionProxy;
-use Magento\Directory\Helper\Data\Proxy as DirectoryHelperProxy;
+use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Directory\Model\Region;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
-use Magento\Quote\Api\CartManagementInterface\Proxy as QuoteManagerProxy;
+use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
@@ -28,7 +28,6 @@ use Magento\Store\Model\Store as BaseStore;
 use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
 use Magento\Tax\Model\Config as TaxConfig;
 use Magento\Weee\Helper\Data as WeeeHelper;
-use Magento\Weee\Helper\Data\Proxy as WeeeHelperProxy;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
@@ -62,7 +61,7 @@ class Importer implements ImporterInterface
     private $dataObjectFactory;
 
     /**
-     * @var DirectoryHelperProxy
+     * @var DirectoryHelper
      */
     private $directoryHelper;
 
@@ -87,22 +86,22 @@ class Importer implements ImporterInterface
     private $orderGeneralConfig;
 
     /**
-     * @var CatalogProductHelperProxy
+     * @var CatalogProductHelper
      */
     private $catalogProductHelper;
 
     /**
-     * @var CatalogProductRepositoryProxy
+     * @var CatalogProductRepository
      */
     private $catalogProductRepository;
 
     /**
-     * @var CheckoutSessionProxy
+     * @var CheckoutSession
      */
     private $checkoutSession;
 
     /**
-     * @var QuoteManagerProxy
+     * @var QuoteManager
      */
     private $quoteManager;
 
@@ -209,19 +208,19 @@ class Importer implements ImporterInterface
     /**
      * @param TransactionFactory $transactionFactory
      * @param DataObjectFactory $dataObjectFactory
-     * @param DirectoryHelperProxy $directoryHelperProxy
+     * @param DirectoryHelper $directoryHelper
      * @param RegionCollectionFactory $regionCollectionFactory
      * @param TimeHelper $timeHelper
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
-     * @param CatalogProductHelperProxy $catalogProductHelperProxy
-     * @param CatalogProductRepositoryProxy $catalogProductRepositoryProxy
-     * @param CheckoutSessionProxy $checkoutSessionProxy
-     * @param QuoteManagerProxy $quoteManagerProxy
+     * @param CatalogProductHelper $catalogProductHelper
+     * @param CatalogProductRepository $catalogProductRepository
+     * @param CheckoutSession $checkoutSession
+     * @param QuoteManager $quoteManager
      * @param QuoteRepositoryInterface $quoteRepository
      * @param QuoteAddressExtensionFactory $quoteAddressExtensionFactory
      * @param BusinessTaxManager $businessTaxManager
-     * @param WeeeHelperProxy $weeeHelper
+     * @param WeeeHelper $weeeHelper
      * @param WeeeTaxPlugin $weeeTaxPlugin
      * @param TaxConfigPlugin $taxConfigPlugin
      * @param ShippingRateMethodFactory $shippingRateMethodFactory
@@ -237,19 +236,19 @@ class Importer implements ImporterInterface
     public function __construct(
         TransactionFactory $transactionFactory,
         DataObjectFactory $dataObjectFactory,
-        DirectoryHelperProxy $directoryHelperProxy,
+        DirectoryHelper $directoryHelper,
         RegionCollectionFactory $regionCollectionFactory,
         TimeHelper $timeHelper,
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
-        CatalogProductHelperProxy $catalogProductHelperProxy,
-        CatalogProductRepositoryProxy $catalogProductRepositoryProxy,
-        CheckoutSessionProxy $checkoutSessionProxy,
-        QuoteManagerProxy $quoteManagerProxy,
+        CatalogProductHelper $catalogProductHelper,
+        CatalogProductRepository $catalogProductRepository,
+        CheckoutSession $checkoutSession,
+        QuoteManager $quoteManager,
         QuoteRepositoryInterface $quoteRepository,
         QuoteAddressExtensionFactory $quoteAddressExtensionFactory,
         BusinessTaxManager $businessTaxManager,
-        WeeeHelperProxy $weeeHelper,
+        WeeeHelper $weeeHelper,
         WeeeTaxPlugin $weeeTaxPlugin,
         TaxConfigPlugin $taxConfigPlugin,
         ShippingRateMethodFactory $shippingRateMethodFactory,
@@ -264,15 +263,15 @@ class Importer implements ImporterInterface
     ) {
         $this->transactionFactory = $transactionFactory;
         $this->dataObjectFactory = $dataObjectFactory;
-        $this->directoryHelper = $directoryHelperProxy;
+        $this->directoryHelper = $directoryHelper;
         $this->regionCollectionFactory = $regionCollectionFactory;
         $this->timeHelper = $timeHelper;
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
-        $this->catalogProductHelper = $catalogProductHelperProxy;
-        $this->catalogProductRepository = $catalogProductRepositoryProxy;
-        $this->checkoutSession = $checkoutSessionProxy;
-        $this->quoteManager = $quoteManagerProxy;
+        $this->catalogProductHelper = $catalogProductHelper;
+        $this->catalogProductRepository = $catalogProductRepository;
+        $this->checkoutSession = $checkoutSession;
+        $this->quoteManager = $quoteManager;
         $this->quoteRepository = $quoteRepository;
         $this->quoteAddressExtensionFactory = $quoteAddressExtensionFactory;
         $this->businessTaxManager = $businessTaxManager;

@@ -2,7 +2,7 @@
 
 namespace ShoppingFeed\Manager\Observer;
 
-use Magento\Catalog\Helper\Product\Proxy as CatalogProductHelperProxy;
+use Magento\Catalog\Helper\Product as CatalogProductHelper;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Model\Quote;
@@ -13,7 +13,7 @@ class BeforeCheckoutSubmitObserver implements ObserverInterface
     const EVENT_KEY_QUOTE = 'quote';
 
     /**
-     * @var CatalogProductHelperProxy
+     * @var CatalogProductHelper
      */
     private $catalogProductHelper;
 
@@ -23,14 +23,14 @@ class BeforeCheckoutSubmitObserver implements ObserverInterface
     private $orderImporter;
 
     /**
-     * @param CatalogProductHelperProxy $catalogProductHelperProxy
+     * @param CatalogProductHelper $catalogProductHelper
      * @param OrderImporterInterface $orderImporter
      */
     public function __construct(
-        CatalogProductHelperProxy $catalogProductHelperProxy,
+        CatalogProductHelper $catalogProductHelper,
         OrderImporterInterface $orderImporter
     ) {
-        $this->catalogProductHelper = $catalogProductHelperProxy;
+        $this->catalogProductHelper = $catalogProductHelper;
         $this->orderImporter = $orderImporter;
     }
 

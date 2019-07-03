@@ -7,7 +7,7 @@ use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\UpgradeDataInterface;
 use ShoppingFeed\Manager\Api\Data\Cron\TaskInterface as CronTaskInterface;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
-use ShoppingFeed\Manager\Model\Account\Store\ConfigManager\Proxy as StoreConfigManager;
+use ShoppingFeed\Manager\Model\Account\Store\ConfigManager as StoreConfigManager;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 

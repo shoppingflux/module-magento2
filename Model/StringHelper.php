@@ -2,12 +2,12 @@
 
 namespace ShoppingFeed\Manager\Model;
 
-use Magento\Framework\Locale\ResolverInterface\Proxy as LocaleResolverProxy;
+use Magento\Framework\Locale\ResolverInterface as LocaleResolverInterface;
 
 class StringHelper
 {
     /**
-     * @var LocaleResolverProxy
+     * @var LocaleResolverInterface
      */
     private $localeResolver;
 
@@ -17,9 +17,9 @@ class StringHelper
     private $collator = null;
 
     /**
-     * @param LocaleResolverProxy $localeResolverProxy
+     * @param LocaleResolverInterface $localeResolverProxy
      */
-    public function __construct(LocaleResolverProxy $localeResolverProxy)
+    public function __construct(LocaleResolverInterface $localeResolverProxy)
     {
         $this->localeResolver = $localeResolverProxy;
     }
