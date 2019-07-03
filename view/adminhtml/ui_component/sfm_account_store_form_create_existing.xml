@@ -4,7 +4,7 @@
         <item name="buttons" xsi:type="array">
             <item name="back" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\BackButton</item>
             <item name="reset" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\ResetButton</item>
-            <item name="save" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\SaveButton</item>
+            <item name="save" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\ImportButton</item>
         </item>
         <item name="config" xsi:type="array">
             <item name="dataScope" xsi:type="string">data</item>
@@ -38,7 +38,7 @@
         <argument name="data" xsi:type="array">
             <item name="config" xsi:type="array">
                 <item name="dataScope" xsi:type="string">store</item>
-                <item name="label" xsi:type="string" translate="true">Import</item>
+                <item name="label" xsi:type="string" translate="true">Account Identification</item>
             </item>
         </argument>
         <field name="account_id">
@@ -46,9 +46,83 @@
                 <item name="config" xsi:type="array">
                     <item name="dataType" xsi:type="string">int</item>
                     <item name="formElement" xsi:type="string">select</item>
-                    <item name="label" xsi:type="string" translate="true">Account</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Account</item>
                     <item name="validation" xsi:type="array">
                         <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                    <item name="switcherConfig" xsi:type="array">
+                        <item name="enabled" xsi:type="boolean">true</item>
+                        <item name="rules" xsi:type="array">
+                            <item name="0" xsi:type="array">
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="callback" xsi:type="string">value</item>
+                                        <item name="params" xsi:type="array">
+                                            <item name="0" xsi:type="number">1</item>
+                                        </item>
+                                        <item name="target" xsi:type="string">${$.parentName}.is_new_account</item>
+                                    </item>
+                                </item>
+                                <item name="value" xsi:type="string">__new_account__</item>
+                            </item>
+                            <!-- Rules for existing accounts are defined dynamically in the data provider. -->
+                        </item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="is_new_account">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">number</item>
+                    <item name="formElement" xsi:type="string">hidden</item>
+                    <item name="switcherConfig" xsi:type="array">
+                        <item name="component" xsi:type="string">ShoppingFeed_Manager/js/form/switcher</item>
+                        <item name="enabled" xsi:type="boolean">true</item>
+                        <item name="rules" xsi:type="array">
+                            <item name="0" xsi:type="array">
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_store_id</item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="callback" xsi:type="string">show</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.use_api_token</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="callback" xsi:type="string">notify:value</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.use_api_token</item>
+                                    </item>
+                                </item>
+                                <item name="value" xsi:type="string">1</item>
+                            </item>
+                            <item name="1" xsi:type="array">
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="callback" xsi:type="string">show</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_store_id</item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.use_api_token</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.api_token</item>
+                                    </item>
+                                    <item name="3" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_login</item>
+                                    </item>
+                                    <item name="4" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_password</item>
+                                    </item>
+                                </item>
+                                <item name="value" xsi:type="string">0</item>
+                            </item>
+                        </item>
                     </item>
                 </item>
             </argument>
@@ -63,6 +137,97 @@
                     </item>
                     <item name="formElement" xsi:type="string">select</item>
                     <item name="label" xsi:type="string" translate="true">Shopping Feed Store</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="use_api_token">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">boolean</item>
+                    <item name="default" xsi:type="number">1</item>
+                    <item name="formElement" xsi:type="string">checkbox</item>
+                    <item name="label" xsi:type="string" translate="true">I Know the Account API Token</item>
+                    <item name="prefer" xsi:type="string">toggle</item>
+                    <item name="switcherConfig" xsi:type="array">
+                        <item name="enabled" xsi:type="boolean">true</item>
+                        <item name="rules" xsi:type="array">
+                            <item name="0" xsi:type="array">
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.api_token</item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="callback" xsi:type="string">show</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_login</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="callback" xsi:type="string">show</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_password</item>
+                                    </item>
+                                </item>
+                                <item name="value" xsi:type="number">0</item>
+                            </item>
+                            <item name="1" xsi:type="array">
+                                <item name="actions" xsi:type="array">
+                                    <item name="0" xsi:type="array">
+                                        <item name="callback" xsi:type="string">show</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.api_token</item>
+                                    </item>
+                                    <item name="1" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_login</item>
+                                    </item>
+                                    <item name="2" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_password</item>
+                                    </item>
+                                </item>
+                                <item name="value" xsi:type="number">1</item>
+                            </item>
+                        </item>
+                    </item>
+                    <item name="valueMap" xsi:type="array">
+                        <item name="false" xsi:type="number">0</item>
+                        <item name="true" xsi:type="number">1</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="api_token">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="label" xsi:type="string" translate="true">API Token</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="shopping_feed_login">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Username</item>
+                    <item name="validation" xsi:type="array">
+                        <item name="required-entry" xsi:type="boolean">true</item>
+                    </item>
+                </item>
+            </argument>
+        </field>
+        <field name="shopping_feed_password">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">password</item>
+                    <item name="elementTmpl" xsi:type="string">ShoppingFeed_Manager/form/element/password</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Password</item>
                     <item name="validation" xsi:type="array">
                         <item name="required-entry" xsi:type="boolean">true</item>
                     </item>

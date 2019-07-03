@@ -45,13 +45,18 @@
 
     <type name="ShoppingFeed\Manager\Model\Account\Store\ConfigManager" shared="true"/>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Refresher" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\Feed\Refresher" shared="true">
+        <arguments>
+            <argument name="appEmulation" xsi:type="object">Magento\Store\Model\App\Emulation\Proxy</argument>
+            <argument name="catalogProductRepository" xsi:type="object">Magento\Catalog\Api\ProductRepositoryInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher" shared="true"/>
 
     <type name="ShoppingFeed\Manager\Model\Feed\Exporter" shared="true">
         <arguments>
             <argument name="feedDirectory" xsi:type="string">shoppingfeed</argument>
-            <argument name="feedBaseFileName" xsi:type="string">feed_%d.xml</argument>
         </arguments>
     </type>
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter" shared="true"/>
@@ -81,6 +86,19 @@
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ImagesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Images"/>
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Categories"/>
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Shipping"/>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Stock">
+        <arguments>
+            <argument name="stockRegistry" xsi:type="object">Magento\CatalogInventory\Api\StockRegistryInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices">
+        <arguments>
+            <argument name="configurableProductType" xsi:type="object">Magento\ConfigurableProduct\Model\Product\Type\Configurable\Proxy</argument>
+            <argument name="taxCalculator" xsi:type="object">Magento\Tax\Api\TaxCalculationInterface\Proxy</argument>
+        </arguments>
+    </type>
 
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Attributes">
         <arguments>
@@ -170,7 +188,18 @@
 
     <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order"/>
     <preference for="ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\OrderRepository"/>
-    <type name="ShoppingFeed\Manager\Model\Marketplace\Order\Importer" shared="true"/>
+
+    <type name="ShoppingFeed\Manager\Model\Marketplace\Order\Importer" shared="true">
+        <arguments>
+            <argument name="localeDate" xsi:type="object">Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\Marketplace\Order\Manager" shared="true">
+        <arguments>
+            <argument name="localeDate" xsi:type="object">Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy</argument>
+        </arguments>
+    </type>
 
     <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\Address"/>
     <preference for="ShoppingFeed\Manager\Api\Marketplace\Order\AddressRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\AddressRepository"/>
@@ -202,10 +231,20 @@
     <preference for="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\MarketplaceInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\Marketplace"/>
 
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Config"/>
-    <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
-    <type name="ShoppingFeed\Manager\Model\Sales\Order\Importer" shared="true"/>
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Business\TaxManager" shared="true"/>
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector" shared="true"/>
+
+    <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
+    <type name="ShoppingFeed\Manager\Model\Sales\Order\Importer" shared="true">
+        <arguments>
+            <argument name="directoryHelper" xsi:type="object">Magento\Directory\Helper\Data\Proxy</argument>
+            <argument name="catalogProductHelper" xsi:type="object">Magento\Catalog\Helper\Product\Proxy</argument>
+            <argument name="catalogProductRepository" xsi:type="object">Magento\Catalog\Api\ProductRepositoryInterface\Proxy</argument>
+            <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+            <argument name="quoteManager" xsi:type="object">Magento\Quote\Api\CartManagementInterface\Proxy</argument>
+            <argument name="weeeHelper" xsi:type="object">Magento\Weee\Helper\Data\Proxy</argument>
+        </arguments>
+    </type>
 
     <type name="Magento\Weee\Model\Tax">
         <plugin name="sfm_weee_tax_plugin" type="ShoppingFeed\Manager\Plugin\Weee\TaxPlugin"/>
@@ -292,14 +331,18 @@
         </arguments>
     </type>
 
-    <type name="ShoppingFeed\Manager\Model\StringHelper" shared="true"/>
+    <type name="ShoppingFeed\Manager\Model\StringHelper" shared="true">
+        <arguments>
+            <argument name="localeResolver" xsi:type="object">Magento\Framework\Locale\ResolverInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\TimeHelper" shared="true"/>
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary" shared="true"/>
 
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
-                <item name="sfm_account_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Grid\Collection</item>
                 <item name="sfm_account_store_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid\Collection</item>
                 <item name="sfm_shipping_method_rule_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Grid\Collection</item>
                 <item name="sfm_marketplace_order_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Grid\Collection</item>
@@ -346,4 +389,16 @@
             <argument name="scopeResolver" xsi:type="object">ShoppingFeed\Manager\Url\FrontendScopeResolver</argument>
         </arguments>
     </virtualType>
+
+    <type name="ShoppingFeed\Manager\Observer\BeforeCheckoutSubmitObserver">
+        <arguments>
+            <argument name="catalogProductHelper" xsi:type="object">Magento\Catalog\Helper\Product\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Setup\UpgradeData">
+        <arguments>
+            <argument name="storeConfigManager" xsi:type="object">ShoppingFeed\Manager\Model\Account\Store\ConfigManager\Proxy</argument>
+        </arguments>
+    </type>
 </config>

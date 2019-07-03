@@ -47,8 +47,8 @@ class Actions extends AbstractActions
                             ),
                             'label' => __('Delete'),
                             'confirm' => [
-                                'title' => __('Delete Account Store'),
-                                'message' => __('Are you sure you want to delete this account store?'),
+                                'title' => __('Delete Account'),
+                                'message' => __('Are you sure you want to delete this account?'),
                             ],
                         ];
                     }

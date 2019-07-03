@@ -16,6 +16,7 @@ interface StoreInterface
     const SHOPPING_FEED_STORE_ID = 'shopping_feed_store_id';
     const SHOPPING_FEED_NAME = 'shopping_feed_name';
     const CONFIGURATION = 'configuration';
+    const FEED_FILE_NAME_BASE = 'feed_file_name_base';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
     /**#@-*/
@@ -59,6 +60,11 @@ interface StoreInterface
      * @return DataObject
      */
     public function getConfiguration();
+
+    /**
+     * @return string
+     */
+    public function getFeedFileNameBase();
 
     /**
      * @return string
@@ -121,6 +127,12 @@ interface StoreInterface
      * @return StoreInterface
      */
     public function setConfiguration(DataObject $configuration);
+
+    /**
+     * @param string $feedFileNameBase
+     * @return StoreInterface
+     */
+    public function setFeedFileNameBase($feedFileNameBase);
 
     /**
      * @param string $createdAt

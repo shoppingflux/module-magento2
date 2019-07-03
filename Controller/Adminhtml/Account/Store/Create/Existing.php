@@ -11,6 +11,7 @@ use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\AccountAction;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Model\Account\Importer as AccountImporter;
+use ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Form\Create\Existing\DataProvider;
 
 class Existing extends AccountAction
 {
@@ -43,15 +44,41 @@ class Existing extends AccountAction
     {
         $redirectResult = $this->resultRedirectFactory->create();
 
-        if (is_array($storeData = $this->getRequest()->getParam('store'))) {
+        if (is_array($storeData = $this->getRequest()->getParam(DataProvider::DATA_SCOPE_STORE))) {
             try {
-                $store = $this->accountImporter->importAccountStoreByShoppingFeedId(
-                    $this->getAccount((int) ($storeData['account_id'] ?? 0)),
-                    (int) ($storeData['shopping_feed_store_id'] ?? 0),
-                    (int) ($storeData['base_store_id'] ?? 0)
-                );
+                $sessionData = $storeData;
 
-                $this->messageManager->addSuccessMessage(__('The account store has been successfully created.'));
+                if (isset($sessionData[DataProvider::FIELD_SHOPPING_FEED_PASSWORD])) {
+                    unset($sessionData[DataProvider::FIELD_SHOPPING_FEED_PASSWORD]);
+                }
+
+                $this->_session->setData(DataProvider::SESSION_DATA_KEY, $storeData);
+
+                if ($storeData[DataProvider::FIELD_IS_NEW_ACCOUNT] ?? false) {
+                    if (empty($storeData[DataProvider::FIELD_USE_API_TOKEN])) {
+                        $apiToken = $this->accountImporter->getApiTokenByLogin(
+                            $storeData[DataProvider::FIELD_SHOPPING_FEED_LOGIN] ?? '',
+                            $storeData[DataProvider::FIELD_SHOPPING_FEED_PASSWORD] ?? ''
+                        );
+                    } else {
+                        $apiToken = trim($storeData[DataProvider::FIELD_API_TOKEN] ?? '');
+                    }
+
+                    list(, $store) = $this->accountImporter->importAccountByApiToken(
+                        $apiToken,
+                        true,
+                        (int) ($storeData[DataProvider::FIELD_BASE_STORE_ID] ?? 0)
+                    );
+                } else {
+                    $store = $this->accountImporter->importAccountStoreByShoppingFeedId(
+                        $this->getAccount((int) ($storeData[DataProvider::FIELD_ACCOUNT_ID] ?? 0)),
+                        (int) ($storeData[DataProvider::FIELD_SHOPPING_FEED_STORE_ID] ?? 0),
+                        (int) ($storeData[DataProvider::FIELD_BASE_STORE_ID] ?? 0)
+                    );
+                }
+
+                $this->messageManager->addSuccessMessage(__('The account has been successfully imported.'));
+                $this->_session->getData(DataProvider::SESSION_DATA_KEY, true);
 
                 return $redirectResult->setPath(
                     '*/*/edit',
@@ -62,10 +89,7 @@ class Existing extends AccountAction
             } catch (LocalizedException $e) {
                 $this->messageManager->addExceptionMessage($e, $e->getMessage());
             } catch (\Exception $e) {
-                $this->messageManager->addExceptionMessage(
-                    $e,
-                    __('An error occurred while creating the account store.')
-                );
+                $this->messageManager->addExceptionMessage($e, __('An error occurred while importing the account.'));
             }
         }
 

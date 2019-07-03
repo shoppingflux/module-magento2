@@ -2,6 +2,9 @@
 
 namespace ShoppingFeed\Manager\Model\Account;
 
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\RequestOptions as HttpRequestOptions;
+use GuzzleHttp\Exception\GuzzleException;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -13,18 +16,15 @@ use ShoppingFeed\Manager\Model\Account;
 use ShoppingFeed\Manager\Model\AccountFactory;
 use ShoppingFeed\Manager\Model\Account\Store as AccountStore;
 use ShoppingFeed\Manager\Model\Account\StoreFactory as AccountStoreFactory;
+use ShoppingFeed\Manager\Model\Feed\Exporter as FeedExporter;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\CollectionFactory as AccountCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as AccountStoreCollectionFactory;
 use ShoppingFeed\Manager\Model\ShoppingFeed\Api\SessionManager as ApiSessionManager;
 use ShoppingFeed\Sdk\Api\Session\SessionResource as ApiSession;
 use ShoppingFeed\Sdk\Api\Store\StoreResource as ApiStore;
-use ShoppingFeed\Sdk\Credential\Password as ApiPasswordCredential;
-use ShoppingFeed\Sdk\Client\Client as ApiClient;
 
 class Importer
 {
-    const STORE_CREATION_TOKEN = '18eaf020f7a33c08c63591c52df6a8dd3bd30d99';
-
     /**
      * @var StoreManagerInterface
      */
@@ -71,6 +71,11 @@ class Importer
     private $transactionFactory;
 
     /**
+     * @var FeedExporter
+     */
+    private $feedExporter;
+
+    /**
      * @param StoreManagerInterface $storeManager
      * @param ApiSessionManager $apiSessionManager
      * @param AccountRepositoryInterface $accountRepository
@@ -80,6 +85,7 @@ class Importer
      * @param StoreFactory $accountStoreFactory
      * @param AccountStoreCollectionFactory $accountStoreCollectionFactory
      * @param TransactionFactory $transactionFactory
+     * @param FeedExporter $feedExporter
      */
     public function __construct(
         StoreManagerInterface $storeManager,
@@ -90,7 +96,8 @@ class Importer
         AccountStoreRepositoryInterface $accountStoreRepository,
         AccountStoreFactory $accountStoreFactory,
         AccountStoreCollectionFactory $accountStoreCollectionFactory,
-        TransactionFactory $transactionFactory
+        TransactionFactory $transactionFactory,
+        FeedExporter $feedExporter
     ) {
         $this->storeManager = $storeManager;
         $this->apiSessionManager = $apiSessionManager;
@@ -101,25 +108,27 @@ class Importer
         $this->accountStoreFactory = $accountStoreFactory;
         $this->accountStoreCollectionFactory = $accountStoreCollectionFactory;
         $this->transactionFactory = $transactionFactory;
+        $this->feedExporter = $feedExporter;
+    }
+
+    /**
+     * @return string
+     */
+    private function generateUniqueFeedFileNameBase()
+    {
+        return 'feed_' . dechex(mt_rand());
     }
 
     /**
      * @param string $login
      * @param string $password
-     * @return string|null
+     * @return string
+     * @throws LocalizedException
      */
     public function getApiTokenByLogin($login, $password)
     {
-        $passwordCredential = new ApiPasswordCredential($login, $password);
-
-        try {
-            $apiSession = ApiClient::createSession($passwordCredential);
-            $apiToken = trim($apiSession->getToken());
-        } catch (\Exception $e) {
-            $apiToken = null;
-        }
-
-        return $apiToken;
+        $apiSession = $this->apiSessionManager->getSessionByLogin($login, $password);
+        return trim($apiSession->getToken());
     }
 
     /**
@@ -142,12 +151,17 @@ class Importer
      * @param string $apiToken
      * @param bool $shouldImportMainStore
      * @param int $baseStoreId
-     * @return Account
+     * @param string|null $feedFileNameBase
+     * @return array Imported Account and AccountStore|null
      * @throws LocalizedException
      * @throws \Exception
      */
-    public function importAccountByApiToken($apiToken, $shouldImportMainStore = false, $baseStoreId = null)
-    {
+    public function importAccountByApiToken(
+        $apiToken,
+        $shouldImportMainStore = false,
+        $baseStoreId = null,
+        $feedFileNameBase = null
+    ) {
         $apiToken = trim($apiToken);
 
         if (empty($apiToken)) {
@@ -187,7 +201,7 @@ class Importer
 
             if (empty($baseStoreId) || empty($baseStore) || !$baseStore->getId()) {
                 throw new LocalizedException(
-                    __('Could not determine the store view to which associate the Shopping Feed account main store.')
+                    __('Could not determine the store view to which associate the Shopping Feed account.')
                 );
             }
 
@@ -196,32 +210,43 @@ class Importer
             $accountStore->setShoppingFeedStoreId($mainStore->getId());
             $accountStore->setShoppingFeedName($mainStore->getName());
 
+            if (!empty($feedFileNameBase)) {
+                $accountStore->setFeedFileNameBase($feedFileNameBase);
+            } else {
+                $accountStore->setFeedFileNameBase($this->generateUniqueFeedFileNameBase());
+            }
+
             $transaction->addCommitCallback(
                 function () use ($account, $accountStore) {
                     $accountStore->setAccountId($account->getId());
                     $this->accountStoreRepository->save($accountStore);
                 }
             );
+        } else {
+            $accountStore = null;
         }
 
         $transaction->save();
 
-        return $account;
+        return [ $account, $accountStore ];
     }
 
     /**
      * @param AccountInterface $account
+     * @param bool $appendMainSuffix
      * @return array
      * @throws LocalizedException
      */
-    public function getAccountImportableStoresOptionHash(AccountInterface $account)
+    public function getAccountImportableStoresOptionHash(AccountInterface $account, $appendMainSuffix = false)
     {
         $importableStores = [];
         $apiSession = $this->getApiSessionByToken($account->getApiToken());
+        $mainStore = $apiSession->getMainStore();
 
         /** @var ApiStore $store */
         foreach ($apiSession->getStores() as $store) {
-            $importableStores[$store->getId()] = $store->getName();
+            $isMainStore = $appendMainSuffix && ($store->getId() === $mainStore->getId());
+            $importableStores[$store->getId()] = $store->getName() . ($isMainStore ? ' ' . __('(main)') : '');
         }
 
         return $importableStores;
@@ -247,7 +272,7 @@ class Importer
         /** @var Account $account */
         foreach ($accountCollection as $account) {
             $accountImportableStores = array_diff_key(
-                $this->getAccountImportableStoresOptionHash($account),
+                $this->getAccountImportableStoresOptionHash($account, true),
                 $importedShoppingFeedStores
             );
 
@@ -290,7 +315,7 @@ class Importer
 
         if (empty($baseStoreId) || !$baseStore->getId()) {
             throw new LocalizedException(
-                __('Could not determine the store view to which associate the Shopping Feed store.')
+                __('Could not determine the store view to which associate the Shopping Feed account.')
             );
         }
 
@@ -299,8 +324,70 @@ class Importer
         $accountStore->setBaseStoreId($baseStore->getId());
         $accountStore->setShoppingFeedStoreId($shoppingFeedStoreId);
         $accountStore->setShoppingFeedName($importableStores[$shoppingFeedStoreId]);
+        $accountStore->setFeedFileNameBase($this->generateUniqueFeedFileNameBase());
         $this->accountStoreRepository->save($accountStore);
 
         return $accountStore;
+    }
+
+    /**
+     * @param int $baseStoreId
+     * @param string $email
+     * @param string $shoppingFeedLogin
+     * @param string $shoppingFeedPassword
+     * @param string $countryId
+     * @return array Imported Account and AccountStore
+     * @throws LocalizedException
+     */
+    public function createAccountAndStore($baseStoreId, $email, $shoppingFeedLogin, $shoppingFeedPassword, $countryId)
+    {
+        $baseStore = $this->storeManager->getStore($baseStoreId);
+
+        if (empty($baseStoreId) || !$baseStore->getId()) {
+            throw new LocalizedException(
+                __('Could not determine the store view to which associate the Shopping Feed account.')
+            );
+        }
+
+        $temporaryStore = $this->accountStoreFactory->create();
+        $temporaryStore->setBaseStoreId($baseStoreId);
+        $feedFileNameBase = $this->generateUniqueFeedFileNameBase();
+        $temporaryStore->setFeedFileNameBase($feedFileNameBase);
+
+        $httpClient = new HttpClient();
+
+        try {
+            $response = $httpClient->post(
+                'https://connectors.shopping-feed.com/api/magento/register',
+                [
+                    HttpRequestOptions::JSON => [
+                        'name' => $shoppingFeedLogin,
+                        'email' => $email,
+                        'password' => $shoppingFeedPassword,
+                        'feed' => $this->feedExporter->getStoreFeedUrl($temporaryStore),
+                        'country' => strtolower($countryId),
+                    ],
+                ]
+            );
+        } catch (GuzzleException $e) {
+            throw new LocalizedException(__('Could not create the account on Shopping Feed. Please try again later.'));
+        }
+
+        $accountData = json_decode($response->getBody(), true);
+
+        if (!is_array($accountData) || !isset($accountData['token']) || empty($accountData['token'])) {
+            throw new LocalizedException(__('Could not create the account on Shopping Feed. Please try again later.'));
+        }
+
+        try {
+            return $this->importAccountByApiToken($accountData['token'], true, $baseStoreId, $feedFileNameBase);
+        } catch (\Exception $e) {
+            throw new LocalizedException(
+                __(
+                    'The account was successfully created on Shopping Feed, but could not be imported. You can try importing it again using the corresponding token: "%s".',
+                    $accountData['token']
+                )
+            );
+        }
     }
 }

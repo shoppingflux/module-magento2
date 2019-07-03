@@ -15,12 +15,16 @@ class Edit extends StoreAction
         try {
             $store = $this->getStore();
         } catch (NoSuchEntityException $e) {
-            $this->messageManager->addErrorMessage(__('This account store does no longer exist.'));
+            $this->messageManager->addErrorMessage(__('This account does no longer exist.'));
             $redirectResult = $this->resultRedirectFactory->create();
             return $redirectResult->setPath('*/*/');
         }
 
         $this->coreRegistry->register(RegistryConstants::CURRENT_ACCOUNT_STORE, $store);
-        return $this->initPage()->addBreadcrumb(__('Edit Account Store'), __('Edit Account Store'));
+        $pageResult = $this->initPage();
+        $pageResult->addBreadcrumb(__('Edit an Account'), __('Edit an Account'));
+        $pageResult->getConfig()->getTitle()->prepend(__('Edit an Account'));
+
+        return $pageResult;
     }
 }

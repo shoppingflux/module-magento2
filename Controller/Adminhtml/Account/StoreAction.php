@@ -72,8 +72,8 @@ abstract class StoreAction extends Action
         $pageResult = $this->pageResultFactory->create();
         $pageResult->setActiveMenu('ShoppingFeed_Manager::account_stores');
         $pageResult->addBreadcrumb(__('Shopping Feed'), __('Shopping Feed'));
-        $pageResult->addBreadcrumb(__('Stores'), __('Stores'));
-        $pageResult->getConfig()->getTitle()->prepend(__('Stores'));
+        $pageResult->addBreadcrumb(__('Accounts'), __('Accounts'));
+        $pageResult->getConfig()->getTitle()->prepend(__('Accounts'));
         return $pageResult;
     }
 }

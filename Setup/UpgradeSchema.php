@@ -81,6 +81,14 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.20.0') < 0)) {
             $this->addMarketplaceOrderItemTaxAmountField($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.21.0') < 0)) {
+            $this->addAccountStoreFeedFileNameBaseField($setup);
+
+            if (!empty($moduleVersion)) {
+                $this->fixMarketplaceOrderItemTaxAmountFieldType($setup);
+            }
+        }
     }
 
     /**
@@ -1159,11 +1167,76 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ItemInterface::TAX_AMOUNT,
                 [
                     'type' => Table::TYPE_DECIMAL,
-                    [ 12, 4 ],
+                    'length' => '12,4',
                     'nullable' => true,
                     'comment' => 'Tax Amount',
                 ]
             );
         }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addAccountStoreFeedFileNameBaseField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $accountStoreTableName = $this->tableDictionary->getAccountStoreTableName();
+
+        if (!$connection->tableColumnExists($accountStoreTableName, StoreInterface::FEED_FILE_NAME_BASE)) {
+            $connection->addColumn(
+                $accountStoreTableName,
+                StoreInterface::FEED_FILE_NAME_BASE,
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => 255,
+                    'nullable' => false,
+                    'comment' => 'Feed File Name Base',
+                    'after' => StoreInterface::CONFIGURATION,
+                ]
+            );
+
+            $connection->update(
+                $accountStoreTableName,
+                [
+                    StoreInterface::FEED_FILE_NAME_BASE => $connection->getConcatSql(
+                        [
+                            $connection->quote('feed_'),
+                            $connection->quoteIdentifier(StoreInterface::STORE_ID),
+                        ]
+                    ),
+                ]
+            );
+
+            $connection->addIndex(
+                $accountStoreTableName,
+                $setup->getIdxName(
+                    $this->tableDictionary->getAccountStoreTableCode(),
+                    StoreInterface::FEED_FILE_NAME_BASE,
+                    AdapterInterface::INDEX_TYPE_UNIQUE
+                ),
+                StoreInterface::FEED_FILE_NAME_BASE,
+                AdapterInterface::INDEX_TYPE_UNIQUE
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function fixMarketplaceOrderItemTaxAmountFieldType(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+
+        $connection->modifyColumn(
+            $this->tableDictionary->getMarketplaceOrderItemTableName(),
+            ItemInterface::TAX_AMOUNT,
+            [
+                'type' => Table::TYPE_DECIMAL,
+                'length' => '12,4',
+                'nullable' => true,
+                'comment' => 'Tax Amount',
+            ]
+        );
     }
 }

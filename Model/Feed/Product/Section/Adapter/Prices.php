@@ -8,9 +8,8 @@ use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Catalog\Model\ResourceModel\ProductFactory as CatalogProductResourceFactory;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProductType;
-use Magento\ConfigurableProduct\Model\Product\Type\Configurable\Proxy as ConfigurableProductTypeProxy;
 use Magento\Store\Model\StoreManagerInterface;
-use Magento\Tax\Api\TaxCalculationInterface\Proxy as TaxCalculationProxy;
+use Magento\Tax\Api\TaxCalculationInterface as TaxCalculationInterface;
 use Magento\Tax\Model\Config as TaxConfig;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -42,12 +41,12 @@ class Prices extends AbstractAdapter implements PricesInterface
     private $catalogProductResource = null;
 
     /**
-     * @var ConfigurableProductTypeProxy
+     * @var ConfigurableProductType
      */
     private $configurableProductType;
 
     /**
-     * @var TaxCalculationProxy
+     * @var TaxCalculationInterface
      */
     private $taxCalculator;
 
@@ -55,19 +54,19 @@ class Prices extends AbstractAdapter implements PricesInterface
      * @param StoreManagerInterface $storeManager
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param CatalogProductResourceFactory $catalogProductResourceFactory
-     * @param ConfigurableProductTypeProxy $configurableProductTypeProxy
-     * @param TaxCalculationProxy $taxCalculatorProxy
+     * @param ConfigurableProductType $configurableProductType
+     * @param TaxCalculationInterface $taxCalculator
      */
     public function __construct(
         StoreManagerInterface $storeManager,
         AttributeRendererPoolInterface $attributeRendererPool,
         CatalogProductResourceFactory $catalogProductResourceFactory,
-        ConfigurableProductTypeProxy $configurableProductTypeProxy,
-        TaxCalculationProxy $taxCalculatorProxy
+        ConfigurableProductType $configurableProductType,
+        TaxCalculationInterface $taxCalculator
     ) {
         $this->catalogProductResourceFactory = $catalogProductResourceFactory;
-        $this->configurableProductType = $configurableProductTypeProxy;
-        $this->taxCalculator = $taxCalculatorProxy;
+        $this->configurableProductType = $configurableProductType;
+        $this->taxCalculator = $taxCalculator;
         parent::__construct($storeManager, $attributeRendererPool);
     }
 

@@ -1,10 +1,21 @@
 require(
     [
+        'jquery',
         'underscore',
-        'Magento_Ui/js/lib/validation/validator'
+        'Magento_Ui/js/lib/validation/utils',
+        'Magento_Ui/js/lib/validation/validator',
+        'mage/translate'
     ],
-    function (_, uiValidator) {
-        uiValidator.addRule(
+    function ($, _, utils, UiValidator) {
+        UiValidator.addRule(
+            'sfm-validate-shopping-feed-login',
+            function (value) {
+                return utils.isEmptyNoTrim(value) || /^[a-zA-Z]+[a-zA-Z0-9-]+$/.test(value);
+            },
+            $.mage.__('Please use only letters (a-z, A-Z), numbers (0-9) or hyphens (-) in this field, and the first character should be a letter.')
+        );
+
+        UiValidator.addRule(
             'sfm-validate-magento-cron-expression',
             function (value) {
                 var tokens = _.reject(String(value).split(/\s+/), _.isEmpty);
@@ -15,7 +26,7 @@ require(
 
                 return _.every(tokens, checkExpressionToken);
             },
-            'Please enter a valid cron expression.'
+            $.mage.__('Please enter a valid cron expression.')
         );
 
         function checkExpressionToken(token) {

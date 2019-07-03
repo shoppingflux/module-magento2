@@ -1,8 +1,11 @@
 <?xml version="1.0"?>
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <script src="ShoppingFeed_Manager::js/form/validation.js"/>
+    </head>
     <body>
         <referenceContainer name="content">
-            <uiComponent name="sfm_account_listing"/>
+            <uiComponent name="sfm_account_store_form_create_unexisting"/>
         </referenceContainer>
     </body>
 </page>
