@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.21.0] - 2019-07-03
+### Added
+- Add ability to create a new Shopping Feed account
+
+### Changed
+- Bump order import try count earlier
+- Rework account/store management and UI
+
+### Fixed
+- Fix the "partially shipped" order status constant
+- Fix french translation for "Use item reference [..]"
+- Remove explicit proxies from constructors
+
 ## [0.20.0] - 2019-05-07
 ### Added
 - Fetch the tax amount for marketplace order items
