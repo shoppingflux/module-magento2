@@ -42,29 +42,19 @@ class Existing extends StoreAction
         try {
             $importableStores = $this->accountImporter->getAllImportableStoresOptionHashes();
         } catch (\Exception $e) {
-            $importableStores = false;
+            $importableStores = [];
 
             $this->messageManager->addExceptionMessage(
                 $e,
-                __('$An error occurred while fetching the importable Shopping Feed stores.')
+                __('An error occurred while fetching the importable Shopping Feed stores.')
             );
-        }
-
-        if (empty($importableStores)) {
-            if (is_array($importableStores)) {
-                $this->messageManager->addNoticeMessage(
-                    __('There is no importable Shopping Feed store corresponding to the currently imported accounts.')
-                );
-            }
-
-            $redirectResult = $this->resultRedirectFactory->create();
-            return $redirectResult->setPath('*/*/');
         }
 
         $this->coreRegistry->register(RegistryConstants::IMPORTABLE_SHOPPING_FEED_STORES, $importableStores);
         $pageResult = $this->initPage();
-        $pageResult->addBreadcrumb(__('New Store - Existing'), __('New Store - Existing'));
-        $pageResult->getConfig()->getTitle()->prepend(__('New Store - Existing'));
+        $pageResult->addBreadcrumb(__('Import an Account'), __('Import an Account'));
+        $pageResult->getConfig()->getTitle()->prepend(__('Import an Account'));
+
         return $pageResult;
     }
 }

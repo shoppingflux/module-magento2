@@ -29,10 +29,7 @@ class Collection extends StoreCollection implements SearchResultInterface
             ->joinInner(
                 [ 'account_table' => $this->tableDictionary->getAccountTableName() ],
                 'main_table.account_id = account_table.account_id',
-                [
-                    'api_token',
-                    'shopping_feed_account_name' => 'shopping_feed_login',
-                ]
+                [ 'api_token', 'shopping_feed_login' ]
             );
 
         return $this;

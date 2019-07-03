@@ -9,6 +9,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
 use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
+use Magento\Framework\UrlInterface;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
 use ShoppingFeed\Feed\ProductGenerator as FeedGenerator;
@@ -81,11 +82,6 @@ class Exporter
     private $feedDirectory;
 
     /**
-     * @var string
-     */
-    private $feedBaseFileName;
-
-    /**
      * @param FileSystem $fileSystem
      * @param ExporterResource $resource
      * @param AppMetadataInterface $appMetadata
@@ -94,7 +90,6 @@ class Exporter
      * @param ExportStateConfigInterface $exportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
      * @param string $feedDirectory
-     * @param string $feedBaseFileName
      */
     public function __construct(
         FileSystem $fileSystem,
@@ -104,8 +99,7 @@ class Exporter
         FeedConfigInterface $generalConfig,
         ExportStateConfigInterface $exportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
-        $feedDirectory,
-        $feedBaseFileName
+        $feedDirectory
     ) {
         $this->fileSystem = $fileSystem;
         $this->resource = $resource;
@@ -115,7 +109,6 @@ class Exporter
         $this->exportStateConfig = $exportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
         $this->feedDirectory = $feedDirectory;
-        $this->feedBaseFileName = $feedBaseFileName;
     }
 
     /**
@@ -377,7 +370,7 @@ class Exporter
         $feedAbsoluteMediaPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory) . '/';
         $feedRelativeMediaPath = $mediaDirectoryReader->getRelativePath($this->feedDirectory) . '/';
 
-        $feedFileName = sprintf($this->feedBaseFileName, $store->getId());
+        $feedFileName = $store->getFeedFileNameBase() . '.xml';
         $feedAbsoluteFilePath = $feedAbsoluteMediaPath . '/' . $feedFileName;
         $feedAbsoluteTempFilePath = $feedAbsoluteFilePath . '.tmp';
         $feedRelativeFilePath = $feedRelativeMediaPath . '/' . $feedFileName;
@@ -416,5 +409,18 @@ class Exporter
                 __('Could not copy file "%1" to file "%2".', $feedAbsoluteTempFilePath, $feedAbsoluteFilePath)
             );
         }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getStoreFeedUrl(StoreInterface $store)
+    {
+        return $store->getBaseStore()->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+            . $this->feedDirectory
+            . '/'
+            . $store->getFeedFileNameBase()
+            . '.xml';
     }
 }

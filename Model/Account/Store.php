@@ -153,6 +153,11 @@ class Store extends AbstractModel implements StoreInterface
         return $data;
     }
 
+    public function getFeedFileNameBase()
+    {
+        return trim($this->getData(self::FEED_FILE_NAME_BASE));
+    }
+
     public function getCreatedAt()
     {
         return $this->getData(self::CREATED_AT);
@@ -216,6 +221,11 @@ class Store extends AbstractModel implements StoreInterface
     public function setConfiguration(DataObject $configuration)
     {
         return $this->setData(self::CONFIGURATION, $configuration);
+    }
+
+    public function setFeedFileNameBase($feedFileNameBase)
+    {
+        return $this->setData(self::FEED_FILE_NAME_BASE, trim($feedFileNameBase));
     }
 
     public function setCreatedAt($createdAt)

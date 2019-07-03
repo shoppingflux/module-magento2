@@ -64,7 +64,7 @@ class Save extends StoreAction
         try {
             $store = $this->getStore();
         } catch (NoSuchEntityException $e) {
-            $this->messageManager->addErrorMessage(__('This account store does no longer exist.'));
+            $this->messageManager->addErrorMessage(__('This account does no longer exist.'));
             return $redirectResult->setPath('*/*/');
         }
 
@@ -91,11 +91,11 @@ class Save extends StoreAction
             }
 
             $isSaveSuccessful = true;
-            $this->messageManager->addSuccessMessage(__('The account store has been successfully saved.'));
+            $this->messageManager->addSuccessMessage(__('The account has been successfully saved.'));
         } catch (LocalizedException $e) {
             $this->messageManager->addExceptionMessage($e, $e->getMessage());
         } catch (\Exception $e) {
-            $this->messageManager->addExceptionMessage($e, __('An error occurred while saving the account store.'));
+            $this->messageManager->addExceptionMessage($e, __('An error occurred while saving the account.'));
         }
 
         if (!$isSaveSuccessful || $this->getRequest()->getParam('back')) {

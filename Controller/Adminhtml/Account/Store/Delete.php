@@ -14,11 +14,11 @@ class Delete extends StoreAction
         try {
             $store = $this->getStore();
             $this->storeRepository->delete($store);
-            $this->messageManager->addSuccessMessage(__('The account store has been successfully deleted.'));
+            $this->messageManager->addSuccessMessage(__('The account has been successfully deleted.'));
         } catch (NoSuchEntityException $e) {
-            $this->messageManager->addErrorMessage(__('This account store does no longer exist.'));
+            $this->messageManager->addErrorMessage(__('This account does no longer exist.'));
         } catch (\Exception $e) {
-            $this->messageManager->addExceptionMessage($e, __('An error occurred while deleting the account store.'));
+            $this->messageManager->addExceptionMessage($e, __('An error occurred while deleting the account.'));
         }
 
         $redirectResult = $this->resultRedirectFactory->create();

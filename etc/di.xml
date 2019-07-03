@@ -51,7 +51,6 @@
     <type name="ShoppingFeed\Manager\Model\Feed\Exporter" shared="true">
         <arguments>
             <argument name="feedDirectory" xsi:type="string">shoppingfeed</argument>
-            <argument name="feedBaseFileName" xsi:type="string">feed_%d.xml</argument>
         </arguments>
     </type>
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter" shared="true"/>
@@ -299,7 +298,6 @@
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
             <argument name="collections" xsi:type="array">
-                <item name="sfm_account_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Grid\Collection</item>
                 <item name="sfm_account_store_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Grid\Collection</item>
                 <item name="sfm_shipping_method_rule_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Grid\Collection</item>
                 <item name="sfm_marketplace_order_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Grid\Collection</item>

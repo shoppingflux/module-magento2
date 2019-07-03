@@ -3,9 +3,15 @@
     <argument name="data" xsi:type="array">
         <item name="acl" xsi:type="string">ShoppingFeed_Manager::account_stores</item>
         <item name="buttons" xsi:type="array">
+            <item name="create_unexisting" xsi:type="array">
+                <item name="class" xsi:type="string">primary</item>
+                <item name="label" xsi:type="string" translate="true">Create an Account</item>
+                <item name="name" xsi:type="string">create_unexisting</item>
+                <item name="url" xsi:type="string">*/*/create_form_unexisting</item>
+            </item>
             <item name="create_existing" xsi:type="array">
                 <item name="class" xsi:type="string">primary</item>
-                <item name="label" xsi:type="string" translate="true">Add Existing Store</item>
+                <item name="label" xsi:type="string" translate="true">Import an Account</item>
                 <item name="name" xsi:type="string">create_existing</item>
                 <item name="url" xsi:type="string">*/*/create_form_existing</item>
             </item>
@@ -60,22 +66,6 @@
                 </item>
             </argument>
         </column>
-        <column name="api_token">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">API Token</item>
-                </item>
-            </argument>
-        </column>
-        <column name="shopping_feed_account_name">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Shopping Feed Account Name</item>
-                </item>
-            </argument>
-        </column>
         <column name="shopping_feed_name">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -84,11 +74,37 @@
                 </item>
             </argument>
         </column>
+        <column name="api_token">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">API Token</item>
+                </item>
+            </argument>
+        </column>
+        <column name="shopping_feed_login">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Username</item>
+                </item>
+            </argument>
+        </column>
         <column name="base_store_id" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store\BaseStore">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="bodyTmpl" xsi:type="string">ui/grid/cells/html</item>
                     <item name="label" xsi:type="string" translate="true">Store View</item>
+                    <item name="sortable" xsi:type="boolean">false</item>
+                </item>
+            </argument>
+        </column>
+        <column name="feed_url" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Account\Store\FeedUrl">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="bodyTmpl" xsi:type="string">ShoppingFeed_Manager/grid/cells/url</item>
+                    <item name="label" xsi:type="string" translate="true">Feed URL</item>
+                    <item name="link" xsi:type="string">feed_url</item>
                     <item name="sortable" xsi:type="boolean">false</item>
                 </item>
             </argument>
