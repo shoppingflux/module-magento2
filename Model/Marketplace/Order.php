@@ -63,7 +63,8 @@ class Order extends AbstractModel implements OrderInterface
 
     public function getSalesOrderId()
     {
-        return (int) $this->getDataByKey(self::SALES_ORDER_ID);
+        $orderId = $this->getDataByKey(self::SALES_ORDER_ID);
+        return empty($orderId) ? null : (int) $orderId;
     }
 
     public function getShoppingFeedOrderId()

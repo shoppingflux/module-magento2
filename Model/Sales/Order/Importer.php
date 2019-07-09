@@ -11,7 +11,6 @@ use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Directory\Model\Region;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
@@ -34,6 +33,7 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as Marketpl
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as MarketplaceItemInterface;
 use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface as ShippingMethodRuleInterface;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface as MarketplaceOrderRepositoryInterface;
+use ShoppingFeed\Manager\DB\TransactionFactory;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\OrderFactory as MarketplaceOrderResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as MarketplaceAddressCollectionFactory;
@@ -449,6 +449,8 @@ class Importer implements ImporterInterface
 
                     $this->quoteRepository->save($quote);
                     $transaction = $this->transactionFactory->create();
+                    $transaction->addModelResource($marketplaceOrder);
+                    $transaction->addModelResource($quote);
 
                     $transaction->addCommitCallback(
                         function () use ($quoteId, $marketplaceOrder) {

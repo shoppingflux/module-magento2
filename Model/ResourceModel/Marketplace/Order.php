@@ -26,14 +26,21 @@ class Order extends AbstractDb
         /** @var OrderInterface $object */
         parent::_afterSave($object);
         $connection = $this->getConnection();
+        $objectSalesOrderId = $object->getSalesOrderId();
 
-        $actualSalesOrderId = (int) $connection->fetchOne(
+        $actualSalesOrderId = $connection->fetchOne(
             $connection->select()
                 ->from($this->getMainTable(), [ OrderInterface::SALES_ORDER_ID ])
                 ->where('order_id = ?', $object->getId())
         );
 
-        if ($object->getSalesOrderId() !== $actualSalesOrderId) {
+        if (empty($actualSalesOrderId)) {
+            $actualSalesOrderId = null;
+        } else {
+            $actualSalesOrderId = (int) $actualSalesOrderId;
+        }
+
+        if ($objectSalesOrderId !== $actualSalesOrderId) {
             throw new LocalizedException(__('A marketplace order can only be imported once.'));
         }
     }
@@ -45,7 +52,7 @@ class Order extends AbstractDb
         if (isset($data[OrderInterface::SALES_ORDER_ID])) {
             // Prevent importing marketplace orders twice by only updating the `sales_order_id` field when it is empty,
             // or when it has the same value as the one that we are saving.
-            // If no update does actually take place, the check in _afterSave() will throw an exception.
+            // If the check in _afterSave() detects a discrepancy, an exception will be thrown.
             $connection = $this->getConnection();
             $salesOrderId = $data[OrderInterface::SALES_ORDER_ID];
 
