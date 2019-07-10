@@ -246,6 +246,10 @@
         </arguments>
     </type>
 
+    <type name="Magento\InventorySales\Model\CheckItemsQuantity">
+        <plugin name="sfm_inventory_sales_check_items_quantity_plugin" type="ShoppingFeed\Manager\Plugin\InventorySales\CheckItemsQuantityPlugin" sortOrder="0"/>
+    </type>
+
     <type name="Magento\Weee\Model\Tax">
         <plugin name="sfm_weee_tax_plugin" type="ShoppingFeed\Manager\Plugin\Weee\TaxPlugin"/>
     </type>
@@ -390,7 +394,7 @@
         </arguments>
     </virtualType>
 
-    <type name="ShoppingFeed\Manager\Observer\BeforeCheckoutSubmitObserver">
+    <type name="ShoppingFeed\Manager\Observer\AfterQuoteLoadObserver">
         <arguments>
             <argument name="catalogProductHelper" xsi:type="object">Magento\Catalog\Helper\Product\Proxy</argument>
         </arguments>

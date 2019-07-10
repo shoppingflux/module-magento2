@@ -319,7 +319,7 @@ class Importer implements ImporterInterface
      */
     public function importStoreOrders(array $marketplaceOrders, StoreInterface $store)
     {
-        if (null !== $this->currentImportStore) {
+        if ($this->isImportRunning()) {
             throw new LocalizedException(__('Order import can not be started twice simultaneously.'));
         }
 
@@ -875,7 +875,7 @@ class Importer implements ImporterInterface
      */
     public function handleImportedSalesOrder(SalesOrderInterface $order)
     {
-        if ((null !== $this->currentImportStore)
+        if ($this->isImportRunning()
             && $this->orderGeneralConfig->shouldCreateInvoice($this->currentImportStore)
             && ($order instanceof SalesOrder)
             && $order->canInvoice()
@@ -887,5 +887,15 @@ class Importer implements ImporterInterface
             $transaction->addObject($order);
             $transaction->save();
         }
+    }
+
+    public function isImportRunning()
+    {
+        return null !== $this->currentImportStore;
+    }
+
+    public function getImportRunningForStore()
+    {
+        return $this->currentImportStore;
     }
 }

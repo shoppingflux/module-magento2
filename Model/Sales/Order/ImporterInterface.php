@@ -86,4 +86,14 @@ interface ImporterInterface
      * @param SalesOrderInterface $order
      */
     public function handleImportedSalesOrder(SalesOrderInterface $order);
+
+    /**
+     * @return bool
+     */
+    public function isImportRunning();
+
+    /**
+     * @return StoreInterface|null
+     */
+    public function getImportRunningForStore();
 }
