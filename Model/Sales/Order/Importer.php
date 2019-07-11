@@ -12,6 +12,7 @@ use Magento\Directory\Model\Region;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
@@ -668,6 +669,9 @@ class Importer implements ImporterInterface
         $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
+        $shouldUseItemReferenceAsProductId = $this->orderGeneralConfig->shouldUseItemReferenceAsProductId($store);
+        $isWeeeEnabled = $this->weeeHelper->isEnabled($store->getBaseStore());
+
         /** @var MarketplaceItemInterface $marketplaceItem */
         foreach ($marketplaceItems as $marketplaceItem) {
             $reference = $marketplaceItem->getReference();
@@ -675,16 +679,30 @@ class Importer implements ImporterInterface
 
             try {
                 /** @var CatalogProduct $product */
+                $product = null;
 
-                if ($this->orderGeneralConfig->shouldUseItemReferenceAsProductId($store)) {
-                    $product = $this->catalogProductRepository->getById((int) $reference, false, $quoteStoreId, false);
-                } else {
-                    $product = $this->catalogProductRepository->get($reference, false, $quoteStoreId, false);
+                try {
+                    if (!$shouldUseItemReferenceAsProductId || !ctype_digit(trim($reference))) {
+                        $product = $this->catalogProductRepository->get($reference, false, $quoteStoreId, false);
+                    }
+                } catch (NoSuchEntityException $e) {
+                    if (!$shouldUseItemReferenceAsProductId) {
+                        throw $e;
+                    }
+                }
+
+                if (null === $product) {
+                    $product = $this->catalogProductRepository->getById(
+                        (int) $reference,
+                        false,
+                        $quoteStoreId,
+                        false
+                    );
                 }
 
                 $itemPrice = $marketplaceItem->getPrice();
 
-                if ($this->weeeHelper->isEnabled($store->getBaseStore())) {
+                if ($isWeeeEnabled) {
                     $itemPrice -= $this->getCatalogProductWeeeAmount($product, $quote, $isUntaxedBusinessOrder, $store);
                 }
 
