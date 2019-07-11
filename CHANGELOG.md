@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.22.0] - -2019-07-11
+### Added
+- Add new columns to the marketplace order listings
+- Detect SKUs when using product IDs for order import
+
+### Changed
+- Improve default phone number handling
+- Improve prevention of duplicate order import in some edge cases
+- Improve prevention of stock checks for Magento 2.3
+
 ## [0.21.0] - 2019-07-03
 ### Added
 - Add ability to create a new Shopping Feed account
