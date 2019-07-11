@@ -246,6 +246,10 @@
         </arguments>
     </type>
 
+    <type name="Magento\CatalogInventory\Model\Spi\StockStateProviderInterface">
+        <plugin name="sfm_cataloginventory_spi_stock_state_provider_plugin" type="ShoppingFeed\Manager\Plugin\CatalogInventory\Spi\StockStateProviderPlugin" sortOrder="1000000000"/>
+    </type>
+
     <type name="Magento\InventorySales\Model\CheckItemsQuantity">
         <plugin name="sfm_inventory_sales_check_items_quantity_plugin" type="ShoppingFeed\Manager\Plugin\InventorySales\CheckItemsQuantityPlugin" sortOrder="0"/>
     </type>
@@ -256,7 +260,7 @@
     <type name="ShoppingFeed\Manager\Plugin\Weee\TaxPlugin" shared="true"/>
 
     <type name="Magento\Tax\Model\Config">
-        <plugin name="sfm_tax_config_plugin" type="ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin" sortOrder="999999999"/>
+        <plugin name="sfm_tax_config_plugin" type="ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin" sortOrder="1000000000"/>
     </type>
     <type name="ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin" shared="true"/>
 
@@ -293,7 +297,7 @@
     </type>
 
     <type name="Magento\SalesRule\Model\Utility">
-        <plugin name="sfm_salesrule_utility_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\UtilityPlugin" sortOrder="999999999"/>
+        <plugin name="sfm_salesrule_utility_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\UtilityPlugin" sortOrder="1000000000"/>
     </type>
 
     <virtualType name="ShoppingFeedManagerPaymentFacade" type="Magento\Payment\Model\Method\Adapter">
