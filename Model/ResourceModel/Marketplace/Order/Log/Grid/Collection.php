@@ -11,6 +11,8 @@ use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log\Collection as
 
 class Collection extends LogCollection implements SearchResultInterface
 {
+    const FIELD_SHOPPING_FEED_ACCOUNT_NAME = 'shopping_feed_account_name';
+
     /**
      * @var SearchAggregationInterface
      */
@@ -19,6 +21,25 @@ class Collection extends LogCollection implements SearchResultInterface
     protected function _construct()
     {
         $this->_init(UiDocument::class, LogResource::class);
+    }
+
+    protected function _initSelect()
+    {
+        parent::_initSelect();
+
+        $this->getSelect()
+            ->joinInner(
+                [ 'order_table' => $this->tableDictionary->getMarketplaceOrderTableName() ],
+                'main_table.order_id = order_table.order_id',
+                [ 'marketplace_name', 'marketplace_order_number' ]
+            )
+            ->joinInner(
+                [ 'store_table' => $this->tableDictionary->getAccountStoreTableName() ],
+                'order_table.store_id = store_table.store_id',
+                [ static::FIELD_SHOPPING_FEED_ACCOUNT_NAME => 'store_table.shopping_feed_name' ]
+            );
+
+        return $this;
     }
 
     public function setItems(array $items = null)

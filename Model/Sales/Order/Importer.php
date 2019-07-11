@@ -11,8 +11,8 @@ use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Directory\Model\Region;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
 use Magento\Framework\DataObjectFactory;
-use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
@@ -34,6 +34,7 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as Marketpl
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as MarketplaceItemInterface;
 use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface as ShippingMethodRuleInterface;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface as MarketplaceOrderRepositoryInterface;
+use ShoppingFeed\Manager\DB\TransactionFactory;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\OrderFactory as MarketplaceOrderResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as MarketplaceAddressCollectionFactory;
@@ -319,7 +320,7 @@ class Importer implements ImporterInterface
      */
     public function importStoreOrders(array $marketplaceOrders, StoreInterface $store)
     {
-        if (null !== $this->currentImportStore) {
+        if ($this->isImportRunning()) {
             throw new LocalizedException(__('Order import can not be started twice simultaneously.'));
         }
 
@@ -449,6 +450,8 @@ class Importer implements ImporterInterface
 
                     $this->quoteRepository->save($quote);
                     $transaction = $this->transactionFactory->create();
+                    $transaction->addModelResource($marketplaceOrder);
+                    $transaction->addModelResource($quote);
 
                     $transaction->addCommitCallback(
                         function () use ($quoteId, $marketplaceOrder) {
@@ -666,6 +669,9 @@ class Importer implements ImporterInterface
         $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
+        $shouldUseItemReferenceAsProductId = $this->orderGeneralConfig->shouldUseItemReferenceAsProductId($store);
+        $isWeeeEnabled = $this->weeeHelper->isEnabled($store->getBaseStore());
+
         /** @var MarketplaceItemInterface $marketplaceItem */
         foreach ($marketplaceItems as $marketplaceItem) {
             $reference = $marketplaceItem->getReference();
@@ -673,16 +679,30 @@ class Importer implements ImporterInterface
 
             try {
                 /** @var CatalogProduct $product */
+                $product = null;
 
-                if ($this->orderGeneralConfig->shouldUseItemReferenceAsProductId($store)) {
-                    $product = $this->catalogProductRepository->getById((int) $reference, false, $quoteStoreId, false);
-                } else {
-                    $product = $this->catalogProductRepository->get($reference, false, $quoteStoreId, false);
+                try {
+                    if (!$shouldUseItemReferenceAsProductId || !ctype_digit(trim($reference))) {
+                        $product = $this->catalogProductRepository->get($reference, false, $quoteStoreId, false);
+                    }
+                } catch (NoSuchEntityException $e) {
+                    if (!$shouldUseItemReferenceAsProductId) {
+                        throw $e;
+                    }
+                }
+
+                if (null === $product) {
+                    $product = $this->catalogProductRepository->getById(
+                        (int) $reference,
+                        false,
+                        $quoteStoreId,
+                        false
+                    );
                 }
 
                 $itemPrice = $marketplaceItem->getPrice();
 
-                if ($this->weeeHelper->isEnabled($store->getBaseStore())) {
+                if ($isWeeeEnabled) {
                     $itemPrice -= $this->getCatalogProductWeeeAmount($product, $quote, $isUntaxedBusinessOrder, $store);
                 }
 
@@ -873,7 +893,7 @@ class Importer implements ImporterInterface
      */
     public function handleImportedSalesOrder(SalesOrderInterface $order)
     {
-        if ((null !== $this->currentImportStore)
+        if ($this->isImportRunning()
             && $this->orderGeneralConfig->shouldCreateInvoice($this->currentImportStore)
             && ($order instanceof SalesOrder)
             && $order->canInvoice()
@@ -885,5 +905,15 @@ class Importer implements ImporterInterface
             $transaction->addObject($order);
             $transaction->save();
         }
+    }
+
+    public function isImportRunning()
+    {
+        return null !== $this->currentImportStore;
+    }
+
+    public function getImportRunningForStore()
+    {
+        return $this->currentImportStore;
     }
 }

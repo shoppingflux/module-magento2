@@ -252,10 +252,14 @@ class Config extends AbstractConfig implements ConfigInterface
 
     public function getDefaultPhoneNumber(StoreInterface $store)
     {
-        if (('' === ($defaultPhone = $this->getFieldValue($store, self::KEY_DEFAULT_PHONE_NUMBER)))
-            && ('' === ($defaultPhone = $this->getStoreDefaultPhoneNumber($store)))
-        ) {
-            $defaultPhone = $this->getDefaultDefaultPhoneNumber();
+        $defaultPhone = trim($this->getFieldValue($store, self::KEY_DEFAULT_PHONE_NUMBER));
+
+        if ('' === $defaultPhone) {
+            $defaultPhone = $this->getStoreDefaultPhoneNumber($store);
+
+            if ('' === $defaultPhone) {
+                $defaultPhone = $this->getDefaultDefaultPhoneNumber();
+            }
         }
 
         return $defaultPhone;

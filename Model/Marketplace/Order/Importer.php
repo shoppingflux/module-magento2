@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
-use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -17,6 +16,7 @@ use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\AddressRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface;
 use ShoppingFeed\Manager\DataObjectFactory;
+use ShoppingFeed\Manager\DB\TransactionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Sdk\Api\Order\OrderResource as ApiOrder;
 use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
@@ -200,6 +200,7 @@ class Importer
         }
 
         $transaction = $this->transactionFactory->create();
+        $transaction->addModelResource($marketplaceOrder);
 
         $transaction->addCommitCallback(
             function () use ($marketplaceOrder, $billingAddress, $shippingAddress, $items) {
@@ -368,6 +369,7 @@ class Importer
         $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt());
 
         $transaction = $this->transactionFactory->create();
+        $transaction->addModelResource($marketplaceOrder);
 
         $transaction->addCommitCallback(
             function () use ($marketplaceOrder, $billingAddress, $shippingAddress) {
