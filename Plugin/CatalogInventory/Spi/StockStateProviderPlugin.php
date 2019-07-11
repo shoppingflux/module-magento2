@@ -45,9 +45,9 @@ class StockStateProviderPlugin
      * @param StockStateProviderInterface $subject
      * @param callable $proceed
      * @param StockItemInterface $stockItem
-     * @param $itemQty
-     * @param $qtyToCheck
-     * @param $origQty
+     * @param float $itemQty
+     * @param float $qtyToCheck
+     * @param float $origQty
      * @return DataObject
      */
     public function aroundCheckQuoteItemQty(
