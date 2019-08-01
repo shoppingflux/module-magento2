@@ -8,7 +8,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
-use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as OrderInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterfaceFactory as OrderLogInterfaceFactory;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterfaceFactory as OrderTicketInterfaceFactory;
 use ShoppingFeed\Manager\Api\Marketplace\Order\LogRepositoryInterface as OrderLogRepositoryInterface;
@@ -24,9 +24,9 @@ use ShoppingFeed\Sdk\Api\Task\TicketResource as ApiTicket;
 
 class Manager
 {
-    const API_FILTER_STATUS = 'status';
     const API_FILTER_ACKNOWLEDGEMENT = 'acknowledgment';
     const API_FILTER_SINCE = 'since';
+    const API_FILTER_STATUS = 'status';
 
     const API_ACKNOWLEDGEMENT_STATUS_SUCCESS = 'success';
     const API_ACKNOWLEDGEMENT_STATUS_FAILURE = 'error';
@@ -118,8 +118,9 @@ class Manager
         return $apiStore->getOrderApi()
             ->getAll(
                 [
-                    self::API_FILTER_SINCE => $sinceDate,
                     self::API_FILTER_ACKNOWLEDGEMENT => self::API_UNACKNOWLEDGED,
+                    self::API_FILTER_SINCE => $sinceDate,
+                    self::API_FILTER_STATUS => OrderInterface::STATUS_WAITING_SHIPMENT,
                 ]
             );
     }

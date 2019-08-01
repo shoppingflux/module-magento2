@@ -25,6 +25,7 @@
                 <can_authorize>0</can_authorize>
                 <can_capture>0</can_capture>
                 <can_refund>1</can_refund>
+                <can_refund_partial_per_invoice>1</can_refund_partial_per_invoice>
                 <can_void>0</can_void>
                 <can_cancel>1</can_cancel>
                 <order_status>processing</order_status>

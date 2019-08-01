@@ -559,6 +559,8 @@ class Importer implements ImporterInterface
         $quoteAddress->setStreet($this->getAddressRequiredFieldValue($marketplaceAddress->getStreet(), $store));
         $quoteAddress->setPostcode($this->getAddressRequiredFieldValue($marketplaceAddress->getPostalCode(), $store));
         $quoteAddress->setCity($this->getAddressRequiredFieldValue($marketplaceAddress->getCity(), $store));
+        $quoteAddress->setCompany($marketplaceAddress->getCompany());
+
         $countryId = $marketplaceAddress->getCountryCode();
         $quoteAddress->setCountryId($countryId);
 
