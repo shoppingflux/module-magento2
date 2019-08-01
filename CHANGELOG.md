@@ -1,6 +1,17 @@
 # Changelog
 
-## [0.22.0] - -2019-07-11
+## [0.22.1] - 2019-08-01
+### Added
+- Import the company in order addresses
+- Allow partial refunds on imported orders
+
+### Changed
+- Only fetch marketplace orders waiting shipment
+
+### Fixed
+- Fix ACL and menu configuration
+
+## [0.22.0] - 2019-07-11
 ### Added
 - Add new columns to the marketplace order listings
 - Detect SKUs when using product IDs for order import
