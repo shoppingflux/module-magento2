@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.23.0] - 2019-08-08
+### Changed
+- Remove final keywords from functions
+- Improve generation of unique feed filenames
+
 ## [0.22.1] - 2019-08-01
 ### Added
 - Import the company in order addresses
