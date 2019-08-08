@@ -47,7 +47,7 @@ class Config extends RefreshableConfig implements ConfigInterface
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
-    final public function getScopeSubPath()
+    public function getScopeSubPath()
     {
         return [ self::SUB_SCOPE ];
     }

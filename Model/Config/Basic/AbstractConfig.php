@@ -59,7 +59,7 @@ abstract class AbstractConfig implements ConfigInterface
      * @return FieldInterface[]
      * @throws LocalizedException
      */
-    final public function getFields()
+    public function getFields()
     {
         if (!is_array($this->fields)) {
             $this->fields = [];
@@ -74,7 +74,7 @@ abstract class AbstractConfig implements ConfigInterface
         return $this->fields;
     }
 
-    final public function getField($name)
+    public function getField($name)
     {
         $fields = $this->getFields();
         return isset($fields[$name]) ? $fields[$name] : null;

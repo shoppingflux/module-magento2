@@ -42,7 +42,7 @@ abstract class AbstractAdapter implements AdapterInterface
         $this->attributeRendererPool = $attributeRendererPool;
     }
 
-    final public function setType(AbstractType $type)
+    public function setType(AbstractType $type)
     {
         $this->type = $type;
         return $this;

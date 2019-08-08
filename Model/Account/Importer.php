@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Math\Random as Randomizer;
 use Magento\Store\Model\StoreManagerInterface;
 use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface as AccountStoreRepositoryInterface;
@@ -25,6 +26,11 @@ use ShoppingFeed\Sdk\Api\Store\StoreResource as ApiStore;
 
 class Importer
 {
+    /**
+     * @var Randomizer
+     */
+    private $randomizer;
+
     /**
      * @var StoreManagerInterface
      */
@@ -76,6 +82,7 @@ class Importer
     private $feedExporter;
 
     /**
+     * @param Randomizer $randomizer
      * @param StoreManagerInterface $storeManager
      * @param ApiSessionManager $apiSessionManager
      * @param AccountRepositoryInterface $accountRepository
@@ -88,6 +95,7 @@ class Importer
      * @param FeedExporter $feedExporter
      */
     public function __construct(
+        Randomizer $randomizer,
         StoreManagerInterface $storeManager,
         ApiSessionManager $apiSessionManager,
         AccountRepositoryInterface $accountRepository,
@@ -99,6 +107,7 @@ class Importer
         TransactionFactory $transactionFactory,
         FeedExporter $feedExporter
     ) {
+        $this->randomizer = $randomizer;
         $this->storeManager = $storeManager;
         $this->apiSessionManager = $apiSessionManager;
         $this->accountRepository = $accountRepository;
@@ -116,7 +125,11 @@ class Importer
      */
     private function generateUniqueFeedFileNameBase()
     {
-        return 'feed_' . dechex(mt_rand());
+        try {
+            return 'feed_' . $this->randomizer->getRandomString(8);
+        } catch (\Exception $e) {
+            return 'feed_' . dechex(time());
+        }
     }
 
     /**
