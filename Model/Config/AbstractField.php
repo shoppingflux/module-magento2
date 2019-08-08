@@ -163,37 +163,37 @@ abstract class AbstractField implements FieldInterface
         return [ 'enabled' => true, 'rules' => $switcherRules ];
     }
 
-    final public function getName()
+    public function getName()
     {
         return $this->name;
     }
 
-    final public function getValueHandler()
+    public function getValueHandler()
     {
         return $this->valueHandler;
     }
 
-    final public function getLabel()
+    public function getLabel()
     {
         return $this->label;
     }
 
-    final public function isRequired()
+    public function isRequired()
     {
         return $this->isRequired;
     }
 
-    final public function getDefaultFormValue()
+    public function getDefaultFormValue()
     {
         return $this->defaultFormValue;
     }
 
-    final public function getDefaultUseValue()
+    public function getDefaultUseValue()
     {
         return $this->defaultUseValue;
     }
 
-    final public function getSortOrder()
+    public function getSortOrder()
     {
         return $this->sortOrder;
     }

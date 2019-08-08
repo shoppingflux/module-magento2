@@ -81,7 +81,7 @@ abstract class AbstractConfig implements ConfigInterface
      * @return FieldInterface[]
      * @throws LocalizedException
      */
-    final public function getFields(StoreInterface $store)
+    public function getFields(StoreInterface $store)
     {
         if (!is_array($this->baseFields)) {
             $this->baseFields = [];
@@ -108,7 +108,7 @@ abstract class AbstractConfig implements ConfigInterface
         return array_merge($this->baseFields, $this->storeFields[$storeId]);
     }
 
-    final public function getField(StoreInterface $store, $name)
+    public function getField(StoreInterface $store, $name)
     {
         $fields = $this->getFields($store);
         return isset($fields[$name]) ? $fields[$name] : null;

@@ -13,12 +13,12 @@ abstract class AbstractConfig extends RefreshableConfig implements ConfigInterfa
      */
     private $type = null;
 
-    final public function getSectionType()
+    public function getSectionType()
     {
         return $this->type->getCode();
     }
 
-    final public function getScopeSubPath()
+    public function getScopeSubPath()
     {
         return [ self::SUB_SCOPE, $this->getSectionType() ];
     }
@@ -27,7 +27,7 @@ abstract class AbstractConfig extends RefreshableConfig implements ConfigInterfa
      * @param AbstractType $type
      * @return $this
      */
-    final public function setType(AbstractType $type)
+    public function setType(AbstractType $type)
     {
         $this->type = $type;
         return $this;
