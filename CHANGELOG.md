@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.23.1] - 2019-08-21
+### Changed
+- Improve prevention of stock checks when not in admin scope
+
 ## [0.23.0] - 2019-08-08
 ### Changed
 - Remove final keywords from functions
