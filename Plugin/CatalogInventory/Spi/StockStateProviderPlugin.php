@@ -42,6 +42,16 @@ class StockStateProviderPlugin
     }
 
     /**
+     * @return bool
+     */
+    private function shouldPreventQtyCheck()
+    {
+        return $this->orderImporter->isImportRunning()
+            && ($store = $this->orderImporter->getImportRunningForStore())
+            && !$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store);
+    }
+
+    /**
      * @param StockStateProviderInterface $subject
      * @param callable $proceed
      * @param StockItemInterface $stockItem
@@ -58,13 +68,24 @@ class StockStateProviderPlugin
         $qtyToCheck,
         $origQty
     ) {
-        if (!$this->orderImporter->isImportRunning()
-            || (!$store = $this->orderImporter->getImportRunningForStore())
-            || $this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
-        ) {
-            return $proceed($stockItem, $itemQty, $qtyToCheck, $origQty);
-        }
+        return $this->shouldPreventQtyCheck()
+            ? $this->dataObjectFactory->create()
+            : $proceed($stockItem, $itemQty, $qtyToCheck, $origQty);
+    }
 
-        return $this->dataObjectFactory->create();
+    /**
+     * @param StockStateProviderInterface $subject
+     * @param callable $proceed
+     * @param StockItemInterface $stockItem
+     * @param float $qty
+     * @return bool
+     */
+    public function aroundCheckQty(
+        StockStateProviderInterface $subject,
+        callable $proceed,
+        StockItemInterface $stockItem,
+        $qty
+    ) {
+        return $this->shouldPreventQtyCheck() ? true : $proceed($stockItem, $qty);
     }
 }
