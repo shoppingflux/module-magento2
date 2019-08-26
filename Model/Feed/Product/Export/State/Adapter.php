@@ -103,6 +103,18 @@ class Adapter implements AdapterInterface
         return false;
     }
 
+    /**
+     * @param StoreInterface $store
+     * @param RefreshableProduct $refreshableProduct
+     * @return bool
+     */
+    private function isProductSelectedForExport(StoreInterface $store, RefreshableProduct $refreshableProduct)
+    {
+        return (!$attribute = $this->config->getIsSelectedProductAttribute($store))
+            ? $refreshableProduct->getFeedProduct()->isSelected()
+            : (bool) $refreshableProduct->getCatalogProduct()->getData($attribute->getAttributeCode());
+    }
+
     public function getProductExportStates(StoreInterface $store, RefreshableProduct $product)
     {
         $feedProduct = $product->getFeedProduct();
@@ -119,8 +131,9 @@ class Adapter implements AdapterInterface
             ($this->config->shouldExportNotSalable($store) || !$this->isNotSalableProduct($catalogProduct))
             && ($this->config->shouldExportOutOfStock($store) || !$this->isOutOfStockProduct($catalogProduct))
         ) {
-            if (($this->config->shouldExportSelectedOnly($store) && !$feedProduct->isSelected())
-                || !in_array((int) $catalogProduct->getVisibility(), $this->config->getExportedVisibilities($store))
+            if (!in_array((int) $catalogProduct->getVisibility(), $this->config->getExportedVisibilities($store))
+                || ($this->config->shouldExportSelectedOnly($store)
+                    && !$this->isProductSelectedForExport($store, $product))
             ) {
                 $baseExportState = FeedProduct::STATE_NOT_EXPORTED;
             }

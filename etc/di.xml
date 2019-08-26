@@ -64,7 +64,7 @@
     <type name="ShoppingFeed\Manager\Model\Feed\RealTimeUpdater" shared="true"/>
 
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePool"/>
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface" shared="true">
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\TypePool" shared="true">
         <arguments>
             <argument name="types" xsi:type="array">
                 <item name="stock" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock</item>
@@ -79,37 +79,22 @@
 
     <type name="ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section\Type" shared="true"/>
 
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Export\State\Adapter"/>
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\StockInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Stock"/>
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\PricesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices"/>
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\AttributesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Attributes"/>
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ImagesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Images"/>
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Categories"/>
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Shipping"/>
-
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Stock">
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Boolean" shared="true">
         <arguments>
-            <argument name="stockRegistry" xsi:type="object">Magento\CatalogInventory\Api\StockRegistryInterface\Proxy</argument>
+            <argument name="fullAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Full</argument>
         </arguments>
     </type>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices">
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Configurable" shared="true">
         <arguments>
-            <argument name="configurableProductType" xsi:type="object">Magento\ConfigurableProduct\Model\Product\Type\Configurable\Proxy</argument>
-            <argument name="taxCalculator" xsi:type="object">Magento\Tax\Api\TaxCalculationInterface\Proxy</argument>
+            <argument name="fullAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Full</argument>
         </arguments>
     </type>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Attributes">
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable" shared="true">
         <arguments>
-            <argument name="frontendUrlBuilder" xsi:type="object">ShoppingFeed\Manager\FrontendUrl</argument>
-        </arguments>
-    </type>
-
-    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source"/>
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface" shared="true">
-        <arguments>
-            <argument name="excludedRenderableAttributes" xsi:type="array">
+            <argument name="fullAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Full</argument>
+            <argument name="excludedAttributeCodes" xsi:type="array">
                 <item name="attribute_set_id" xsi:type="string">attribute_set_id</item>
                 <item name="category_ids" xsi:type="string">category_ids</item>
                 <item name="created_at" xsi:type="string">created_at</item>
@@ -147,6 +132,34 @@
         </arguments>
     </type>
 
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Export\State\Adapter"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\StockInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Stock"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\PricesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\AttributesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Attributes"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ImagesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Images"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Categories"/>
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Shipping"/>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Stock">
+        <arguments>
+            <argument name="stockRegistry" xsi:type="object">Magento\CatalogInventory\Api\StockRegistryInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices">
+        <arguments>
+            <argument name="configurableProductType" xsi:type="object">Magento\ConfigurableProduct\Model\Product\Type\Configurable</argument>
+            <argument name="taxCalculator" xsi:type="object">Magento\Tax\Api\TaxCalculationInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Attributes">
+        <arguments>
+            <argument name="frontendUrlBuilder" xsi:type="object">ShoppingFeed\Manager\FrontendUrl</argument>
+            <argument name="configurableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Configurable</argument>
+        </arguments>
+    </type>
+
     <preference for="ShoppingFeed\Manager\Model\Feed\ConfigInterface" type="ShoppingFeed\Manager\Model\Feed\Config"/>
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Export\State\Config"/>
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Stock"/>
@@ -156,14 +169,27 @@
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Categories"/>
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping"/>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\AttributesInterface">
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Export\State\Config">
         <arguments>
+            <argument name="booleanAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Boolean</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Attributes">
+        <arguments>
+            <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>
             <argument name="mappableAttributes" xsi:type="array"/>
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping">
+        <arguments>
+            <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>
+        </arguments>
+    </type>
+
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPool"/>
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface" shared="true">
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPool" shared="true">
         <arguments>
             <argument name="renderers" xsi:type="array">
                 <item name="boolean" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Boolean</item>

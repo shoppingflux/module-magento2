@@ -18,12 +18,12 @@ class Attribute extends OptionHandler
     public function __construct(AttributeSourceInterface $attributeSource)
     {
         $this->attributeSource = $attributeSource;
-        parent::__construct(UiText::NAME, $attributeSource->getRenderableAttributeOptionArray(false));
+        parent::__construct(UiText::NAME, $attributeSource->getAttributeOptionArray(false));
     }
 
     public function prepareRawValueForUse($value, $defaultValue, $isRequired)
     {
         $attributeCode = parent::prepareRawValueForUse($value, $defaultValue, $isRequired);
-        return (null !== $attributeCode) ? $this->attributeSource->getRenderableAttributeByCode($attributeCode) : null;
+        return (null !== $attributeCode) ? $this->attributeSource->getAttribute($attributeCode) : null;
     }
 }

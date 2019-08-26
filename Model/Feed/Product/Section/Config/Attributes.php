@@ -27,7 +27,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
     /**
      * @var AttributeSourceInterface
      */
-    private $attributeSource;
+    private $renderableAttributeSource;
 
     /**
      * @var string[]
@@ -37,16 +37,16 @@ class Attributes extends AbstractConfig implements AttributesInterface
     /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
-     * @param AttributeSourceInterface $attributeSource
+     * @param AttributeSourceInterface $renderableAttributeSource
      * @param string[] $mappableAttributes
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
         ValueHandlerFactoryInterface $valueHandlerFactory,
-        AttributeSourceInterface $attributeSource,
+        AttributeSourceInterface $renderableAttributeSource,
         array $mappableAttributes = []
     ) {
-        $this->attributeSource = $attributeSource;
+        $this->renderableAttributeSource = $renderableAttributeSource;
         $this->mappableAttributes = array_filter($mappableAttributes);
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
@@ -55,7 +55,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
     {
         $attributeValueHandler = $this->valueHandlerFactory->create(
             AttributeHandler::TYPE_CODE,
-            [ 'attributeSource' => $this->attributeSource ]
+            [ 'attributeSource' => $this->renderableAttributeSource ]
         );
 
         $fields = [
