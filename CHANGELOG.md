@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0] - 2019-08-26
+### Added
+- Add an option for selecting exportable products using a custom attribute
+
+### Changed
+- Refactor attribute sources
+
 ## [0.23.1] - 2019-08-21
 ### Changed
 - Improve prevention of stock checks when not in admin scope
