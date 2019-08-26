@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 
+use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as BaseConfig;
 use ShoppingFeed\Manager\Model\Feed\Product\RefreshableConfigInterface;
@@ -13,6 +14,12 @@ interface ConfigInterface extends BaseConfig, RefreshableConfigInterface
      * @return bool
      */
     public function shouldExportSelectedOnly(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return AbstractAttribute|null
+     */
+    public function getIsSelectedProductAttribute(StoreInterface $store);
 
     /**
      * @param StoreInterface $store

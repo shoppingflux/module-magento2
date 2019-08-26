@@ -26,19 +26,19 @@ class Shipping extends AbstractConfig implements ShippingInterface
     /**
      * @var AttributeSourceInterface
      */
-    private $attributeSource;
+    private $renderableAttributeSource;
 
     /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
-     * @param AttributeSourceInterface $attributeSource
+     * @param AttributeSourceInterface $renderableAttributeSource
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
         ValueHandlerFactoryInterface $valueHandlerFactory,
-        AttributeSourceInterface $attributeSource
+        AttributeSourceInterface $renderableAttributeSource
     ) {
-        $this->attributeSource = $attributeSource;
+        $this->renderableAttributeSource = $renderableAttributeSource;
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
@@ -46,7 +46,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
     {
         $attributeHandler = $this->valueHandlerFactory->create(
             AttributeHandler::TYPE_CODE,
-            [ 'attributeSource' => $this->attributeSource ]
+            [ 'attributeSource' => $this->renderableAttributeSource ]
         );
 
         return array_merge(

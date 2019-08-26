@@ -14,13 +14,17 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Feed\Exporter as FeedExporter;
+use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\RefreshableConfig;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
 class Config extends RefreshableConfig implements ConfigInterface
 {
     const SUB_SCOPE = 'export_state';
 
     const KEY_EXPORT_SELECTED_ONLY = 'export_selected_only';
+    const KEY_SELECT_WITH_PRODUCT_ATTRIBUTE = 'select_with_product_attribute';
+    const KEY_IS_SELECTED_PRODUCT_ATTRIBUTE = 'is_selected_product_attribute';
     const KEY_EXPORTED_VISIBILITIES = 'exported_visibilities';
     const KEY_EXPORT_OUT_OF_STOCK = 'export_out_of_stock';
     const KEY_EXPORT_NOT_SALABLE = 'export_not_salable';
@@ -34,16 +38,24 @@ class Config extends RefreshableConfig implements ConfigInterface
     private $productVisibility;
 
     /**
+     * @var AttributeSourceInterface
+     */
+    private $booleanAttributeSource;
+
+    /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param ProductVisibility $productVisibility
+     * @param AttributeSourceInterface $booleanAttributeSource
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
         ValueHandlerFactoryInterface $valueHandlerFactory,
-        ProductVisibility $productVisibility
+        ProductVisibility $productVisibility,
+        AttributeSourceInterface $booleanAttributeSource
     ) {
         $this->productVisibility = $productVisibility;
+        $this->booleanAttributeSource = $booleanAttributeSource;
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
@@ -54,6 +66,11 @@ class Config extends RefreshableConfig implements ConfigInterface
 
     protected function getBaseFields()
     {
+        $booleanAttributeValueHandler = $this->valueHandlerFactory->create(
+            AttributeHandler::TYPE_CODE,
+            [ 'attributeSource' => $this->booleanAttributeSource ]
+        );
+
         return array_merge(
             [
                 $this->fieldFactory->create(
@@ -61,6 +78,27 @@ class Config extends RefreshableConfig implements ConfigInterface
                     [
                         'name' => self::KEY_EXPORT_SELECTED_ONLY,
                         'label' => __('Export Only Selected Products'),
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_SELECT_WITH_PRODUCT_ATTRIBUTE,
+                        'label' => __('Use a Custom Attribute to Select Products'),
+                        'checkedNotice' => __('Products are selectable using the chosen attribute below.'),
+                        'uncheckedNotice' => __('Products are selectable using the feed product list below.'),
+                        'checkedDependentFieldNames' => [ self::KEY_IS_SELECTED_PRODUCT_ATTRIBUTE ],
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_IS_SELECTED_PRODUCT_ATTRIBUTE,
+                        'valueHandler' => $booleanAttributeValueHandler,
+                        'isRequired' => true,
+                        'label' => __('Select Products Based on Attribute'),
                     ]
                 ),
 
@@ -170,6 +208,13 @@ class Config extends RefreshableConfig implements ConfigInterface
     public function shouldExportSelectedOnly(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_EXPORT_SELECTED_ONLY);
+    }
+
+    public function getIsSelectedProductAttribute(StoreInterface $store)
+    {
+        return !$this->getFieldValue($store, self::KEY_SELECT_WITH_PRODUCT_ATTRIBUTE)
+            ? null
+            : $this->getFieldValue($store, self::KEY_IS_SELECTED_PRODUCT_ATTRIBUTE);
     }
 
     public function getExportedVisibilities(StoreInterface $store)

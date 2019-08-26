@@ -9,22 +9,17 @@ interface SourceInterface
     /**
      * @return AbstractAttribute[]
      */
-    public function getConfigurableAttributes();
-
-    /**
-     * @return AbstractAttribute[]
-     */
-    public function getRenderableAttributes();
+    public function getAttributesByCode();
 
     /**
      * @param bool $withEmpty
      * @return array
      */
-    public function getRenderableAttributeOptionArray($withEmpty = true);
+    public function getAttributeOptionArray($withEmpty = true);
 
     /**
-     * @param string $attributeCode
-     * @return AbstractAttribute|false
+     * @param string $code
+     * @return AbstractAttribute|null
      */
-    public function getRenderableAttributeByCode($attributeCode);
+    public function getAttribute($code);
 }

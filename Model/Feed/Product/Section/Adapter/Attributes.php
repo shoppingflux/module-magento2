@@ -50,7 +50,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     /**
      * @var AttributeSourceInterface
      */
-    private $attributeSource;
+    private $configurableAttributeSource;
 
     /**
      * @var EavEntityType|null
@@ -67,18 +67,18 @@ class Attributes extends AbstractAdapter implements AttributesInterface
      * @param EavEntityTypeFactory $eavEntityTypeFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param UrlInterface $frontendUrlBuilder
-     * @param AttributeSourceInterface $attributeSource
+     * @param AttributeSourceInterface $configurableAttributeSource
      */
     public function __construct(
         StoreManagerInterface $storeManager,
         EavEntityTypeFactory $eavEntityTypeFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         UrlInterface $frontendUrlBuilder,
-        AttributeSourceInterface $attributeSource
+        AttributeSourceInterface $configurableAttributeSource
     ) {
         $this->eavEntityTypeFactory = $eavEntityTypeFactory;
         $this->frontendUrlBuilder = $frontendUrlBuilder;
-        $this->attributeSource = $attributeSource;
+        $this->configurableAttributeSource = $configurableAttributeSource;
         parent::__construct($storeManager, $attributeRendererPool);
     }
 
@@ -95,8 +95,8 @@ class Attributes extends AbstractAdapter implements AttributesInterface
             $productCollection->addAttributeToSelect($attribute->getAttributeCode());
         }
 
-        foreach ($this->attributeSource->getConfigurableAttributes() as $key => $attribute) {
-            $productCollection->addAttributeToSelect($attribute->getAttributeCode());
+        foreach ($this->configurableAttributeSource->getAttributesByCode() as $code => $attribute) {
+            $productCollection->addAttributeToSelect($code);
         }
 
         $productCollection->addUrlRewrite();
@@ -174,7 +174,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     {
         $config = $this->getConfig();
         $catalogProduct = $product->getCatalogProduct();
-        $productId = (int) $catalogProduct->getId();
+        $productId = (int)$catalogProduct->getId();
         $productSku = $catalogProduct->getSku();
 
         $data = [
@@ -209,9 +209,9 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         }
 
         if (ProductType::TYPE_SIMPLE === $catalogProduct->getTypeId()) {
-            foreach ($this->attributeSource->getConfigurableAttributes() as $key => $attribute) {
+            foreach ($this->configurableAttributeSource->getAttributesByCode() as $code => $attribute) {
                 $value = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
-                $data[self::KEY_CONFIGURABLE_ATTRIBUTES][$key] = $value;
+                $data[self::KEY_CONFIGURABLE_ATTRIBUTES][$code] = $value;
             }
         }
 
