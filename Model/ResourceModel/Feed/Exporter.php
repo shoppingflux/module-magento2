@@ -151,7 +151,7 @@ class Exporter extends AbstractDb
         $productAttributeIds = $connection->fetchAll(
             $connection->select()
                 ->from(
-                    $this->tableDictionary->getConfigurableProductAttributeTableCode(),
+                    $this->tableDictionary->getConfigurableProductAttributeTableName(),
                     [ 'product_id', 'attribute_id' ]
                 )
         );
