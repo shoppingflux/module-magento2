@@ -102,6 +102,11 @@ class Order extends AbstractModel implements OrderInterface
         return (float) $this->getDataByKey(self::SHIPPING_AMOUNT);
     }
 
+    public function getFeesAmount()
+    {
+        return (float) $this->getDataByKey(self::FEES_AMOUNT);
+    }
+
     public function getTotalAmount()
     {
         return (float) $this->getDataByKey(self::TOTAL_AMOUNT);
@@ -213,6 +218,11 @@ class Order extends AbstractModel implements OrderInterface
     public function setShippingAmount($amount)
     {
         return $this->setData(self::SHIPPING_AMOUNT, (float) $amount);
+    }
+
+    public function setFeesAmount($amount)
+    {
+        return $this->setData(self::FEES_AMOUNT, (float) $amount);
     }
 
     public function setTotalAmount($amount)

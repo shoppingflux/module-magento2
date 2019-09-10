@@ -25,9 +25,6 @@ class SaveProductAttributesObserver implements ObserverInterface
         $this->feedProductResourceFactory = $feedProductResourceFactory;
     }
 
-    /**
-     * @param Observer $observer
-     */
     public function execute(Observer $observer)
     {
         if (($catalogProduct = $observer->getEvent()->getData(static::EVENT_KEY_PRODUCT))

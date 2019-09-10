@@ -96,4 +96,9 @@ interface ImporterInterface
      * @return StoreInterface|null
      */
     public function getImportRunningForStore();
+
+    /**
+     * @return MarketplaceOrderInterface|null
+     */
+    public function getCurrentlyImportedMarketplaceOrder();
 }

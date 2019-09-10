@@ -24,9 +24,6 @@ class AfterProductSaveObserver implements ObserverInterface
         $this->realTimeFeedUpdater = $realTimeFeedUpdater;
     }
 
-    /**
-     * @param Observer $observer
-     */
     public function execute(Observer $observer)
     {
         if (($catalogProduct = $observer->getEvent()->getData(static::EVENT_KEY_PRODUCT))

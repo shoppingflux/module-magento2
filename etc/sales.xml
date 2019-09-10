@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Sales:etc/sales.xsd">
+    <section name="quote">
+        <group name="totals">
+            <item name="sfm_marketplace_fees" instance="ShoppingFeed\Manager\Model\Sales\Quote\Address\Total\MarketplaceFees" sort_order="500"/>
+        </group>
+    </section>
+
+    <section name="order_invoice">
+        <group name="totals">
+            <item name="sfm_marketplace_fees" instance="ShoppingFeed\Manager\Model\Sales\Invoice\Total\MarketplaceFees" sort_order="300"/>
+        </group>
+    </section>
+</config>

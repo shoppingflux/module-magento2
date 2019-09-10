@@ -34,9 +34,6 @@ class OnQuoteSubmitSuccessObserver implements ObserverInterface
         $this->orderImporter = $orderImporter;
     }
 
-    /**
-     * @param Observer $observer
-     */
     public function execute(Observer $observer)
     {
         if (($order = $observer->getEvent()->getData(self::EVENT_KEY_ORDER)) && ($order instanceof Order)) {

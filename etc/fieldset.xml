@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:DataObject/etc/fieldset.xsd">
+    <scope id="global">
+        <fieldset id="sales_convert_order">
+            <field name="sfm_marketplace_fees_amount">
+                <aspect name="to_invoice"/>
+            </field>
+            <field name="sfm_marketplace_fees_base_amount">
+                <aspect name="to_invoice"/>
+            </field>
+        </fieldset>
+    </scope>
+</config>

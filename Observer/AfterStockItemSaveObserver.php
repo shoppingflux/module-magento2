@@ -24,9 +24,6 @@ class AfterStockItemSaveObserver implements ObserverInterface
         $this->realTimeFeedUpdater = $realTimeFeedUpdater;
     }
 
-    /**
-     * @param Observer $observer
-     */
     public function execute(Observer $observer)
     {
         if (($stockItem = $observer->getEvent()->getData(static::EVENT_KEY_STOCK_ITEM))
