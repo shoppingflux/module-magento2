@@ -7,7 +7,7 @@
 
 ### Fixed
 - Fix feed URL in account listing when using gzip
-- Fix feed URL in account listing when using gzip
+- Fix wrong table name used for configurable product attributes
 - Force frontend config scope when executing CLI commands
 
 ## [0.24.0] - 2019-08-26
