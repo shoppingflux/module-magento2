@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
+use Magento\Framework\Config\ScopeInterface as ConfigScopeInterface;
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Console\AbstractCommand as BaseCommand;
@@ -71,6 +72,7 @@ abstract class AbstractCommand extends BaseCommand
 
     /**
      * @param AppState $appState
+     * @param ConfigScopeInterface $configScope
      * @param StoreCollectionFactory $storeCollectionFactory
      * @param SectionTypePoolInterface $sectionTypePool
      * @param TimeFilterFactory $timeFilterFactory
@@ -79,6 +81,7 @@ abstract class AbstractCommand extends BaseCommand
      */
     public function __construct(
         AppState $appState,
+        ConfigScopeInterface $configScope,
         StoreCollectionFactory $storeCollectionFactory,
         SectionTypePoolInterface $sectionTypePool,
         TimeFilterFactory $timeFilterFactory,
@@ -89,7 +92,7 @@ abstract class AbstractCommand extends BaseCommand
         $this->timeFilterFactory = $timeFilterFactory;
         $this->feedProductFilterFactory = $feedProductFilterFactory;
         $this->feedSectionFilterFactory = $feedSectionFilterFactory;
-        parent::__construct($appState, $storeCollectionFactory);
+        parent::__construct($appState, $configScope, $storeCollectionFactory);
     }
 
     /**

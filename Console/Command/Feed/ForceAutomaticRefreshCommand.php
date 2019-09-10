@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
+use Magento\Framework\Config\ScopeInterface as ConfigScopeInterface;
 use Magento\Framework\Console\Cli;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
@@ -35,6 +36,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
 
     /**
      * @param AppState $appState
+     * @param ConfigScopeInterface $configScope
      * @param StoreCollectionFactory $storeCollectionFactory
      * @param SectionTypePoolInterface $sectionTypePool
      * @param TimeFilterFactory $timeFilterFactory
@@ -45,6 +47,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
      */
     public function __construct(
         AppState $appState,
+        ConfigScopeInterface $configScope,
         StoreCollectionFactory $storeCollectionFactory,
         SectionTypePoolInterface $sectionTypePool,
         TimeFilterFactory $timeFilterFactory,
@@ -55,6 +58,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
     ) {
         parent::__construct(
             $appState,
+            $configScope,
             $storeCollectionFactory,
             $sectionTypePool,
             $timeFilterFactory,
