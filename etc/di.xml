@@ -182,6 +182,12 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Prices">
+        <arguments>
+            <argument name="customerGroupSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping">
         <arguments>
             <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>

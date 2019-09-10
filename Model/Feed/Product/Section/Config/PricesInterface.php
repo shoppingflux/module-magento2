@@ -13,6 +13,12 @@ interface PricesInterface extends ConfigInterface
 
     /**
      * @param StoreInterface $store
+     * @return int
+     */
+    public function getCustomerGroupId(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return string
      */
     public function getConfigurableProductPriceType(StoreInterface $store);

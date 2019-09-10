@@ -327,6 +327,7 @@
 "Use Item Reference as Product ID","Utiliser la référence d'article comme ID produit"
 "Use Mobile Phone Number First (If Available)","Utiliser en priorité le numéro de téléphone portable (si disponible)"
 "Use Parent Categories","Utiliser les catégories parent"
+"Use Prices from Customer Group","Utiliser les prix du groupe clients"
 "Use Product ID for SKU","Utiliser l'ID produit à la place du SKU"
 "Value handler factory ""%1"" must create instances of type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.",La factory de handler de valeurs ""%1"" doit créer des instances du type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface."
 "Value handler factory ""%1"" must implement a callable create() method.","La factory de handler de valeurs ""%1"" doit implémenter une méthode create() appelable."
