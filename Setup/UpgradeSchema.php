@@ -89,6 +89,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 $this->fixMarketplaceOrderItemTaxAmountFieldType($setup);
             }
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.25.0') < 0)) {
+            $this->addMarketplaceOrderFeesAmountField($setup);
+
+            $this->addSalesEntityMarketplaceFeesAmountFields(
+                $setup,
+                [
+                    $this->tableDictionary->getSalesOrderTableName(),
+                    $this->tableDictionary->getSalesInvoiceTableName(),
+                ]
+            );
+        }
     }
 
     /**
@@ -1238,5 +1250,74 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'comment' => 'Tax Amount',
             ]
         );
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderFeesAmountField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTableName, OrderInterface::FEES_AMOUNT)) {
+            $connection->addColumn(
+                $marketplaceOrderTableName,
+                OrderInterface::FEES_AMOUNT,
+                [
+                    'type' => Table::TYPE_DECIMAL,
+                    'length' => '12,4',
+                    'nullable' => false,
+                    'default' => 0.0,
+                    'comment' => 'Fees Amount',
+                    'after' => OrderInterface::SHIPPING_AMOUNT,
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @param string[] $salesEntityTableNames
+     */
+    private function addSalesEntityMarketplaceFeesAmountFields(
+        SchemaSetupInterface $setup,
+        array $salesEntityTableNames
+    ) {
+        $connection = $setup->getConnection();
+
+        $feesAmountFieldDefinition = [
+            'type' => Table::TYPE_DECIMAL,
+            'length' => '12,4',
+            'nullable' => true,
+            'comment' => 'Marketplace Fees Amount',
+        ];
+
+        $feesBaseAmountFieldDefinition = $feesAmountFieldDefinition;
+        $feesBaseAmountFieldDefinition['comment'] = 'Marketplace Fees Base Amount';
+
+        foreach ($salesEntityTableNames as $salesEntityTableName) {
+            if (!$connection->tableColumnExists(
+                $salesEntityTableName,
+                OrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_AMOUNT
+            )) {
+                $connection->addColumn(
+                    $salesEntityTableName,
+                    OrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_AMOUNT,
+                    $feesAmountFieldDefinition
+                );
+            }
+
+            if (!$connection->tableColumnExists(
+                $salesEntityTableName,
+                OrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_BASE_AMOUNT
+            )) {
+                $connection->addColumn(
+                    $salesEntityTableName,
+                    OrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_BASE_AMOUNT,
+                    $feesBaseAmountFieldDefinition
+                );
+            }
+        }
     }
 }

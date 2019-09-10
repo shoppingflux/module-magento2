@@ -182,6 +182,12 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Prices">
+        <arguments>
+            <argument name="customerGroupSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping">
         <arguments>
             <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>
@@ -292,6 +298,20 @@
 
     <type name="Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector">
         <plugin name="sfm_tax_sales_total_quote_common_tax_collector_plugin" type="ShoppingFeed\Manager\Plugin\Tax\Sales\Total\Quote\CommonTaxCollectorPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\Sales\Block\Order\Totals">
+        <plugin name="sfm_order_totals_block_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\TotalsBlockPlugin" sortOrder="1000000000"/>
+    </type>
+
+    <type name="Magento\Tax\Model\Sales\Pdf\Grandtotal">
+        <plugin name="sfm_tax_sales_pdf_grand_total_plugin" type="ShoppingFeed\Manager\Plugin\Tax\Sales\Pdf\GrandTotalPlugin" sortOrder="1000000000"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Observer\AfterQuoteLoadObserver">
+        <arguments>
+            <argument name="catalogProductHelper" xsi:type="object">Magento\Catalog\Helper\Product\Proxy</argument>
+        </arguments>
     </type>
 
     <preference for="ShoppingFeed\Manager\Api\Data\Cron\TaskInterface" type="ShoppingFeed\Manager\Model\Cron\Task"/>
@@ -423,12 +443,6 @@
             <argument name="scopeResolver" xsi:type="object">ShoppingFeed\Manager\Url\FrontendScopeResolver</argument>
         </arguments>
     </virtualType>
-
-    <type name="ShoppingFeed\Manager\Observer\AfterQuoteLoadObserver">
-        <arguments>
-            <argument name="catalogProductHelper" xsi:type="object">Magento\Catalog\Helper\Product\Proxy</argument>
-        </arguments>
-    </type>
 
     <type name="ShoppingFeed\Manager\Setup\UpgradeData">
         <arguments>

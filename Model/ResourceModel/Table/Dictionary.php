@@ -301,6 +301,38 @@ class Dictionary extends AbstractDb
     /**
      * @return string
      */
+    public function getSalesInvoiceTableCode()
+    {
+        return 'sales_invoice';
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalesInvoiceTableName()
+    {
+        return $this->getTable($this->getSalesInvoiceTableCode());
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalesCreditmemoTableCode()
+    {
+        return 'sales_creditmemo';
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalesCreditmemoTableName()
+    {
+        return $this->getTable($this->getSalesCreditmemoTableCode());
+    }
+
+    /**
+     * @return string
+     */
     public function getSalesShipmentTableCode()
     {
         return 'sales_shipment';

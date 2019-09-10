@@ -110,6 +110,14 @@
                 </item>
             </argument>
         </column>
+        <column name="fees_amount" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Price">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">textRange</item>
+                    <item name="label" xsi:type="string" translate="true">Fees Amount</item>
+                </item>
+            </argument>
+        </column>
         <column name="total_amount" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Price">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

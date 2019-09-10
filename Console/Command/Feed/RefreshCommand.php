@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Console\Command\Feed;
 
 use Magento\Framework\App\State as AppState;
+use Magento\Framework\Config\ScopeInterface as ConfigScopeInterface;
 use Magento\Framework\Console\Cli;
 use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
@@ -32,6 +33,7 @@ class RefreshCommand extends AbstractCommand
 
     /**
      * @param AppState $appState
+     * @param ConfigScopeInterface $configScope
      * @param StoreCollectionFactory $storeCollectionFactory
      * @param SectionTypePoolInterface $sectionTypePool
      * @param TimeFilterFactory $timeFilterFactory
@@ -41,6 +43,7 @@ class RefreshCommand extends AbstractCommand
      */
     public function __construct(
         AppState $appState,
+        ConfigScopeInterface $configScope,
         StoreCollectionFactory $storeCollectionFactory,
         SectionTypePoolInterface $sectionTypePool,
         TimeFilterFactory $timeFilterFactory,
@@ -50,6 +53,7 @@ class RefreshCommand extends AbstractCommand
     ) {
         parent::__construct(
             $appState,
+            $configScope,
             $storeCollectionFactory,
             $sectionTypePool,
             $timeFilterFactory,

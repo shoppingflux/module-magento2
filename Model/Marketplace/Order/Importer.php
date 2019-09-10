@@ -15,6 +15,7 @@ use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterfaceFactory;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\AddressRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface;
+use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\DB\TransactionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
@@ -196,7 +197,7 @@ class Importer
         if (!empty($apiOrderData['additionalFields']) && is_array($apiOrderData['additionalFields'])) {
             $additionalFields = $this->dataObjectFactory->create();
             $additionalFields->setData($apiOrderData['additionalFields']);
-            $marketplaceOrder->setAdditionalFields($additionalFields);
+            $this->importApiAdditionalOrderData($apiOrder, $marketplaceOrder, $additionalFields, $store);
         }
 
         $transaction = $this->transactionFactory->create();
@@ -256,6 +257,32 @@ class Importer
         $marketplaceOrder->setCreatedAt($apiOrder->getCreatedAt()->format('Y-m-d H:i:s'));
         $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt()->format('Y-m-d H:i:s'));
         $marketplaceOrder->setFetchedAt($this->localeDate->date(null, null, false)->format('Y-m-d H:i:s'));
+    }
+
+    /**
+     * @param ApiOrder $apiOrder
+     * @param MarketplaceOrderInterface $marketplaceOrder
+     * @param DataObject $additionalFields
+     * @param StoreInterface $store
+     */
+    public function importApiAdditionalOrderData(
+        ApiOrder $apiOrder,
+        MarketplaceOrderInterface $marketplaceOrder,
+        DataObject $additionalFields,
+        StoreInterface $store
+    ) {
+        $feesAmount = 0.0;
+
+        if ($additionalFields->hasData('FRAISTRAITEMENT')) {
+            $feesAmount += max(0.0, (float) $additionalFields->getData('FRAISTRAITEMENT'));
+        }
+
+        if ($additionalFields->hasData('INTERETBCA')) {
+            $feesAmount += max(0.0, (float) $additionalFields->getData('INTERETBCA'));
+        }
+
+        $marketplaceOrder->setFeesAmount($feesAmount);
+        $marketplaceOrder->setAdditionalFields($additionalFields);
     }
 
     /**

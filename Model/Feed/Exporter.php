@@ -421,6 +421,7 @@ class Exporter
             . $this->feedDirectory
             . '/'
             . $store->getFeedFileNameBase()
-            . '.xml';
+            . '.xml'
+            . ($this->generalConfig->shouldUseGzipCompression($store) ? '.gz' : '');
     }
 }

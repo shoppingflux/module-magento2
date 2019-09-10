@@ -192,6 +192,11 @@ class Importer implements ImporterInterface
     private $currentImportStore = null;
 
     /**
+     * @var MarketplaceOrderInterface|null
+     */
+    private $currentlyImportedMarketplaceOrder = null;
+
+    /**
      * @var int|null
      */
     private $currentlyImportedQuoteId = null;
@@ -361,6 +366,8 @@ class Importer implements ImporterInterface
                 $marketplaceOrderId = $marketplaceOrder->getId();
 
                 try {
+                    $this->currentlyImportedMarketplaceOrder = $marketplaceOrder;
+
                     $baseStore->setCurrentCurrencyCode($marketplaceOrder->getCurrencyCode());
                     $quoteId = (int) $this->quoteManager->createEmptyCart();
                     $this->currentlyImportedQuoteId = $quoteId;
@@ -486,6 +493,7 @@ class Importer implements ImporterInterface
         } finally {
             $this->taxConfigPlugin->disableForcedCrossBorderTrade();
             $this->currentImportStore = null;
+            $this->currentlyImportedMarketplaceOrder = null;
             $this->currentlyImportedQuoteId = null;
             $this->isCurrentlyImportedBusinessQuote = false;
             $baseStore->setCurrentCurrencyCode($originalBaseStoreCurrencyCode);
@@ -917,5 +925,10 @@ class Importer implements ImporterInterface
     public function getImportRunningForStore()
     {
         return $this->currentImportStore;
+    }
+
+    public function getCurrentlyImportedMarketplaceOrder()
+    {
+        return $this->currentlyImportedMarketplaceOrder;
     }
 }

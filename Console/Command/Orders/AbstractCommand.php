@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Console\Command\Orders;
 
 use Magento\Framework\App\State as AppState;
+use Magento\Framework\Config\ScopeInterface as ConfigScopeInterface;
 use ShoppingFeed\Manager\Console\AbstractCommand as BaseCommand;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Importer as MarketplaceOrderImporter;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
@@ -28,6 +29,7 @@ abstract class AbstractCommand extends BaseCommand
 
     /**
      * @param AppState $appState
+     * @param ConfigScopeInterface $configScope
      * @param StoreCollectionFactory $storeCollectionFactory
      * @param MarketplaceOrderManager $marketplaceOrderManager
      * @param MarketplaceOrderImporter $marketplaceOrderImporter
@@ -35,6 +37,7 @@ abstract class AbstractCommand extends BaseCommand
      */
     public function __construct(
         AppState $appState,
+        ConfigScopeInterface $configScope,
         StoreCollectionFactory $storeCollectionFactory,
         MarketplaceOrderManager $marketplaceOrderManager,
         MarketplaceOrderImporter $marketplaceOrderImporter,
@@ -43,6 +46,6 @@ abstract class AbstractCommand extends BaseCommand
         $this->marketplaceOrderManager = $marketplaceOrderManager;
         $this->marketplaceOrderImporter = $marketplaceOrderImporter;
         $this->salesOrderImporter = $salesOrderImporter;
-        parent::__construct($appState, $storeCollectionFactory);
+        parent::__construct($appState, $configScope, $storeCollectionFactory);
     }
 }

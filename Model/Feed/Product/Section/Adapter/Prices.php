@@ -77,9 +77,19 @@ class Prices extends AbstractAdapter implements PricesInterface
 
     public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
     {
+        $productCollection->addPriceData(
+            $this->getConfig()->getCustomerGroupId($store),
+            $store->getBaseStore()->getWebsiteId()
+        );
+
         $productCollection->addMinimalPrice();
         $productCollection->addFinalPrice();
         $productCollection->addTaxPercents();
+    }
+
+    public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
+        $productCollection->addTierPriceData();
     }
 
     /**
@@ -137,9 +147,19 @@ class Prices extends AbstractAdapter implements PricesInterface
             }
         }
 
+        $originalCustomerGroupId = $product->getCustomerGroupId();
+        $originalWebsiteId = $product->getWebsiteId();
+        $product->setCustomerGroupId($this->getConfig()->getCustomerGroupId($store));
+        $product->setWebsiteId($store->getBaseStore()->getWebsiteId());
+
+        $product->unsetData('final_price');
+        $product->unsetData('calculated_final_price');
         $basePrice = $this->applyTaxRateOnPrice($product->getPrice(), $taxRate);
         $specialPrice = $this->applyTaxRateOnPrice($product->getSpecialPrice(), $taxRate);
-        $finalPrice = $this->applyTaxRateOnPrice($product->getFinalPrice(), $taxRate);
+        $finalPrice = $this->applyTaxRateOnPrice($product->getFinalPrice(1), $taxRate);
+
+        $product->setCustomerGroupId($originalCustomerGroupId);
+        $product->setWebsiteId($originalWebsiteId);
 
         return [
             self::KEY_BASE_PRICE => round($basePrice, 2),

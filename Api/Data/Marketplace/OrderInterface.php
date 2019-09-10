@@ -21,6 +21,7 @@ interface OrderInterface
     const CURRENCY_CODE = 'currency_code';
     const PRODUCT_AMOUNT = 'product_amount';
     const SHIPPING_AMOUNT = 'shipping_amount';
+    const FEES_AMOUNT = 'fees_amount';
     const TOTAL_AMOUNT = 'total_amount';
     const PAYMENT_METHOD = 'payment_method';
     const SHIPMENT_CARRIER = 'shipment_carrier';
@@ -32,6 +33,9 @@ interface OrderInterface
     const IMPORTED_AT = 'imported_at';
     const ACKNOWLEDGED_AT = 'acknowledged_at';
     /**#@+*/
+
+    const SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_AMOUNT = 'sfm_marketplace_fees_amount';
+    const SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_BASE_AMOUNT = 'sfm_marketplace_fees_base_amount';
 
     const STATUS_CREATED = 'created';
     const STATUS_WAITING_STORE_ACCEPTANCE = 'waiting_store_acceptance';
@@ -96,6 +100,11 @@ interface OrderInterface
      * @return float
      */
     public function getShippingAmount();
+
+    /**
+     * @return float
+     */
+    public function getFeesAmount();
 
     /**
      * @return float
@@ -210,6 +219,12 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setShippingAmount($amount);
+
+    /**
+     * @param float $amount
+     * @return OrderInterface
+     */
+    public function setFeesAmount($amount);
 
     /**
      * @param float $amount

@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Console;
 
 use Magento\Framework\App\Area as AppArea;
 use Magento\Framework\App\State as AppState;
+use Magento\Framework\Config\ScopeInterface as ConfigScopeInterface;
 use ShoppingFeed\Manager\Console\Command\Exception as CommandException;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
@@ -24,17 +25,27 @@ abstract class AbstractCommand extends Command
     private $appState;
 
     /**
+     * @var ConfigScopeInterface
+     */
+    private $configScope;
+
+    /**
      * @var StoreCollectionFactory
      */
     private $storeCollectionFactory;
 
     /**
      * @param AppState $appState
+     * @param ConfigScopeInterface $configScope
      * @param StoreCollectionFactory $storeCollectionFactory
      */
-    public function __construct(AppState $appState, StoreCollectionFactory $storeCollectionFactory)
-    {
+    public function __construct(
+        AppState $appState,
+        ConfigScopeInterface $configScope,
+        StoreCollectionFactory $storeCollectionFactory
+    ) {
         $this->appState = $appState;
+        $this->configScope = $configScope;
         $this->storeCollectionFactory = $storeCollectionFactory;
         parent::__construct();
     }
@@ -44,7 +55,10 @@ abstract class AbstractCommand extends Command
         return $this->appState->emulateAreaCode(
             AppArea::AREA_FRONTEND,
             function () use ($input, $output) {
-                return $this->executeActions($input, $output);
+                $originalScope = $this->configScope->getCurrentScope();
+                $this->configScope->setCurrentScope(AppArea::AREA_FRONTEND);
+                $this->executeActions($input, $output);
+                $this->configScope->setCurrentScope($originalScope);
             }
         );
     }
