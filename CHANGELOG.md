@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.25.0] - 2019-09-10
+### Added
+- Allow specifying a customer group with which to fetch product prices
+- Import marketplace fees for orders
+
+### Fixed
+- Fix feed URL in account listing when using gzip
+- Fix feed URL in account listing when using gzip
+- Force frontend config scope when executing CLI commands
+
 ## [0.24.0] - 2019-08-26
 ### Added
 - Add an option for selecting exportable products using a custom attribute
