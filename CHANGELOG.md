@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.25.1] - 2019-09-19
+### Fixed
+- Fix memory overflow with large catalogs when exporting an empty feed
+
 ## [0.25.0] - 2019-09-10
 ### Added
 - Allow specifying a customer group with which to fetch product prices
