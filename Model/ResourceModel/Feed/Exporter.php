@@ -12,6 +12,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Query\IteratorFactory as QueryIteratorFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 use ShoppingFeed\Manager\Model\TimeHelper;
+use Zend_Db_Statement_Interface;
 
 class Exporter extends AbstractDb
 {
@@ -373,6 +374,10 @@ class Exporter extends AbstractDb
                     &$childrenQuery,
                     &$previousChildRow
                 ) {
+                    if ($childrenQuery instanceof Zend_Db_Statement_Interface) {
+                        $childrenQuery->closeCursor();
+                    }
+
                     $childrenQuery = $connection->query($childrenSelect);
                     $previousChildRow = null;
                 },
