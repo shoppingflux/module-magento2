@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.2] - 2019-10-07
+### Added
+- Add a details column to the order logs listing
+
+### Fixed
+- Fix usages of table codes instead of table names
+
 ## [0.25.1] - 2019-09-19
 ### Fixed
 - Fix memory overflow with large catalogs when exporting an empty feed
