@@ -29,7 +29,7 @@ class Collection extends AbstractCollection
 
         $this->getSelect()
             ->joinLeft(
-                [ '_sales_order_table' => $this->tableDictionary->getSalesOrderTableCode() ],
+                [ '_sales_order_table' => $this->tableDictionary->getSalesOrderTableName() ],
                 '_sales_order_table.entity_id = main_table.sales_order_id',
                 [ self::KEY_SALES_INCREMENT_ID => 'increment_id' ]
             );
@@ -84,7 +84,7 @@ class Collection extends AbstractCollection
     {
         $ticketSelect = $this->getConnection()->select()
             ->from(
-                [ '_ticket_table' => $this->tableDictionary->getMarketplaceOrderTicketTableCode() ],
+                [ '_ticket_table' => $this->tableDictionary->getMarketplaceOrderTicketTableName() ],
                 [ TicketInterface::ORDER_ID ]
             )
             ->where('action = ?', $action)
@@ -122,7 +122,7 @@ class Collection extends AbstractCollection
         $shipmentSelect = $this->getConnection()
             ->select()
             ->from(
-                [ '_sales_shipment_table' => $this->tableDictionary->getSalesShipmentTableCode() ],
+                [ '_sales_shipment_table' => $this->tableDictionary->getSalesShipmentTableName() ],
                 [ 'order_id' ]
             );
 
