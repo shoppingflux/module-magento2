@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Shipping\Method\Applier;
 
 use Magento\Framework\DataObject;
 use ShoppingFeed\Manager\Model\Config\Basic\AbstractConfig as BaseConfig;
-use ShoppingFeed\Manager\Model\Config\FieldInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
@@ -17,9 +16,6 @@ abstract class AbstractConfig extends BaseConfig implements ConfigInterface
     const KEY_DEFAULT_METHOD_TITLE = 'default_method_title';
     const KEY_FORCE_DEFAULT_METHOD_TITLE = 'force_default_method_title';
 
-    /**
-     * @return FieldInterface[]
-     */
     protected function getBaseFields()
     {
         return [
@@ -29,6 +25,12 @@ abstract class AbstractConfig extends BaseConfig implements ConfigInterface
                     'name' => self::KEY_ONLY_APPLY_IF_AVAILABLE,
                     'isRequired' => true,
                     'label' => __('Only Apply if Available'),
+                    'checkedNotice' => __(
+                        'The shipping method will only be applied if it is available for the imported order.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'Enable to only apply the shipping method if it is available for the imported order.'
+                    ),
                     'sortOrder' => 100010,
                 ]
             ),
@@ -93,26 +95,26 @@ abstract class AbstractConfig extends BaseConfig implements ConfigInterface
 
     public function shouldOnlyApplyIfAvailable(DataObject $configData)
     {
-        return $this->getFieldValue(self::KEY_ONLY_APPLY_IF_AVAILABLE, $configData);
+        return (bool) $this->getFieldValue(self::KEY_ONLY_APPLY_IF_AVAILABLE, $configData);
     }
 
     public function getDefaultCarrierTitle(DataObject $configData)
     {
-        return $this->getFieldValue(self::KEY_DEFAULT_CARRIER_TITLE, $configData);
+        return trim($this->getFieldValue(self::KEY_DEFAULT_CARRIER_TITLE, $configData));
     }
 
     public function shouldForceDefaultCarrierTitle(DataObject $configData)
     {
-        return $this->getFieldValue(self::KEY_FORCE_DEFAULT_CARRIER_TITLE, $configData);
+        return (bool) $this->getFieldValue(self::KEY_FORCE_DEFAULT_CARRIER_TITLE, $configData);
     }
 
     public function getDefaultMethodTitle(DataObject $configData)
     {
-        return $this->getFieldValue(self::KEY_DEFAULT_METHOD_TITLE, $configData);
+        return trim($this->getFieldValue(self::KEY_DEFAULT_METHOD_TITLE, $configData));
     }
 
     public function shouldForceDefaultMethodTitle(DataObject $configData)
     {
-        return $this->getFieldValue(self::KEY_FORCE_DEFAULT_METHOD_TITLE, $configData);
+        return (bool) $this->getFieldValue(self::KEY_FORCE_DEFAULT_METHOD_TITLE, $configData);
     }
 }
