@@ -59,6 +59,7 @@ class MultiSelect extends AbstractField
     public function getBaseUiMetaConfig()
     {
         return [
+            'label' => $this->getLabel(),
             'componentType' => UiField::NAME,
             'component' => 'ShoppingFeed_Manager/js/form/element/ui-select',
             'formElement' => UiSelect::NAME,
