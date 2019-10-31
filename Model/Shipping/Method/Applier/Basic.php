@@ -4,7 +4,8 @@ namespace ShoppingFeed\Manager\Model\Shipping\Method\Applier;
 
 use Magento\Framework\DataObject;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
-use Magento\Quote\Model\Quote\Address\Rate as QuoteShippingRate;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\AbstractApplier;
 use ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\BasicInterface as ConfigInterface;
 
@@ -24,47 +25,17 @@ class Basic extends AbstractApplier
     }
 
     public function applyToQuoteShippingAddress(
-        QuoteAddress $shippingAddress,
-        $orderShippingAmount,
+        MarketplaceOrderInterface $marketplaceOrder,
+        MarketplaceAddressInterface $marketplaceShippingAddress,
+        QuoteAddress $quoteShippingAddress,
         DataObject $configData
     ) {
-        $carrierCode = $this->getConfig()->getShippingCarrierCode($configData);
-        $methodCode = $this->getConfig()->getShippingMethodCode($configData);
-        $quoteShippingRates = $shippingAddress->getAllShippingRates();
-        $availableShippingRate = null;
-
-        /** @var QuoteShippingRate $quoteShippingRate */
-        foreach ($quoteShippingRates as $quoteShippingRate) {
-            if ($quoteShippingRate->getCode() === $carrierCode . '_' . $methodCode) {
-                $availableShippingRate = $quoteShippingRate;
-                break;
-            }
-        }
-
-        if (null !== $availableShippingRate) {
-            if (!$this->getConfig()->shouldForceDefaultCarrierTitle($configData)) {
-                $carrierTitle = trim($availableShippingRate->getCarrierTitle());
-            }
-
-            if (!$this->getConfig()->shouldForceDefaultMethodTitle($configData)) {
-                $methodTitle = trim($availableShippingRate->getMethodTitle());
-            }
-        } elseif ($this->getConfig()->shouldOnlyApplyIfAvailable($configData)) {
-            return null;
-        }
-
-        $carrierTitle = '' !== ($carrierTitle ?? '') ?: $this->getConfig()->getDefaultCarrierTitle($configData);
-        $methodTitle = '' !== ($methodTitle ?? '') ?: $this->getConfig()->getDefaultMethodTitle($configData);
-
-        return $this->resultFactory->create(
-            [
-                'carrierCode' => $carrierCode,
-                'methodCode' => $methodCode,
-                'carrierTitle' => $carrierTitle,
-                'methodTitle' => $methodTitle,
-                'cost' => $orderShippingAmount,
-                'price' => $orderShippingAmount,
-            ]
+        return $this->applyCarrierMethodToQuoteShippingAddress(
+            $this->getConfig()->getShippingCarrierCode($configData),
+            $this->getConfig()->getShippingMethodCode($configData),
+            $marketplaceOrder,
+            $quoteShippingAddress,
+            $configData
         );
     }
 }

@@ -36,6 +36,11 @@ class Result
     private $price;
 
     /**
+     * @var array
+     */
+    private $additionalData = array();
+
+    /**
      * @param string $carrierCode
      * @param string $methodCode
      * @param string $carrierTitle
@@ -110,6 +115,14 @@ class Result
     }
 
     /**
+     * @return array
+     */
+    public function getAdditionalData()
+    {
+        return $this->additionalData;
+    }
+
+    /**
      * @param string $carrierCode
      * @return Result
      */
@@ -166,6 +179,16 @@ class Result
     public function setPrice($price)
     {
         $this->price = max(0, (float) $price);
+        return $this;
+    }
+
+    /**
+     * @param array $data
+     * @return $this
+     */
+    public function setAdditionalData(array $data)
+    {
+        $this->additionalData = $data;
         return $this;
     }
 }

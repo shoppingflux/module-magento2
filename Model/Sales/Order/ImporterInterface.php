@@ -51,11 +51,13 @@ interface ImporterInterface
     /**
      * @param Quote $quote
      * @param MarketplaceOrderInterface $marketplaceOrder
+     * @param MarketplaceAddressInterface $marketplaceShippingAddress
      * @param StoreInterface $store
      */
     public function importQuoteShippingMethod(
         Quote $quote,
         MarketplaceOrderInterface $marketplaceOrder,
+        MarketplaceAddressInterface $marketplaceShippingAddress,
         StoreInterface $store
     );
 

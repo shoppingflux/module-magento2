@@ -452,7 +452,13 @@ class Importer implements ImporterInterface
                         $store
                     );
 
-                    $this->importQuoteShippingMethod($quote, $marketplaceOrder, $store);
+                    $this->importQuoteShippingMethod(
+                        $quote,
+                        $marketplaceOrder,
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING],
+                        $store
+                    );
+
                     $this->importQuotePaymentMethod($quote, $store);
 
                     $this->quoteRepository->save($quote);
@@ -773,37 +779,45 @@ class Importer implements ImporterInterface
     /**
      * @param Quote $quote
      * @param MarketplaceOrderInterface $marketplaceOrder
+     * @param MarketplaceAddressInterface $marketplaceShippingAddress
      * @param StoreInterface $store
      * @throws LocalizedException
      */
     public function importQuoteShippingMethod(
         Quote $quote,
         MarketplaceOrderInterface $marketplaceOrder,
+        MarketplaceAddressInterface $marketplaceShippingAddress,
         StoreInterface $store
     ) {
         $shippingMethodRuleCollection = $this->getShippingMethodRuleCollection();
-        $shippingAddress = $quote->getShippingAddress();
-        $shippingRates = $shippingAddress->getAllShippingRates();
+        $quoteShippingAddress = $quote->getShippingAddress();
+        $shippingRates = $quoteShippingAddress->getAllShippingRates();
 
         if (empty($shippingRates)) {
-            $shippingAddress->setCollectShippingRates(true);
-            $shippingAddress->collectShippingRates();
+            $quoteShippingAddress->setCollectShippingRates(true);
+            $quoteShippingAddress->collectShippingRates();
         }
 
-        $shippingAmount = $marketplaceOrder->getShippingAmount();
+        $shippingMethodApplier = null;
         $shippingMethodApplierResult = null;
+        $shippingMethodApplierConfiguration = null;
 
         /** @var ShippingMethodRuleInterface $shippingMethodRule */
         foreach ($shippingMethodRuleCollection as $shippingMethodRule) {
             if ($shippingMethodRule->isAppliableToQuote($quote, $marketplaceOrder)) {
                 try {
-                    $shippingMethodApplierResult = $this->shippingMethodApplierPool
-                        ->getApplierByCode($shippingMethodRule->getApplierCode())
-                        ->applyToQuoteShippingAddress(
-                            $shippingAddress,
-                            $shippingAmount,
-                            $shippingMethodRule->getApplierConfiguration()
-                        );
+                    $shippingMethodApplier = $this->shippingMethodApplierPool->getApplierByCode(
+                        $shippingMethodRule->getApplierCode()
+                    );
+
+                    $shippingMethodApplierConfiguration = $shippingMethodRule->getApplierConfiguration();
+
+                    $shippingMethodApplierResult = $shippingMethodApplier->applyToQuoteShippingAddress(
+                        $marketplaceOrder,
+                        $marketplaceShippingAddress,
+                        $quoteShippingAddress,
+                        $shippingMethodApplierConfiguration
+                    );
 
                     if (null !== $shippingMethodApplierResult) {
                         break;
@@ -815,16 +829,22 @@ class Importer implements ImporterInterface
         }
 
         if (null === $shippingMethodApplierResult) {
-            $shippingMethodApplierResult = $this->shippingMethodApplierPool
-                ->getDefaultApplier()
-                ->applyToQuoteShippingAddress($shippingAddress, $shippingAmount, $this->dataObjectFactory->create());
+            $shippingMethodApplier = $this->shippingMethodApplierPool->getDefaultApplier();
+            $shippingMethodApplierConfiguration = $this->dataObjectFactory->create();
+
+            $shippingMethodApplierResult = $shippingMethodApplier->applyToQuoteShippingAddress(
+                $marketplaceOrder,
+                $marketplaceShippingAddress,
+                $quoteShippingAddress,
+                $shippingMethodApplierConfiguration
+            );
         }
 
         if (null === $shippingMethodApplierResult) {
             throw new LocalizedException(__('No shipping method could be selected.'));
         }
 
-        $shippingAddress->removeAllShippingRates();
+        $quoteShippingAddress->removeAllShippingRates();
         $rateMethod = $this->shippingRateMethodFactory->create();
 
         $rateMethod->addData(
@@ -840,8 +860,14 @@ class Importer implements ImporterInterface
 
         $addressRate = $this->shippingAddressRateFactory->create();
         $addressRate->importShippingRate($rateMethod);
-        $shippingAddress->addShippingRate($addressRate);
-        $shippingAddress->setShippingMethod($shippingMethodApplierResult->getFullCode());
+        $quoteShippingAddress->addShippingRate($addressRate);
+        $quoteShippingAddress->setShippingMethod($shippingMethodApplierResult->getFullCode());
+
+        $shippingMethodApplier->commitOnQuoteShippingAddress(
+            $quoteShippingAddress,
+            $shippingMethodApplierResult,
+            $shippingMethodApplierConfiguration
+        );
     }
 
     /**
