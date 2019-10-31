@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.26.0] - 2019-10-31
+### Changed
+- Refactor shipping method appliers and improve defaults (**BC break** for custom shipping method appliers)
+
+### Fixed
+- Exclude the "All Groups" group from the options available in "Use Prices from Customer Group"
+- Fix the "Category Selection" label on recent M2 versions
+
 ## [0.25.2] - 2019-10-07
 ### Added
 - Add a details column to the order logs listing
