@@ -46,9 +46,9 @@ class Prices extends AbstractConfig implements PricesInterface
         $customerGroupSource = [];
 
         foreach ($allCustomerGroups as $customerGroup) {
-            if (CustomerGroupInterface::CUST_GROUP_ALL !== $customerGroup['value']) {
-                $customerGroupId = (int) $customerGroup['value'];
+            $customerGroupId = (int) $customerGroup['value'];
 
+            if (CustomerGroupInterface::CUST_GROUP_ALL !== $customerGroupId) {
                 if (CustomerGroupInterface::NOT_LOGGED_IN_ID === $customerGroupId) {
                     // Use a positive ID because a value of 0 is not always correctly handled.
                     $customerGroupId = static::CUSTOMER_GROUP_ID_NOT_LOGGED_IN;
