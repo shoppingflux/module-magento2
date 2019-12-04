@@ -2,8 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 
-use Magento\CatalogInventory\Api\StockRegistryInterface;
-use Magento\CatalogInventory\Model\Stock\Item as StockItem;
 use Magento\Store\Model\StoreManagerInterface;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -11,6 +9,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterfac
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock as Type;
+use ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolver;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 
 /**
@@ -21,21 +20,21 @@ class Stock extends AbstractAdapter implements StockInterface
     const KEY_QUANTITY = 'qty';
 
     /**
-     * @var StockRegistryInterface $stockRegistry
+     * @var QtyResolver
      */
-    protected $stockRegistry;
+    protected $qtyResolver;
 
     /**
      * @param StoreManagerInterface $storeManager
      * @param AttributeRendererPoolInterface $attributeRendererPool
-     * @param StockRegistryInterface $stockRegistry
+     * @param QtyResolver $qtyResolver
      */
     public function __construct(
         StoreManagerInterface $storeManager,
         AttributeRendererPoolInterface $attributeRendererPool,
-        StockRegistryInterface $stockRegistry
+        QtyResolver $qtyResolver
     ) {
-        $this->stockRegistry = $stockRegistry;
+        $this->qtyResolver = $qtyResolver;
         parent::__construct($storeManager, $attributeRendererPool);
     }
 
@@ -58,18 +57,10 @@ class Stock extends AbstractAdapter implements StockInterface
         ) {
             $quantity = 0;
         } elseif ($this->getConfig()->shouldUseActualStockState($store)) {
-            $stockItem = $this->stockRegistry->getStockItem(
-                $product->getCatalogProduct()->getId(),
-                $this->getStoreBaseWebsiteId($store)
-            );
+            $stockQuantity = $this->qtyResolver->getCatalogProductQuantity($product->getCatalogProduct(), $store);
 
-            if ($stockItem instanceof StockItem) {
-                // Ensure that the right system configuration values will be used.
-                $stockItem->setStoreId($store->getBaseStoreId());
-            }
-
-            if ($stockItem->getManageStock()) {
-                $quantity = $stockItem->getQty();
+            if (null !== $stockQuantity) {
+                $quantity = $stockQuantity;
             }
         }
 

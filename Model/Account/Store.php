@@ -125,9 +125,19 @@ class Store extends AbstractModel implements StoreInterface
         return (int) $this->getData(self::BASE_STORE_ID);
     }
 
+    public function getBaseWebsiteId()
+    {
+        return (int) $this->getBaseStore()->getWebsiteId();
+    }
+
     public function getBaseStore()
     {
         return $this->storeManager->getStore($this->getBaseStoreId());
+    }
+
+    public function getBaseWebsite()
+    {
+        return $this->getBaseStore()->getWebsite();
     }
 
     public function getShoppingFeedStoreId()
