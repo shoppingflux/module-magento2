@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.27.0] - 2019-12-04
+### Added
+-	Fetch product quantities using MSI (if available) (**BC break** for stock section adapter)
+
 ## [0.26.0] - 2019-10-31
 ### Changed
 - Refactor shipping method appliers and improve defaults (**BC break** for custom shipping method appliers)
