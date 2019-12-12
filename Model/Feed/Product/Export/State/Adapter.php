@@ -119,27 +119,32 @@ class Adapter implements AdapterInterface
     {
         $feedProduct = $product->getFeedProduct();
         $catalogProduct = $product->getCatalogProduct();
-        $baseExportState = FeedProduct::STATE_EXPORTED;
-        $childExportState = FeedProduct::STATE_EXPORTED;
+        $baseExportState = FeedProduct::STATE_NOT_EXPORTED;
+        $childExportState = FeedProduct::STATE_NOT_EXPORTED;
+        $exclusionReason = null;
 
-        if (!in_array($catalogProduct->getTypeId(), $this->getExportedProductTypes(), true)
-            || !in_array($store->getBaseStore()->getWebsiteId(), $catalogProduct->getWebsiteIds())
-        ) {
+        if (!in_array($catalogProduct->getTypeId(), $this->getExportedProductTypes(), true)) {
             $baseExportState = FeedProduct::STATE_NEVER_EXPORTED;
             $childExportState = FeedProduct::STATE_NEVER_EXPORTED;
-        } elseif (
-            ($this->config->shouldExportNotSalable($store) || !$this->isNotSalableProduct($catalogProduct))
-            && ($this->config->shouldExportOutOfStock($store) || !$this->isOutOfStockProduct($catalogProduct))
-        ) {
-            if (!in_array((int) $catalogProduct->getVisibility(), $this->config->getExportedVisibilities($store))
-                || ($this->config->shouldExportSelectedOnly($store)
-                    && !$this->isProductSelectedForExport($store, $product))
-            ) {
-                $baseExportState = FeedProduct::STATE_NOT_EXPORTED;
-            }
+            $exclusionReason = FeedProduct::EXCLUSION_REASON_UNHANDLED_PRODUCT_TYPE;
+        } elseif (!in_array($store->getBaseStore()->getWebsiteId(), $catalogProduct->getWebsiteIds())) {
+            $exclusionReason = FeedProduct::EXCLUSION_REASON_NOT_IN_WEBSITE;
+        } elseif ($this->isNotSalableProduct($catalogProduct) && !$this->config->shouldExportNotSalable($store)) {
+            $exclusionReason = FeedProduct::EXCLUSION_REASON_NOT_SALABLE;
+        } elseif ($this->isOutOfStockProduct($catalogProduct) && !$this->config->shouldExportOutOfStock($store)) {
+            $exclusionReason = FeedProduct::EXCLUSION_REASON_NOT_SALABLE;
         } else {
-            $baseExportState = FeedProduct::STATE_NOT_EXPORTED;
-            $childExportState = FeedProduct::STATE_NOT_EXPORTED;
+            $childExportState = FeedProduct::STATE_EXPORTED;
+
+            if (!in_array((int) $catalogProduct->getVisibility(), $this->config->getExportedVisibilities($store))) {
+                $exclusionReason = FeedProduct::EXCLUSION_REASON_FILTERED_VISIBILITY;
+            } elseif ($this->config->shouldExportSelectedOnly($store)
+                && !$this->isProductSelectedForExport($store, $product)
+            ) {
+                $exclusionReason = FeedProduct::EXCLUSION_REASON_UNSELECTED_PRODUCT;
+            } else {
+                $baseExportState = FeedProduct::STATE_EXPORTED;
+            }
         }
 
         if (FeedProduct::STATE_EXPORTED !== $baseExportState) {
@@ -148,6 +153,6 @@ class Adapter implements AdapterInterface
                 : FeedProduct::STATE_RETAINED;
         }
 
-        return [ $baseExportState, $childExportState ];
+        return [ $baseExportState, $childExportState, $exclusionReason ];
     }
 }

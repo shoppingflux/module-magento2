@@ -12,6 +12,8 @@ use ShoppingFeed\Feed\Product\ProductVariation as ExportedVariation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface as AttributeRendererPoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface as SectionConfig;
+use ShoppingFeed\Manager\Model\LabelledValue;
+use ShoppingFeed\Manager\Model\LabelledValueFactory;
 
 abstract class AbstractAdapter implements AdapterInterface
 {
@@ -26,19 +28,27 @@ abstract class AbstractAdapter implements AdapterInterface
     protected $storeManager;
 
     /**
+     * @var LabelledValueFactory
+     */
+    private $labelledValueFactory;
+
+    /**
      * @var AttributeRendererPoolInterface
      */
     private $attributeRendererPool;
 
     /**
      * @param StoreManagerInterface $storeManager
+     * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool
     ) {
         $this->storeManager = $storeManager;
+        $this->labelledValueFactory = $labelledValueFactory;
         $this->attributeRendererPool = $attributeRendererPool;
     }
 
@@ -104,6 +114,39 @@ abstract class AbstractAdapter implements AdapterInterface
         array $configurableAttributeCodes,
         ExportedVariation $exportedVariation
     ) {
+    }
+
+    /**
+     * @param string $label
+     * @param array|string $value
+     * @return LabelledValue
+     */
+    protected function createLabelledValue($label, $value)
+    {
+        return $this->labelledValueFactory->create(
+            [
+                'label' => trim($label),
+                'value' => is_array($value) ? json_encode($value) : (string) $value,
+            ]
+        );
+    }
+
+    /**
+     * @param string[] $keyLabels
+     * @param array $productData
+     * @return LabelledValue[]
+     */
+    protected function describeRawProductData(array $keyLabels, array $productData)
+    {
+        $data = [];
+
+        foreach ($keyLabels as $key => $label) {
+            if (isset($productData[$key])) {
+                $data[] = $this->createLabelledValue($label, $productData[$key]);
+            }
+        }
+
+        return $data;
     }
 
     /**

@@ -41,7 +41,14 @@ class Section extends DataObject implements SectionInterface
      */
     public function getFeedData()
     {
-        return (array) $this->getData(self::FEED_DATA);
+        $data = $this->getData(self::FEED_DATA);
+
+        if (is_string($data)) {
+            $data = '' !== trim($data) ? (array) json_decode($data, true) : [];
+            $this->setFeedData($data);
+        }
+
+        return (array) $data;
     }
 
     /**

@@ -84,9 +84,10 @@ class Product extends AbstractDb
      * @param int $storeId
      * @param int $baseExportState
      * @param int $childExportState
+     * @param int|null $exclusionReason
      * @param int $refreshState
-     * @param bool $renewRetentionStart
      * @param bool $resetRetentionStart
+     * @param bool $renewRetentionStart
      * @return $this
      */
     public function updateProductExportStates(
@@ -94,6 +95,7 @@ class Product extends AbstractDb
         $storeId,
         $baseExportState,
         $childExportState,
+        $exclusionReason,
         $refreshState,
         $resetRetentionStart,
         $renewRetentionStart
@@ -104,6 +106,7 @@ class Product extends AbstractDb
         $values = [
             'export_state' => $baseExportState,
             'child_export_state' => $childExportState,
+            'exclusion_reason' => $exclusionReason,
             'export_state_refreshed_at' => $now,
             'export_state_refresh_state' => $refreshState,
             'export_state_refresh_state_updated_at' => $now,

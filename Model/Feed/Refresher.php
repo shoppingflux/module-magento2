@@ -193,17 +193,15 @@ class Refresher
 
         if ($refreshExportState) {
             $previousBaseExportState = $refreshableProduct->getFeedProduct()->getExportState();
-
-            list($baseExportState, $childExportState) = $this->exportStateAdapter->getProductExportStates(
-                $store,
-                $refreshableProduct
-            );
+            $exportStates = $this->exportStateAdapter->getProductExportStates($store, $refreshableProduct);
+            list ($baseExportState, $childExportState, $exclusionReason) = $exportStates;
 
             $this->feedProductResource->updateProductExportStates(
                 $productId,
                 $storeId,
                 $baseExportState,
                 $childExportState,
+                $exclusionReason,
                 FeedProduct::REFRESH_STATE_UP_TO_DATE,
                 (FeedProduct::STATE_RETAINED !== $baseExportState),
                 (FeedProduct::STATE_RETAINED !== $previousBaseExportState)

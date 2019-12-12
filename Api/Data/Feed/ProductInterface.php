@@ -16,6 +16,13 @@ interface ProductInterface
     const REFRESH_STATE_ADVISED = 2;
     const REFRESH_STATE_REQUIRED = 3;
 
+    const EXCLUSION_REASON_UNHANDLED_PRODUCT_TYPE = 1;
+    const EXCLUSION_REASON_NOT_IN_WEBSITE = 2;
+    const EXCLUSION_REASON_NOT_SALABLE = 3;
+    const EXCLUSION_REASON_OUT_OF_STOCK = 4;
+    const EXCLUSION_REASON_FILTERED_VISIBILITY = 5;
+    const EXCLUSION_REASON_UNSELECTED_PRODUCT = 6;
+
     /**#@+*/
     const PRODUCT_ID = 'product_id';
     const STORE_ID = 'store_id';
@@ -23,6 +30,7 @@ interface ProductInterface
     const SELECTED_CATEGORY_ID = 'selected_category_id';
     const EXPORT_STATE = 'export_state';
     const CHILD_EXPORT_STATE = 'child_export_state';
+    const EXCLUSION_REASON = 'exclusion_reason';
     const EXPORT_RETENTION_STARTED_AT = 'export_retention_started_at';
     const EXPORT_RETENTION_STARTED_AT_TIMESTAMP = 'export_retention_started_at_timestamp';
     const EXPORT_STATE_REFRESHED_AT = 'export_state_refreshed_at';
@@ -61,6 +69,11 @@ interface ProductInterface
      * @return int
      */
     public function getChildExportState();
+
+    /**
+     * @return int|null
+     */
+    public function getExclusionReason();
 
     /**
      * @return string|null
@@ -132,6 +145,12 @@ interface ProductInterface
      * @return ProductInterface
      */
     public function setChildExportState($childExportState);
+
+    /**
+     * @param int|null $exclusionReason
+     * @return ProductInterface
+     */
+    public function setExclusionReason($exclusionReason);
 
     /**
      * @param string $retentionStartedAt

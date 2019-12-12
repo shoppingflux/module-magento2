@@ -86,10 +86,19 @@ class Store extends AbstractDb
         /** @var CatalogProductCollection $productCollection */
         $productCollection = $this->catalogProductCollectionFactory->create();
 
+        $feedProductFields = [
+            FeedProductInterface::EXPORT_STATE,
+            FeedProductInterface::CHILD_EXPORT_STATE,
+            FeedProductInterface::EXCLUSION_REASON,
+            FeedProductInterface::EXPORT_STATE_REFRESH_STATE,
+            FeedProductInterface::EXPORT_STATE_REFRESHED_AT,
+            FeedProductInterface::EXPORT_STATE_REFRESH_STATE_UPDATED_AT,
+        ];
+
         $productCollection->joinTable(
             [ 'feed_product_table' => $this->tableDictionary->getFeedProductTableName() ],
             'product_id = entity_id',
-            [ FeedProductInterface::EXPORT_STATE, FeedProductInterface::CHILD_EXPORT_STATE ],
+            array_combine($feedProductFields, $feedProductFields),
             [ FeedProductInterface::STORE_ID => $store->getId() ]
         );
 
@@ -144,9 +153,9 @@ class Store extends AbstractDb
         }
 
         $insertableListSelect->where(
-                $connection->quoteIdentifier($entityIdFieldName) . ' NOT IN (?)',
-                new \Zend_Db_Expr($existingListSelect->assemble())
-            );
+            $connection->quoteIdentifier($entityIdFieldName) . ' NOT IN (?)',
+            new \Zend_Db_Expr($existingListSelect->assemble())
+        );
 
         $connection->query(
             $connection->insertFromSelect(

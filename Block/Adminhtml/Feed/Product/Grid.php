@@ -4,14 +4,26 @@ namespace ShoppingFeed\Manager\Block\Adminhtml\Feed\Product;
 
 use Magento\Backend\Block\Template\Context;
 use Magento\Backend\Block\Widget\Grid\Column;
+use Magento\Backend\Block\Widget\Grid\Column\Filter\Select as SelectFilter;
 use Magento\Backend\Block\Widget\Grid\Extended as ExtendedGrid;
 use Magento\Backend\Helper\Data as BackendHelper;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatusSource;
+use Magento\Catalog\Model\Product\Type as ProductType;
+use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
+use Magento\Directory\Model\Currency;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Registry;
+use Magento\Store\Model\ScopeInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterface;
+use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer\State as StateRenderer;
+use ShoppingFeed\Manager\Controller\Adminhtml\Account\Store\FeedProductSections as ProductSectionsAction;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
+use ShoppingFeed\Manager\Model\Feed\Product\Export\State\Source as ProductExportStateSource;
+use ShoppingFeed\Manager\Model\Feed\Product\Exclusion\Reason\Source as ProductExclusionReasonSource;
+use ShoppingFeed\Manager\Model\Feed\Product\Refresh\State\Source as ProductRefreshStateSource;
 
 class Grid extends ExtendedGrid
 {
@@ -28,10 +40,46 @@ class Grid extends ExtendedGrid
     private $productCollectionFactory;
 
     /**
+     * @var ProductType
+     */
+    private $productType;
+
+    /**
+     * @var ProductVisibility
+     */
+    private $productVisibility;
+
+    /**
+     * @var ProductStatusSource
+     */
+    private $productStatusSource;
+
+    /**
+     * @var ProductExportStateSource
+     */
+    private $productExportStateSource;
+
+    /**
+     * @var ProductExclusionReasonSource
+     */
+    private $productExclusionReasonSource;
+
+    /**
+     * @var ProductRefreshStateSource
+     */
+    private $productRefreshStateSource;
+
+    /**
      * @param Context $context
      * @param BackendHelper $backendHelper
      * @param Registry $coreRegistry
      * @param ProductCollectionFactory $productCollectionFactory
+     * @param ProductType $productType
+     * @param ProductVisibility $productVisibility
+     * @param ProductStatusSource $productStatusSource
+     * @param ProductExportStateSource $productExportStateSource
+     * @param ProductExclusionReasonSource $productExclusionReasonSource
+     * @param ProductRefreshStateSource $productRefreshStateSource
      * @param array $data
      */
     public function __construct(
@@ -39,10 +87,22 @@ class Grid extends ExtendedGrid
         BackendHelper $backendHelper,
         Registry $coreRegistry,
         ProductCollectionFactory $productCollectionFactory,
+        ProductType $productType,
+        ProductVisibility $productVisibility,
+        ProductStatusSource $productStatusSource,
+        ProductExportStateSource $productExportStateSource,
+        ProductExclusionReasonSource $productExclusionReasonSource,
+        ProductRefreshStateSource $productRefreshStateSource,
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->productCollectionFactory = $productCollectionFactory;
+        $this->productType = $productType;
+        $this->productVisibility = $productVisibility;
+        $this->productStatusSource = $productStatusSource;
+        $this->productExportStateSource = $productExportStateSource;
+        $this->productExclusionReasonSource = $productExclusionReasonSource;
+        $this->productRefreshStateSource = $productRefreshStateSource;
         parent::__construct($context, $backendHelper, $data);
     }
 
@@ -66,7 +126,7 @@ class Grid extends ExtendedGrid
     {
         /** @var ProductCollection $collection */
         $collection = $this->getAccountStore()->getCatalogProductCollection();
-        $collection->addAttributeToSelect([ 'sku', 'name' ]);
+        $collection->addAttributeToSelect([ 'sku', 'name', 'price', 'status', 'visibility' ]);
         $this->setCollection($collection);
         return parent::_prepareCollection();
     }
@@ -120,6 +180,7 @@ class Grid extends ExtendedGrid
             [
                 'index' => 'entity_id',
                 'header' => __('ID'),
+                'type' => 'number',
                 'sortable' => true,
                 'header_css_class' => 'col-id',
                 'column_css_class' => 'col-id',
@@ -142,17 +203,123 @@ class Grid extends ExtendedGrid
             ]
         );
 
-        /*
         $this->addColumn(
-            'export_state',
+            'type_id',
             [
-                'index' => 'export_state',
-                'header' => __('Export State'),
+                'index' => 'type_id',
+                'header' => __('Type'),
+                'type' => 'options',
+                'options' => $this->productType->getOptionArray(),
             ]
         );
-        */
 
-        // @todo add the (child) export state(s) (and the default category?)
+        $this->addColumn(
+            'status',
+            [
+                'index' => 'status',
+                'header' => __('Status'),
+                'type' => 'options',
+                'options' => $this->productStatusSource->getOptionArray(),
+            ]
+        );
+
+        $this->addColumn(
+            'visibility',
+            [
+                'index' => 'visibility',
+                'header' => __('Visibility'),
+                'type' => 'options',
+                'options' => $this->productVisibility->getOptionArray(),
+            ]
+        );
+
+        $this->addColumn(
+            'price',
+            [
+                'index' => 'price',
+                'header' => __('Price'),
+                'type' => 'currency',
+                'currency_code' => (string) $this->_scopeConfig->getValue(
+                    Currency::XML_PATH_CURRENCY_BASE,
+                    ScopeInterface::SCOPE_STORE
+                ),
+            ]
+        );
+
+        $this->addColumn(
+            FeedProductInterface::EXPORT_STATE,
+            [
+                'index' => FeedProductInterface::EXPORT_STATE,
+                'header' => __('Feed State - Main'),
+                'filter' => SelectFilter::class,
+                'renderer' => StateRenderer::class,
+                'options' => $this->productExportStateSource->toOptionArray(),
+            ]
+        );
+
+        $this->addColumn(
+            FeedProductInterface::EXCLUSION_REASON,
+            [
+                'index' => FeedProductInterface::EXCLUSION_REASON,
+                'header' => __('Feed State - Exclusion Reason'),
+                'type' => 'options',
+                'options' => $this->productExclusionReasonSource->toOptionHash(),
+            ]
+        );
+
+        $this->addColumn(
+            FeedProductInterface::CHILD_EXPORT_STATE,
+            [
+                'index' => FeedProductInterface::CHILD_EXPORT_STATE,
+                'header' => __('Feed State - Variation'),
+                'filter' => SelectFilter::class,
+                'renderer' => StateRenderer::class,
+                'options' => $this->productExportStateSource->toOptionArray(),
+            ]
+        );
+
+        $this->addColumn(
+            FeedProductInterface::EXPORT_STATE_REFRESH_STATE,
+            [
+                'index' => FeedProductInterface::EXPORT_STATE_REFRESH_STATE,
+                'header' => __('Feed State - Status'),
+                'filter' => SelectFilter::class,
+                'renderer' => StateRenderer::class,
+                'options' => $this->productRefreshStateSource->toOptionArray(),
+                'refresh_date_index' => FeedProductInterface::EXPORT_STATE_REFRESHED_AT,
+            ]
+        );
+
+        $sectionsDetailsModalLinkConfig = [
+            'ShoppingFeed_Manager/js/modal/ajax/link' => [
+                'type' => 'slide',
+                'buttons' => [],
+                'title' => __('View Sections Details'),
+            ],
+        ];
+
+        $this->addColumn(
+            'sections_details_action',
+            [
+                'index' => 'entity_id',
+                'header' => __('Sections'),
+                'type' => 'action',
+                'filter' => false,
+                'actions' => [
+                    [
+                        'caption' => __('View Details'),
+                        'field' => ProductSectionsAction::REQUEST_KEY_PRODUCT_ID,
+                        'data-mage-init' => json_encode($sectionsDetailsModalLinkConfig),
+                        'url' => [
+                            'base' => 'shoppingfeed_manager/account_store/feedProductSections',
+                            'params' => [
+                                ProductSectionsAction::REQUEST_KEY_STORE_ID => $this->getAccountStore()->getId(),
+                            ],
+                        ],
+                    ],
+                ],
+            ]
+        );
 
         return parent::_prepareColumns();
     }

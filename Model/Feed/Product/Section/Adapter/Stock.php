@@ -11,6 +11,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface as Con
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock as Type;
 use ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolver;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
+use ShoppingFeed\Manager\Model\LabelledValueFactory;
 
 /**
  * @method ConfigInterface getConfig()
@@ -26,16 +27,18 @@ class Stock extends AbstractAdapter implements StockInterface
 
     /**
      * @param StoreManagerInterface $storeManager
+     * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param QtyResolver $qtyResolver
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         QtyResolver $qtyResolver
     ) {
         $this->qtyResolver = $qtyResolver;
-        parent::__construct($storeManager, $attributeRendererPool);
+        parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
     public function getSectionType()
@@ -93,5 +96,10 @@ class Stock extends AbstractAdapter implements StockInterface
         if (isset($productData[self::KEY_QUANTITY])) {
             $exportedProduct->setQuantity($productData[self::KEY_QUANTITY]);
         }
+    }
+
+    public function describeProductData(StoreInterface $store, array $productData)
+    {
+        return $this->describeRawProductData([ self::KEY_QUANTITY => __('Quantity') ], $productData);
     }
 }

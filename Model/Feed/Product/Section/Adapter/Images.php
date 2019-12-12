@@ -114,4 +114,19 @@ class Images extends AbstractAdapter implements ImagesInterface
             $exportedProduct->setAdditionalImages($productData[self::KEY_ADDITIONAL_IMAGES]);
         }
     }
+
+    public function describeProductData(StoreInterface $store, array $productData)
+    {
+        $data = $this->describeRawProductData([ self::KEY_MAIN_IMAGE => __('Main') ], $productData);
+
+        if (isset($productData[self::KEY_ADDITIONAL_IMAGES])) {
+            $index = 1;
+
+            foreach ($productData[self::KEY_ADDITIONAL_IMAGES] as $image) {
+                $data[] = $this->createLabelledValue(__('Additional (#%1)', $index++), $image);
+            }
+        }
+
+        return $data;
+    }
 }

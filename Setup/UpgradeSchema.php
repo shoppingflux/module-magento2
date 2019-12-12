@@ -9,6 +9,7 @@ use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Cron\TaskInterface as CronTaskInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
@@ -100,6 +101,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     $this->tableDictionary->getSalesInvoiceTableName(),
                 ]
             );
+        }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.28.0') < 0)) {
+            $this->addFeedProductExclusionReasonField($setup);
         }
     }
 
@@ -1318,6 +1323,28 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     $feesBaseAmountFieldDefinition
                 );
             }
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addFeedProductExclusionReasonField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $feedProductTableName = $this->tableDictionary->getFeedProductTableName();
+
+        if (!$connection->tableColumnExists($feedProductTableName, ProductInterface::EXCLUSION_REASON)) {
+            $connection->addColumn(
+                $feedProductTableName,
+                ProductInterface::EXCLUSION_REASON,
+                [
+                    'type' => Table::TYPE_SMALLINT,
+                    'nullable' => true,
+                    'comment' => 'Exclusion Reason',
+                    'after' => ProductInterface::CHILD_EXPORT_STATE,
+                ]
+            );
         }
     }
 }

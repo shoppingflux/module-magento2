@@ -70,10 +70,14 @@ abstract class StoreAction extends Action
     {
         /** @var PageResult $pageResult */
         $pageResult = $this->pageResultFactory->create();
-        $pageResult->setActiveMenu('ShoppingFeed_Manager::account_stores');
-        $pageResult->addBreadcrumb(__('Shopping Feed'), __('Shopping Feed'));
-        $pageResult->addBreadcrumb(__('Accounts'), __('Accounts'));
-        $pageResult->getConfig()->getTitle()->prepend(__('Accounts'));
+
+        if ($pageResult->getLayout()->getBlock('menu')) {
+            $pageResult->setActiveMenu('ShoppingFeed_Manager::account_stores');
+            $pageResult->addBreadcrumb(__('Shopping Feed'), __('Shopping Feed'));
+            $pageResult->addBreadcrumb(__('Accounts'), __('Accounts'));
+            $pageResult->getConfig()->getTitle()->prepend(__('Accounts'));
+        }
+
         return $pageResult;
     }
 }

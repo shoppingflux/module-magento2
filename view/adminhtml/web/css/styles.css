@@ -1,4 +1,30 @@
+.action-menu-item._off-selection {
+    text-decoration: line-through;
+}
+
 .admin__sfm-nested-fieldset .admin__fieldset {
     padding-top: 0;
     padding-bottom: 0;
+}
+
+.admin__sfm-feed-product-sections-table td,
+.admin__sfm-feed-product-sections-table th {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+.admin__sfm-feed-product-sections-table tbody td {
+    vertical-align: middle;
+}
+
+.admin__sfm-feed-product-sections-table td:first-child {
+    font-weight: bold;
+}
+
+.admin__sfm-no-wrap {
+    white-space: nowrap;
+}
+
+select[name^=sfm_feed_attributes] option:empty {
+    display: inherit;
 }
