@@ -304,6 +304,7 @@
 "The multiplier that will additionally be used to determine the weights of parent categories.","Le multiplicateur qui sera utilisé en plus pour déterminer les poids des catégories parent."
 "The number that will be multiplied with the level of a category to determine its weight.","Le nombre qui sera multiplié avec le niveau d'une catégorie pour déterminer son poids."
 "The order import attempts have been successfully reset.","Les tentatives d'import de la commande ont bien été réinitialisées."
+"The product is disabled.","Le produit est désactivé."
 "The product quantities will be updated in real-time on Shopping Feed when changes are detected. This may slow down product and inventory updates.","Les quantités des produits seront mises à jour en temps réel sur Shopping Feed quand des changements sont détectés. Cela pourrait ralentir la sauvegarde des stocks et des produits."
 "The root category has a level of 1.","La catégorie racine a un niveau de 1."
 "The selected categories will not be considered.","Les catégories sélectionnées ne seront pas considérées."
