@@ -15,6 +15,12 @@ interface StockInterface extends ConfigInterface
 
     /**
      * @param StoreInterface $store
+     * @return string
+     */
+    public function getMsiQuantityType(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return int
      */
     public function getDefaultQuantity(StoreInterface $store);
