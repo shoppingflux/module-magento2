@@ -43,6 +43,20 @@ class StringHelper
      */
     public function strcmp($stringA, $stringB)
     {
-        return $this->getCollator()->compare($stringA, $stringB);
+        $collator = $this->getCollator();
+        $collator->setAttribute(\Collator::NUMERIC_COLLATION, \Collator::OFF);
+        return $collator->compare($stringA, $stringB);
+    }
+
+    /**
+     * @param $stringA
+     * @param $stringB
+     * @return int|false
+     */
+    public function strnatcmp($stringA, $stringB)
+    {
+        $collator = $this->getCollator();
+        $collator->setAttribute(\Collator::NUMERIC_COLLATION, \Collator::ON);
+        return $collator->compare($stringA, $stringB);
     }
 }

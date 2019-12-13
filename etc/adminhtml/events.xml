@@ -4,4 +4,8 @@
         <observer name="sfm_after_product_save" instance="ShoppingFeed\Manager\Observer\AfterProductSaveObserver"/>
         <observer name="sfm_save_product_attributes" instance="ShoppingFeed\Manager\Observer\SaveProductAttributesObserver"/>
     </event>
+
+    <event name="catalog_product_attribute_update_before">
+        <observer name="sfm_save_products_attributes" instance="ShoppingFeed\Manager\Observer\SaveProductsAttributesObserver"/>
+    </event>
 </config>
