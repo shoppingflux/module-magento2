@@ -38,6 +38,33 @@ abstract class AbstractApplier implements ApplierInterface
     }
 
     /**
+     * @param QuoteAddress $quoteShippingAddress
+     * @return string[]
+     */
+    protected function getAvailableShippingMethodCodes(QuoteAddress $quoteShippingAddress)
+    {
+        $quoteShippingRates = $quoteShippingAddress->getAllShippingRates();
+        $shippingMethodCodes = [];
+
+        /** @var QuoteShippingRate $quoteShippingRate */
+        foreach ($quoteShippingRates as $quoteShippingRate) {
+            $shippingMethodCodes[] = $quoteShippingRate->getCode();
+        }
+
+        return $shippingMethodCodes;
+    }
+
+    /**
+     * @param string $code
+     * @param QuoteAddress $quoteShippingAddress
+     * @return bool
+     */
+    protected function isAvailableShippingMethod($code, QuoteAddress $quoteShippingAddress)
+    {
+        return in_array($code, $this->getAvailableShippingMethodCodes($quoteShippingAddress), true);
+    }
+
+    /**
      * @param string $carrierCode
      * @param string $methodCode
      * @param MarketplaceOrderInterface $marketplaceOrder
