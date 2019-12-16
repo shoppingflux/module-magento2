@@ -4,6 +4,7 @@ define([
     'mage/adminhtml/grid'
 ], function ($, _) {
     'use strict';
+
     return function (config) {
         var selectedProductIds = _.isArray(config.selectedProductIds) ? config.selectedProductIds : [];
         var selectionInput = $('#' + config.selectionInputId);

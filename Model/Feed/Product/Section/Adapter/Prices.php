@@ -18,6 +18,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\PricesInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Prices as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
+use ShoppingFeed\Manager\Model\LabelledValueFactory;
 
 /**
  * @method ConfigInterface getConfig()
@@ -52,6 +53,7 @@ class Prices extends AbstractAdapter implements PricesInterface
 
     /**
      * @param StoreManagerInterface $storeManager
+     * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param CatalogProductResourceFactory $catalogProductResourceFactory
      * @param ConfigurableProductType $configurableProductType
@@ -59,6 +61,7 @@ class Prices extends AbstractAdapter implements PricesInterface
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         CatalogProductResourceFactory $catalogProductResourceFactory,
         ConfigurableProductType $configurableProductType,
@@ -67,7 +70,7 @@ class Prices extends AbstractAdapter implements PricesInterface
         $this->catalogProductResourceFactory = $catalogProductResourceFactory;
         $this->configurableProductType = $configurableProductType;
         $this->taxCalculator = $taxCalculator;
-        parent::__construct($storeManager, $attributeRendererPool);
+        parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
     public function getSectionType()
@@ -246,5 +249,17 @@ class Prices extends AbstractAdapter implements PricesInterface
         if (isset($productData[self::KEY_BASE_PRICE])) {
             $exportedProduct->setAttribute('price_before_discount', $productData[self::KEY_BASE_PRICE]);
         }
+    }
+
+    public function describeProductData(StoreInterface $store, array $productData)
+    {
+        return $this->describeRawProductData(
+            [
+                self::KEY_BASE_PRICE => __('Base'),
+                self::KEY_SPECIAL_PRICE => __('Special'),
+                self::KEY_FINAL_PRICE => __('Final'),
+            ],
+            $productData
+        );
     }
 }

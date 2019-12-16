@@ -29,6 +29,16 @@ class Collection extends AbstractCollection
         return $this;
     }
 
+    /**
+     * @param int|int[] $baseStoreIds
+     * @return $this
+     */
+    public function addBaseStoreFilter($baseStoreIds)
+    {
+        $this->addFieldToFilter(StoreInterface::BASE_STORE_ID, [ 'in' => $this->prepareIdFilterValue($baseStoreIds) ]);
+        return $this;
+    }
+
     public function toOptionArray()
     {
         return $this->_toOptionArray(StoreInterface::STORE_ID, StoreInterface::SHOPPING_FEED_NAME);

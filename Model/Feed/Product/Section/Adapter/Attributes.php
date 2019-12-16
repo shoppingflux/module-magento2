@@ -20,6 +20,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\AttributesInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Attributes as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
+use ShoppingFeed\Manager\Model\LabelledValueFactory;
 
 /**
  * @method ConfigInterface getConfig()
@@ -65,6 +66,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     /**
      * @param StoreManagerInterface $storeManager
      * @param EavEntityTypeFactory $eavEntityTypeFactory
+     * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param UrlInterface $frontendUrlBuilder
      * @param AttributeSourceInterface $configurableAttributeSource
@@ -72,6 +74,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     public function __construct(
         StoreManagerInterface $storeManager,
         EavEntityTypeFactory $eavEntityTypeFactory,
+        LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         UrlInterface $frontendUrlBuilder,
         AttributeSourceInterface $configurableAttributeSource
@@ -79,7 +82,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         $this->eavEntityTypeFactory = $eavEntityTypeFactory;
         $this->frontendUrlBuilder = $frontendUrlBuilder;
         $this->configurableAttributeSource = $configurableAttributeSource;
-        parent::__construct($storeManager, $attributeRendererPool);
+        parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
     public function getSectionType()
@@ -174,7 +177,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     {
         $config = $this->getConfig();
         $catalogProduct = $product->getCatalogProduct();
-        $productId = (int)$catalogProduct->getId();
+        $productId = (int) $catalogProduct->getId();
         $productSku = $catalogProduct->getSku();
 
         $data = [
@@ -298,5 +301,35 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                 }
             }
         }
+    }
+
+    public function describeProductData(StoreInterface $store, array $productData)
+    {
+        $data = $this->describeRawProductData(
+            [
+                self::KEY_SKU => __('SKU'),
+                self::KEY_NAME => __('Name'),
+                self::KEY_GTIN => __('GTIN'),
+                self::KEY_ATTRIBUTE_SET => __('Attribute Set'),
+                self::KEY_BRAND => __('Brand'),
+                self::KEY_URL => __('URL'),
+                self::KEY_DESCRIPTION => __('Description'),
+                self::KEY_SHORT_DESCRIPTION => __('Short Description'),
+            ],
+            $productData
+        );
+
+        if (isset($productData[self::KEY_ATTRIBUTE_MAP])) {
+            foreach ($this->getConfig()->getAttributeMap($store) as $key => $attribute) {
+                if (isset($productData[self::KEY_ATTRIBUTE_MAP][$key])) {
+                    $data[] = $this->createLabelledValue(
+                        __('Attribute %1', $key),
+                        $productData[self::KEY_ATTRIBUTE_MAP][$key]
+                    );
+                }
+            }
+        }
+
+        return $data;
     }
 }

@@ -1,0 +1,54 @@
+<?php /** @var \ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Sections $block */ ?>
+<h3>
+    <?= $block->escapeHtml(__('Product:')) ?>
+    <?= $block->escapeHtml($block->getCatalogProduct()->getName()) ?>
+</h3>
+<div class="admin__control-table-wrapper">
+    <table class="admin__control-table admin__sfm-feed-product-sections-table">
+        <thead>
+        <tr>
+            <th><?= $block->escapeHtml(__('Section')) ?></th>
+            <th><?= $block->escapeHtml(__('Data')) ?></th>
+            <th><?= $block->escapeHtml(__('Status')) ?></th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($block->getFeedProductSectionTypes() as $sectionType): ?>
+            <tr>
+                <td>
+                    <strong><?= $block->escapeHtml($sectionType->getLabel()) ?></strong>
+                </td>
+                <?php if ($section = $block->getFeedProductSection($sectionType)): ?>
+                    <td>
+                        <?php if (!empty($sectionData = $block->getFeedProductSectionData($sectionType))): ?>
+                            <table>
+                                <?php foreach ($sectionData as $dataPair): ?>
+                                    <tr>
+                                        <td><?= $block->escapeHtml($dataPair->getLabel()) ?></td>
+                                        <td><?= $block->escapeHtml($dataPair->getValue()) ?></td>
+                                    </tr>
+                                <?php endforeach ?>
+                            </table>
+                        <?php else: ?>
+                            <em><?= $block->escapeHtml(__('Empty')) ?></em>
+                        <?php endif ?>
+                    </td>
+                    <td class="admin__sfm-no-wrap">
+                        <div>
+                            <strong>
+                                <?= $block->escapeHtml($block->getRefreshStateLabel($section->getRefreshState())) ?>
+                            </strong>
+                        </div>
+                        <div><em><?= $block->escapeHtml(__('Last Update:')) ?></em></div>
+                        <div><?= $block->escapeHtml($block->getFormattedDate($section->getRefreshedAt())) ?></div>
+                    </td>
+                <?php else: ?>
+                    <td colspan="2">
+                        <em><?= $block->escapeHtml(__('Not Initialized')) ?></em>
+                    </td>
+                <?php endif ?>
+            </tr>
+        <?php endforeach ?>
+        </tbody>
+    </table>
+</div>

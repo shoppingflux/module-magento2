@@ -44,6 +44,12 @@ class Product extends DataObject implements ProductInterface
         return (int) $this->getDataByKey(self::CHILD_EXPORT_STATE);
     }
 
+    public function getExclusionReason()
+    {
+        $reason = $this->getDataByKey(self::EXCLUSION_REASON);
+        return empty($reason) ? null : (int) $reason;
+    }
+
     public function getExportRetentionStartedAt()
     {
         return $this->getDataByKey(self::EXPORT_RETENTION_STARTED_AT);
@@ -110,6 +116,11 @@ class Product extends DataObject implements ProductInterface
     public function setChildExportState($childExportState)
     {
         return $this->setData(self::CHILD_EXPORT_STATE, (int) $childExportState);
+    }
+
+    public function setExclusionReason($reason)
+    {
+        return $this->setData(self::EXCLUSION_REASON, empty($reason) ? null : (int) $reason);
     }
 
     public function setExportRetentionStartedAt($retentionStartedAt)

@@ -100,4 +100,16 @@ class Shipping extends AbstractAdapter implements ShippingInterface
             $exportedProduct->setAttribute('shipping_delay', $productData[self::KEY_DELAY]);
         }
     }
+
+    public function describeProductData(StoreInterface $store, array $productData)
+    {
+        return $this->describeRawProductData(
+            [
+                self::KEY_CARRIER_NAME => __('Carrier Name'),
+                self::KEY_FEES => __('Fees'),
+                self::KEY_DELAY => __('Delay'),
+            ],
+            $productData
+        );
+    }
 }

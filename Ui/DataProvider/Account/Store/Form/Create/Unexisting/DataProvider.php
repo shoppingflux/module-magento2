@@ -9,7 +9,7 @@ use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Api\Search\ReportingInterface;
 use Magento\Framework\Api\Search\SearchCriteriaBuilder;
 use Magento\Framework\App\RequestInterface;
-use \Magento\Framework\Filter\FilterManager;
+use Magento\Framework\Filter\FilterManager;
 use Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider as BaseDataProvider;
 use Magento\Store\Model\Information as StoreInformation;
 use Magento\Store\Model\Store;

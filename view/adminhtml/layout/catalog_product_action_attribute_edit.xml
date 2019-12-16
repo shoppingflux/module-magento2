@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="ShoppingFeed_Manager::css/styles.css"/>
+    </head>
+    <body>
+        <referenceBlock name="attributes_tabs">
+            <block class="ShoppingFeed\Manager\Block\Adminhtml\Catalog\Product\Edit\Action\Attribute\Tab\FeedAttributes" name="tab_sfm_feed_attributes"/>
+            <action method="addTab">
+                <argument name="name" xsi:type="string">sfm_feed_attributes</argument>
+                <argument name="block" xsi:type="string">tab_sfm_feed_attributes</argument>
+            </action>
+        </referenceBlock>
+    </body>
+</page>

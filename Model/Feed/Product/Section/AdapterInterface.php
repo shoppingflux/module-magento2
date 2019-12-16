@@ -8,6 +8,7 @@ use ShoppingFeed\Feed\Product\ProductVariation as ExportedVariation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as BaseInterface;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
+use ShoppingFeed\Manager\Model\LabelledValue;
 
 interface AdapterInterface extends BaseInterface
 {
@@ -80,4 +81,11 @@ interface AdapterInterface extends BaseInterface
         array $configurableAttributeCodes,
         ExportedVariation $exportedVariation
     );
+
+    /**
+     * @param StoreInterface $store
+     * @param array $productData
+     * @return LabelledValue[]
+     */
+    public function describeProductData(StoreInterface $store, array $productData);
 }

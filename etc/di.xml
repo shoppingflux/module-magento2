@@ -19,6 +19,7 @@
             <argument name="typeFactories" xsi:type="array">
                 <item name="category_multi_select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\Category\MultiSelectFactory</item>
                 <item name="checkbox" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\CheckboxFactory</item>
+                <item name="hidden" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\HiddenFactory</item>
                 <item name="multi_select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\MultiSelectFactory</item>
                 <item name="select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\SelectFactory</item>
                 <item name="text_box" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\TextBoxFactory</item>
@@ -140,12 +141,6 @@
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\CategoriesInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Categories"/>
     <preference for="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\ShippingInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Shipping"/>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Stock">
-        <arguments>
-            <argument name="stockRegistry" xsi:type="object">Magento\CatalogInventory\Api\StockRegistryInterface\Proxy</argument>
-        </arguments>
-    </type>
-
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices">
         <arguments>
             <argument name="configurableProductType" xsi:type="object">Magento\ConfigurableProduct\Model\Product\Type\Configurable</argument>
@@ -215,6 +210,13 @@
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Category\Selector" shared="true">
         <arguments>
             <argument name="frontendUrlBuilder" xsi:type="object">ShoppingFeed\Manager\FrontendUrl</argument>
+        </arguments>
+    </type>
+
+    <preference for="ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolverInterface" type="ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolver"/>
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolver" shared="true">
+        <arguments>
+            <argument name="stockRegistry" xsi:type="object">Magento\CatalogInventory\Api\StockRegistryInterface\Proxy</argument>
         </arguments>
     </type>
 

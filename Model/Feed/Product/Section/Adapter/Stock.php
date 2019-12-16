@@ -9,8 +9,9 @@ use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterfac
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock as Type;
-use ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolver;
+use ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolverInterface;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
+use ShoppingFeed\Manager\Model\LabelledValueFactory;
 
 /**
  * @method ConfigInterface getConfig()
@@ -20,22 +21,24 @@ class Stock extends AbstractAdapter implements StockInterface
     const KEY_QUANTITY = 'qty';
 
     /**
-     * @var QtyResolver
+     * @var QtyResolverInterface
      */
     protected $qtyResolver;
 
     /**
      * @param StoreManagerInterface $storeManager
+     * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
-     * @param QtyResolver $qtyResolver
+     * @param QtyResolverInterface $qtyResolver
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
-        QtyResolver $qtyResolver
+        QtyResolverInterface $qtyResolver
     ) {
         $this->qtyResolver = $qtyResolver;
-        parent::__construct($storeManager, $attributeRendererPool);
+        parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
     public function getSectionType()
@@ -50,14 +53,19 @@ class Stock extends AbstractAdapter implements StockInterface
 
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
-        $quantity = $this->getConfig()->getDefaultQuantity($store);
+        $config = $this->getConfig();
+        $quantity = $config->getDefaultQuantity($store);
 
-        if ($this->getConfig()->shouldForceZeroQuantityForNonSalable($store)
+        if ($config->shouldForceZeroQuantityForNonSalable($store)
             && !$product->getCatalogProduct()->isSalable()
         ) {
             $quantity = 0;
-        } elseif ($this->getConfig()->shouldUseActualStockState($store)) {
-            $stockQuantity = $this->qtyResolver->getCatalogProductQuantity($product->getCatalogProduct(), $store);
+        } elseif ($config->shouldUseActualStockState($store)) {
+            $stockQuantity = $this->qtyResolver->getCatalogProductQuantity(
+                $product->getCatalogProduct(),
+                $store,
+                $config->getMsiQuantityType($store)
+            );
 
             if (null !== $stockQuantity) {
                 $quantity = $stockQuantity;
@@ -93,5 +101,10 @@ class Stock extends AbstractAdapter implements StockInterface
         if (isset($productData[self::KEY_QUANTITY])) {
             $exportedProduct->setQuantity($productData[self::KEY_QUANTITY]);
         }
+    }
+
+    public function describeProductData(StoreInterface $store, array $productData)
+    {
+        return $this->describeRawProductData([ self::KEY_QUANTITY => __('Quantity') ], $productData);
     }
 }

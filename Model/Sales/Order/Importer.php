@@ -5,6 +5,7 @@ namespace ShoppingFeed\Manager\Model\Sales\Order;
 use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Helper\Product as CatalogProductHelper;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as CatalogProductStatus;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Directory\Helper\Data as DirectoryHelper;
@@ -714,6 +715,12 @@ class Importer implements ImporterInterface
                         $quoteStoreId,
                         false
                     );
+                }
+
+                if ($this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
+                    && ((int) $product->getStatus() === CatalogProductStatus::STATUS_DISABLED)
+                ) {
+                    throw new LocalizedException(__('The product is disabled.'));
                 }
 
                 $itemPrice = $marketplaceItem->getPrice();

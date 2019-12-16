@@ -58,24 +58,35 @@ class Product extends AbstractDb
     }
 
     /**
-     * @param int $productId
+     * @param int|int[] $productIds
      * @param int $storeId
-     * @param bool $isSelected
-     * @param int|null $selectedCategoryId
+     * @param bool|null $isSelected
+     * @param int|false|null $selectedCategoryId
      */
-    public function updateProductFeedAttributes($productId, $storeId, $isSelected, $selectedCategoryId)
+    public function updateProductFeedAttributes($productIds, $storeId, $isSelected, $selectedCategoryId)
     {
         $connection = $this->getConnection();
+        $productIds = array_filter(array_map('intval', (array) $productIds));
+        $values = [];
+
+        if (null !== $isSelected) {
+            $values['is_selected'] = (bool) $isSelected;
+        }
+
+        if (null !== $selectedCategoryId) {
+            $values['selected_category_id'] = empty($selectedCategoryId) ? null : (int) $selectedCategoryId;
+        }
+
+        if (empty($values)) {
+            return;
+        }
 
         $connection->update(
             $this->tableDictionary->getFeedProductTableName(),
-            [
-                'is_selected' => (bool) $isSelected,
-                'selected_category_id' => empty($selectedCategoryId) ? null : (int) $selectedCategoryId,
-            ],
-            $connection->quoteInto('product_id = ?', $productId)
+            $values,
+            $connection->quoteInto('store_id = ?', $storeId)
             . ' AND '
-            . $connection->quoteInto('store_id = ?', $storeId)
+            . $connection->quoteInto('product_id IN (?)', $productIds)
         );
     }
 
@@ -84,9 +95,10 @@ class Product extends AbstractDb
      * @param int $storeId
      * @param int $baseExportState
      * @param int $childExportState
+     * @param int|null $exclusionReason
      * @param int $refreshState
-     * @param bool $renewRetentionStart
      * @param bool $resetRetentionStart
+     * @param bool $renewRetentionStart
      * @return $this
      */
     public function updateProductExportStates(
@@ -94,6 +106,7 @@ class Product extends AbstractDb
         $storeId,
         $baseExportState,
         $childExportState,
+        $exclusionReason,
         $refreshState,
         $resetRetentionStart,
         $renewRetentionStart
@@ -104,6 +117,7 @@ class Product extends AbstractDb
         $values = [
             'export_state' => $baseExportState,
             'child_export_state' => $childExportState,
+            'exclusion_reason' => $exclusionReason,
             'export_state_refreshed_at' => $now,
             'export_state_refresh_state' => $refreshState,
             'export_state_refresh_state_updated_at' => $now,

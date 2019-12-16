@@ -2,11 +2,23 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Feed\Product;
 
+use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
+use ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface as ProductSectionInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFactory as ProductSectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Section extends AbstractDb
 {
     const SECTION_DATA_UPDATE_BATCH_SIZE = 250;
+
+    /**
+     * @var ProductSectionFactory
+     */
+    private $productSectionFactory;
 
     /**
      * @var array|null
@@ -17,6 +29,36 @@ class Section extends AbstractDb
      * @var int
      */
     private $sectionDataBatchedUpdateCount = 0;
+
+    /**
+     * @param DbContext $context
+     * @param TimeHelper $timeHelper
+     * @param TableDictionary $tableDictionary
+     * @param ProductFilterApplier $productFilterApplier
+     * @param SectionFilterApplier $sectionFilterApplier
+     * @param ProductSectionFactory $productSectionFactory
+     * @param string|null $connectionName
+     */
+    public function __construct(
+        DbContext $context,
+        TimeHelper $timeHelper,
+        TableDictionary $tableDictionary,
+        ProductFilterApplier $productFilterApplier,
+        SectionFilterApplier $sectionFilterApplier,
+        ProductSectionFactory $productSectionFactory,
+        string $connectionName = null
+    ) {
+        $this->productSectionFactory = $productSectionFactory;
+
+        parent::__construct(
+            $context,
+            $timeHelper,
+            $tableDictionary,
+            $productFilterApplier,
+            $sectionFilterApplier,
+            $connectionName
+        );
+    }
 
     protected function _construct()
     {
@@ -109,5 +151,30 @@ class Section extends AbstractDb
     {
         $this->flushSectionDataBatchedUpdates();
         $this->sectionDataBatchedUpdates = null;
+    }
+
+    /**
+     * @param int $productId
+     * @param int $storeId
+     * @return ProductSectionInterface[]
+     * @throws LocalizedException
+     */
+    public function getProductSections($productId, $storeId)
+    {
+        $sections = [];
+        $connection = $this->getConnection();
+
+        $sectionSelect = $connection->select()
+            ->from($this->getMainTable())
+            ->where($connection->quoteInto(ProductSectionInterface::STORE_ID . ' = ?', $storeId))
+            ->where($connection->quoteInto(ProductSectionInterface::PRODUCT_ID . ' = ?', $productId));
+
+        foreach ($connection->fetchAll($sectionSelect) as $sectionData) {
+            $section = $this->productSectionFactory->create();
+            $section->addData($sectionData);
+            $sections[$section->getTypeId()] = $section;
+        }
+
+        return $sections;
     }
 }

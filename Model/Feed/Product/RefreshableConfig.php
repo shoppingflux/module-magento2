@@ -5,6 +5,7 @@ namespace ShoppingFeed\Manager\Model\Feed\Product;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
@@ -12,7 +13,6 @@ use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Feed\AbstractConfig;
-use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 
 abstract class RefreshableConfig extends AbstractConfig implements RefreshableConfigInterface
 {
@@ -48,8 +48,8 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
                             'hasEmptyOption' => true,
                             'optionArray' => [
                                 [ 'value' => '', 'label' => __('No') ],
-                                [ 'value' => FeedProduct::REFRESH_STATE_ADVISED, 'label' => __('Advised') ],
-                                [ 'value' => FeedProduct::REFRESH_STATE_REQUIRED, 'label' => __('Required') ],
+                                [ 'value' => FeedProductInterface::REFRESH_STATE_ADVISED, 'label' => __('Advised') ],
+                                [ 'value' => FeedProductInterface::REFRESH_STATE_REQUIRED, 'label' => __('Required') ],
                             ],
                         ]
                     ),
@@ -59,8 +59,8 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
                     'dependencies' => [
                         [
                             'values' => [
-                                FeedProduct::REFRESH_STATE_ADVISED,
-                                FeedProduct::REFRESH_STATE_REQUIRED,
+                                FeedProductInterface::REFRESH_STATE_ADVISED,
+                                FeedProductInterface::REFRESH_STATE_REQUIRED,
                             ],
                             'fieldNames' => [ self::KEY_AUTOMATIC_REFRESH_DELAY ],
                         ],

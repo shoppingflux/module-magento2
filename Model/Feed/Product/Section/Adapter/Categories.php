@@ -12,6 +12,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\CategoriesInterface as ConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Categories as Type;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
+use ShoppingFeed\Manager\Model\LabelledValueFactory;
 
 /**
  * @method ConfigInterface getConfig()
@@ -30,16 +31,18 @@ class Categories extends AbstractAdapter implements CategoriesInterface
 
     /**
      * @param StoreManagerInterface $storeManager
+     * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param CategorySelectorInterface $productCategorySelector
      */
     public function __construct(
         StoreManagerInterface $storeManager,
+        LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         CategorySelectorInterface $productCategorySelector
     ) {
         $this->productCategorySelector = $productCategorySelector;
-        parent::__construct($storeManager, $attributeRendererPool);
+        parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
     public function getSectionType()
@@ -97,5 +100,16 @@ class Categories extends AbstractAdapter implements CategoriesInterface
                 $productData[self::KEY_CATEGORY_URL] ?? ''
             );
         }
+    }
+
+    public function describeProductData(StoreInterface $store, array $productData)
+    {
+        return $this->describeRawProductData(
+            [
+                self::KEY_CATEGORY_NAME => __('Name'),
+                self::KEY_CATEGORY_URL => __('URL'),
+            ],
+            $productData
+        );
     }
 }
