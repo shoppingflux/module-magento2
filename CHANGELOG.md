@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.28.0] - 2019-12-16
+### Added
+- Improve the feed product listing:
+    - Add new attribute columns (type, status, visibility, price)
+    - Add new feed columns (main and variation states, exclusion reason)
+    - Add a sections details modal
+- Implement mass-update for those product attributes: is selected, forced category
+- Add an option for fetching different types of quantities when using MSI
+- Implement utility methods for shipping method appliers
+
+### Fixed
+- Fix import of orders with disabled products (with or without availability check)
+
 ## [0.27.0] - 2019-12-04
 ### Added
 -	Fetch product quantities using MSI (if available) (**BC break** for stock section adapter)
