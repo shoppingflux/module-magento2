@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Block\Adminhtml\Catalog\Product\Edit\Action\Attribute\Tab;
 
 use Magento\Backend\Block\Template\Context;
+use Magento\Backend\Block\Widget;
 use Magento\Backend\Block\Widget\Tab\TabInterface;
 use Magento\Catalog\Block\Adminhtml\Product\Edit\Action\Attribute\Tab\Attributes as AttributesTab;
 use Magento\Catalog\Helper\Product\Edit\Action\Attribute as AttributeActionHelper;
@@ -157,11 +158,11 @@ class FeedAttributes extends AttributesTab implements TabInterface
         return $field;
     }
 
-    /**
-     * @throws LocalizedException
-     */
-    protected function _prepareForm()
+    protected function _beforeToHtml()
     {
+        // We can't override _prepareForm() here due to the return type declaration that was arbitrarily added by:
+        // https://github.com/magento/magento2/commit/aa183e0796e95bf2594e2fafd6c4b32b581d800c
+
         /** @var Form $form */
         $form = $this->_formFactory->create();
 
@@ -211,6 +212,9 @@ class FeedAttributes extends AttributesTab implements TabInterface
         }
 
         $this->setForm($form);
+        $this->_initFormValues();
+
+        return Widget::_beforeToHtml();
     }
 
     public function getTabLabel()
