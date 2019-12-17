@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.28.1] - 2019-12-17
+### Fixed
+- Fix mass-update tab on recent M2 versions
+
 ## [0.28.0] - 2019-12-16
 ### Added
 - Improve the feed product listing:
