@@ -70,7 +70,7 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
                     'label' => __('Force Automatic Refresh'),
                     'notice' => $this->getTranslatedMultiLineString(
                         [
-                            'Indicates whether to refresh the data on a regular basis:',
+                            'Indicates whether to refresh the section data on a regular basis:',
                             '- "No": data will only be refreshed when updates are detected.',
                             '- "Advised" / "Required": data will also be refreshed after a specific amount of time.',
                             '- "Required": takes priority over "Advised" refresh, and is enforced before any generation of the feed.'

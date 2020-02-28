@@ -198,7 +198,7 @@
 "In minutes.","En minutes."
 "Includable Parent Count","Nombre de parents incluables"
 "Include","Inclure"
-"Indicates whether to refresh the data on a regular basis:","Indique s'il faut rafraîchir les données régulièrement :"
+"Indicates whether to refresh the section data on a regular basis:","Indique s'il faut rafraîchir les données de la section régulièrement :"
 "Invalid connection.","Connection invalide."
 "Invalid query.","Requête invalide."
 "Is there a corresponding cron job scheduled regularly?","Y a-t-il une tâche cron correspondante programmée régulièrement ?"
