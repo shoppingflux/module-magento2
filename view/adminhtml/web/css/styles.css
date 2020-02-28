@@ -2,6 +2,12 @@
     text-decoration: line-through;
 }
 
+.admin__sfm-fieldset .admin__field-note {
+    margin: -5px 0 0;
+    line-height: 2;
+    white-space: pre-line;
+}
+
 .admin__sfm-nested-fieldset .admin__fieldset {
     padding-top: 0;
     padding-bottom: 0;

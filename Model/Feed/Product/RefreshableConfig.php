@@ -32,8 +32,20 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
                 Checkbox::TYPE_CODE,
                 [
                     'name' => self::KEY_FORCE_PRODUCT_LOAD_FOR_REFRESH,
-                    'label' => __('Force Product Load for Refresh'),
+                    'label' => __('Force Full Loading of Products for Refresh'),
                     'sortOrder' => 100010,
+                    'checkedNotice' => $this->getTranslatedMultiLineString(
+                        [
+                            'Products will be loaded individually, with all their data.',
+                            'This method is (much) slower, and should therefore only be used if the other is insufficient.'
+                        ]
+                    ),
+                    'uncheckedNotice' => $this->getTranslatedMultiLineString(
+                        [
+                            'Products will be loaded in batch, with only the necessary data.',
+                            'This method is (much) faster, but in some rare cases insufficient to fetch specific data.'
+                        ]
+                    ),
                 ]
             ),
 
@@ -56,6 +68,14 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
                     'defaultFormValue' => '',
                     'defaultUseValue' => '',
                     'label' => __('Force Automatic Refresh'),
+                    'notice' => $this->getTranslatedMultiLineString(
+                        [
+                            'Indicates whether to refresh the data on a regular basis:',
+                            '- "No": data will only be refreshed when updates are detected.',
+                            '- "Advised" / "Required": data will also be refreshed after a specific amount of time.',
+                            '- "Required": takes priority over "Advised" refresh, and is enforced before any generation of the feed.'
+                        ]
+                    ),
                     'dependencies' => [
                         [
                             'values' => [

@@ -212,4 +212,13 @@ abstract class AbstractConfig implements ConfigInterface
     public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)
     {
     }
+
+    /**
+     * @param string[] $lines
+     * @return string
+     */
+    protected function getTranslatedMultiLineString(array $lines)
+    {
+        return implode("\n", array_map('__', $lines));
+    }
 }

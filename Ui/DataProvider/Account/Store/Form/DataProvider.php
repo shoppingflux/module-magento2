@@ -131,6 +131,7 @@ class DataProvider extends BaseDataProvider
                         'collapsible' => true,
                         'dataScope' => $dataScope,
                         'sortOrder' => $sortOrder,
+                        'additionalClasses' => 'admin__sfm-fieldset',
                     ],
                 ],
             ],
