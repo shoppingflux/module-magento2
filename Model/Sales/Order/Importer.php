@@ -720,7 +720,15 @@ class Importer implements ImporterInterface
                 if ($this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
                     && ((int) $product->getStatus() === CatalogProductStatus::STATUS_DISABLED)
                 ) {
-                    throw new LocalizedException(__('The product is disabled.'));
+                    throw new LocalizedException(__('The product with reference "%1" is disabled.', $reference));
+                }
+
+                if ($this->orderGeneralConfig->shouldCheckProductWebsites($store)
+                    && !in_array($store->getBaseWebsiteId(), array_map('intval', $product->getWebsiteIds()), true)
+                ) {
+                    throw new LocalizedException(
+                        __('The product with reference "%1" is not available in the website.', $reference)
+                    );
                 }
 
                 $itemPrice = $marketplaceItem->getPrice();

@@ -9,7 +9,7 @@ class SaveButton extends AbstractButton
     public function getButtonData()
     {
         return [
-            'label' => $this->getLabel(__('Save')),
+            'label' => __($this->getLabel('Save')),
             'class' => 'save primary',
             'data_attribute' => [
                 'mage-init' => [ 'button' => [ 'event' => 'save' ] ],

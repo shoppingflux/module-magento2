@@ -67,6 +67,17 @@
                 </item>
             </argument>
         </column>
+        <column name="applier_code">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Pattern</item>
+                </item>
+                <item name="options" xsi:type="object">ShoppingFeed\Manager\Model\Shipping\Method\Applier\Source</item>
+            </argument>
+        </column>
         <column name="is_active">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

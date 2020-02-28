@@ -92,7 +92,7 @@ class Basic extends AbstractConfig implements BasicInterface
      */
     private function getShippingMethodCodePart(DataObject $configData, $index)
     {
-        $methodParts = array_filter(explode('_', $this->getShippingMethodFullCode($configData)));
+        $methodParts = array_filter(explode('_', $this->getShippingMethodFullCode($configData), 2));
         return (2 === count($methodParts)) && isset($methodParts[$index]) ? $methodParts[$index] : null;
     }
 

@@ -17,6 +17,7 @@ class Config extends AbstractConfig implements ConfigInterface
 {
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS = 'check_product_availability_and_options';
+    const KEY_CHECK_PRODUCT_WEBSITES = 'check_product_websites';
     const KEY_SYNC_NON_IMPORTED_ADDRESSES = 'sync_non_imported_addresses';
     const KEY_DEFAULT_EMAIL_ADDRESS = 'default_email_address';
     const KEY_DEFAULT_PHONE_NUMBER = 'default_phone_number';
@@ -80,10 +81,20 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_CHECK_PRODUCT_WEBSITES,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Check Product Websites'),
+                        'sortOrder' => 30,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_SYNC_NON_IMPORTED_ADDRESSES,
                         'isCheckedByDefault' => true,
                         'label' => __('Synchronize Addresses of Non-Imported Orders with Shopping Feed'),
-                        'sortOrder' => 30,
+                        'sortOrder' => 40,
                     ]
                 ),
 
@@ -93,7 +104,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
                         'isCheckedByDefault' => true,
                         'label' => __('Use Mobile Phone Number First (If Available)'),
-                        'sortOrder' => 40,
+                        'sortOrder' => 60,
                     ]
                 ),
 
@@ -107,7 +118,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => $this->getDefaultAddressFieldPlaceholder(),
                         'label' => __('Default Address Field Value'),
                         'notice' => __('This value will be used as the default for other missing required fields.'),
-                        'sortOrder' => 70,
+                        'sortOrder' => 90,
                     ]
                 ),
 
@@ -117,7 +128,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_FORCE_CROSS_BORDER_TRADE,
                         'isCheckedByDefault' => true,
                         'label' => __('Force Cross Border Trade'),
-                        'sortOrder' => 80,
+                        'sortOrder' => 100,
                         'checkedNotice' =>
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
@@ -135,7 +146,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_CREATE_INVOICE,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Invoice'),
-                        'sortOrder' => 90,
+                        'sortOrder' => 110,
                     ]
                 ),
             ],
@@ -174,7 +185,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $this->valueHandlerFactory->create(EmailHandler::TYPE_CODE),
                         'label' => __('Default Email Address'),
                         'notice' => $defaultEmailNotice,
-                        'sortOrder' => 50,
+                        'sortOrder' => 70,
                     ]
                 ),
 
@@ -185,7 +196,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Phone Number'),
                         'notice' => $defaultPhoneNotice,
-                        'sortOrder' => 60,
+                        'sortOrder' => 80,
                     ]
                 ),
             ],
@@ -201,6 +212,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldCheckProductAvailabilityAndOptions(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS);
+    }
+
+    public function shouldCheckProductWebsites(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_CHECK_PRODUCT_WEBSITES);
     }
 
     public function shouldSyncNonImportedAddresses(StoreInterface $store)

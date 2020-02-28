@@ -133,9 +133,13 @@ class Stock extends AbstractConfig implements StockInterface
                         'name' => self::KEY_UPDATE_QUANTITY_IN_REAL_TIME,
                         'isRequired' => true,
                         'isCheckedByDefault' => false,
-                        'label' => __('Update Quantity in Real Time'),
-                        'checkedNotice' => __(
-                            'The product quantities will be updated in real-time on Shopping Feed when changes are detected. This may slow down product and inventory updates.'
+                        'label' => __('Update Quantities in Real Time'),
+                        'uncheckedNotice' => __('Quantities will only be updated through the feed.'),
+                        'checkedNotice' => $this->getTranslatedMultiLineString(
+                            [
+                                'Quantities will also be updated in real-time on Shopping Feed when changes are detected.',
+                                'This may slow down product and inventory updates.',
+                            ]
                         ),
                         'sortOrder' => 50,
                     ]
