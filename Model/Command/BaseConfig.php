@@ -82,7 +82,7 @@ class BaseConfig extends AbstractConfig implements ConfigInterface
                     'name' => self::KEY_APPLY_TO_ALL_STORES,
                     'isRequired' => true,
                     'isCheckedByDefault' => true,
-                    'label' => __('Apply to All Stores'),
+                    'label' => __('Apply to All Accounts'),
                     'sortOrder' => 100010,
                     'uncheckedDependentFieldNames' => [ self::KEY_APPLY_TO_STORE_IDS ],
                 ]
@@ -100,7 +100,7 @@ class BaseConfig extends AbstractConfig implements ConfigInterface
                         ]
                     ),
                     'isRequired' => true,
-                    'label' => __('Apply to Stores'),
+                    'label' => __('Apply to Accounts'),
                     'sortOrder' => 100020,
                 ]
             ),
