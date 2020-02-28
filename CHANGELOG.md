@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.29.0] - 2020-02-28
+### Added
+- Add more notes/feedback in the account configuration form
+- Add an option to check product websites when importing orders
+- Add a "pattern" column to the shipping method rule listing
+
+### Changed
+- Improve the rendering of notes in the account configuration form
+
+### Fixed
+- Fix the translation of save buttons
+- Fix some button/field labels in the cron task form
+- Fix the basic shipping method applier with codes containing multiple underscores
+
 ## [0.28.1] - 2019-12-17
 ### Fixed
 - Fix mass-update tab on recent M2 versions
