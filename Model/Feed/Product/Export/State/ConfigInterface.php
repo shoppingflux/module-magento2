@@ -22,6 +22,17 @@ interface ConfigInterface extends BaseConfig, RefreshableConfigInterface
     public function getIsSelectedProductAttribute(StoreInterface $store);
 
     /**
+     * @return string[]
+     */
+    public function getExportableProductTypes();
+
+    /**
+     * @param StoreInterface $store
+     * @return string[]
+     */
+    public function getExportedProductTypes(StoreInterface $store);
+
+    /**
      * @param StoreInterface $store
      * @return int[]
      */

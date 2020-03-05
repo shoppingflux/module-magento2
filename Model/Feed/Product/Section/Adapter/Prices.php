@@ -224,14 +224,14 @@ class Prices extends AbstractAdapter implements PricesInterface
         $productTypeId = $catalogProduct->getTypeId();
         $productData = [];
 
-        if (CatalogProductType::TYPE_SIMPLE === $productTypeId) {
-            $productData = $this->getSimpleProductPriceData($catalogProduct, $store);
-        } elseif (ConfigurableProductType::TYPE_CODE === $productTypeId) {
+        if (ConfigurableProductType::TYPE_CODE === $productTypeId) {
             $priceType = $this->getConfig()->getConfigurableProductPriceType($store);
 
             if (ConfigInterface::CONFIGURABLE_PRODUCT_PRICE_TYPE_NONE !== $priceType) {
                 $productData = $this->getConfigurablePriceData($catalogProduct, $store, $priceType);
             }
+        } else {
+            $productData = $this->getSimpleProductPriceData($catalogProduct, $store);
         }
 
         return $productData;

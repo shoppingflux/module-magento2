@@ -18,6 +18,10 @@ class Source implements OptionSourceInterface
                 'label' => __('Unhandled Product Type'),
             ],
             [
+                'value' => ProductInterface::EXCLUSION_REASON_FILTERED_PRODUCT_TYPE,
+                'label' => __('Filtered Product Type'),
+            ],
+            [
                 'value' => ProductInterface::EXCLUSION_REASON_NOT_IN_WEBSITE,
                 'label' => __('Not in Website'),
             ],

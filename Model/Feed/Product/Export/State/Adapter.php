@@ -3,9 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 
 use Magento\Catalog\Model\Product as CatalogProduct;
-use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
-use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableType;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
@@ -51,9 +49,18 @@ class Adapter implements AdapterInterface
     /**
      * @return string[]
      */
-    public function getExportedProductTypes()
+    public function getExportableProductTypes()
     {
-        return [ ProductType::TYPE_SIMPLE, ConfigurableType::TYPE_CODE ];
+        return $this->config->getExportableProductTypes();
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @return string[]
+     */
+    public function getExportedProductTypes(StoreInterface $store)
+    {
+        return $this->config->getExportedProductTypes($store);
     }
 
     /**
@@ -123,10 +130,12 @@ class Adapter implements AdapterInterface
         $childExportState = FeedProduct::STATE_NOT_EXPORTED;
         $exclusionReason = null;
 
-        if (!in_array($catalogProduct->getTypeId(), $this->getExportedProductTypes(), true)) {
+        if (!in_array($catalogProduct->getTypeId(), $this->getExportableProductTypes(), true)) {
             $baseExportState = FeedProduct::STATE_NEVER_EXPORTED;
             $childExportState = FeedProduct::STATE_NEVER_EXPORTED;
             $exclusionReason = FeedProduct::EXCLUSION_REASON_UNHANDLED_PRODUCT_TYPE;
+        } elseif (!in_array($catalogProduct->getTypeId(), $this->getExportedProductTypes($store), true)) {
+            $exclusionReason = FeedProduct::EXCLUSION_REASON_FILTERED_PRODUCT_TYPE;
         } elseif (!in_array($store->getBaseStore()->getWebsiteId(), $catalogProduct->getWebsiteIds())) {
             $exclusionReason = FeedProduct::EXCLUSION_REASON_NOT_IN_WEBSITE;
         } elseif ($this->isNotSalableProduct($catalogProduct) && !$this->config->shouldExportNotSalable($store)) {

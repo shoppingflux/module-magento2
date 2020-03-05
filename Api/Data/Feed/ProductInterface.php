@@ -22,6 +22,7 @@ interface ProductInterface
     const EXCLUSION_REASON_OUT_OF_STOCK = 4;
     const EXCLUSION_REASON_FILTERED_VISIBILITY = 5;
     const EXCLUSION_REASON_UNSELECTED_PRODUCT = 6;
+    const EXCLUSION_REASON_FILTERED_PRODUCT_TYPE = 7;
 
     /**#@+*/
     const PRODUCT_ID = 'product_id';
