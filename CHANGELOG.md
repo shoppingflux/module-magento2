@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.30.0] - 2020-03-06
+### Added
+- Add an option to choose the product types to export
+- Implement export for virtual products
+- Add an option to choose how to export base and discount prices
+
+### Fixed
+- Fix compatibility with PHP 7.4
+
 ## [0.29.0] - 2020-02-28
 ### Added
 - Add more notes/feedback in the account configuration form
