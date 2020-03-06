@@ -50,7 +50,7 @@ class Shipping extends AbstractAdapter implements ShippingInterface
 
         return (null !== $value)
             ? $value
-            : (null !== $defaultValue) ? $defaultValue : null;
+            : ((null !== $defaultValue) ? $defaultValue : null);
     }
 
     public function getProductData(StoreInterface $store, RefreshableProduct $product)

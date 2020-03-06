@@ -2,7 +2,9 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 
+use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableType;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
@@ -25,12 +27,18 @@ class Config extends RefreshableConfig implements ConfigInterface
     const KEY_EXPORT_SELECTED_ONLY = 'export_selected_only';
     const KEY_SELECT_WITH_PRODUCT_ATTRIBUTE = 'select_with_product_attribute';
     const KEY_IS_SELECTED_PRODUCT_ATTRIBUTE = 'is_selected_product_attribute';
+    const KEY_EXPORTED_PRODUCT_TYPES = 'exported_product_types';
     const KEY_EXPORTED_VISIBILITIES = 'exported_visibilities';
     const KEY_EXPORT_OUT_OF_STOCK = 'export_out_of_stock';
     const KEY_EXPORT_NOT_SALABLE = 'export_not_salable';
     const KEY_CHILDREN_EXPORT_MODE = 'children_export_mode';
     const KEY_RETAIN_PREVIOUSLY_EXPORTED = 'retain_previously_exported';
     const KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION = 'previously_exported_retention_duration';
+
+    /**
+     * @var ProductType
+     */
+    private $productType;
 
     /**
      * @var ProductVisibility
@@ -45,15 +53,18 @@ class Config extends RefreshableConfig implements ConfigInterface
     /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
+     * @param ProductType $productType
      * @param ProductVisibility $productVisibility
      * @param AttributeSourceInterface $booleanAttributeSource
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
         ValueHandlerFactoryInterface $valueHandlerFactory,
+        ProductType $productType,
         ProductVisibility $productVisibility,
         AttributeSourceInterface $booleanAttributeSource
     ) {
+        $this->productType = $productType;
         $this->productVisibility = $productVisibility;
         $this->booleanAttributeSource = $booleanAttributeSource;
         parent::__construct($fieldFactory, $valueHandlerFactory);
@@ -70,6 +81,19 @@ class Config extends RefreshableConfig implements ConfigInterface
             AttributeHandler::TYPE_CODE,
             [ 'attributeSource' => $this->booleanAttributeSource ]
         );
+
+        $productTypesOptionArray = $this->productType->toOptionArray();
+
+        foreach ($productTypesOptionArray as $key => $productTypeOption) {
+            if (!in_array($productTypeOption['value'], $this->getExportableProductTypes(), true)) {
+                unset($productTypesOptionArray[$key]);
+            }
+        }
+
+        $defaultExportedProductTypes = [
+            ProductType::TYPE_SIMPLE,
+            ConfigurableType::TYPE_CODE,
+        ];
 
         return array_merge(
             [
@@ -99,6 +123,25 @@ class Config extends RefreshableConfig implements ConfigInterface
                         'valueHandler' => $booleanAttributeValueHandler,
                         'isRequired' => true,
                         'label' => __('Select Products Based on Attribute'),
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    MultiSelect::TYPE_CODE,
+                    [
+                        'name' => self::KEY_EXPORTED_PRODUCT_TYPES,
+                        'valueHandler' => $this->valueHandlerFactory->create(
+                            OptionHandler::TYPE_CODE,
+                            [
+                                'dataType' => UiText::NAME,
+                                'optionArray' => $productTypesOptionArray,
+                            ]
+                        ),
+                        'isRequired' => true,
+                        'defaultFormValue' => $defaultExportedProductTypes,
+                        'defaultUseValue' => $defaultExportedProductTypes,
+                        'size' => 4,
+                        'label' => __('Export Product Types'),
                     ]
                 ),
 
@@ -215,6 +258,20 @@ class Config extends RefreshableConfig implements ConfigInterface
         return !$this->getFieldValue($store, self::KEY_SELECT_WITH_PRODUCT_ATTRIBUTE)
             ? null
             : $this->getFieldValue($store, self::KEY_IS_SELECTED_PRODUCT_ATTRIBUTE);
+    }
+
+    public function getExportableProductTypes()
+    {
+        return [
+            ProductType::TYPE_SIMPLE,
+            ProductType::TYPE_VIRTUAL,
+            ConfigurableType::TYPE_CODE,
+        ];
+    }
+
+    public function getExportedProductTypes(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_EXPORTED_PRODUCT_TYPES);
     }
 
     public function getExportedVisibilities(StoreInterface $store)
