@@ -80,14 +80,12 @@ class Prices extends AbstractAdapter implements PricesInterface
 
     public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
     {
+        $productCollection->addAttributeToSelect('special_price');
+
         $productCollection->addPriceData(
             $this->getConfig()->getCustomerGroupId($store),
             $store->getBaseStore()->getWebsiteId()
         );
-
-        $productCollection->addMinimalPrice();
-        $productCollection->addFinalPrice();
-        $productCollection->addTaxPercents();
     }
 
     public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
@@ -242,11 +240,33 @@ class Prices extends AbstractAdapter implements PricesInterface
         array $productData,
         AbstractExportedProduct $exportedProduct
     ) {
-        if (isset($productData[self::KEY_FINAL_PRICE])) {
-            $exportedProduct->setPrice($productData[self::KEY_FINAL_PRICE]);
+        $discountExportMode = $this->getConfig()->getDiscountExportMode($store);
+
+        $hasBasePrice = isset($productData[self::KEY_BASE_PRICE]);
+        $hasFinalPrice = isset($productData[self::KEY_FINAL_PRICE]);
+
+        $isDiscounted = $hasBasePrice
+            && $hasFinalPrice
+            && ($productData[self::KEY_FINAL_PRICE] < $productData[self::KEY_BASE_PRICE]);
+
+        if (ConfigInterface::DISCOUNT_EXPORT_MODE_PRICE_ATTRIBUTE === $discountExportMode) {
+            if ($isDiscounted || $hasFinalPrice) {
+                $exportedProduct->setPrice($productData[self::KEY_FINAL_PRICE]);
+            } elseif ($hasBasePrice) {
+                $exportedProduct->setPrice($productData[self::KEY_BASE_PRICE]);
+            }
+        } else {
+            if ($isDiscounted) {
+                $exportedProduct->setPrice($productData[self::KEY_BASE_PRICE]);
+                $exportedProduct->addDiscount($productData[self::KEY_FINAL_PRICE]);
+            } elseif ($hasFinalPrice) {
+                $exportedProduct->setPrice($productData[self::KEY_FINAL_PRICE]);
+            } elseif ($hasBasePrice) {
+                $exportedProduct->setPrice($productData[self::KEY_BASE_PRICE]);
+            }
         }
 
-        if (isset($productData[self::KEY_BASE_PRICE])) {
+        if ($hasBasePrice) {
             $exportedProduct->setAttribute('price_before_discount', $productData[self::KEY_BASE_PRICE]);
         }
     }

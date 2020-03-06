@@ -7,6 +7,9 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface;
 
 interface PricesInterface extends ConfigInterface
 {
+    const DISCOUNT_EXPORT_MODE_DISCOUNT_ATTRIBUTE = 'discount_attribute';
+    const DISCOUNT_EXPORT_MODE_PRICE_ATTRIBUTE = 'price_attribute';
+
     const CONFIGURABLE_PRODUCT_PRICE_TYPE_NONE = 'none';
     const CONFIGURABLE_PRODUCT_PRICE_TYPE_VARIATIONS_MINIMUM = 'variations_minimum';
     const CONFIGURABLE_PRODUCT_PRICE_TYPE_VARIATIONS_MAXIMUM = 'variations_maximum';
@@ -16,6 +19,12 @@ interface PricesInterface extends ConfigInterface
      * @return int
      */
     public function getCustomerGroupId(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getDiscountExportMode(StoreInterface $store);
 
     /**
      * @param StoreInterface $store
