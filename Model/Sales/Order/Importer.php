@@ -808,6 +808,28 @@ class Importer implements ImporterInterface
         $quoteShippingAddress = $quote->getShippingAddress();
         $shippingRates = $quoteShippingAddress->getAllShippingRates();
 
+        if ($quoteShippingAddress->hasData('cached_items_all')) {
+            $quoteShippingAddress->unsetData('cached_items_all');
+        }
+
+        $quote->setTotalsCollectedFlag(false);
+        $quote->collectTotals();
+
+        if (empty($quoteShippingAddress->getData('total_qty'))) {
+            // The "total_qty" value seems to sometimes be reset at the end of the collect process,
+            // but it might be needed by some shipping method rules.
+            $totalQty = 0;
+
+            /** @var Quote\Item $quoteItem */
+            foreach ($quote->getAllItems() as $quoteItem) {
+                if (!$quoteItem->getParentItem()) {
+                    $totalQty += $quoteItem->getQty();
+                }
+            }
+
+            $quoteShippingAddress->setData('total_qty', $totalQty);
+        }
+
         if (empty($shippingRates)) {
             $quoteShippingAddress->setCollectShippingRates(true);
             $quoteShippingAddress->collectShippingRates();
