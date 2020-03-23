@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.30.1] - 2020-03-23
+### Fixed
+- Fix handling of some of the cart conditions in shipping method rules
+
 ## [0.30.0] - 2020-03-06
 ### Added
 - Add an option to choose the product types to export
