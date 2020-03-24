@@ -26,10 +26,7 @@ class RendererPool implements RendererPoolInterface
         foreach ($renderers as $code => $renderer) {
             if (!$renderer instanceof RendererInterface) {
                 throw new LocalizedException(
-                    __(
-                        'Attribute renderer "%1" must be of type: ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererInterface.',
-                        $code
-                    )
+                    __('Attribute renderer "%1" must be of type: %2.', $code, RendererInterface::class)
                 );
             }
 

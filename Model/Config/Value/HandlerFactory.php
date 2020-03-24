@@ -45,8 +45,9 @@ class HandlerFactory implements HandlerFactoryInterface
         if (!$handler instanceof HandlerInterface) {
             throw new LocalizedException(
                 __(
-                    'Value handler factory "%1" must create instances of type: ShoppingFeed\Manager\Model\Config\Value\HandlerInterface.',
-                    $typeCode
+                    'Value handler factory "%1" must create instances of type: %2.',
+                    $typeCode,
+                    HandlerInterface::class
                 )
             );
         }

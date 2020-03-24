@@ -31,10 +31,7 @@ class CommandPool implements CommandPoolInterface
                 foreach ($subCommands as $code => $command) {
                     if (!$command instanceof CommandInterface) {
                         throw new LocalizedException(
-                            __(
-                                'Command "%1" must be of type: ShoppingFeed\Manager\Model\CommandInterface.',
-                                $code
-                            )
+                            __('Command "%1" must be of type: %2.', $code, CommandInterface::class)
                         );
                     }
 

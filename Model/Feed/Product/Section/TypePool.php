@@ -29,12 +29,7 @@ class TypePool implements TypePoolInterface
     {
         foreach ($types as $code => $type) {
             if (!$type instanceof AbstractType) {
-                throw new LocalizedException(
-                    __(
-                        'Section type "%1" must be of type: ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractType.',
-                        $code
-                    )
-                );
+                throw new LocalizedException(__('Section type "%1" must be of type: %2.', $code, AbstractType::class));
             }
 
             $this->types[$code] = $type;

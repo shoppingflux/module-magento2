@@ -45,8 +45,9 @@ class FieldFactory implements FieldFactoryInterface
         if (!$field instanceof FieldInterface) {
             throw new LocalizedException(
                 __(
-                    'Field type factory "%1" must create instances of type: ShoppingFeed\Manager\Model\Config\FieldInterface.',
-                    $typeCode
+                    'Field type factory "%1" must create instances of type: %2.',
+                    $typeCode,
+                    FieldInterface::class
                 )
             );
         }
