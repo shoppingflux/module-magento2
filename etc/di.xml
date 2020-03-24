@@ -19,6 +19,7 @@
             <argument name="typeFactories" xsi:type="array">
                 <item name="category_multi_select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\Category\MultiSelectFactory</item>
                 <item name="checkbox" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\CheckboxFactory</item>
+                <item name="dynamic_rows" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\DynamicRowsFactory</item>
                 <item name="hidden" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\HiddenFactory</item>
                 <item name="multi_select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\MultiSelectFactory</item>
                 <item name="select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\SelectFactory</item>
@@ -37,6 +38,7 @@
                 <item name="option" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\OptionFactory</item>
                 <item name="positive_integer" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveIntegerFactory</item>
                 <item name="positive_number" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveNumberFactory</item>
+                <item name="rows" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\RowsFactory</item>
                 <item name="text" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\TextFactory</item>
                 <item name="email" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\EmailFactory</item>
                 <item name="product_attribute" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\AttributeFactory</item>
