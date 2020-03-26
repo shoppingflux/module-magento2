@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.31.0] - 2020-03-26
+### Added
+- Add an option to import order customers (**BC break** for sales order importer)
+- Implement dynamic rows config fields
+
+### Changed
+- Improve the handling of regions for some countries
+- Replace hard-coded class names in error messages
+
 ## [0.30.1] - 2020-03-23
 ### Fixed
 - Fix handling of some of the cart conditions in shipping method rules
