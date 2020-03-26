@@ -8,13 +8,9 @@ use Magento\Catalog\Helper\Product as CatalogProductHelper;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as CatalogProductStatus;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
 use Magento\Checkout\Model\Session as CheckoutSession;
-use Magento\Directory\Helper\Data as DirectoryHelper;
-use Magento\Directory\Model\Region;
-use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
-use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
@@ -44,6 +40,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Collection as 
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\CollectionFactory as ShippingMethodRuleCollectionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\Business\TaxManager as BusinessTaxManager;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\Customer\Importer as CustomerImporter;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingMethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\TimeHelper;
 use ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider as PaymentConfigProvider;
@@ -61,16 +58,6 @@ class Importer implements ImporterInterface
      * @var DataObjectFactory
      */
     private $dataObjectFactory;
-
-    /**
-     * @var DirectoryHelper
-     */
-    private $directoryHelper;
-
-    /**
-     * @var RegionCollectionFactory
-     */
-    private $regionCollectionFactory;
 
     /**
      * @var TimeHelper
@@ -116,6 +103,11 @@ class Importer implements ImporterInterface
      * @var QuoteAddressExtensionFactory
      */
     private $quoteAddressExtensionFactory;
+
+    /**
+     * @var CustomerImporter
+     */
+    private $customerImporter;
 
     /**
      * @var BusinessTaxManager
@@ -208,15 +200,8 @@ class Importer implements ImporterInterface
     private $isCurrentlyImportedBusinessQuote = false;
 
     /**
-     * @var int[]
-     */
-    private $countryDefaultRegionIds = [];
-
-    /**
      * @param TransactionFactory $transactionFactory
      * @param DataObjectFactory $dataObjectFactory
-     * @param DirectoryHelper $directoryHelper
-     * @param RegionCollectionFactory $regionCollectionFactory
      * @param TimeHelper $timeHelper
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
@@ -226,6 +211,7 @@ class Importer implements ImporterInterface
      * @param QuoteManager $quoteManager
      * @param QuoteRepositoryInterface $quoteRepository
      * @param QuoteAddressExtensionFactory $quoteAddressExtensionFactory
+     * @param CustomerImporter $customerImporter
      * @param BusinessTaxManager $businessTaxManager
      * @param WeeeHelper $weeeHelper
      * @param WeeeTaxPlugin $weeeTaxPlugin
@@ -243,8 +229,6 @@ class Importer implements ImporterInterface
     public function __construct(
         TransactionFactory $transactionFactory,
         DataObjectFactory $dataObjectFactory,
-        DirectoryHelper $directoryHelper,
-        RegionCollectionFactory $regionCollectionFactory,
         TimeHelper $timeHelper,
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
@@ -254,6 +238,7 @@ class Importer implements ImporterInterface
         QuoteManager $quoteManager,
         QuoteRepositoryInterface $quoteRepository,
         QuoteAddressExtensionFactory $quoteAddressExtensionFactory,
+        CustomerImporter $customerImporter,
         BusinessTaxManager $businessTaxManager,
         WeeeHelper $weeeHelper,
         WeeeTaxPlugin $weeeTaxPlugin,
@@ -270,8 +255,6 @@ class Importer implements ImporterInterface
     ) {
         $this->transactionFactory = $transactionFactory;
         $this->dataObjectFactory = $dataObjectFactory;
-        $this->directoryHelper = $directoryHelper;
-        $this->regionCollectionFactory = $regionCollectionFactory;
         $this->timeHelper = $timeHelper;
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
@@ -281,6 +264,7 @@ class Importer implements ImporterInterface
         $this->quoteManager = $quoteManager;
         $this->quoteRepository = $quoteRepository;
         $this->quoteAddressExtensionFactory = $quoteAddressExtensionFactory;
+        $this->customerImporter = $customerImporter;
         $this->businessTaxManager = $businessTaxManager;
         $this->weeeHelper = $weeeHelper;
         $this->weeeTaxPlugin = $weeeTaxPlugin;
@@ -398,9 +382,15 @@ class Importer implements ImporterInterface
                      */
                     $quote->setIgnoreOldQty(true);
 
-                    $quote->setCustomerIsGuest(true);
-                    $quote->setCheckoutMethod(QuoteManagerInterface::METHOD_GUEST);
                     $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
+
+                    if (!isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING])) {
+                        throw new LocalizedException(__('The marketplace order has no billing address.'));
+                    }
+
+                    if (!isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING])) {
+                        throw new LocalizedException(__('The marketplace order has no shipping address.'));
+                    }
 
                     if (isset($orderItems[$marketplaceOrderId])) {
                         $isUntaxedBusinessOrder = $this->isUntaxedBusinessOrder(
@@ -411,6 +401,27 @@ class Importer implements ImporterInterface
                         throw new LocalizedException(__('The marketplace order has no item.'));
                     }
 
+                    $this->customerImporter->importQuoteCustomer(
+                        $quote,
+                        $marketplaceOrder,
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
+                        $store
+                    );
+
+                    $this->importQuoteAddress(
+                        $quote,
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
+                        $isUntaxedBusinessOrder,
+                        $store
+                    );
+
+                    $this->importQuoteAddress(
+                        $quote,
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING],
+                        $isUntaxedBusinessOrder,
+                        $store
+                    );
+
                     if ($isUntaxedBusinessOrder) {
                         $this->isCurrentlyImportedBusinessQuote = true;
                         $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
@@ -418,32 +429,6 @@ class Importer implements ImporterInterface
                         $quote->setCustomerTaxClassId($this->businessTaxManager->getCustomerTaxClass()->getClassId());
                     } else {
                         $this->isCurrentlyImportedBusinessQuote = false;
-                    }
-
-                    if (($quoteAddress = $quote->getBillingAddress())
-                        && isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING])
-                    ) {
-                        $this->importQuoteAddress(
-                            $quoteAddress,
-                            $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
-                            $isUntaxedBusinessOrder,
-                            $store
-                        );
-                    } else {
-                        throw new LocalizedException(__('The marketplace order has no billing address.'));
-                    }
-
-                    if (($quoteAddress = $quote->getShippingAddress())
-                        && isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING])
-                    ) {
-                        $this->importQuoteAddress(
-                            $quoteAddress,
-                            $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING],
-                            $isUntaxedBusinessOrder,
-                            $store
-                        );
-                    } else {
-                        throw new LocalizedException(__('The marketplace order has no shipping address.'));
                     }
 
                     $this->importQuoteItems(
@@ -530,74 +515,17 @@ class Importer implements ImporterInterface
         }
     }
 
-    /**
-     * @param string $marketplaceValue
-     * @param StoreInterface $store
-     * @return string
-     */
-    public function getAddressRequiredFieldValue($marketplaceValue, StoreInterface $store)
-    {
-        return ('' !== trim($marketplaceValue))
-            ? $marketplaceValue
-            : $this->orderGeneralConfig->getAddressFieldPlaceholder($store);
-    }
-
-    /**
-     * @param int $countryId
-     * @param StoreInterface $store
-     * @return int|null
-     */
-    public function getCountryDefaultRegionId($countryId, StoreInterface $store)
-    {
-        if (!array_key_exists($countryId, $this->countryDefaultRegionIds)) {
-            $regionCollection = $this->regionCollectionFactory->create();
-            $regionCollection->addCountryFilter($countryId);
-            $regionCollection->setPageSize(1);
-            $regionCollection->setCurPage(1);
-
-            /** @var Region $defaultRegion */
-            $defaultRegion = $regionCollection->getFirstItem();
-            $this->countryDefaultRegionIds[$countryId] = $defaultRegion ? (int) $defaultRegion->getId() : null;
-        }
-
-        return $this->countryDefaultRegionIds[$countryId];
-    }
-
     public function importQuoteAddress(
-        QuoteAddressInterface $quoteAddress,
+        Quote $quote,
         MarketplaceAddressInterface $marketplaceAddress,
         $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
-        $quoteAddress->setFirstname($this->getAddressRequiredFieldValue($marketplaceAddress->getFirstName(), $store));
-        $quoteAddress->setLastname($this->getAddressRequiredFieldValue($marketplaceAddress->getLastName(), $store));
-        $quoteAddress->setStreet($this->getAddressRequiredFieldValue($marketplaceAddress->getStreet(), $store));
-        $quoteAddress->setPostcode($this->getAddressRequiredFieldValue($marketplaceAddress->getPostalCode(), $store));
-        $quoteAddress->setCity($this->getAddressRequiredFieldValue($marketplaceAddress->getCity(), $store));
-        $quoteAddress->setCompany($marketplaceAddress->getCompany());
-
-        $countryId = $marketplaceAddress->getCountryCode();
-        $quoteAddress->setCountryId($countryId);
-
-        if (in_array($countryId, $this->directoryHelper->getCountriesWithStatesRequired(), true)) {
-            $quoteAddress->setRegionId($this->getCountryDefaultRegionId($countryId, $store));
-        }
-
-        $email = $marketplaceAddress->getEmail();
-        $phone = $marketplaceAddress->getPhone();
-        $mobilePhone = $marketplaceAddress->getMobilePhone();
-
-        $quoteAddress->setEmail('' !== $email ? $email : $this->orderGeneralConfig->getDefaultEmailAddress($store));
-
-        if ((('' === $phone) || $this->orderGeneralConfig->shouldUseMobilePhoneNumberFirst($store))
-            && ('' !== $mobilePhone)
-        ) {
-            $quoteAddress->setTelephone($mobilePhone);
-        } elseif ('' !== $phone) {
-            $quoteAddress->setTelephone($phone);
-        } else {
-            $quoteAddress->setTelephone($this->orderGeneralConfig->getDefaultPhoneNumber($store));
-        }
+        $quoteAddress = $this->customerImporter->importQuoteAddress(
+            $quote,
+            $marketplaceAddress,
+            $store
+        );
 
         $this->tagImportedQuoteAddress($quoteAddress, $isUntaxedBusinessOrder);
     }

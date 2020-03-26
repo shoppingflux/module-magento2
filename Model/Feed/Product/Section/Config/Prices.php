@@ -2,8 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
-use Magento\Customer\Api\Data\GroupInterface as CustomerGroupInterface;
-use Magento\Customer\Model\Customer\Source\Group as CustomerGroupSource;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -12,14 +10,12 @@ use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
+use ShoppingFeed\Manager\Model\Customer\Group\Source as CustomerGroupSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Prices as PricesSection;
 
 class Prices extends AbstractConfig implements PricesInterface
 {
-    /** @see CustomerGroupInterface::CUST_GROUP_ALL */
-    const CUSTOMER_GROUP_ID_NOT_LOGGED_IN = 32001;
-
     const KEY_CUSTOMER_GROUP_ID = 'customer_group_id';
     const KEY_DISCOUNT_EXPORT_MODE = 'discount_export_mode';
     const KEY_CONFIGURABLE_PRODUCT_PRICE_TYPE = 'configurable_product_price_type';
@@ -45,30 +41,11 @@ class Prices extends AbstractConfig implements PricesInterface
 
     protected function getBaseFields()
     {
-        $allCustomerGroups = $this->customerGroupSource->toOptionArray();
-        $customerGroupSource = [];
-
-        foreach ($allCustomerGroups as $customerGroup) {
-            $customerGroupId = (int) $customerGroup['value'];
-
-            if (CustomerGroupInterface::CUST_GROUP_ALL !== $customerGroupId) {
-                if (CustomerGroupInterface::NOT_LOGGED_IN_ID === $customerGroupId) {
-                    // Use a positive ID because a value of 0 is not always correctly handled.
-                    $customerGroupId = static::CUSTOMER_GROUP_ID_NOT_LOGGED_IN;
-                }
-
-                $customerGroupSource[] = [
-                    'value' => $customerGroupId,
-                    'label' => trim($customerGroup['label']),
-                ];
-            }
-        }
-
         $customerGroupHandler = $this->valueHandlerFactory->create(
             OptionHandler::TYPE_CODE,
             [
                 'dataType' => UiNumber::NAME,
-                'optionArray' => $customerGroupSource,
+                'optionArray' => $this->customerGroupSource->toOptionArray(),
             ]
         );
 
@@ -120,8 +97,8 @@ class Prices extends AbstractConfig implements PricesInterface
                         'valueHandler' => $customerGroupHandler,
                         'label' => __('Use Prices from Customer Group'),
                         'isRequired' => true,
-                        'defaultFormValue' => static::CUSTOMER_GROUP_ID_NOT_LOGGED_IN,
-                        'defaultUseValue' => static::CUSTOMER_GROUP_ID_NOT_LOGGED_IN,
+                        'defaultFormValue' => CustomerGroupSource::CUSTOMER_GROUP_ID_NOT_LOGGED_IN,
+                        'defaultUseValue' => CustomerGroupSource::CUSTOMER_GROUP_ID_NOT_LOGGED_IN,
                         'sortOrder' => 10,
                     ]
                 ),
@@ -164,11 +141,7 @@ class Prices extends AbstractConfig implements PricesInterface
 
     public function getCustomerGroupId(StoreInterface $store)
     {
-        $groupId = (int) $this->getFieldValue($store, self::KEY_CUSTOMER_GROUP_ID);
-
-        return (static::CUSTOMER_GROUP_ID_NOT_LOGGED_IN !== $groupId)
-            ? $groupId
-            : CustomerGroupInterface::NOT_LOGGED_IN_ID;
+        return $this->customerGroupSource->getGroupId($this->getFieldValue($store, self::KEY_CUSTOMER_GROUP_ID));
     }
 
     public function getDiscountExportMode(StoreInterface $store)

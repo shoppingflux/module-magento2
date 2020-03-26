@@ -83,4 +83,23 @@ class Order extends AbstractDb
             $connection->quoteInto('order_id = ?', $orderId)
         );
     }
+
+    /**
+     * @param int|null $storeId
+     * @return string[]
+     */
+    public function getMarketplaceList($storeId = null)
+    {
+        $connection = $this->getConnection();
+
+        $marketplaceSelect = $connection->select()
+            ->distinct(true)
+            ->from($this->getMainTable(), [ OrderInterface::MARKETPLACE_NAME ]);
+
+        if (null !== $storeId) {
+            $marketplaceSelect->where(OrderInterface::STORE_ID . ' = ?', (int) $storeId);
+        }
+
+        return $connection->fetchCol($marketplaceSelect);
+    }
 }

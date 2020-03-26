@@ -179,12 +179,6 @@
         </arguments>
     </type>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Prices">
-        <arguments>
-            <argument name="customerGroupSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
-        </arguments>
-    </type>
-
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping">
         <arguments>
             <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>
@@ -267,7 +261,15 @@
     <preference for="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\MarketplaceInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\Marketplace"/>
 
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Config"/>
+
+    <type name="ShoppingFeed\Manager\Model\Sales\Order\Config">
+        <arguments>
+            <argument name="customerGroupSource" xsi:type="object">ShoppingFeed\Manager\Model\Customer\Group\Source\OnlyLoggedIn</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Business\TaxManager" shared="true"/>
+
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector" shared="true"/>
 
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
@@ -345,6 +347,19 @@
             </argument>
         </arguments>
     </type>
+
+    <type name="ShoppingFeed\Manager\Model\Customer\Group\Source">
+        <arguments>
+            <argument name="fullSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
+        </arguments>
+    </type>
+
+    <virtualType name="ShoppingFeed\Manager\Model\Customer\Group\Source\OnlyLoggedIn" type="ShoppingFeed\Manager\Model\Customer\Group\Source">
+        <arguments>
+            <argument name="withAll" xsi:type="boolean">false</argument>
+            <argument name="withNotLoggedIn" xsi:type="boolean">false</argument>
+        </arguments>
+    </virtualType>
 
     <type name="Magento\SalesRule\Model\Utility">
         <plugin name="sfm_salesrule_utility_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\UtilityPlugin" sortOrder="1000000000"/>

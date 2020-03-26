@@ -77,6 +77,8 @@ class Rows extends AbstractHandler
         }
 
         if (is_array($value)) {
+            $index = 1;
+
             foreach ($value as $key => $rowData) {
                 $row = [];
 
@@ -95,6 +97,7 @@ class Rows extends AbstractHandler
                         );
                 }
 
+                $row[$this->rowIdPropertyName] = $index++;
                 $rows[] = $row;
             }
         }
