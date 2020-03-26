@@ -13,6 +13,14 @@
     padding-bottom: 0;
 }
 
+.admin__sfm-fieldset .admin__dynamic-rows .admin__field-label {
+    display: none;
+}
+
+.admin__sfm-fieldset .admin__dynamic-rows.admin__control-table {
+    width: auto;
+}
+
 .admin__sfm-feed-product-sections-table td,
 .admin__sfm-feed-product-sections-table th {
     padding-top: 1rem;

@@ -33,6 +33,19 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldImportCustomers(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @param string $marketplace
+     * @return int|null
+     */
+    public function getMarketplaceCustomerGroup(StoreInterface $store, $marketplace);
+
+    /**
+     * @param StoreInterface $store
      * @return string
      */
     public function getDefaultEmailAddress(StoreInterface $store);

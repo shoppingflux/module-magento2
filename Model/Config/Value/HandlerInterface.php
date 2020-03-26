@@ -5,7 +5,7 @@ namespace ShoppingFeed\Manager\Model\Config\Value;
 interface HandlerInterface
 {
     /**
-     * @return string
+     * @return string|null
      */
     public function getFormDataType();
 

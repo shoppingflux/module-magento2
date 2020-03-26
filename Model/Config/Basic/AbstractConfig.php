@@ -47,11 +47,7 @@ abstract class AbstractConfig implements ConfigInterface
     private function checkFieldValidity($field)
     {
         if (!$field instanceof FieldInterface) {
-            throw new LocalizedException(
-                __(
-                    'Config fields must be of type: ShoppingFeed\Manager\Model\Config\FieldInterface.'
-                )
-            );
+            throw new LocalizedException(__('Config fields must be of type: %1.', FieldInterface::class));
         }
     }
 

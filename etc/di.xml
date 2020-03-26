@@ -19,6 +19,7 @@
             <argument name="typeFactories" xsi:type="array">
                 <item name="category_multi_select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\Category\MultiSelectFactory</item>
                 <item name="checkbox" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\CheckboxFactory</item>
+                <item name="dynamic_rows" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\DynamicRowsFactory</item>
                 <item name="hidden" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\HiddenFactory</item>
                 <item name="multi_select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\MultiSelectFactory</item>
                 <item name="select" xsi:type="object">ShoppingFeed\Manager\Model\Config\Field\SelectFactory</item>
@@ -37,6 +38,7 @@
                 <item name="option" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\OptionFactory</item>
                 <item name="positive_integer" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveIntegerFactory</item>
                 <item name="positive_number" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveNumberFactory</item>
+                <item name="rows" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\RowsFactory</item>
                 <item name="text" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\TextFactory</item>
                 <item name="email" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\EmailFactory</item>
                 <item name="product_attribute" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\AttributeFactory</item>
@@ -177,12 +179,6 @@
         </arguments>
     </type>
 
-    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Prices">
-        <arguments>
-            <argument name="customerGroupSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
-        </arguments>
-    </type>
-
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping">
         <arguments>
             <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>
@@ -265,7 +261,15 @@
     <preference for="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\MarketplaceInterface" type="ShoppingFeed\Manager\Model\Shipping\Method\Applier\Config\Marketplace"/>
 
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Config"/>
+
+    <type name="ShoppingFeed\Manager\Model\Sales\Order\Config">
+        <arguments>
+            <argument name="customerGroupSource" xsi:type="object">ShoppingFeed\Manager\Model\Customer\Group\Source\OnlyLoggedIn</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Business\TaxManager" shared="true"/>
+
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector" shared="true"/>
 
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
@@ -343,6 +347,19 @@
             </argument>
         </arguments>
     </type>
+
+    <type name="ShoppingFeed\Manager\Model\Customer\Group\Source">
+        <arguments>
+            <argument name="fullSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
+        </arguments>
+    </type>
+
+    <virtualType name="ShoppingFeed\Manager\Model\Customer\Group\Source\OnlyLoggedIn" type="ShoppingFeed\Manager\Model\Customer\Group\Source">
+        <arguments>
+            <argument name="withAll" xsi:type="boolean">false</argument>
+            <argument name="withNotLoggedIn" xsi:type="boolean">false</argument>
+        </arguments>
+    </virtualType>
 
     <type name="Magento\SalesRule\Model\Utility">
         <plugin name="sfm_salesrule_utility_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\UtilityPlugin" sortOrder="1000000000"/>

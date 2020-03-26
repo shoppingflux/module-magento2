@@ -41,8 +41,9 @@ class ApplierPool implements ApplierPoolInterface
             if (!$applier instanceof ApplierInterface) {
                 throw new LocalizedException(
                     __(
-                        'Shipping method applier "%1" must be of type: ShoppingFeed\Manager\Model\Shipping\Method\ApplierInterface.',
-                        $code
+                        'Shipping method applier "%1" must be of type: %2.',
+                        $code,
+                        ApplierInterface::class
                     )
                 );
             }

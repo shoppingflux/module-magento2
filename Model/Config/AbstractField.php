@@ -203,10 +203,12 @@ abstract class AbstractField implements FieldInterface
      */
     protected function getBaseUiMetaConfig()
     {
-        $metaConfig = [
-            'dataType' => $this->valueHandler->getFormDataType(),
-            'label' => $this->label,
-        ];
+        $metaConfig = array_filter(
+            [
+                'dataType' => $this->valueHandler->getFormDataType(),
+                'label' => $this->label,
+            ]
+        );
 
         if ($this->isRequired) {
             $metaConfig['validation'] = [ 'required-entry' => true ];
