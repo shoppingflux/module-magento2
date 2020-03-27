@@ -31,13 +31,15 @@ class Collection extends LogCollection implements SearchResultInterface
             ->joinInner(
                 [ 'order_table' => $this->tableDictionary->getMarketplaceOrderTableName() ],
                 'main_table.order_id = order_table.order_id',
-                [ 'marketplace_name', 'marketplace_order_number' ]
+                [ 'marketplace_name', 'marketplace_order_number', 'store_id' ]
             )
             ->joinInner(
                 [ 'store_table' => $this->tableDictionary->getAccountStoreTableName() ],
                 'order_table.store_id = store_table.store_id',
                 [ static::FIELD_SHOPPING_FEED_ACCOUNT_NAME => 'store_table.shopping_feed_name' ]
             );
+
+        $this->addFilterToMap('store_id', 'order_table.store_id');
 
         return $this;
     }
