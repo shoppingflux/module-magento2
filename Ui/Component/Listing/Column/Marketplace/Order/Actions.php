@@ -9,14 +9,17 @@ use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
 class Actions extends AbstractActions
 {
     const ACL_VIEW_SALES_ORDER = 'Magento_Sales::actions_view';
+    const ACL_CANCEL_IMPORT = 'ShoppingFeed_Manager::marketplace_order_cancel_import';
     const ACL_RESET_IMPORT_TRY_COUNT = 'ShoppingFeed_Manager::marketplace_order_reset_import_try_count';
 
     const URL_PATH_VIEW_SALES_ORDER = 'sales/order/view';
+    const URL_PATH_CANCEL_IMPORT = 'shoppingfeed_manager/marketplace_order/cancelImport';
     const URL_PATH_RESET_IMPORT_TRY_COUNT = 'shoppingfeed_manager/marketplace_order/resetImportTryCount';
 
     public function prepareDataSource(array $dataSource)
     {
         $isSalesOrderViewAllowed = $this->authorizationModel->isAllowed(static::ACL_VIEW_SALES_ORDER);
+        $isCancelImportAllowed = $this->authorizationModel->isAllowed(static::ACL_CANCEL_IMPORT);
         $isResetImportAllowed = $this->authorizationModel->isAllowed(static::ACL_RESET_IMPORT_TRY_COUNT);
 
         if (isset($dataSource['data']['items'])) {
@@ -39,18 +42,34 @@ class Actions extends AbstractActions
                         ];
                     }
 
-                    if (!$salesOrderId && $isResetImportAllowed) {
-                        $item[$this->getData('name')]['reset_import_try_count'] = [
-                            'href' => $this->urlBuilder->getUrl(
-                                static::URL_PATH_RESET_IMPORT_TRY_COUNT,
-                                [ OrderAction::REQUEST_KEY_ORDER_ID => $item[OrderInterface::ORDER_ID] ]
-                            ),
-                            'label' => __('Reset Import Attempts'),
-                            'confirm' => [
-                                'title' => __('Reset Import Attempts'),
-                                'message' => __('Are you sure you want to do this?'),
-                            ],
-                        ];
+                    if (!$salesOrderId) {
+                        if ($isCancelImportAllowed) {
+                            $item[$this->getData('name')]['cancel_import'] = [
+                                'href' => $this->urlBuilder->getUrl(
+                                    static::URL_PATH_CANCEL_IMPORT,
+                                    [ OrderAction::REQUEST_KEY_ORDER_ID => $item[OrderInterface::ORDER_ID] ]
+                                ),
+                                'label' => __('Cancel Import'),
+                                'confirm' => [
+                                    'title' => __('Cancel Import'),
+                                    'message' => __('Are you sure you want to do this?'),
+                                ],
+                            ];
+                        }
+
+                        if ($isResetImportAllowed) {
+                            $item[$this->getData('name')]['reset_import_try_count'] = [
+                                'href' => $this->urlBuilder->getUrl(
+                                    static::URL_PATH_RESET_IMPORT_TRY_COUNT,
+                                    [ OrderAction::REQUEST_KEY_ORDER_ID => $item[OrderInterface::ORDER_ID] ]
+                                ),
+                                'label' => __('Reset Import Attempts'),
+                                'confirm' => [
+                                    'title' => __('Reset Import Attempts'),
+                                    'message' => __('Are you sure you want to do this?'),
+                                ],
+                            ];
+                        }
                     }
                 }
             }
