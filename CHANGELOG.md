@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.32.0] - 2020-04-08
+### Added
+- Add an option to cancel import for new marketplace orders
+- Add an "Importable" column to the marketplace order listing
+- Add missing french translations
+
+### Fixed
+- Regularly update the status of unimported marketplace orders
+
 ## [0.31.0] - 2020-03-26
 ### Added
 - Add an option to import order customers (**BC break** for sales order importer)
