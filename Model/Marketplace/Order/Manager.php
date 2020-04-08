@@ -120,7 +120,6 @@ class Manager
                 [
                     self::API_FILTER_ACKNOWLEDGEMENT => self::API_UNACKNOWLEDGED,
                     self::API_FILTER_SINCE => $sinceDate,
-                    self::API_FILTER_STATUS => OrderInterface::STATUS_WAITING_SHIPMENT,
                 ]
             );
     }
@@ -230,7 +229,7 @@ class Manager
     {
         $this->notifyStoreOrderImportResult(
             $order,
-            ((string) $order->getId()),
+            (string) $order->getId(),
             TicketInterface::ACTION_ACKNOWLEDGE_FAILURE,
             $store
         );
