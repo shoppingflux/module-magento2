@@ -7,6 +7,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterfaceFactory;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceOrderAddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterfaceFactory;
@@ -171,6 +172,10 @@ class Importer
      */
     public function importNewApiOrder(ApiOrder $apiOrder, StoreInterface $store)
     {
+        if ($apiOrder->getStatus() !== OrderInterface::STATUS_WAITING_SHIPMENT) {
+            return;
+        }
+
         $marketplaceOrder = $this->orderFactory->create();
         $this->importApiBaseOrderData($apiOrder, $marketplaceOrder, $store);
 
@@ -393,7 +398,7 @@ class Importer
         }
 
         $marketplaceOrder->setShoppingFeedStatus($apiOrder->getStatus());
-        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt());
+        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt()->format('Y-m-d H:i:s'));
 
         $transaction = $this->transactionFactory->create();
         $transaction->addModelResource($marketplaceOrder);
