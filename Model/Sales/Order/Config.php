@@ -25,6 +25,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS = 'check_product_availability_and_options';
     const KEY_CHECK_PRODUCT_WEBSITES = 'check_product_websites';
+    const KEY_SYNC_NON_IMPORTED_ITEMS = 'sync_non_imported_items';
     const KEY_SYNC_NON_IMPORTED_ADDRESSES = 'sync_non_imported_addresses';
     const KEY_IMPORT_CUSTOMERS = 'import_customers';
     const KEY_DEFAULT_CUSTOMER_GROUP = 'default_customer_group';
@@ -143,10 +144,20 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_SYNC_NON_IMPORTED_ITEMS,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Synchronize Items of Non-Imported Orders with Shopping Feed'),
+                        'sortOrder' => 40,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_SYNC_NON_IMPORTED_ADDRESSES,
                         'isCheckedByDefault' => true,
                         'label' => __('Synchronize Addresses of Non-Imported Orders with Shopping Feed'),
-                        'sortOrder' => 40,
+                        'sortOrder' => 50,
                     ]
                 ),
 
@@ -160,7 +171,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             self::KEY_DEFAULT_CUSTOMER_GROUP,
                             self::KEY_MARKETPLACE_CUSTOMER_GROUPS,
                         ],
-                        'sortOrder' => 50,
+                        'sortOrder' => 60,
                     ]
                 ),
 
@@ -171,7 +182,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $customerGroupHandler,
                         'isRequired' => true,
                         'label' => __('Default Customer Group'),
-                        'sortOrder' => 60,
+                        'sortOrder' => 70,
                     ]
                 ),
 
@@ -202,7 +213,7 @@ class Config extends AbstractConfig implements ConfigInterface
                                 ]
                             ),
                         ],
-                        'sort_order' => 70,
+                        'sort_order' => 80,
                     ]
                 ),
 
@@ -212,7 +223,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
                         'isCheckedByDefault' => true,
                         'label' => __('Use Mobile Phone Number First (If Available)'),
-                        'sortOrder' => 80,
+                        'sortOrder' => 90,
                     ]
                 ),
 
@@ -226,7 +237,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => $this->getDefaultAddressFieldPlaceholder(),
                         'label' => __('Default Address Field Value'),
                         'notice' => __('This value will be used as the default for other missing required fields.'),
-                        'sortOrder' => 110,
+                        'sortOrder' => 120,
                     ]
                 ),
 
@@ -236,7 +247,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_FORCE_CROSS_BORDER_TRADE,
                         'isCheckedByDefault' => true,
                         'label' => __('Force Cross Border Trade'),
-                        'sortOrder' => 120,
+                        'sortOrder' => 130,
                         'checkedNotice' =>
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
@@ -254,7 +265,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_CREATE_INVOICE,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Invoice'),
-                        'sortOrder' => 130,
+                        'sortOrder' => 140,
                     ]
                 ),
             ],
@@ -293,7 +304,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $this->valueHandlerFactory->create(EmailHandler::TYPE_CODE),
                         'label' => __('Default Email Address'),
                         'notice' => $defaultEmailNotice,
-                        'sortOrder' => 90,
+                        'sortOrder' => 100,
                     ]
                 ),
 
@@ -304,7 +315,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Phone Number'),
                         'notice' => $defaultPhoneNotice,
-                        'sortOrder' => 100,
+                        'sortOrder' => 110,
                     ]
                 ),
             ],
@@ -325,6 +336,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldCheckProductWebsites(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CHECK_PRODUCT_WEBSITES);
+    }
+
+    public function shouldSyncNonImportedItems(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_SYNC_NON_IMPORTED_ITEMS);
     }
 
     public function shouldSyncNonImportedAddresses(StoreInterface $store)
