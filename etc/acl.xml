@@ -26,8 +26,9 @@
                         </resource>
 
                         <resource id="ShoppingFeed_Manager::marketplace_orders" title="Marketplace Orders" translate="title" sortOrder="20000">
-                            <resource id="ShoppingFeed_Manager::marketplace_order_cancel_import" title="Cancel Import" translate="title" sortOrder="10000"/>
-                            <resource id="ShoppingFeed_Manager::marketplace_order_reset_import_try_count" title="Reset Import Attempts" translate="title" sortOrder="20000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_import" title="Import" translate="title" sortOrder="10000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_cancel_import" title="Cancel Import" translate="title" sortOrder="20000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_reset_import_try_count" title="Reset Import Attempts" translate="title" sortOrder="30000"/>
                         </resource>
 
                         <resource id="ShoppingFeed_Manager::marketplace_order_logs" title="Order Logs" translate="title" sortOrder="30000"/>
