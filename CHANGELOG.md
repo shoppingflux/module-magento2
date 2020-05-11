@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.33.0] - 2020-05-11
+### Added
+- Add an option to manually import a new marketplace order
+- Add an option to synchronize the items of non-imported marketplace orders
+
+### Changed
+- Bumped `shoppingfeed/php-sdk` dependency from **0.2.6** to **0.3.2**
+
+### Fixed
+- Disable sorting on the new "Importable" column
+
 ## [0.32.0] - 2020-04-08
 ### Added
 - Add an option to cancel import for new marketplace orders
