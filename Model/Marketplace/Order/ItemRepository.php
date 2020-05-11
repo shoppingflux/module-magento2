@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
+use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface;
@@ -52,5 +53,21 @@ class ItemRepository implements ItemRepositoryInterface
         }
 
         return $item;
+    }
+
+    public function delete(ItemInterface $item)
+    {
+        try {
+            $this->itemResource->delete($item);
+        } catch (\Exception $exception) {
+            throw new CouldNotDeleteException(__($exception->getMessage()));
+        }
+
+        return true;
+    }
+
+    public function deleteById($itemId)
+    {
+        return $this->delete($this->getById($itemId));
     }
 }

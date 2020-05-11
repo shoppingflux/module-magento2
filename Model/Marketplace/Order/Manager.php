@@ -187,20 +187,20 @@ class Manager
         }
 
         $operation->acknowledge($reference, $channelName, $storeReference, $apiStatus);
+        $result = $apiStore->getOrderApi()->execute($operation);
+        $apiTickets = $result->getTickets();
 
-        $apiTickets = $apiStore->getOrderApi()
-            ->execute($operation)
-            ->getAcknowledge($reference);
-
-        if (isset($apiTickets[0]) && $apiTickets[0]->getId()) {
+        foreach ($apiTickets as $apiTicket) {
             try {
-                $this->registerOrderApiTicket($order, $apiTickets[0], $action);
+                $this->registerOrderApiTicket($order, $apiTicket, $action);
             } catch (\Exception $e) {
                 $operation = new ApiOrderOperation();
                 $operation->unacknowledge($reference, $channelName);
                 $apiStore->getOrderApi()->execute($operation);
                 throw $e;
             }
+
+            break;
         }
     }
 
@@ -266,14 +266,14 @@ class Manager
         $operation = new ApiOrderOperation();
         $reference = $order->getMarketplaceOrderNumber();
         $channelName = $order->getMarketplaceName();
+
         $operation->cancel($reference, $channelName);
+        $result = $apiStore->getOrderApi()->execute($operation);
+        $apiTickets = $result->getTickets();
 
-        $apiTickets = $apiStore->getOrderApi()
-            ->execute($operation)
-            ->getCanceled($reference);
-
-        if (isset($apiTickets[0]) && $apiTickets[0]->getId()) {
-            $this->registerOrderApiTicket($order, $apiTickets[0], TicketInterface::ACTION_CANCEL);
+        foreach ($apiTickets as $apiTicket) {
+            $this->registerOrderApiTicket($order, $apiTicket, TicketInterface::ACTION_CANCEL);
+            break;
         }
     }
 
@@ -320,12 +320,12 @@ class Manager
             $shipmentTrack->getTrackingUrl()
         );
 
-        $apiTickets = $apiStore->getOrderApi()
-            ->execute($operation)
-            ->getShipped($reference);
+        $result = $apiStore->getOrderApi()->execute($operation);
+        $apiTickets = $result->getTickets();
 
-        if (isset($apiTickets[0]) && $apiTickets[0]->getId()) {
-            $this->registerOrderApiTicket($order, $apiTickets[0], TicketInterface::ACTION_SHIP);
+        foreach ($apiTickets as $apiTicket) {
+            $this->registerOrderApiTicket($order, $apiTicket, TicketInterface::ACTION_SHIP);
+            break;
         }
     }
 

@@ -7,11 +7,10 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
-use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterfaceFactory;
-use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceOrderAddressInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterfaceFactory;
-use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as MarketplaceOrderItemInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as MarketplaceItemInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterfaceFactory;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\AddressRepositoryInterface;
@@ -19,6 +18,7 @@ use ShoppingFeed\Manager\Api\Marketplace\Order\ItemRepositoryInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\DB\TransactionFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item\CollectionFactory as ItemCollectionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Sdk\Api\Order\OrderResource as ApiOrder;
 use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
@@ -71,6 +71,11 @@ class Importer
     private $itemRepository;
 
     /**
+     * @var ItemCollectionFactory
+     */
+    private $itemCollectionFactory;
+
+    /**
      * @var TransactionFactory
      */
     private $transactionFactory;
@@ -85,6 +90,7 @@ class Importer
      * @param AddressRepositoryInterface $addressRepository
      * @param ItemInterfaceFactory $itemFactory
      * @param ItemRepositoryInterface $itemRepository
+     * @param ItemCollectionFactory $itemCollectionFactory
      * @param TransactionFactory $transactionFactory
      */
     public function __construct(
@@ -97,6 +103,7 @@ class Importer
         AddressRepositoryInterface $addressRepository,
         ItemInterfaceFactory $itemFactory,
         ItemRepositoryInterface $itemRepository,
+        ItemCollectionFactory $itemCollectionFactory,
         TransactionFactory $transactionFactory
     ) {
         $this->localeDate = $localeDate;
@@ -108,6 +115,7 @@ class Importer
         $this->addressRepository = $addressRepository;
         $this->itemFactory = $itemFactory;
         $this->itemRepository = $itemRepository;
+        $this->itemCollectionFactory = $itemCollectionFactory;
         $this->transactionFactory = $transactionFactory;
     }
 
@@ -172,7 +180,7 @@ class Importer
      */
     public function importNewApiOrder(ApiOrder $apiOrder, StoreInterface $store)
     {
-        if ($apiOrder->getStatus() !== OrderInterface::STATUS_WAITING_SHIPMENT) {
+        if ($apiOrder->getStatus() !== MarketplaceOrderInterface::STATUS_WAITING_SHIPMENT) {
             return;
         }
 
@@ -180,21 +188,22 @@ class Importer
         $this->importApiBaseOrderData($apiOrder, $marketplaceOrder, $store);
 
         $billingAddress = $this->importApiOrderAddress(
-            MarketplaceOrderAddressInterface::TYPE_BILLING,
+            MarketplaceAddressInterface::TYPE_BILLING,
             $apiOrder->getBillingAddress(),
             $store
         );
 
         $shippingAddress = $this->importApiOrderAddress(
-            MarketplaceOrderAddressInterface::TYPE_SHIPPING,
+            MarketplaceAddressInterface::TYPE_SHIPPING,
             $apiOrder->getShippingAddress(),
             $store
         );
 
         $items = [];
+        $referenceAliases = (array) $apiOrder->getItemsReferencesAliases();
 
         foreach ($apiOrder->getItems() as $apiItem) {
-            $items[] = $this->importApiOrderItem($apiItem, $store);
+            $items[] = $this->importApiOrderItem($apiItem, $referenceAliases, $store);
         }
 
         $apiOrderData = $apiOrder->toArray();
@@ -216,7 +225,7 @@ class Importer
                 $this->addressRepository->save($billingAddress->setOrderId($marketplaceOrderId));
                 $this->addressRepository->save($shippingAddress->setOrderId($marketplaceOrderId));
 
-                /** @var MarketplaceOrderItemInterface $item */
+                /** @var MarketplaceItemInterface $item */
                 foreach ($items as $item) {
                     $this->itemRepository->save($item->setOrderId($marketplaceOrderId));
                 }
@@ -294,8 +303,8 @@ class Importer
      * @param string $type
      * @param array $apiAddressData
      * @param StoreInterface $store
-     * @param MarketplaceOrderAddressInterface|null $address
-     * @return MarketplaceOrderAddressInterface
+     * @param MarketplaceAddressInterface|null $address
+     * @return MarketplaceAddressInterface
      */
     public function importApiOrderAddress(
         $type,
@@ -330,16 +339,29 @@ class Importer
 
     /**
      * @param ApiItem $apiItem
+     * @param array $referenceAliases
      * @param StoreInterface $store
-     * @return MarketplaceOrderItemInterface
+     * @param MarketplaceItemInterface|null $item
+     * @return MarketplaceItemInterface
      */
-    public function importApiOrderItem(ApiItem $apiItem, StoreInterface $store)
-    {
-        $item = $this->itemFactory->create();
-        $item->setReference($apiItem->getReference());
+    public function importApiOrderItem(
+        ApiItem $apiItem,
+        array $referenceAliases,
+        StoreInterface $store,
+        MarketplaceItemInterface $item = null
+    ) {
+        $item = (null !== $item) ? $item : $this->itemFactory->create();
+        $reference = $apiItem->getReference();
+
+        if (isset($referenceAliases[$reference])) {
+            $reference = $referenceAliases[$reference];
+        }
+
+        $item->setReference($reference);
         $item->setQuantity($apiItem->getQuantity());
         $item->setPrice($apiItem->getUnitPrice());
         $item->setTaxAmount($apiItem->getTaxAmount());
+
         return $item;
     }
 
@@ -354,47 +376,81 @@ class Importer
         MarketplaceOrderInterface $marketplaceOrder,
         StoreInterface $store
     ) {
-        if (!$marketplaceOrder->getSalesOrderId()
-            && $this->orderGeneralConfig->shouldSyncNonImportedAddresses($store)
-        ) {
-            $orderId = $marketplaceOrder->getId();
+        $orderId = $marketplaceOrder->getId();
 
-            try {
-                $billingAddress = $this->addressRepository->getByOrderIdAndType(
-                    $orderId,
-                    AddressInterface::TYPE_BILLING
+        $billingAddress = null;
+        $shippingAddress = null;
+        $savableItems = [];
+        $deletableItems = [];
+
+        if (!$marketplaceOrder->getSalesOrderId()) {
+            if ($this->orderGeneralConfig->shouldSyncNonImportedAddresses($store)) {
+                try {
+                    $billingAddress = $this->addressRepository->getByOrderIdAndType(
+                        $orderId,
+                        AddressInterface::TYPE_BILLING
+                    );
+                } catch (NoSuchEntityException $e) {
+                    $billingAddress = $this->addressFactory->create();
+                    $billingAddress->setOrderId($orderId);
+                }
+
+                try {
+                    $shippingAddress = $this->addressRepository->getByOrderIdAndType(
+                        $marketplaceOrder->getId(),
+                        AddressInterface::TYPE_SHIPPING
+                    );
+                } catch (NoSuchEntityException $e) {
+                    $shippingAddress = $this->addressFactory->create();
+                    $shippingAddress->setOrderId($orderId);
+                }
+
+                $this->importApiOrderAddress(
+                    AddressInterface::TYPE_BILLING,
+                    $apiOrder->getBillingAddress(),
+                    $store,
+                    $billingAddress
                 );
-            } catch (NoSuchEntityException $e) {
-                $billingAddress = $this->addressFactory->create();
-                $billingAddress->setOrderId($orderId);
+
+                $this->importApiOrderAddress(
+                    AddressInterface::TYPE_SHIPPING,
+                    $apiOrder->getShippingAddress(),
+                    $store,
+                    $shippingAddress
+                );
             }
 
-            try {
-                $shippingAddress = $this->addressRepository->getByOrderIdAndType(
-                    $marketplaceOrder->getId(),
-                    AddressInterface::TYPE_SHIPPING
-                );
-            } catch (NoSuchEntityException $e) {
-                $shippingAddress = $this->addressFactory->create();
-                $shippingAddress->setOrderId($orderId);
+            if ($this->orderGeneralConfig->shouldSyncNonImportedItems($store)) {
+                $itemCollection = $this->itemCollectionFactory->create();
+                $itemCollection->addOrderIdFilter($orderId);
+                $oldItems = $itemCollection->getItems();
+                $referenceAliases = $apiOrder->getItemsReferencesAliases();
+
+                foreach ($apiOrder->getItems() as $apiItem) {
+                    $isNewItem = true;
+                    $reference = $apiItem->getReference();
+
+                    if (isset($referenceAliases[$reference])) {
+                        $reference = $referenceAliases[$reference];
+                    }
+
+                    /** @var MarketplaceItemInterface $oldItem */
+                    foreach ($oldItems as $key => $oldItem) {
+                        if ($oldItem->getReference() === $reference) {
+                            $isNewItem = false;
+                            $savableItems[] = $this->importApiOrderItem($apiItem, $referenceAliases, $store, $oldItem);
+                            unset($oldItems[$key]);
+                            break;
+                        }
+                    }
+
+                    if ($isNewItem) {
+                        $savableItems[] = $this->importApiOrderItem($apiItem, $referenceAliases, $store);
+                    }
+                }
+
+                $deletableItems = $oldItems;
             }
-
-            $this->importApiOrderAddress(
-                AddressInterface::TYPE_BILLING,
-                $apiOrder->getBillingAddress(),
-                $store,
-                $billingAddress
-            );
-
-            $this->importApiOrderAddress(
-                AddressInterface::TYPE_SHIPPING,
-                $apiOrder->getShippingAddress(),
-                $store,
-                $shippingAddress
-            );
-        } else {
-            $billingAddress = null;
-            $shippingAddress = null;
         }
 
         $marketplaceOrder->setShoppingFeedStatus($apiOrder->getStatus());
@@ -404,7 +460,14 @@ class Importer
         $transaction->addModelResource($marketplaceOrder);
 
         $transaction->addCommitCallback(
-            function () use ($marketplaceOrder, $billingAddress, $shippingAddress) {
+            function () use (
+                $marketplaceOrder,
+                $orderId,
+                $billingAddress,
+                $shippingAddress,
+                $savableItems,
+                $deletableItems
+            ) {
                 $this->orderRepository->save($marketplaceOrder);
 
                 if (null !== $billingAddress) {
@@ -413,6 +476,16 @@ class Importer
 
                 if (null !== $shippingAddress) {
                     $this->addressRepository->save($shippingAddress);
+                }
+
+                /** @var MarketplaceItemInterface $savableItem */
+                foreach ($savableItems as $savableItem) {
+                    $savableItem->setOrderId($orderId);
+                    $this->itemRepository->save($savableItem);
+                }
+
+                foreach ($deletableItems as $deletableItem) {
+                    $this->itemRepository->delete($deletableItem);
                 }
             }
         );

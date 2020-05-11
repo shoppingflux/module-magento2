@@ -26,6 +26,7 @@ class CancelImport extends OrderAction
         }
 
         $redirectResult = $this->resultRedirectFactory->create();
+
         return $redirectResult->setPath('*/*/');
     }
 }
