@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.34.0] - 2020-06-03
+### Added
+- Add marketplace informations to the sales order view
+
 ## [0.33.0] - 2020-05-11
 ### Added
 - Add an option to manually import a new marketplace order
