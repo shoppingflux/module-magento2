@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Api\Data\Marketplace;
 
 use ShoppingFeed\Manager\DataObject;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 
 /**
  * @api
@@ -165,6 +166,21 @@ interface OrderInterface
      * @return string|null
      */
     public function getAcknowledgedAt();
+
+    /**
+     * @return AddressInterface[]
+     */
+    public function getAddresses();
+
+    /**
+     * @return AddressInterface|null
+     */
+    public function getBillingAddress();
+
+    /**
+     * @return AddressInterface|null
+     */
+    public function getShippingAddress();
 
     /**
      * @param int $storeId

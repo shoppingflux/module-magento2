@@ -6,10 +6,12 @@ use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as AddressCollectionFactory;
 
 /**
  * @method OrderResource getResource()
@@ -26,9 +28,20 @@ class Order extends AbstractModel implements OrderInterface
     private $dataObjectFactory;
 
     /**
+     * @var AddressCollectionFactory
+     */
+    private $addressCollectionFactory;
+
+    /**
+     * @var AddressInterface[]|null
+     */
+    private $addresses = null;
+
+    /**
      * @param Context $context
      * @param Registry $registry
      * @param DataObjectFactory $dataObjectFactory
+     * @param AddressCollectionFactory $addressCollectionFactory
      * @param OrderResource|null $resource
      * @param OrderCollection|null $resourceCollection
      * @param array $data
@@ -37,11 +50,13 @@ class Order extends AbstractModel implements OrderInterface
         Context $context,
         Registry $registry,
         DataObjectFactory $dataObjectFactory,
+        AddressCollectionFactory $addressCollectionFactory,
         OrderResource $resource = null,
         OrderCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
+        $this->addressCollectionFactory = $addressCollectionFactory;
         parent::__construct($context, $registry, $resource, $resourceCollection, $data);
     }
 
@@ -173,6 +188,39 @@ class Order extends AbstractModel implements OrderInterface
     public function getAcknowledgedAt()
     {
         return $this->getDataByKey(self::ACKNOWLEDGED_AT);
+    }
+
+    public function getAddresses()
+    {
+        if (!is_array($this->addresses)) {
+            $addressCollection = $this->addressCollectionFactory->create();
+            $addressCollection->addOrderIdFilter($this->getId());
+            $this->addresses = $addressCollection->getItems();
+        }
+
+        return $this->addresses;
+    }
+
+    public function getBillingAddress()
+    {
+        foreach ($this->getAddresses() as $address) {
+            if ($address->getType() === AddressInterface::TYPE_BILLING) {
+                return $address;
+            }
+        }
+
+        return null;
+    }
+
+    public function getShippingAddress()
+    {
+        foreach ($this->getAddresses() as $address) {
+            if ($address->getType() === AddressInterface::TYPE_SHIPPING) {
+                return $address;
+            }
+        }
+
+        return null;
     }
 
     public function setStoreId($storeId)

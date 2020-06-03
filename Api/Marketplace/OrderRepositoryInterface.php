@@ -31,4 +31,11 @@ interface OrderRepositoryInterface
      * @throws NoSuchEntityException
      */
     public function getByShoppingFeedId($orderId);
+
+    /**
+     * @param int $orderId
+     * @return OrderInterface
+     * @throws NoSuchEntityException
+     */
+    public function getBySalesOrderId($orderId);
 }

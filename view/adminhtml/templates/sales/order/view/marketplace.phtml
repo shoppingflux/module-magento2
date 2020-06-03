@@ -1,0 +1,56 @@
+<?php /** @var \ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Marketplace $block */ ?>
+<?php if ($marketplaceOrder = $block->getMarketplaceOrder()): ?>
+    <section class="admin__page-section order-addresses">
+        <div class="admin__page-section-title">
+            <span class="title"><?= $block->escapeHtml(__('Shopping Feed')) ?></span>
+        </div>
+        <div class="admin__page-section-content">
+            <div class="admin__page-section-item order-billing-address">
+                <div class="admin__page-section-item-title">
+                    <span class="title"><?= $block->escapeHtml(__('Order')) ?></span>
+                </div>
+                <div class="admin__page-section-item-content">
+                    <table class="admin__table-secondary order-information-table">
+                        <tbody>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Marketplace')) ?></th>
+                            <td><?= $block->escapeHtml($marketplaceOrder->getMarketplaceName()) ?></td>
+                        </tr>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Order #')) ?></th>
+                            <td><?= $block->escapeHtml($marketplaceOrder->getMarketplaceOrderNumber()) ?></td>
+                        </tr>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Payment Method')) ?></th>
+                            <td><?= $block->escapeHtml($marketplaceOrder->getPaymentMethod()) ?></td>
+                        </tr>
+                        <tr>
+                            <th><?= $block->escapeHtml(__('Shipping Method')) ?></th>
+                            <td><?= $block->escapeHtml($marketplaceOrder->getShipmentCarrier()) ?></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <?php if (!empty($additionalData = $block->getAdditionalData())): ?>
+                <div class="admin__page-section-item order-shipping-address">
+                    <div class="admin__page-section-item-title">
+                        <span class="title"><?= $block->escapeHtml(__('Additional Information')) ?></span>
+                    </div>
+                    <div class="admin__page-section-item-content">
+                        <table class="admin__table-secondary order-information-table">
+                            <tbody>
+                            <?php foreach ($additionalData as $label => $value): ?>
+                                <tr>
+                                    <th><?= $block->escapeHtml($label) ?></th>
+                                    <td><?= $block->escapeHtml($value) ?></td>
+                                </tr>
+                            <?php endforeach ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <?php endif; ?>
+        </div>
+    </section>
+<?php endif ?>

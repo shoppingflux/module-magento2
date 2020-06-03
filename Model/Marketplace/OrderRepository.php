@@ -67,4 +67,18 @@ class OrderRepository implements OrderRepositoryInterface
 
         return $order;
     }
+
+    public function getBySalesOrderId($orderId)
+    {
+        $order = $this->orderFactory->create();
+        $this->orderResource->load($order, $orderId, OrderInterface::SALES_ORDER_ID);
+
+        if (!$order->getId()) {
+            throw new NoSuchEntityException(
+                __('Marketplace order with sales order ID "%1" does not exist.', $orderId)
+            );
+        }
+
+        return $order;
+    }
 }
