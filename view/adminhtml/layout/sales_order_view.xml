@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="admin-2columns-left" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <referenceContainer name="order_additional_info">
+        <block class="ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Marketplace" name="sfm_order_marketplace_info" template="ShoppingFeed_Manager::sales/order/view/marketplace.phtml"/>
+    </referenceContainer>
+</page>
