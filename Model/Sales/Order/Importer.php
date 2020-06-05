@@ -357,6 +357,7 @@ class Importer implements ImporterInterface
                     $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
 
                     $currencyCode = strtoupper($marketplaceOrder->getCurrencyCode());
+                    $baseStore->unsetData('current_currency');
                     $baseStore->setCurrentCurrencyCode($currencyCode);
 
                     if (strtoupper($baseStore->getCurrentCurrency()->getCode()) !== $currencyCode) {
