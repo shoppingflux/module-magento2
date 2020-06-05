@@ -353,12 +353,24 @@ class Importer implements ImporterInterface
                 try {
                     $this->currentlyImportedMarketplaceOrder = $marketplaceOrder;
 
-                    $baseStore->setCurrentCurrencyCode($marketplaceOrder->getCurrencyCode());
-                    $quoteId = (int) $this->quoteManager->createEmptyCart();
-                    $this->currentlyImportedQuoteId = $quoteId;
-
                     $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
                     $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
+
+                    $currencyCode = strtoupper($marketplaceOrder->getCurrencyCode());
+                    $baseStore->setCurrentCurrencyCode($currencyCode);
+
+                    if (strtoupper($baseStore->getCurrentCurrency()->getCode()) !== $currencyCode) {
+                        throw new LocalizedException(
+                            __(
+                                'The "%1" currency is currently unavailable (possible causes: it has not been allowed yet in the system configuration, or its conversion rate to "%2" is unknown).',
+                                $currencyCode,
+                                $baseStore->getBaseCurrencyCode()
+                            )
+                        );
+                    }
+
+                    $quoteId = (int) $this->quoteManager->createEmptyCart();
+                    $this->currentlyImportedQuoteId = $quoteId;
 
                     /** @var Quote $quote */
                     $quote = $this->quoteRepository->get($quoteId);

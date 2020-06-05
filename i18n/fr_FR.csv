@@ -360,6 +360,7 @@
 "Synchronize Items of Non-Imported Orders with Shopping Feed","Synchroniser les articles des commandes non importées avec Shopping Feed"
 "Synchronize Product List","Synchroniser la liste des produits"
 "Task Information","Informations de la tâche"
+"The ""%1"" currency is currently unavailable (possible causes: it has not been allowed yet in the system configuration, or its conversion rate to ""%2"" is unknown).","La devise ""%1"" est actuellement indisponible (causes possibles: celle-ci n'a pas encore été autorisée depuis la configuration système, ou son taux de conversion en ""%2"" est inconnu)"
 "The account has been successfully created on Shopping Feed, but could not be imported. You can try importing it again using the corresponding token: ""%s"".","Le compte a bien été créé sur Shopping Feed, mais n'a pas pu être importé. Vous pouvez essayer de l'importer à nouveau en utilisant le token correspondant : ""%s""."
 "The API token can not be empty.","Le token API ne peut pas être vide."
 "The account has been successfully created.","Le compte a bien été créé."
