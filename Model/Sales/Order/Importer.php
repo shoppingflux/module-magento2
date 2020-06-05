@@ -823,7 +823,15 @@ class Importer implements ImporterInterface
         }
 
         $quoteShippingAddress->removeAllShippingRates();
+
+        $baseStore = $store->getBaseStore();
         $rateMethod = $this->shippingRateMethodFactory->create();
+        $ratePrice = $shippingMethodApplierResult->getPrice();
+
+        if ($baseStore->getCurrentCurrencyCode() !== $baseStore->getBaseCurrencyCode()) {
+            // The rate price is expected to be in the base currency.
+            $ratePrice /= $baseStore->getCurrentCurrencyRate();
+        }
 
         $rateMethod->addData(
             [
@@ -832,7 +840,7 @@ class Importer implements ImporterInterface
                 'method' => $shippingMethodApplierResult->getMethodCode(),
                 'method_title' => $shippingMethodApplierResult->getMethodTitle(),
                 'cost' => $shippingMethodApplierResult->getCost(),
-                'price' => $shippingMethodApplierResult->getPrice(),
+                'price' => $ratePrice,
             ]
         );
 
