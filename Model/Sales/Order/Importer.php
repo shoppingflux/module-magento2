@@ -353,12 +353,25 @@ class Importer implements ImporterInterface
                 try {
                     $this->currentlyImportedMarketplaceOrder = $marketplaceOrder;
 
-                    $baseStore->setCurrentCurrencyCode($marketplaceOrder->getCurrencyCode());
-                    $quoteId = (int) $this->quoteManager->createEmptyCart();
-                    $this->currentlyImportedQuoteId = $quoteId;
-
                     $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
                     $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
+
+                    $currencyCode = strtoupper($marketplaceOrder->getCurrencyCode());
+                    $baseStore->unsetData('current_currency');
+                    $baseStore->setCurrentCurrencyCode($currencyCode);
+
+                    if (strtoupper($baseStore->getCurrentCurrency()->getCode()) !== $currencyCode) {
+                        throw new LocalizedException(
+                            __(
+                                'The "%1" currency is currently unavailable (possible causes: it has not been allowed yet in the system configuration, or its conversion rate to "%2" is unknown).',
+                                $currencyCode,
+                                $baseStore->getBaseCurrencyCode()
+                            )
+                        );
+                    }
+
+                    $quoteId = (int) $this->quoteManager->createEmptyCart();
+                    $this->currentlyImportedQuoteId = $quoteId;
 
                     /** @var Quote $quote */
                     $quote = $this->quoteRepository->get($quoteId);
@@ -515,6 +528,22 @@ class Importer implements ImporterInterface
         }
     }
 
+    /**
+     * @param float $amount
+     * @param StoreInterface $store
+     * @return float
+     */
+    private function applyStoreCurrencyRateToAmount($amount, StoreInterface $store)
+    {
+        $baseStore = $store->getBaseStore();
+
+        if ($baseStore->getCurrentCurrencyCode() !== $baseStore->getBaseCurrencyCode()) {
+            $amount /= $baseStore->getCurrentCurrencyRate();
+        }
+
+        return $amount;
+    }
+
     public function importQuoteAddress(
         Quote $quote,
         MarketplaceAddressInterface $marketplaceAddress,
@@ -543,10 +572,12 @@ class Importer implements ImporterInterface
         $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
-        $weeeAmountExclTax = 0.0;
-        $weeeAmount = 0.0;
-        $weeeTaxAmount = 0.0;
+        $totalWeeeAmountExclTax = 0.0;
+        $totalWeeeAmount = 0.0;
+        $totalWeeeTaxAmount = 0.0;
         $isCatalogPriceIncludingTax = (bool) $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_PRICE_INCLUDES_TAX);
+
+        $this->weeeTaxPlugin->resetProductLockedAttributes($product->getId());
 
         $weeeAttributes = $this->weeeHelper->getProductWeeeAttributes(
             $product,
@@ -556,49 +587,51 @@ class Importer implements ImporterInterface
             true
         );
 
+        $lockedAttributes = [];
+
         foreach ($weeeAttributes as $weeeAttribute) {
-            $weeeAmountExclTax += $weeeAttribute->getAmountExclTax();
-            $weeeAmount += $weeeAttribute->getAmount();
-            $weeeTaxAmount += $weeeAttribute->getTaxAmount();
-        }
+            $amountExclTax = $weeeAttribute->getAmountExclTax();
+            $amount = $weeeAttribute->getAmount();
+            $taxAmount = $weeeAttribute->getTaxAmount();
 
-        $this->weeeTaxPlugin->resetProductLockedAttributes($product->getId());
+            // The components of the total WEEE amount that will subtracted from the product amount. 
+            // We must not convert those, because the product amount is expected to be in the store currency.
+            $totalWeeeAmountExclTax += $amountExclTax;
+            $totalWeeeAmount += $amount;
+            $totalWeeeTaxAmount += $taxAmount;
 
-        if ($isUntaxedBusinessOrder) {
-            if ($isCatalogPriceIncludingTax) {
-                $lockedAttributes = [];
+            /** @see \Magento\Weee\Model\Total\Quote\Weee::process() */
+            $lockedAttribute = clone $weeeAttribute;
 
-                foreach ($weeeAttributes as $weeeAttribute) {
-                    /** @see \Magento\Weee\Model\Total\Quote\Weee::process() */
-                    $lockedAttribute = clone $weeeAttribute;
-                    $amountExclTax = $weeeAttribute->getAmountExclTax();
-                    $lockedAttribute->setTaxAmount(0);
-                    $lockedAttribute->setAmount($amountExclTax);
-                    $lockedAttribute->setAmountExclTax($amountExclTax);
-                    $lockedAttributes[] = $lockedAttribute;
-                }
-
-                $this->weeeTaxPlugin->setProductLockedAttributes($product->getId(), $lockedAttributes);
-                return $weeeAmountExclTax;
-            }
-        } elseif (!$isCatalogPriceIncludingTax) {
-            $lockedAttributes = [];
-
-            foreach ($weeeAttributes as $weeeAttribute) {
-                /** @see \Magento\Weee\Model\Total\Quote\Weee::process() */
-                $lockedAttribute = clone $weeeAttribute;
-                $amountInclTax = $lockedAttribute->getAmount() + $weeeAttribute->getTaxAmount();
+            // The attribute amounts are expected to be in the base currency, so we must convert those.
+            if ($isUntaxedBusinessOrder && $isCatalogPriceIncludingTax) {
+                $amountExclTax = $this->applyStoreCurrencyRateToAmount($amountExclTax, $store);
+                $lockedAttribute->setTaxAmount(0);
+                $lockedAttribute->setAmount($amountExclTax);
+                $lockedAttribute->setAmountExclTax($amountExclTax);
+            } elseif (!$isCatalogPriceIncludingTax) {
+                $amountInclTax = $this->applyStoreCurrencyRateToAmount($amount + $taxAmount, $store);
                 $lockedAttribute->setTaxAmount(0);
                 $lockedAttribute->setAmount($amountInclTax);
                 $lockedAttribute->setAmountExclTax($amountInclTax);
-                $lockedAttributes[] = $lockedAttribute;
+            } else {
+                $lockedAttribute->setTaxAmount($this->applyStoreCurrencyRateToAmount($taxAmount, $store));
+                $lockedAttribute->setAmount($this->applyStoreCurrencyRateToAmount($amount, $store));
+                $lockedAttribute->setAmountExclTax($this->applyStoreCurrencyRateToAmount($amountExclTax, $store));
             }
 
-            $this->weeeTaxPlugin->setProductLockedAttributes($product->getId(), $lockedAttributes);
-            return $weeeAmountExclTax + $weeeTaxAmount;
+            $lockedAttributes[] = $lockedAttribute;
         }
 
-        return $weeeAmount;
+        $this->weeeTaxPlugin->setProductLockedAttributes($product->getId(), $lockedAttributes);
+
+        if ($isUntaxedBusinessOrder && $isCatalogPriceIncludingTax) {
+            return $totalWeeeAmountExclTax;
+        } elseif (!$isCatalogPriceIncludingTax) {
+            return $totalWeeeAmountExclTax + $totalWeeeTaxAmount;
+        }
+
+        return $totalWeeeAmount;
     }
 
     /**
@@ -819,7 +852,8 @@ class Importer implements ImporterInterface
                 'method' => $shippingMethodApplierResult->getMethodCode(),
                 'method_title' => $shippingMethodApplierResult->getMethodTitle(),
                 'cost' => $shippingMethodApplierResult->getCost(),
-                'price' => $shippingMethodApplierResult->getPrice(),
+                // Shipping rates are expected to be in the base currency.
+                'price' => $this->applyStoreCurrencyRateToAmount($shippingMethodApplierResult->getPrice(), $store),
             ]
         );
 

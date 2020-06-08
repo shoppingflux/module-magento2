@@ -6,6 +6,7 @@ use Magento\Customer\Api\CustomerMetadataInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Model\AddressFactory as CustomerAddressFactory;
 use Magento\Customer\Model\CustomerFactory;
+use Magento\Customer\Model\CustomerRegistry;
 use Magento\Customer\Model\ResourceModel\Address as CustomerAddressResource;
 use Magento\Customer\Model\ResourceModel\AddressFactory as CustomerAddressResourceFactory;
 use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
@@ -60,6 +61,11 @@ class Importer
     private $customerResource;
 
     /**
+     * @var CustomerRegistry
+     */
+    private $customerRegistry;
+
+    /**
      * @var CustomerAddressFactory
      */
     private $customerAddressFactory;
@@ -81,6 +87,7 @@ class Importer
      * @param DirectoryHelper $directoryHelper
      * @param CustomerFactory $customerFactory
      * @param CustomerResourceFactory $customerResourceFactory
+     * @param CustomerRegistry $customerRegistry
      * @param CustomerAddressFactory $customerAddressFactory
      * @param CustomerAddressResourceFactory $customerAddresssResourceFactory
      * @param OrderConfigInterface $orderGeneralConfig
@@ -92,6 +99,7 @@ class Importer
         DirectoryHelper $directoryHelper,
         CustomerFactory $customerFactory,
         CustomerResourceFactory $customerResourceFactory,
+        CustomerRegistry $customerRegistry,
         CustomerAddressFactory $customerAddressFactory,
         CustomerAddressResourceFactory $customerAddresssResourceFactory,
         OrderConfigInterface $orderGeneralConfig
@@ -102,6 +110,7 @@ class Importer
         $this->directoryHelper = $directoryHelper;
         $this->customerFactory = $customerFactory;
         $this->customerResource = $customerResourceFactory->create();
+        $this->customerRegistry = $customerRegistry;
         $this->customerAddressFactory = $customerAddressFactory;
         $this->customerAddressResource = $customerAddresssResourceFactory->create();
         $this->orderGeneralConfig = $orderGeneralConfig;
@@ -393,6 +402,9 @@ class Importer
 
         $customerAddress->setCustomerId($customer->getId());
         $this->customerAddressResource->save($customerAddress);
+
+        // Remove the customer from the registry cache, because the cached version does not know about the new address. 
+        $this->customerRegistry->remove($customer->getId());
 
         $quoteAddress = $this->getBaseQuoteAddress($quote, $marketplaceAddress);
         $quoteAddress->setSaveInAddressBook(false);
