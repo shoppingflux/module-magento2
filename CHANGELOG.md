@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.34.1] - 2020-06-08
+### Fixed
+- Fix consecutive import of orders for the same customer
+- Do not import orders using a non-base currency if the latter is unavailable
+- Fix the handling of the current order's currency after the first import
+- Fix the import of shipping and WEEE amounts with non-base currencies
+
 ## [0.34.0] - 2020-06-03
 ### Added
 - Add marketplace informations to the sales order view
