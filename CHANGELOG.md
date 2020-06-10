@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.34.2] - 2020-06-10
+### Added
+- Display the "is_business_order" field in the sales order view
+
 ## [0.34.1] - 2020-06-08
 ### Fixed
 - Fix consecutive import of orders for the same customer
