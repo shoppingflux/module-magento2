@@ -12,9 +12,7 @@ use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface as Marketplace
 
 class Marketplace extends AbstractOrder
 {
-    const IGNORED_ADDITIONAL_DATA_KEYS = [
-        MarketplaceOrderInterface::ADDITIONAL_FIELD_IS_BUSINESS_ORDER,
-    ];
+    const IGNORED_ADDITIONAL_DATA_KEYS = [];
 
     /**
      * @var MarketplaceOrderRepositoryInterface
