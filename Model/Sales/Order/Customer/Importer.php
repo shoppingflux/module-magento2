@@ -14,8 +14,11 @@ use Magento\Customer\Model\ResourceModel\CustomerFactory as CustomerResourceFact
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Directory\Model\Region;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
+use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filter\Template as TemplateFilter;
 use Magento\Framework\Math\Random as RandomGenerator;
+use Magento\Framework\Validator\EmailAddress as EmailAddressValidator;
 use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Model\Quote;
@@ -31,6 +34,11 @@ class Importer
     const CUSTOMER_FROM_SHOPPING_ATTRIBUTE_CODE = 'from_shopping_feed';
 
     /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
      * @var RandomGenerator
      */
     private $randomGenerator;
@@ -39,6 +47,11 @@ class Importer
      * @var StringHelper
      */
     private $stringHelper;
+
+    /**
+     * @var TemplateFilter
+     */
+    private $templateFilter;
 
     /**
      * @var RegionCollectionFactory
@@ -81,8 +94,10 @@ class Importer
     private $orderGeneralConfig;
 
     /**
+     * @param DataObjectFactory $dataObjectFactory
      * @param RandomGenerator $randomGenerator
      * @param StringHelper $stringHelper
+     * @param TemplateFilter $templateFilter
      * @param RegionCollectionFactory $regionCollectionFactory
      * @param DirectoryHelper $directoryHelper
      * @param CustomerFactory $customerFactory
@@ -93,8 +108,10 @@ class Importer
      * @param OrderConfigInterface $orderGeneralConfig
      */
     public function __construct(
+        DataObjectFactory $dataObjectFactory,
         RandomGenerator $randomGenerator,
         StringHelper $stringHelper,
+        TemplateFilter $templateFilter,
         RegionCollectionFactory $regionCollectionFactory,
         DirectoryHelper $directoryHelper,
         CustomerFactory $customerFactory,
@@ -104,8 +121,10 @@ class Importer
         CustomerAddressResourceFactory $customerAddresssResourceFactory,
         OrderConfigInterface $orderGeneralConfig
     ) {
+        $this->dataObjectFactory = $dataObjectFactory;
         $this->randomGenerator = $randomGenerator;
         $this->stringHelper = $stringHelper;
+        $this->templateFilter = $templateFilter;
         $this->regionCollectionFactory = $regionCollectionFactory;
         $this->directoryHelper = $directoryHelper;
         $this->customerFactory = $customerFactory;
@@ -129,81 +148,109 @@ class Importer
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressFirstname(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressFirstname(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         return $this->getAddressRequiredFieldValue($address->getFirstName(), $store);
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressLastname(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressLastname(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         return $this->getAddressRequiredFieldValue($address->getLastName(), $store);
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressCompany(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressCompany(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         return $address->getCompany();
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressStreet(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressStreet(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         return $this->getAddressRequiredFieldValue($address->getStreet(), $store);
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressPostalCode(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressPostalCode(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         return $this->getAddressRequiredFieldValue($address->getPostalCode(), $store);
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressCity(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressCity(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         return $this->getAddressRequiredFieldValue($address->getCity(), $store);
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return int|null
      */
-    public function getAddressRegionId(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
-        $countryId = $this->getAddressCountryCode($address, $store);
+    public function getAddressRegionId(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
+        $countryId = $this->getAddressCountryCode($order, $address, $store);
         $regionId = null;
         $regionCode = null;
 
         if ('FR' === $countryId) {
-            $postalCode = $this->getAddressPostalCode($address, $store);
+            $postalCode = $this->getAddressPostalCode($order, $address, $store);
             $regionCode = $this->stringHelper->substr($postalCode, 0, 2);
         } elseif (in_array($countryId, [ 'CA', 'US' ], true)) {
-            $streetParts = explode("\n", $this->getAddressStreet($address, $store));
+            $streetParts = explode("\n", $this->getAddressStreet($order, $address, $store));
             $regionCode = trim($streetParts[1] ?? '');
 
             if (!preg_match('/^[a-z]{2}$/i', $regionCode)) {
@@ -231,33 +278,98 @@ class Importer
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressCountryCode(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressCountryCode(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         return $address->getCountryCode();
     }
 
     /**
-     * @param MarketplaceAddressInterface $address
-     * @param StoreInterface $store
+     * @param string $value
      * @return string
      */
-    public function getAddressEmail(MarketplaceAddressInterface $address, StoreInterface $store)
+    public function getAddressEmailVariableValue($value)
     {
-        $email = $address->getEmail();
-        return ('' !== $email) ? $email : $this->orderGeneralConfig->getDefaultEmailAddress($store);
+        // Underscores are not allowed in the domain part.
+        return str_replace('_', '-', $this->stringHelper->getNormalizedCode((string) $value));
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return string
      */
-    public function getAddressPhone(MarketplaceAddressInterface $address, StoreInterface $store)
-    {
+    public function getAddressEmail(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
+        $email = $address->getEmail();
+
+        try {
+            if (('' === $email) || !\Zend_Validate::is($email, EmailAddressValidator::class)) {
+                $this->templateFilter->setVariables(
+                    array_merge(
+                        array_map(
+                            [ $this, 'getAddressEmailVariableValue' ],
+                            [
+                                'marketplace' => $order->getMarketplaceName(),
+                                'order_id' => $order->getId(),
+                                'order_number' => $order->getMarketplaceOrderNumber(),
+                                'payment_method' => $order->getPaymentMethod(),
+                            ]
+                        ),
+                        [
+                            'address' => $this->dataObjectFactory->create(
+                                [
+                                    'data' => array_map(
+                                        [ $this, 'getAddressEmailVariableValue' ],
+                                        [
+                                            'first_name' => $address->getFirstName(),
+                                            'last_name' => $address->getLastName(),
+                                            'company' => $address->getCompany(),
+                                            'country' => $address->getCountryCode(),
+                                        ]
+                                    ),
+                                ]
+                            ),
+                        ]
+                    )
+                );
+
+                $email = $this->templateFilter->filter(
+                    $this->orderGeneralConfig->getMarketplaceDefaultEmailAddress(
+                        $store,
+                        $order->getMarketplaceName()
+                    )
+                );
+            }
+        } catch (\Exception $e) {
+            $email = '';
+        }
+
+        return $email;
+    }
+
+    /**
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $address
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getAddressPhone(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
         $phone = $address->getPhone();
         $mobilePhone = $address->getMobilePhone();
 
@@ -274,8 +386,8 @@ class Importer
 
     /**
      * @param Quote $quote
-     * @param MarketplaceOrderInterface $marketplaceOrder
-     * @param MarketplaceAddressInterface $marketplaceBillingAddress
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $billingAddress
      * @param StoreInterface $store
      * @return CustomerInterface
      * @throws LocalizedException
@@ -283,8 +395,8 @@ class Importer
      */
     public function importQuoteCustomer(
         Quote $quote,
-        MarketplaceOrderInterface $marketplaceOrder,
-        MarketplaceAddressInterface $marketplaceBillingAddress,
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $billingAddress,
         StoreInterface $store
     ) {
         if (!$this->orderGeneralConfig->shouldImportCustomers($store)) {
@@ -293,7 +405,8 @@ class Importer
             return null;
         }
 
-        $customerEmail = $marketplaceBillingAddress->getEmail();
+        $customerEmail = $this->getAddressEmail($order, $billingAddress, $store);
+
         $customer = $this->customerFactory->create();
         $customer->setWebsiteId($store->getBaseWebsiteId());
         $customer->loadByEmail($customerEmail);
@@ -316,7 +429,7 @@ class Importer
 
         $groupId = $this->orderGeneralConfig->getMarketplaceCustomerGroup(
             $store,
-            $marketplaceOrder->getMarketplaceName()
+            $order->getMarketplaceName()
         );
 
         if ((null === $groupId) && !$customer->getId()) {
@@ -328,8 +441,8 @@ class Importer
         $customer->addData(
             [
                 'is_active' => true,
-                'lastname' => $this->getAddressRequiredFieldValue($marketplaceBillingAddress->getLastName(), $store),
-                'firstname' => $this->getAddressRequiredFieldValue($marketplaceBillingAddress->getFirstName(), $store),
+                'lastname' => $this->getAddressRequiredFieldValue($billingAddress->getLastName(), $store),
+                'firstname' => $this->getAddressRequiredFieldValue($billingAddress->getFirstName(), $store),
             ]
         );
 
@@ -369,7 +482,8 @@ class Importer
     /**
      * @param Quote $quote
      * @param CustomerInterface $customer
-     * @param MarketplaceAddressInterface $marketplaceAddress
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return QuoteAddressInterface
      * @throws LocalizedException
@@ -377,27 +491,29 @@ class Importer
     public function importCustomerQuoteAddress(
         Quote $quote,
         CustomerInterface $customer,
-        MarketplaceAddressInterface $marketplaceAddress,
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
         StoreInterface $store
     ) {
         $customerAddress = $this->customerAddressFactory->create();
-        $countryId = $this->getAddressCountryCode($marketplaceAddress, $store);
+
+        $countryId = $this->getAddressCountryCode($order, $address, $store);
 
         $customerAddress->addData(
             [
-                'firstname' => $this->getAddressFirstname($marketplaceAddress, $store),
-                'lastname' => $this->getAddressLastname($marketplaceAddress, $store),
-                'company' => $this->getAddressCompany($marketplaceAddress, $store),
-                'street' => $this->getAddressStreet($marketplaceAddress, $store),
-                'postcode' => $this->getAddressPostalCode($marketplaceAddress, $store),
-                'city' => $this->getAddressCity($marketplaceAddress, $store),
+                'firstname' => $this->getAddressFirstname($order, $address, $store),
+                'lastname' => $this->getAddressLastname($order, $address, $store),
+                'company' => $this->getAddressCompany($order, $address, $store),
+                'street' => $this->getAddressStreet($order, $address, $store),
+                'postcode' => $this->getAddressPostalCode($order, $address, $store),
+                'city' => $this->getAddressCity($order, $address, $store),
                 'country_id' => $countryId,
-                'telephone' => $this->getAddressPhone($marketplaceAddress, $store),
+                'telephone' => $this->getAddressPhone($order, $address, $store),
             ]
         );
 
         if (in_array($countryId, $this->directoryHelper->getCountriesWithStatesRequired(), true)) {
-            $customerAddress->setRegionId($this->getAddressRegionId($marketplaceAddress, $store));
+            $customerAddress->setRegionId($this->getAddressRegionId($order, $address, $store));
         }
 
         $customerAddress->setCustomerId($customer->getId());
@@ -406,61 +522,69 @@ class Importer
         // Remove the customer from the registry cache, because the cached version does not know about the new address. 
         $this->customerRegistry->remove($customer->getId());
 
-        $quoteAddress = $this->getBaseQuoteAddress($quote, $marketplaceAddress);
+        $quoteAddress = $this->getBaseQuoteAddress($quote, $address);
+
         $quoteAddress->setSaveInAddressBook(false);
         $quoteAddress->setSameAsBilling(false);
         $quoteAddress->importCustomerAddressData($customerAddress->getDataModel());
-        $quoteAddress->setEmail($this->getAddressEmail($marketplaceAddress, $store));
+
+        $quoteAddress->setEmail($this->getAddressEmail($order, $address, $store));
 
         return $quoteAddress;
     }
 
     /**
      * @param Quote $quote
-     * @param MarketplaceAddressInterface $marketplaceAddress
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return QuoteAddressInterface
      * @throws LocalizedException
      */
     public function importGuestQuoteAddress(
         Quote $quote,
-        MarketplaceAddressInterface $marketplaceAddress,
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
         StoreInterface $store
     ) {
-        $countryId = $this->getAddressCountryCode($marketplaceAddress, $store);
+        $quoteAddress = $this->getBaseQuoteAddress($quote, $address);
 
-        $quoteAddress = $this->getBaseQuoteAddress($quote, $marketplaceAddress);
-        $quoteAddress->setFirstname($this->getAddressFirstname($marketplaceAddress, $store));
-        $quoteAddress->setLastname($this->getAddressLastname($marketplaceAddress, $store));
-        $quoteAddress->setCompany($this->getAddressCompany($marketplaceAddress, $store));
-        $quoteAddress->setStreet($this->getAddressStreet($marketplaceAddress, $store));
-        $quoteAddress->setPostcode($this->getAddressPostalCode($marketplaceAddress, $store));
-        $quoteAddress->setCity($this->getAddressCity($marketplaceAddress, $store));
-        $quoteAddress->setCountryId($countryId);
-        $quoteAddress->setEmail($this->getAddressEmail($marketplaceAddress, $store));
-        $quoteAddress->setTelephone($this->getAddressPhone($marketplaceAddress, $store));
+        $quoteAddress->setFirstname($this->getAddressFirstname($order, $address, $store));
+        $quoteAddress->setLastname($this->getAddressLastname($order, $address, $store));
+        $quoteAddress->setCompany($this->getAddressCompany($order, $address, $store));
+        $quoteAddress->setStreet($this->getAddressStreet($order, $address, $store));
+        $quoteAddress->setPostcode($this->getAddressPostalCode($order, $address, $store));
+        $quoteAddress->setCity($this->getAddressCity($order, $address, $store));
+        $quoteAddress->setEmail($this->getAddressEmail($order, $address, $store));
+        $quoteAddress->setTelephone($this->getAddressPhone($order, $address, $store));
+
+        $countryId = $this->getAddressCountryCode($order, $address, $store);
 
         if (in_array($countryId, $this->directoryHelper->getCountriesWithStatesRequired(), true)) {
-            $quoteAddress->setRegionId($this->getAddressRegionId($marketplaceAddress, $store));
+            $quoteAddress->setRegionId($this->getAddressRegionId($order, $address, $store));
         }
+
+        $quoteAddress->setCountryId($countryId);
 
         return $quoteAddress;
     }
 
     /**
      * @param Quote $quote
-     * @param MarketplaceAddressInterface $marketplaceAddress
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
      * @return QuoteAddressInterface
      * @throws LocalizedException
      */
     public function importQuoteAddress(
         Quote $quote,
-        MarketplaceAddressInterface $marketplaceAddress,
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
         StoreInterface $store
     ) {
         return !$quote->getCustomerId()
-            ? $this->importGuestQuoteAddress($quote, $marketplaceAddress, $store)
-            : $this->importCustomerQuoteAddress($quote, $quote->getCustomer(), $marketplaceAddress, $store);
+            ? $this->importGuestQuoteAddress($quote, $order, $address, $store)
+            : $this->importCustomerQuoteAddress($quote, $quote->getCustomer(), $order, $address, $store);
     }
 }

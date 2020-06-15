@@ -24,12 +24,14 @@ interface ImporterInterface
 
     /**
      * @param Quote $quote
+     * @param MarketplaceOrderInterface $marketplaceOrder
      * @param MarketplaceAddressInterface $marketplaceAddress
      * @param bool $isUntaxedBusinessOrder
      * @param StoreInterface $store
      */
     public function importQuoteAddress(
         Quote $quote,
+        MarketplaceOrderInterface $marketplaceOrder,
         MarketplaceAddressInterface $marketplaceAddress,
         $isUntaxedBusinessOrder,
         StoreInterface $store
@@ -63,9 +65,14 @@ interface ImporterInterface
 
     /**
      * @param Quote $quote
+     * @param MarketplaceOrderInterface $marketplaceOrder
      * @param StoreInterface $store
      */
-    public function importQuotePaymentMethod(Quote $quote, StoreInterface $store);
+    public function importQuotePaymentMethod(
+        Quote $quote,
+        MarketplaceOrderInterface $marketplaceOrder,
+        StoreInterface $store
+    );
 
     /**
      * @param Quote $quote

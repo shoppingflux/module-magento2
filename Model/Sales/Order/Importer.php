@@ -11,6 +11,7 @@ use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Filter\Template as TemplateFilter;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
@@ -44,6 +45,7 @@ use ShoppingFeed\Manager\Model\Sales\Order\Customer\Importer as CustomerImporter
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingMethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\TimeHelper;
 use ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider as PaymentConfigProvider;
+use ShoppingFeed\Manager\Payment\Gateway\Config\Config as MarketplacePaymentConfig;
 use ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin as TaxConfigPlugin;
 use ShoppingFeed\Manager\Plugin\Weee\TaxPlugin as WeeeTaxPlugin;
 
@@ -63,6 +65,11 @@ class Importer implements ImporterInterface
      * @var TimeHelper
      */
     private $timeHelper;
+
+    /**
+     * @var TemplateFilter
+     */
+    private $templateFilter;
 
     /**
      * @var BaseStoreManagerInterface
@@ -155,6 +162,11 @@ class Importer implements ImporterInterface
     private $shippingMethodRuleCollection = null;
 
     /**
+     * @var MarketplacePaymentConfig
+     */
+    private $marketplacePaymentConfig;
+
+    /**
      * @var MarketplaceOrderManager
      */
     private $marketplaceOrderManager;
@@ -203,6 +215,7 @@ class Importer implements ImporterInterface
      * @param TransactionFactory $transactionFactory
      * @param DataObjectFactory $dataObjectFactory
      * @param TimeHelper $timeHelper
+     * @param TemplateFilter $templateFilter
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
      * @param CatalogProductHelper $catalogProductHelper
@@ -220,6 +233,7 @@ class Importer implements ImporterInterface
      * @param ShippingAddressRateFactory $shippingAddressRateFactory
      * @param ShippingMethodApplierPoolInterface $shippingMethodApplierPool
      * @param ShippingMethodRuleCollectionFactory $shippingMethodRuleCollectionFactory
+     * @param MarketplacePaymentConfig $marketplacePaymentConfig
      * @param MarketplaceOrderManager $marketplaceOrderManager
      * @param MarketplaceOrderRepositoryInterface $marketplaceOrderRepository
      * @param MarketplaceOrderResourceFactory $marketplaceOrderResourceFactory
@@ -230,6 +244,7 @@ class Importer implements ImporterInterface
         TransactionFactory $transactionFactory,
         DataObjectFactory $dataObjectFactory,
         TimeHelper $timeHelper,
+        TemplateFilter $templateFilter,
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
         CatalogProductHelper $catalogProductHelper,
@@ -247,6 +262,7 @@ class Importer implements ImporterInterface
         ShippingAddressRateFactory $shippingAddressRateFactory,
         ShippingMethodApplierPoolInterface $shippingMethodApplierPool,
         ShippingMethodRuleCollectionFactory $shippingMethodRuleCollectionFactory,
+        MarketplacePaymentConfig $marketplacePaymentConfig,
         MarketplaceOrderManager $marketplaceOrderManager,
         MarketplaceOrderRepositoryInterface $marketplaceOrderRepository,
         MarketplaceOrderResourceFactory $marketplaceOrderResourceFactory,
@@ -256,6 +272,7 @@ class Importer implements ImporterInterface
         $this->transactionFactory = $transactionFactory;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->timeHelper = $timeHelper;
+        $this->templateFilter = $templateFilter;
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
         $this->catalogProductHelper = $catalogProductHelper;
@@ -273,6 +290,7 @@ class Importer implements ImporterInterface
         $this->shippingAddressRateFactory = $shippingAddressRateFactory;
         $this->shippingMethodApplierPool = $shippingMethodApplierPool;
         $this->shippingMethodRuleCollectionFactory = $shippingMethodRuleCollectionFactory;
+        $this->marketplacePaymentConfig = $marketplacePaymentConfig;
         $this->marketplaceOrderManager = $marketplaceOrderManager;
         $this->marketplaceOrderRepository = $marketplaceOrderRepository;
         $this->marketplaceOrderResourceFactory = $marketplaceOrderResourceFactory;
@@ -423,6 +441,7 @@ class Importer implements ImporterInterface
 
                     $this->importQuoteAddress(
                         $quote,
+                        $marketplaceOrder,
                         $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
                         $isUntaxedBusinessOrder,
                         $store
@@ -430,6 +449,7 @@ class Importer implements ImporterInterface
 
                     $this->importQuoteAddress(
                         $quote,
+                        $marketplaceOrder,
                         $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING],
                         $isUntaxedBusinessOrder,
                         $store
@@ -458,7 +478,7 @@ class Importer implements ImporterInterface
                         $store
                     );
 
-                    $this->importQuotePaymentMethod($quote, $store);
+                    $this->importQuotePaymentMethod($quote, $marketplaceOrder, $store);
 
                     $this->quoteRepository->save($quote);
                     $transaction = $this->transactionFactory->create();
@@ -546,12 +566,14 @@ class Importer implements ImporterInterface
 
     public function importQuoteAddress(
         Quote $quote,
+        MarketplaceOrderInterface $marketplaceOrder,
         MarketplaceAddressInterface $marketplaceAddress,
         $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
         $quoteAddress = $this->customerImporter->importQuoteAddress(
             $quote,
+            $marketplaceOrder,
             $marketplaceAddress,
             $store
         );
@@ -871,11 +893,44 @@ class Importer implements ImporterInterface
 
     /**
      * @param Quote $quote
+     * @param MarketplaceOrderInterface $marketplaceOrder
      * @param StoreInterface $store
      * @throws LocalizedException
      */
-    public function importQuotePaymentMethod(Quote $quote, StoreInterface $store)
-    {
+    public function importQuotePaymentMethod(
+        Quote $quote,
+        MarketplaceOrderInterface $marketplaceOrder,
+        StoreInterface $store
+    ) {
+        $paymentMethodTitle = $this->orderGeneralConfig->getMarketplacePaymentMethodTitle(
+            $store,
+            $marketplaceOrder->getMarketplaceName()
+        );
+
+        $this->templateFilter->setVariables(
+            [
+                'marketplace' => $marketplaceOrder->getMarketplaceName(),
+                'order_id' => $marketplaceOrder->getId(),
+                'order_number' => $marketplaceOrder->getMarketplaceOrderNumber(),
+                'payment_method' => $marketplaceOrder->getPaymentMethod(),
+            ]
+        );
+
+        $paymentMethodTitle = trim($paymentMethodTitle);
+
+        if ('' !== $paymentMethodTitle) {
+            try {
+                $this->marketplacePaymentConfig->setForcedValue(
+                    MarketplacePaymentConfig::FIELD_NAME_TITLE,
+                    $this->templateFilter->filter($paymentMethodTitle)
+                );
+            } catch (\Exception $e) {
+                $this->marketplacePaymentConfig->unsetForcedValue(MarketplacePaymentConfig::FIELD_NAME_TITLE);
+            }
+        } else {
+            $this->marketplacePaymentConfig->unsetForcedValue(MarketplacePaymentConfig::FIELD_NAME_TITLE);
+        }
+
         $quote->getPayment()->importData([ PaymentInterface::KEY_METHOD => PaymentConfigProvider::CODE ]);
     }
 

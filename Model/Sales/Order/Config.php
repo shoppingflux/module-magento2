@@ -33,9 +33,16 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_MARKETPLACE_CUSTOMER_GROUPS__MARKETPLACE = 'marketplace';
     const KEY_MARKETPLACE_CUSTOMER_GROUPS__CUSTOMER_GROUP = 'customer_group';
     const KEY_DEFAULT_EMAIL_ADDRESS = 'default_email_address';
+    const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES = 'marketplace_default_email_addresses';
+    const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__MARKETPLACE = 'marketplace';
+    const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__ADDRESS = 'address';
     const KEY_DEFAULT_PHONE_NUMBER = 'default_phone_number';
     const KEY_ADDRESS_FIELD_PLACEHOLDER = 'address_field_placeholder';
     const KEY_USE_MOBILE_PHONE_NUMBER_FIRST = 'use_mobile_phone_number_first';
+    const KEY_DEFAULT_PAYMENT_METHOD_TITLE = 'default_payment_method_title';
+    const KEY_MARKETPLACE_PAYMENT_METHOD_TITLES = 'marketplace_payment_method_titles';
+    const KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__MARKETPLACE = 'marketplace';
+    const KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__TITLE = 'title';
     const KEY_FORCE_CROSS_BORDER_TRADE = 'force_border_trade';
     const KEY_CREATE_INVOICE = 'create_invoice';
 
@@ -103,6 +110,35 @@ class Config extends AbstractConfig implements ConfigInterface
                 'dataType' => UiNumber::NAME,
                 'optionArray' => $this->marketplaceSource->toOptionArray(),
             ]
+        );
+
+        $textHandler = $this->valueHandlerFactory->create(TextHandler::TYPE_CODE);
+
+        $paymentMethodTitleTemplateVariableNotices = [
+            'marketplace' => 'The name of the marketplace.',
+            'order_id' => 'The ID of the marketplace order.',
+            'order_number' => 'The reference of the order on the marketplace.',
+            'payment_method' => 'The payment method that was chosen by the customer.',
+        ];
+
+        foreach ($paymentMethodTitleTemplateVariableNotices as $field => &$notice) {
+            $notice = '- ' . __('"%1":', $field) . ' ' . __($notice);
+        }
+
+        $paymentMethodTitleNotice = implode(
+            "\n",
+            array_merge(
+                [
+                    __('Leave empty to use the default title.'),
+                    '',
+                    __('You can use a template here. The following variables are available:'),
+                ],
+                $paymentMethodTitleTemplateVariableNotices,
+                [
+                    '',
+                    __('Example: "Payment on {{var marketplace}}: {{var payment_method}}" could be replaced by "Payment on Amazon: MFN".'),
+                ]
+            )
         );
 
         return array_merge(
@@ -228,16 +264,89 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    DynamicRows::TYPE_CODE,
+                    [
+                        'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES,
+                        'label' => __('Marketplace Default Email Addresses'),
+                        'fields' => [
+                            $this->fieldFactory->create(
+                                Select::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__MARKETPLACE,
+                                    'valueHandler' => $marketplaceHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Marketplace'),
+                                    'sortOrder' => 10,
+                                ]
+                            ),
+                            $this->fieldFactory->create(
+                                TextBox::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__ADDRESS,
+                                    'valueHandler' => $textHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Email Address'),
+                                    'sortOrder' => 20,
+                                ]
+                            ),
+                        ],
+                        'sortOrder' => 110,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_ADDRESS_FIELD_PLACEHOLDER,
-                        'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
+                        'valueHandler' => $textHandler,
                         'isRequired' => true,
                         'defaultFormValue' => $this->getDefaultAddressFieldPlaceholder(),
                         'defaultUseValue' => $this->getDefaultAddressFieldPlaceholder(),
                         'label' => __('Default Address Field Value'),
                         'notice' => __('This value will be used as the default for other missing required fields.'),
-                        'sortOrder' => 120,
+                        'sortOrder' => 130,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_DEFAULT_PAYMENT_METHOD_TITLE,
+                        'valueHandler' => $textHandler,
+                        'label' => __('Default Payment Method Title'),
+                        'notice' => $paymentMethodTitleNotice,
+                        'sortOrder' => 140,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    DynamicRows::TYPE_CODE,
+                    [
+                        'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES,
+                        'label' => __('Marketplace Payment Method Titles'),
+                        'fields' => [
+                            $this->fieldFactory->create(
+                                Select::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__MARKETPLACE,
+                                    'valueHandler' => $marketplaceHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Marketplace'),
+                                    'sortOrder' => 10,
+                                ]
+                            ),
+                            $this->fieldFactory->create(
+                                TextBox::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__TITLE,
+                                    'valueHandler' => $textHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Title'),
+                                    'sortOrder' => 20,
+                                ]
+                            ),
+                        ],
+                        'sort_order' => 150,
                     ]
                 ),
 
@@ -247,7 +356,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_FORCE_CROSS_BORDER_TRADE,
                         'isCheckedByDefault' => true,
                         'label' => __('Force Cross Border Trade'),
-                        'sortOrder' => 130,
+                        'sortOrder' => 160,
                         'checkedNotice' =>
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
@@ -265,7 +374,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_CREATE_INVOICE,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Invoice'),
-                        'sortOrder' => 140,
+                        'sortOrder' => 170,
                     ]
                 ),
             ],
@@ -275,15 +384,46 @@ class Config extends AbstractConfig implements ConfigInterface
 
     protected function getStoreFields(StoreInterface $store)
     {
-        $defaultEmailNotice = __('This email address will be used when none is available for a given address.')
-            . "\n"
-            . __(
-                'Leave empty to use the "%1" store email address ("%2").',
-                __('Sales Representative'),
-                $this->geStoreDefaultEmailAddress($store)
-            );
+        $emailTemplateVariableNotices = [
+            'marketplace' => 'The name of the marketplace.',
+            'order_id' => 'The ID of the marketplace order.',
+            'order_number' => 'The reference of the order on the marketplace.',
+            'payment_method' => 'The payment method that was chosen by the customer.',
+            'address.first_name' => 'The first name entered in the billing address.',
+            'address.last_name' => 'The last name entered in the billing address.',
+            'address.company' => 'The company entered in the billing address.',
+            'address.country' => 'The code of the country entered in the billing address.',
+        ];
+
+        foreach ($emailTemplateVariableNotices as $field => &$notice) {
+            $notice = '- ' . __('"%1":', $field) . ' ' . __($notice);
+        }
+
+        $defaultEmailNotice = implode(
+            "\n",
+            array_merge(
+                [
+                    __('This email address will be used when none is available for a given address.'),
+                    __(
+                        'Leave empty to use the "%1" store email address ("%2").',
+                        __('Sales Representative'),
+                        $this->geStoreDefaultEmailAddress($store)
+                    ),
+                    '',
+                    __('You can use a template here. The following variables are available:'),
+                ],
+                $emailTemplateVariableNotices,
+                [
+                    '',
+                    __(
+                        'Example: "{{depend address.first_name}}{{var address.first_name}}.{{/depend}}{{depend address.last_name}}{{var address.last_name}}.{{/depend}}{{var marketplace}}@test.com" could be replaced by "john.doe.amazon@test.com".'
+                    ),
+                ]
+            )
+        );
 
         $storePhone = $this->getStoreDefaultPhoneNumber($store);
+
         $defaultPhoneNotice = __('This phone number will be used when none is available for a given address.') . "\n";
 
         if ('' !== $storePhone) {
@@ -301,7 +441,7 @@ class Config extends AbstractConfig implements ConfigInterface
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_DEFAULT_EMAIL_ADDRESS,
-                        'valueHandler' => $this->valueHandlerFactory->create(EmailHandler::TYPE_CODE),
+                        'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Email Address'),
                         'notice' => $defaultEmailNotice,
                         'sortOrder' => 100,
@@ -315,12 +455,48 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Phone Number'),
                         'notice' => $defaultPhoneNotice,
-                        'sortOrder' => 110,
+                        'sortOrder' => 120,
                     ]
                 ),
             ],
             parent::getStoreFields($store)
         );
+    }
+
+    /**
+     * @param string $configRowsKey
+     * @param string $rowMarketplaceKey
+     * @param string $rowValueKey
+     * @param StoreInterface $store
+     * @param string $marketplace
+     * @param mixed $defaultValue
+     * @return mixed
+     */
+    private function getMarketplaceBasedConfigValue(
+        $configRowsKey,
+        $rowMarketplaceKey,
+        $rowValueKey,
+        StoreInterface $store,
+        $marketplace,
+        $defaultValue
+    ) {
+        $rows = $this->getFieldValue($store, $configRowsKey);
+        $marketplace = $this->stringHelper->getNormalizedCode($marketplace);
+
+        if (('' !== $marketplace) && is_array($rows)) {
+            foreach ($rows as $row) {
+                if (
+                    is_array($row)
+                    && isset($row[$rowMarketplaceKey])
+                    && isset($row[$rowValueKey])
+                    && ($row[$rowMarketplaceKey] === $marketplace)
+                ) {
+                    return $row[$rowValueKey];
+                }
+            }
+        }
+
+        return $defaultValue;
     }
 
     public function shouldUseItemReferenceAsProductId(StoreInterface $store)
@@ -353,49 +529,23 @@ class Config extends AbstractConfig implements ConfigInterface
         return $this->getFieldValue($store, self::KEY_IMPORT_CUSTOMERS);
     }
 
-    /**
-     * @param StoreInterface $store
-     * @return int|null
-     */
     public function getDefaultCustomerGroup(StoreInterface $store)
     {
         return $this->customerGroupSource->getGroupId($this->getFieldValue($store, self::KEY_DEFAULT_CUSTOMER_GROUP));
     }
 
-    /**
-     * @param StoreInterface $store
-     * @return array
-     */
-    public function getMarketplaceCustomerGroups(StoreInterface $store)
-    {
-        $groups = [];
-        $value = $this->getFieldValue($store, self::KEY_MARKETPLACE_CUSTOMER_GROUPS);
-
-        if (is_array($value)) {
-            foreach ($value as $group) {
-                if (is_array($group)
-                    && isset($group[self::KEY_MARKETPLACE_CUSTOMER_GROUPS__MARKETPLACE])
-                    && isset($group[self::KEY_MARKETPLACE_CUSTOMER_GROUPS__CUSTOMER_GROUP])
-                ) {
-                    $groups[$group[self::KEY_MARKETPLACE_CUSTOMER_GROUPS__MARKETPLACE]] =
-                        $this->customerGroupSource->getGroupId(
-                            $group[self::KEY_MARKETPLACE_CUSTOMER_GROUPS__CUSTOMER_GROUP]
-                        );
-                }
-            }
-        }
-
-        return $groups;
-    }
-
     public function getMarketplaceCustomerGroup(StoreInterface $store, $marketplace)
     {
-        $marketplace = $this->stringHelper->getNormalizedCode($marketplace);
-        $marketplaceGroups = $this->getMarketplaceCustomerGroups($store);
-
-        return isset($marketplaceGroups[$marketplace])
-            ? $marketplaceGroups[$marketplace]
-            : $this->getDefaultCustomerGroup($store);
+        return $this->customerGroupSource->getGroupId(
+            $this->getMarketplaceBasedConfigValue(
+                static::KEY_MARKETPLACE_CUSTOMER_GROUPS,
+                static::KEY_MARKETPLACE_CUSTOMER_GROUPS__MARKETPLACE,
+                static::KEY_MARKETPLACE_CUSTOMER_GROUPS__CUSTOMER_GROUP,
+                $store,
+                $marketplace,
+                $this->getFieldValue($store, self::KEY_DEFAULT_CUSTOMER_GROUP)
+            )
+        );
     }
 
     /**
@@ -415,6 +565,18 @@ class Config extends AbstractConfig implements ConfigInterface
     {
         $defaultEmail = $this->getFieldValue($store, self::KEY_DEFAULT_EMAIL_ADDRESS);
         return ('' !== $defaultEmail) ? $defaultEmail : $this->geStoreDefaultEmailAddress($store);
+    }
+
+    public function getMarketplaceDefaultEmailAddress(StoreInterface $store, $marketplace)
+    {
+        return $this->getMarketplaceBasedConfigValue(
+            static::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES,
+            static::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__MARKETPLACE,
+            static::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__ADDRESS,
+            $store,
+            $marketplace,
+            $this->getDefaultEmailAddress($store)
+        );
     }
 
     /**
@@ -471,6 +633,25 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldUseMobilePhoneNumberFirst(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST);
+    }
+
+    public function getDefaultPaymentMethodTitle(StoreInterface $store)
+    {
+        return trim($this->getFieldValue($store, self::KEY_DEFAULT_PAYMENT_METHOD_TITLE));
+    }
+
+    public function getMarketplacePaymentMethodTitle(StoreInterface $store, $marketplace)
+    {
+        return trim(
+            $this->getMarketplaceBasedConfigValue(
+                static::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES,
+                static::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__MARKETPLACE,
+                static::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__TITLE,
+                $store,
+                $marketplace,
+                $this->getDefaultPaymentMethodTitle($store)
+            )
+        );
     }
 
     public function shouldForceCrossBorderTrade(StoreInterface $store)
