@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.0] - 2020-06-15
+### Added
+- Allow specifying dynamic default email addresses/payment method titles by marketplace (**BC break** for customer and sales order importers)
+
+### Fixed
+- Fix the import of customers without email addresses
+
 ## [0.34.2] - 2020-06-10
 ### Added
 - Display the "is_business_order" field in the sales order view
