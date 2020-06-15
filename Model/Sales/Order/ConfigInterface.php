@@ -30,7 +30,7 @@ interface ConfigInterface extends BaseConfig
      * @return bool
      */
     public function shouldSyncNonImportedItems(StoreInterface $store);
-    
+
     /**
      * @param StoreInterface $store
      * @return bool
@@ -45,6 +45,12 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return int|null
+     */
+    public function getDefaultCustomerGroup(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @param string $marketplace
      * @return int|null
      */
@@ -55,6 +61,13 @@ interface ConfigInterface extends BaseConfig
      * @return string
      */
     public function getDefaultEmailAddress(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @param string $marketplace
+     * @return string
+     */
+    public function getMarketplaceDefaultEmailAddress(StoreInterface $store, $marketplace);
 
     /**
      * @param StoreInterface $store
@@ -73,6 +86,19 @@ interface ConfigInterface extends BaseConfig
      * @return bool
      */
     public function shouldUseMobilePhoneNumberFirst(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getDefaultPaymentMethodTitle(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @param string $marketplace
+     * @return string|null
+     */
+    public function getMarketplacePaymentMethodTitle(StoreInterface $store, $marketplace);
 
     /**
      * @param StoreInterface $store

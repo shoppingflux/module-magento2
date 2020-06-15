@@ -369,7 +369,7 @@
         <arguments>
             <argument name="code" xsi:type="const">ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider::CODE</argument>
             <argument name="formBlockType" xsi:type="string">Magento\Payment\Block\Form</argument>
-            <argument name="infoBlockType" xsi:type="string">Magento\Payment\Block\Info</argument>
+            <argument name="infoBlockType" xsi:type="string">ShoppingFeed\Manager\Block\Payment\Info</argument>
             <argument name="valueHandlerPool" xsi:type="object">ShoppingFeedManagerPaymentValueHandlerPool</argument>
             <argument name="validatorPool" xsi:type="object">ShoppingFeedManagerPaymentValidatorPool</argument>
         </arguments>
