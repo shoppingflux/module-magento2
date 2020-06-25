@@ -136,7 +136,9 @@ class Config extends AbstractConfig implements ConfigInterface
                 $paymentMethodTitleTemplateVariableNotices,
                 [
                     '',
-                    __('Example: "Payment on {{var marketplace}}: {{var payment_method}}" could be replaced by "Payment on Amazon: MFN".'),
+                    __(
+                        'Example: "Payment on {{var marketplace}}: {{var payment_method}}" could be replaced by "Payment on Amazon: MFN".'
+                    ),
                 ]
             )
         );
@@ -163,6 +165,12 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS,
                         'isCheckedByDefault' => false,
                         'label' => __('Check Product Availability and Required Options'),
+                        'checkedNotice' => __(
+                            'Orders containing products that are not available or have required options will not be imported.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'Orders containing products that are not available or have required options will still be imported.'
+                        ),
                         'sortOrder' => 20,
                     ]
                 ),
@@ -173,6 +181,12 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_CHECK_PRODUCT_WEBSITES,
                         'isCheckedByDefault' => false,
                         'label' => __('Check Product Websites'),
+                        'checkedNotice' => __(
+                            'Orders containing products that are not associated to the right website will not be imported.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'Orders containing products that are not associated to the right website will still be imported.'
+                        ),
                         'sortOrder' => 30,
                     ]
                 ),
@@ -203,6 +217,12 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_IMPORT_CUSTOMERS,
                         'isCheckedByDefault' => false,
                         'label' => __('Import Customers'),
+                        'checkedNotice' => __(
+                            'A customer account will be created for each order, using the billing email address.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'Orders will be imported using guest mode. No customer account will be created.'
+                        ),
                         'checkedDependentFieldNames' => [
                             self::KEY_DEFAULT_CUSTOMER_GROUP,
                             self::KEY_MARKETPLACE_CUSTOMER_GROUPS,
@@ -374,6 +394,8 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_CREATE_INVOICE,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Invoice'),
+                        'checkedNotice' => __('Orders will be automatically invoiced upon import.'),
+                        'uncheckedNotice' => __('Orders will not be invoiced automatically.'),
                         'sortOrder' => 170,
                     ]
                 ),
