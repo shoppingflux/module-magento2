@@ -108,6 +108,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         }
 
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.36.0') < 0)) {
+            $this->addMarketplaceOrderIsFulfilledField($setup);
             $this->addMarketplaceOrderMarketplaceIdAndNumberUniqueIndex($setup);
         }
     }
@@ -1350,6 +1351,29 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'nullable' => true,
                     'comment' => 'Exclusion Reason',
                     'after' => ProductInterface::CHILD_EXPORT_STATE,
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderIsFulfilledField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTableName, OrderInterface::IS_FULFILLED)) {
+            $connection->addColumn(
+                $marketplaceOrderTableName,
+                OrderInterface::IS_FULFILLED,
+                [
+                    'type' => Table::TYPE_BOOLEAN,
+                    'nullable' => false,
+                    'default' => 0,
+                    'comment' => 'Is Fulfilled',
+                    'after' => OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
                 ]
             );
         }

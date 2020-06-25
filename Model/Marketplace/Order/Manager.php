@@ -337,6 +337,7 @@ class Manager
     {
         $shippedCollection = $this->orderCollectionFactory->create();
         $shippedCollection->addStoreIdFilter($store->getId());
+        $shippedCollection->addIsFulfilledFilter(false);
         $shippedCollection->addNotifiableShipmentFilter();
         $shippedSalesOrderIds = [];
 

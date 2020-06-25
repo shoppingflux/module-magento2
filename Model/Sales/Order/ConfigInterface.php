@@ -11,6 +11,12 @@ interface ConfigInterface extends BaseConfig
      * @param StoreInterface $store
      * @return bool
      */
+    public function shouldImportFulfilledOrders(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
     public function shouldUseItemReferenceAsProductId(StoreInterface $store);
 
     /**
@@ -111,4 +117,10 @@ interface ConfigInterface extends BaseConfig
      * @return bool
      */
     public function shouldCreateInvoice(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldCreateFulfilmentShipment(StoreInterface $store);
 }

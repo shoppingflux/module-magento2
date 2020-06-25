@@ -53,6 +53,16 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param bool $isFulfilled
+     * @return $this
+     */
+    public function addIsFulfilledFilter($isFulfilled = true)
+    {
+        $this->addFieldToFilter(OrderInterface::IS_FULFILLED, (bool) $isFulfilled ? 1 : 0);
+        return $this;
+    }
+
+    /**
      * @param int|int[] $marketplaceIds
      * @return $this
      */
@@ -100,7 +110,12 @@ class Collection extends AbstractCollection
     public function addImportableFilter()
     {
         $this->addFieldToFilter(OrderInterface::IMPORT_REMAINING_TRY_COUNT, [ 'gt' => 0 ]);
-        $this->addFieldToFilter(OrderInterface::SHOPPING_FEED_STATUS, OrderInterface::STATUS_WAITING_SHIPMENT);
+
+        $this->addFieldToFilter(
+            [ OrderInterface::SHOPPING_FEED_STATUS, OrderInterface::IS_FULFILLED ],
+            [ OrderInterface::STATUS_WAITING_SHIPMENT, true ]
+        );
+
         return $this;
     }
 
