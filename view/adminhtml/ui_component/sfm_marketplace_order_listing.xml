@@ -79,6 +79,17 @@
                 </item>
             </argument>
         </column>
+        <column name="is_fulfilled">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Is Fulfilled</item>
+                </item>
+                <item name="options" xsi:type="object">Magento\Config\Model\Config\Source\Yesno</item>
+            </argument>
+        </column>
         <column name="sales_increment_id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

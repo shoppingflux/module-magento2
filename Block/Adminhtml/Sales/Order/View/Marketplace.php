@@ -61,7 +61,8 @@ class Marketplace extends AbstractOrder
 
         if ($marketplaceOrder = $this->getMarketplaceOrder()) {
             foreach ($marketplaceOrder->getAdditionalFields()->getData() as $key => $value) {
-                if (!in_array($key, static::IGNORED_ADDITIONAL_DATA_KEYS, true)
+                if (
+                    !in_array($key, static::IGNORED_ADDITIONAL_DATA_KEYS, true)
                     && is_scalar($value)
                     && ('' !== ($value = trim($value)))
                 ) {

@@ -66,7 +66,8 @@ class Save extends TaskAction
         $isSaveSuccessful = false;
 
         try {
-            if (!isset($data[TaskFormDataProvider::DATA_SCOPE_TASK])
+            if (
+                !isset($data[TaskFormDataProvider::DATA_SCOPE_TASK])
                 || !is_array($data[TaskFormDataProvider::DATA_SCOPE_TASK])
             ) {
                 throw new LocalizedException(__('The request is incomplete.'));
@@ -74,7 +75,8 @@ class Save extends TaskAction
 
             $taskData = $data[TaskFormDataProvider::DATA_SCOPE_TASK];
 
-            if (!isset($taskData[TaskFormDataProvider::FIELD_NAME])
+            if (
+                !isset($taskData[TaskFormDataProvider::FIELD_NAME])
                 || empty($taskData[TaskFormDataProvider::FIELD_NAME])
                 || !isset($taskData[TaskFormDataProvider::DATA_SCOPE_COMMAND])
                 || !is_array($taskData[TaskFormDataProvider::DATA_SCOPE_COMMAND])

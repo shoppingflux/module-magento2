@@ -26,7 +26,8 @@ class AfterStockItemSaveObserver implements ObserverInterface
 
     public function execute(Observer $observer)
     {
-        if (($stockItem = $observer->getEvent()->getData(static::EVENT_KEY_STOCK_ITEM))
+        if (
+            ($stockItem = $observer->getEvent()->getData(static::EVENT_KEY_STOCK_ITEM))
             && ($stockItem instanceof StockItem)
         ) {
             try {

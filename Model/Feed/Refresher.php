@@ -418,7 +418,8 @@ class Refresher
 
             /** @var RefreshableProduct $refreshableProduct */
             foreach ($refreshableProducts as $refreshableProduct) {
-                if ($isExportStateRefreshed
+                if (
+                    $isExportStateRefreshed
                     && !$refreshSliceExportState
                     && $refreshableProduct->hasRefreshableExportState()
                 ) {
@@ -431,7 +432,8 @@ class Refresher
                     }
                 }
 
-                if (empty($sliceNonRefreshableSectionTypeIds)
+                if (
+                    empty($sliceNonRefreshableSectionTypeIds)
                     && (!$isExportStateRefreshed || $refreshSliceExportState)
                 ) {
                     break;
@@ -453,7 +455,8 @@ class Refresher
             foreach ($sliceRefreshableSectionTypeIds as $typeId) {
                 $sectionType = $this->sectionTypePool->getTypeById($typeId);
 
-                if ($sectionType->getAdapter()->requiresLoadedProduct($store)
+                if (
+                    $sectionType->getAdapter()->requiresLoadedProduct($store)
                     || $sectionType->getConfig()->shouldForceProductLoadForRefresh($store)
                 ) {
                     $isProductLoadingRequiredForSections = true;
@@ -463,7 +466,8 @@ class Refresher
 
             // Refresh products.
 
-            if ((!$refreshSliceExportState && !$isProductLoadingRequiredForSections)
+            if (
+                (!$refreshSliceExportState && !$isProductLoadingRequiredForSections)
                 || ($refreshSliceExportState && !$isProductLoadingRequiredForExportState)
             ) {
                 $this->refreshProductsWithCollection(
@@ -474,7 +478,8 @@ class Refresher
                 );
             }
 
-            if (($refreshSliceExportState && $isProductLoadingRequiredForExportState)
+            if (
+                ($refreshSliceExportState && $isProductLoadingRequiredForExportState)
                 || $isProductLoadingRequiredForSections
             ) {
                 $this->refreshProductsWithRepository(

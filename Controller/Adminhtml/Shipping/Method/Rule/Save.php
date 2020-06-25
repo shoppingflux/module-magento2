@@ -86,7 +86,8 @@ class Save extends RuleAction
         $isSaveSuccessful = false;
 
         try {
-            if (!isset($data[RuleFormDataProvider::DATA_SCOPE_RULE])
+            if (
+                !isset($data[RuleFormDataProvider::DATA_SCOPE_RULE])
                 || !is_array($data[RuleFormDataProvider::DATA_SCOPE_RULE])
             ) {
                 throw new LocalizedException(__('The request is incomplete.'));
@@ -94,7 +95,8 @@ class Save extends RuleAction
 
             $ruleData = $data[RuleFormDataProvider::DATA_SCOPE_RULE];
 
-            if (!isset($ruleData[RuleFormDataProvider::DATA_SCOPE_APPLIER])
+            if (
+                !isset($ruleData[RuleFormDataProvider::DATA_SCOPE_APPLIER])
                 || !is_array($ruleData[RuleFormDataProvider::DATA_SCOPE_APPLIER])
                 || !isset($ruleData[RuleFormDataProvider::DATA_SCOPE_APPLIER][RuleFormDataProvider::FIELD_APPLIER_CODE])
             ) {

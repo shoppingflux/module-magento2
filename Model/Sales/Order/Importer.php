@@ -21,6 +21,7 @@ use Magento\Quote\Api\Data\AddressExtensionFactory as QuoteAddressExtensionFacto
 use Magento\Quote\Model\Quote\Address\RateFactory as ShippingAddressRateFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory as ShippingRateMethodFactory;
 use Magento\Sales\Api\Data\OrderInterface as SalesOrderInterface;
+use Magento\Sales\Model\Convert\Order as SalesOrderConverter;
 use Magento\Sales\Model\Order as SalesOrder;
 use Magento\Store\Model\Store as BaseStore;
 use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
@@ -162,6 +163,11 @@ class Importer implements ImporterInterface
     private $shippingMethodRuleCollection = null;
 
     /**
+     * @var SalesOrderConverter
+     */
+    private $salesOrderConverter;
+
+    /**
      * @var MarketplacePaymentConfig
      */
     private $marketplacePaymentConfig;
@@ -233,6 +239,7 @@ class Importer implements ImporterInterface
      * @param ShippingAddressRateFactory $shippingAddressRateFactory
      * @param ShippingMethodApplierPoolInterface $shippingMethodApplierPool
      * @param ShippingMethodRuleCollectionFactory $shippingMethodRuleCollectionFactory
+     * @param SalesOrderConverter $salesOrderConverter
      * @param MarketplacePaymentConfig $marketplacePaymentConfig
      * @param MarketplaceOrderManager $marketplaceOrderManager
      * @param MarketplaceOrderRepositoryInterface $marketplaceOrderRepository
@@ -262,6 +269,7 @@ class Importer implements ImporterInterface
         ShippingAddressRateFactory $shippingAddressRateFactory,
         ShippingMethodApplierPoolInterface $shippingMethodApplierPool,
         ShippingMethodRuleCollectionFactory $shippingMethodRuleCollectionFactory,
+        SalesOrderConverter $salesOrderConverter,
         MarketplacePaymentConfig $marketplacePaymentConfig,
         MarketplaceOrderManager $marketplaceOrderManager,
         MarketplaceOrderRepositoryInterface $marketplaceOrderRepository,
@@ -290,6 +298,7 @@ class Importer implements ImporterInterface
         $this->shippingAddressRateFactory = $shippingAddressRateFactory;
         $this->shippingMethodApplierPool = $shippingMethodApplierPool;
         $this->shippingMethodRuleCollectionFactory = $shippingMethodRuleCollectionFactory;
+        $this->salesOrderConverter = $salesOrderConverter;
         $this->marketplacePaymentConfig = $marketplacePaymentConfig;
         $this->marketplaceOrderManager = $marketplaceOrderManager;
         $this->marketplaceOrderRepository = $marketplaceOrderRepository;
@@ -700,13 +709,15 @@ class Importer implements ImporterInterface
                     );
                 }
 
-                if ($this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
+                if (
+                    $this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
                     && ((int) $product->getStatus() === CatalogProductStatus::STATUS_DISABLED)
                 ) {
                     throw new LocalizedException(__('The product with reference "%1" is disabled.', $reference));
                 }
 
-                if ($this->orderGeneralConfig->shouldCheckProductWebsites($store)
+                if (
+                    $this->orderGeneralConfig->shouldCheckProductWebsites($store)
                     && !in_array($store->getBaseWebsiteId(), array_map('intval', $product->getWebsiteIds()), true)
                 ) {
                     throw new LocalizedException(
@@ -977,23 +988,73 @@ class Importer implements ImporterInterface
     }
 
     /**
-     * @param SalesOrderInterface $order
+     * @param SalesOrder $order
      * @throws LocalizedException
      * @throws \Exception
      */
-    public function handleImportedSalesOrder(SalesOrderInterface $order)
+    private function invoiceSalesOrder(SalesOrder $order)
     {
-        if ($this->isImportRunning()
-            && $this->orderGeneralConfig->shouldCreateInvoice($this->currentImportStore)
-            && ($order instanceof SalesOrder)
-            && $order->canInvoice()
-        ) {
+        if ($order->canInvoice()) {
             $invoice = $order->prepareInvoice();
             $invoice->register();
             $transaction = $this->transactionFactory->create();
             $transaction->addObject($invoice);
             $transaction->addObject($order);
             $transaction->save();
+        }
+    }
+
+    /**
+     * @param SalesOrder $order
+     * @throws LocalizedException
+     * @throws \Exception
+     */
+    private function shipSalesOrder(SalesOrder $order)
+    {
+        if ($order->canShip()) {
+            $shipment = $this->salesOrderConverter->toShipment($order);
+
+            if ($shipment) {
+                foreach ($order->getAllItems() AS $orderItem) {
+                    if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
+                        continue;
+                    }
+
+                    $shipmentItem = $this->salesOrderConverter->itemToShipmentItem($orderItem);
+                    $shipmentItem->setQty($orderItem->getQtyToShip());
+
+                    $shipment->addItem($shipmentItem);
+                }
+
+                $shipment->register();
+
+                $transaction = $this->transactionFactory->create();
+                $transaction->addObject($shipment);
+                $transaction->addObject($order);
+                $transaction->save();
+            }
+        }
+    }
+
+    /**
+     * @param SalesOrderInterface $order
+     * @throws LocalizedException
+     * @throws \Exception
+     */
+    public function handleImportedSalesOrder(SalesOrderInterface $order)
+    {
+        if ($this->isImportRunning() && ($order instanceof SalesOrder)) {
+            if ($this->orderGeneralConfig->shouldCreateInvoice($this->currentImportStore)) {
+                $this->invoiceSalesOrder($order);
+            }
+
+            if (
+                (null !== $this->currentlyImportedMarketplaceOrder)
+                && $this->currentlyImportedMarketplaceOrder->isFulfilled()
+                && $this->orderGeneralConfig->shouldCreateFulfilmentShipment($this->currentImportStore)
+            ) {
+                $this->shipSalesOrder($order);
+            }
         }
     }
 

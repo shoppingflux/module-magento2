@@ -29,7 +29,8 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
 
     public function execute(Observer $observer)
     {
-        if (($quote = $observer->getEvent()->getData(self::EVENT_KEY_QUOTE))
+        if (
+            ($quote = $observer->getEvent()->getData(self::EVENT_KEY_QUOTE))
             && ($quote instanceof Quote)
             && ($order = $observer->getEvent()->getData(self::EVENT_KEY_ORDER))
             && ($order instanceof Order)

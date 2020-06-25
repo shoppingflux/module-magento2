@@ -97,6 +97,11 @@ class Order extends AbstractModel implements OrderInterface
         return (int) $this->getDataByKey(self::SHOPPING_FEED_MARKETPLACE_ID);
     }
 
+    public function isFulfilled()
+    {
+        return (bool) $this->getDataByKey(self::IS_FULFILLED);
+    }
+
     public function getMarketplaceName()
     {
         return trim($this->getDataByKey(self::MARKETPLACE_NAME));
@@ -246,6 +251,11 @@ class Order extends AbstractModel implements OrderInterface
     public function setShoppingFeedMarketplaceId($marketplaceId)
     {
         return $this->setData(self::SHOPPING_FEED_MARKETPLACE_ID, (int) $marketplaceId);
+    }
+
+    public function setIsFulfilled($isFulfilled)
+    {
+        return $this->setData(self::IS_FULFILLED, (bool) $isFulfilled);
     }
 
     public function setMarketplaceName($marketplaceName)

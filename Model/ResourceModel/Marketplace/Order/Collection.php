@@ -53,6 +53,40 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param bool $isFulfilled
+     * @return $this
+     */
+    public function addIsFulfilledFilter($isFulfilled = true)
+    {
+        $this->addFieldToFilter(OrderInterface::IS_FULFILLED, (bool) $isFulfilled ? 1 : 0);
+        return $this;
+    }
+
+    /**
+     * @param int|int[] $marketplaceIds
+     * @return $this
+     */
+    public function addMarketplaceIdFilter($marketplaceIds)
+    {
+        $this->addFieldToFilter(
+            OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+            [ 'in' => $this->prepareIdFilterValue($marketplaceIds) ]
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param string $number
+     * @return $this
+     */
+    public function addMarketplaceNumberFilter($number)
+    {
+        $this->addFieldToFilter(OrderInterface::MARKETPLACE_ORDER_NUMBER, [ 'like' => $number ]);
+        return $this;
+    }
+
+    /**
      * @return $this
      */
     public function addImportedFilter()
@@ -76,7 +110,12 @@ class Collection extends AbstractCollection
     public function addImportableFilter()
     {
         $this->addFieldToFilter(OrderInterface::IMPORT_REMAINING_TRY_COUNT, [ 'gt' => 0 ]);
-        $this->addFieldToFilter(OrderInterface::SHOPPING_FEED_STATUS, OrderInterface::STATUS_WAITING_SHIPMENT);
+
+        $this->addFieldToFilter(
+            [ OrderInterface::SHOPPING_FEED_STATUS, OrderInterface::IS_FULFILLED ],
+            [ OrderInterface::STATUS_WAITING_SHIPMENT, true ]
+        );
+
         return $this;
     }
 

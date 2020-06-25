@@ -373,7 +373,8 @@ class Importer
         $phone = $address->getPhone();
         $mobilePhone = $address->getMobilePhone();
 
-        if ((('' === $phone) || $this->orderGeneralConfig->shouldUseMobilePhoneNumberFirst($store))
+        if (
+            (('' === $phone) || $this->orderGeneralConfig->shouldUseMobilePhoneNumberFirst($store))
             && ('' !== $mobilePhone)
         ) {
             return $mobilePhone;

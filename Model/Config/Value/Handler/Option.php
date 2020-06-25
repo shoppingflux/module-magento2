@@ -56,7 +56,8 @@ class Option extends AbstractHandler
         $optionValues = [];
 
         foreach ($optionArray as $option) {
-            if (is_array($option)
+            if (
+                is_array($option)
                 && array_key_exists('value', $option)
                 && ($this->hasEmptyOption || !$this->isUndefinedValue($option['value']))
             ) {

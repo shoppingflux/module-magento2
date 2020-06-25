@@ -179,7 +179,8 @@ class RealTimeUpdater
         );
 
         foreach ($this->getStoreCollection() as $store) {
-            if (($stockSectionConfig instanceof StockSectionConfigInterface)
+            if (
+                ($stockSectionConfig instanceof StockSectionConfigInterface)
                 && $stockSectionConfig->shouldUpdateQuantityInRealTime($store)
             ) {
                 try {

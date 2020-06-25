@@ -160,13 +160,35 @@ class Importer
 
     /**
      * @param ApiOrder $apiOrder
+     * @return bool
+     */
+    public function isFulfilledApiOrder(ApiOrder $apiOrder)
+    {
+        $marketplace = strtolower(trim($apiOrder->getChannel()->getName()));
+        $paymentMethod = strtolower(trim($apiOrder->getPaymentInformation()['method'] ?? ''));
+
+        return
+            // Amazon
+            ('amazon' === $marketplace) && ('afn' === $paymentMethod)
+            // Cdiscount
+            || ('cdiscount' === $marketplace) && ('clogistique' === $paymentMethod)
+            // ManoMano
+            || ('epmm' === $marketplace);
+    }
+
+    /**
+     * @param ApiOrder $apiOrder
      * @param StoreInterface $store
      * @throws \Exception
      */
     public function importApiOrder(ApiOrder $apiOrder, StoreInterface $store)
     {
         try {
-            $marketplaceOrder = $this->orderRepository->getByShoppingFeedId($apiOrder->getId());
+            $marketplaceOrder = $this->orderRepository->getByMarketplaceIdAndNumber(
+                $apiOrder->getChannel()->getId(),
+                $apiOrder->getReference()
+            );
+
             $this->importExistingApiOrder($apiOrder, $marketplaceOrder, $store);
         } catch (NoSuchEntityException $e) {
             $this->importNewApiOrder($apiOrder, $store);
@@ -180,11 +202,17 @@ class Importer
      */
     public function importNewApiOrder(ApiOrder $apiOrder, StoreInterface $store)
     {
-        if ($apiOrder->getStatus() !== MarketplaceOrderInterface::STATUS_WAITING_SHIPMENT) {
+        $isFulfilled = $this->isFulfilledApiOrder($apiOrder);
+
+        if (
+            ($isFulfilled && !$this->orderGeneralConfig->shouldImportFulfilledOrders($store))
+            || (!$isFulfilled && ($apiOrder->getStatus() !== MarketplaceOrderInterface::STATUS_WAITING_SHIPMENT))
+        ) {
             return;
         }
 
         $marketplaceOrder = $this->orderFactory->create();
+        $marketplaceOrder->setIsFulfilled($isFulfilled);
         $this->importApiBaseOrderData($apiOrder, $marketplaceOrder, $store);
 
         $billingAddress = $this->importApiOrderAddress(

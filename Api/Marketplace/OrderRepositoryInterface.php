@@ -33,6 +33,14 @@ interface OrderRepositoryInterface
     public function getByShoppingFeedId($orderId);
 
     /**
+     * @param int $marketplaceId
+     * @param string $marketplaceNumber
+     * @return OrderInterface
+     * @throws NoSuchEntityException
+     */
+    public function getByMarketplaceIdAndNumber($marketplaceId, $marketplaceNumber);
+
+    /**
      * @param int $orderId
      * @return OrderInterface
      * @throws NoSuchEntityException

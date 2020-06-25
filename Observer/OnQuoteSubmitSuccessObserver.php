@@ -49,7 +49,8 @@ class OnQuoteSubmitSuccessObserver implements ObserverInterface
                 // Do not prevent the order from being completed.
             }
 
-            if (($quote = $observer->getEvent()->getData(static::EVENT_KEY_QUOTE))
+            if (
+                ($quote = $observer->getEvent()->getData(static::EVENT_KEY_QUOTE))
                 && ($quote instanceof Quote)
                 && $this->orderImporter->isCurrentlyImportedQuote($quote)
             ) {

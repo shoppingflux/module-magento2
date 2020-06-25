@@ -106,6 +106,11 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.28.0') < 0)) {
             $this->addFeedProductExclusionReasonField($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.36.0') < 0)) {
+            $this->addMarketplaceOrderIsFulfilledField($setup);
+            $this->addMarketplaceOrderMarketplaceIdAndNumberUniqueIndex($setup);
+        }
     }
 
     /**
@@ -671,7 +676,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $connection = $setup->getConnection();
         $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
 
-        if ($connection->tableColumnExists($marketplaceOrderTicketTableName, 'marketplace_order_id')
+        if (
+            $connection->tableColumnExists($marketplaceOrderTicketTableName, 'marketplace_order_id')
             && !$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::ORDER_ID)
         ) {
             $connection->changeColumn(
@@ -696,7 +702,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $connection = $setup->getConnection();
         $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
 
-        if ($connection->tableColumnExists($marketplaceOrderTicketTableName, 'action_code')
+        if (
+            $connection->tableColumnExists($marketplaceOrderTicketTableName, 'action_code')
             && !$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::ACTION)
         ) {
             $connection->changeColumn(
@@ -850,7 +857,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $connection = $setup->getConnection();
         $marketplaceOrderLogTableName = $this->tableDictionary->getMarketplaceOrderLogTableName();
 
-        if ($connection->tableColumnExists($marketplaceOrderLogTableName, 'marketplace_order_id')
+        if (
+            $connection->tableColumnExists($marketplaceOrderLogTableName, 'marketplace_order_id')
             && !$connection->tableColumnExists($marketplaceOrderLogTableName, LogInterface::ORDER_ID)
         ) {
             $connection->changeColumn(
@@ -1344,6 +1352,61 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'comment' => 'Exclusion Reason',
                     'after' => ProductInterface::CHILD_EXPORT_STATE,
                 ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderIsFulfilledField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTableName, OrderInterface::IS_FULFILLED)) {
+            $connection->addColumn(
+                $marketplaceOrderTableName,
+                OrderInterface::IS_FULFILLED,
+                [
+                    'type' => Table::TYPE_BOOLEAN,
+                    'nullable' => false,
+                    'default' => 0,
+                    'comment' => 'Is Fulfilled',
+                    'after' => OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderMarketplaceIdAndNumberUniqueIndex(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        $indexName = $connection->getIndexName(
+            $marketplaceOrderTableName,
+            [
+                OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                OrderInterface::MARKETPLACE_ORDER_NUMBER,
+            ],
+            AdapterInterface::INDEX_TYPE_UNIQUE
+        );
+
+        $indexList = $connection->getIndexList($marketplaceOrderTableName);
+
+        if (!isset($indexList[$indexName])) {
+            $connection->addIndex(
+                $marketplaceOrderTableName,
+                $indexName,
+                [
+                    OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                    OrderInterface::MARKETPLACE_ORDER_NUMBER,
+                ],
+                AdapterInterface::INDEX_TYPE_UNIQUE
             );
         }
     }

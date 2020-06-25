@@ -40,7 +40,8 @@ class MarketplaceFees extends AbstractTotal
      */
     public function getQuoteMarketplaceFeesAmounts(Quote $quote)
     {
-        if ($this->orderImporter->isImportRunning()
+        if (
+            $this->orderImporter->isImportRunning()
             && $this->orderImporter->isCurrentlyImportedQuote($quote)
             && ($marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder())
         ) {
