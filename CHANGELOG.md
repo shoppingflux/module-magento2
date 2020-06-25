@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.36.0] - 2020-06-25
+### Added
+- Implement handling of fulfilled orders
+- Add more notes in the order configuration
+
+### Changed
+- Identify marketplace orders by their marketplace ID and reference
+- Follow PSR-12 spec for multiline if / elseif structures
+
 ## [0.35.0] - 2020-06-15
 ### Added
 - Allow specifying dynamic default email addresses/payment method titles by marketplace (**BC break** for customer and sales order importers)
