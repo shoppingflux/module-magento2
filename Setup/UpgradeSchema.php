@@ -106,6 +106,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.28.0') < 0)) {
             $this->addFeedProductExclusionReasonField($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.36.0') < 0)) {
+            $this->addMarketplaceOrderMarketplaceIdAndNumberUniqueIndex($setup);
+        }
     }
 
     /**
@@ -1347,6 +1351,38 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'comment' => 'Exclusion Reason',
                     'after' => ProductInterface::CHILD_EXPORT_STATE,
                 ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderMarketplaceIdAndNumberUniqueIndex(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        $indexName = $connection->getIndexName(
+            $marketplaceOrderTableName,
+            [
+                OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                OrderInterface::MARKETPLACE_ORDER_NUMBER,
+            ],
+            AdapterInterface::INDEX_TYPE_UNIQUE
+        );
+
+        $indexList = $connection->getIndexList($marketplaceOrderTableName);
+
+        if (!isset($indexList[$indexName])) {
+            $connection->addIndex(
+                $marketplaceOrderTableName,
+                $indexName,
+                [
+                    OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                    OrderInterface::MARKETPLACE_ORDER_NUMBER,
+                ],
+                AdapterInterface::INDEX_TYPE_UNIQUE
             );
         }
     }

@@ -53,6 +53,30 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param int|int[] $marketplaceIds
+     * @return $this
+     */
+    public function addMarketplaceIdFilter($marketplaceIds)
+    {
+        $this->addFieldToFilter(
+            OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+            [ 'in' => $this->prepareIdFilterValue($marketplaceIds) ]
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param string $number
+     * @return $this
+     */
+    public function addMarketplaceNumberFilter($number)
+    {
+        $this->addFieldToFilter(OrderInterface::MARKETPLACE_ORDER_NUMBER, [ 'like' => $number ]);
+        return $this;
+    }
+
+    /**
      * @return $this
      */
     public function addImportedFilter()

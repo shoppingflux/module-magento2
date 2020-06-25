@@ -8,6 +8,7 @@ use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\OrderFactory as OrderResourceFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\CollectionFactory as OrderCollectionFactory;
 
 class OrderRepository implements OrderRepositoryInterface
 {
@@ -22,13 +23,23 @@ class OrderRepository implements OrderRepositoryInterface
     protected $orderFactory;
 
     /**
+     * @var OrderCollectionFactory
+     */
+    protected $orderCollectionFactory;
+
+    /**
      * @param OrderResourceFactory $orderResourceFactory
      * @param OrderFactory $orderFactory
+     * @param OrderCollectionFactory $orderCollectionFactory
      */
-    public function __construct(OrderResourceFactory $orderResourceFactory, OrderFactory $orderFactory)
-    {
+    public function __construct(
+        OrderResourceFactory $orderResourceFactory,
+        OrderFactory $orderFactory,
+        OrderCollectionFactory $orderCollectionFactory
+    ) {
         $this->orderResource = $orderResourceFactory->create();
         $this->orderFactory = $orderFactory;
+        $this->orderCollectionFactory = $orderCollectionFactory;
     }
 
     public function save(OrderInterface $order)
@@ -66,6 +77,27 @@ class OrderRepository implements OrderRepositoryInterface
         }
 
         return $order;
+    }
+
+    public function getByMarketplaceIdAndNumber($marketplaceId, $marketplaceNumber)
+    {
+        $orderCollection = $this->orderCollectionFactory->create();
+
+        $orderCollection->addMarketplaceIdFilter($marketplaceId);
+        $orderCollection->addMarketplaceNumberFilter($marketplaceNumber);
+        $orderIds = $orderCollection->getAllIds();
+
+        if (empty($orderIds)) {
+            throw new NoSuchEntityException(
+                __(
+                    'Marketplace order with marketplace ID "%1" and number "%2" does not exist.',
+                    $marketplaceId,
+                    $marketplaceNumber
+                )
+            );
+        }
+
+        return $this->getById($orderIds[0]);
     }
 
     public function getBySalesOrderId($orderId)

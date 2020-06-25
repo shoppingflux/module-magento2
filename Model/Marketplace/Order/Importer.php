@@ -166,7 +166,11 @@ class Importer
     public function importApiOrder(ApiOrder $apiOrder, StoreInterface $store)
     {
         try {
-            $marketplaceOrder = $this->orderRepository->getByShoppingFeedId($apiOrder->getId());
+            $marketplaceOrder = $this->orderRepository->getByMarketplaceIdAndNumber(
+                $apiOrder->getChannel()->getId(),
+                $apiOrder->getReference()
+            );
+
             $this->importExistingApiOrder($apiOrder, $marketplaceOrder, $store);
         } catch (NoSuchEntityException $e) {
             $this->importNewApiOrder($apiOrder, $store);
