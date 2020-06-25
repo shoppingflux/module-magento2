@@ -46,7 +46,8 @@ class SaveProductsAttributesObserver implements ObserverInterface
         $params = $this->request->getParams();
         $productIds = $this->attributeActionHelper->getProductIds();
 
-        if (isset($params[FeedAttributesTab::DATA_SCOPE])
+        if (
+            isset($params[FeedAttributesTab::DATA_SCOPE])
             && is_array($params[FeedAttributesTab::DATA_SCOPE])
             && !empty($productIds)
         ) {

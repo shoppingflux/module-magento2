@@ -73,7 +73,8 @@ class FeedUrl extends Column
             $storeFeedUrls = $this->getStoreFeedUrls();
 
             foreach ($dataSource['data']['items'] as &$item) {
-                if (isset($item[StoreInterface::STORE_ID])
+                if (
+                    isset($item[StoreInterface::STORE_ID])
                     && isset($storeFeedUrls[$item[StoreInterface::STORE_ID]])
                 ) {
                     $feedUrl = $storeFeedUrls[$item[StoreInterface::STORE_ID]];

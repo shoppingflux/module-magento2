@@ -47,7 +47,8 @@ class Schedule extends Column
                 if (isset($item[$fieldName]) || isset($item[TaskInterface::SCHEDULE_TYPE])) {
                     $scheduleType = $item[$fieldName] ?? $item[TaskInterface::SCHEDULE_TYPE];
 
-                    if ((TaskInterface::SCHEDULE_TYPE_CUSTOM === $scheduleType)
+                    if (
+                        (TaskInterface::SCHEDULE_TYPE_CUSTOM === $scheduleType)
                         && isset($item[TaskInterface::CRON_EXPRESSION])
                     ) {
                         $item[$fieldName] = $item[TaskInterface::CRON_EXPRESSION];

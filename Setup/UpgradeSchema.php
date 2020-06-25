@@ -671,7 +671,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $connection = $setup->getConnection();
         $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
 
-        if ($connection->tableColumnExists($marketplaceOrderTicketTableName, 'marketplace_order_id')
+        if (
+            $connection->tableColumnExists($marketplaceOrderTicketTableName, 'marketplace_order_id')
             && !$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::ORDER_ID)
         ) {
             $connection->changeColumn(
@@ -696,7 +697,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $connection = $setup->getConnection();
         $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
 
-        if ($connection->tableColumnExists($marketplaceOrderTicketTableName, 'action_code')
+        if (
+            $connection->tableColumnExists($marketplaceOrderTicketTableName, 'action_code')
             && !$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::ACTION)
         ) {
             $connection->changeColumn(
@@ -850,7 +852,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $connection = $setup->getConnection();
         $marketplaceOrderLogTableName = $this->tableDictionary->getMarketplaceOrderLogTableName();
 
-        if ($connection->tableColumnExists($marketplaceOrderLogTableName, 'marketplace_order_id')
+        if (
+            $connection->tableColumnExists($marketplaceOrderLogTableName, 'marketplace_order_id')
             && !$connection->tableColumnExists($marketplaceOrderLogTableName, LogInterface::ORDER_ID)
         ) {
             $connection->changeColumn(

@@ -13,7 +13,8 @@ class AvailabilityValidator extends AbstractValidator
     {
         $isAvailable = false;
 
-        if (isset($validationSubject['payment'])
+        if (
+            isset($validationSubject['payment'])
             && ($validationSubject['payment'] instanceof PaymentDataObject)
             && ($quotePayment = $validationSubject['payment']->getPayment())
             && ($quotePayment instanceof QuotePayment)

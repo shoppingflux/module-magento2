@@ -20,7 +20,8 @@ define(
                         var suggestionKey = 'sfm.last_suggestion.' + action.target;
                         var lastSuggestedValue = UiRegistry.get(suggestionKey);
 
-                        if (_.isNull(currentValue)
+                        if (
+                            _.isNull(currentValue)
                             || _.isUndefined(currentValue)
                             || (String(currentValue).trim() === '')
                             || (currentValue === lastSuggestedValue)

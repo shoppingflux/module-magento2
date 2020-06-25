@@ -56,7 +56,8 @@ class Stock extends AbstractAdapter implements StockInterface
         $config = $this->getConfig();
         $quantity = $config->getDefaultQuantity($store);
 
-        if ($config->shouldForceZeroQuantityForNonSalable($store)
+        if (
+            $config->shouldForceZeroQuantityForNonSalable($store)
             && !$product->getCatalogProduct()->isSalable()
         ) {
             $quantity = 0;

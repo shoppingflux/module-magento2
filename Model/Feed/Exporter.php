@@ -286,7 +286,8 @@ class Exporter
             )
         );
 
-        if ((self::CHILDREN_EXPORT_MODE_BOTH === $childrenExportMode)
+        if (
+            (self::CHILDREN_EXPORT_MODE_BOTH === $childrenExportMode)
             || (self::CHILDREN_EXPORT_MODE_WITHIN_PARENTS === $childrenExportMode)
         ) {
             $productsIterator->append(

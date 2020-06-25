@@ -48,7 +48,8 @@ class FulltextFilterPlugin
     {
         $result = $proceed($collection, $filter);
 
-        if (($collection instanceof OrderGridCollection)
+        if (
+            ($collection instanceof OrderGridCollection)
             && $this->orderGridCollectionPlugin->isAppliedToOrderGridCollection($collection)
         ) {
             /**
@@ -63,7 +64,8 @@ class FulltextFilterPlugin
 
             foreach ($whereClauses as $index => $whereClause) {
                 /** @see FulltextFilter::apply() */
-                if ((false !== strpos($whereClause, 'MATCH('))
+                if (
+                    (false !== strpos($whereClause, 'MATCH('))
                     && (false !== strpos($whereClause, 'AGAINST('))
                 ) {
                     if (null === $fulltextClauseIndex) {

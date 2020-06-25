@@ -36,7 +36,8 @@ class CheckItemsQuantityPlugin
      */
     public function aroundExecute(CheckItemsQuantity $subject, callable $proceed, array $items, $stockId)
     {
-        if (!$this->orderImporter->isImportRunning()
+        if (
+            !$this->orderImporter->isImportRunning()
             || (!$store = $this->orderImporter->getImportRunningForStore())
             || $this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
         ) {

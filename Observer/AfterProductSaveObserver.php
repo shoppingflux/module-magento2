@@ -26,7 +26,8 @@ class AfterProductSaveObserver implements ObserverInterface
 
     public function execute(Observer $observer)
     {
-        if (($catalogProduct = $observer->getEvent()->getData(static::EVENT_KEY_PRODUCT))
+        if (
+            ($catalogProduct = $observer->getEvent()->getData(static::EVENT_KEY_PRODUCT))
             && ($catalogProduct instanceof CatalogProduct)
             && ($productId = (int) $catalogProduct->getId())
         ) {

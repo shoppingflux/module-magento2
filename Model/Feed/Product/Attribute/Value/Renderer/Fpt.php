@@ -42,7 +42,8 @@ class Fpt extends AbstractRenderer
                 $countryId = strtolower(trim($row['country']));
                 $chosenRow = $countryRows[$countryId] ?? null;
 
-                if (in_array($row['website_id'], $expectedWebsiteIds, true)
+                if (
+                    in_array($row['website_id'], $expectedWebsiteIds, true)
                     && empty($row['state'])
                     && (!is_array($chosenRow) || (empty($chosenRow['website_id']) && !empty($row['website_id'])))
                 ) {

@@ -204,7 +204,8 @@ class Prices extends AbstractAdapter implements PricesInterface
             $variationFinalPrice = $variationPriceData[self::KEY_FINAL_PRICE] ?? 0;
 
             if (!empty($variationFinalPrice)) {
-                if (empty($priceData)
+                if (
+                    empty($priceData)
                     || (0 < $this->compareVariationPricesPriority($variationFinalPrice, $currentFinalPrice, $priceType))
                 ) {
                     $priceData = $variationPriceData;

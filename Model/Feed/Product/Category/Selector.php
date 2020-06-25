@@ -211,7 +211,8 @@ class Selector implements SelectorInterface
         $categoryIds = $product->getCategoryIds();
         $selectedCategoryId = null;
 
-        if (!empty($preselectedCategoryId)
+        if (
+            !empty($preselectedCategoryId)
             && isset($categories[$preselectedCategoryId])
             && $this->isSelectableCategory($categories[$preselectedCategoryId], $selectionIds, $selectionMode)
         ) {
@@ -220,7 +221,8 @@ class Selector implements SelectorInterface
             $categoryWeights = [];
 
             foreach ($categoryIds as $categoryId) {
-                if (isset($categories[$categoryId])
+                if (
+                    isset($categories[$categoryId])
                     && ($categories[$categoryId]->getLevel() <= $maximumLevel)
                     && $this->isSelectableCategory($categories[$categoryId], $selectionIds, $selectionMode)
                 ) {
@@ -240,7 +242,8 @@ class Selector implements SelectorInterface
                             && ($parentLevel-- >= $minimumParentLevel)
                             && (++$parentCount <= $includableParentCount)
                         ) {
-                            if (!isset($categoryWeights[$parentId])
+                            if (
+                                !isset($categoryWeights[$parentId])
                                 && $this->isSelectableCategory($categories[$parentId], $selectionIds, $selectionMode)
                             ) {
                                 $categoryWeights[$parentId] = $parentLevel

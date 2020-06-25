@@ -38,7 +38,8 @@ class TaxPlugin
     ) {
         $productAttributes = $proceed($product, $shipping, $billing, $website, $calculateTax, $round);
 
-        if (($product instanceof DataObject)
+        if (
+            ($product instanceof DataObject)
             && ($productId = (int) $product->getId())
             && isset($this->lockedProductAttributes[$productId])
             && ($shipping instanceof QuoteAddress)

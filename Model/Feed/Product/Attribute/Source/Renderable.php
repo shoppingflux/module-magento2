@@ -37,7 +37,7 @@ class Renderable extends AbstractSource
     public function __construct(
         AttributeRendererPoolInterface $attributeRendererPool,
         SourceInterface $fullAttributeSource,
-        array $excludedAttributeCodes = array()
+        array $excludedAttributeCodes = []
     ) {
         $this->attributeRendererPool = $attributeRendererPool;
         $this->fullAttributeSource = $fullAttributeSource;
@@ -51,7 +51,8 @@ class Renderable extends AbstractSource
     {
         if (!is_array($this->renderableAttributes)) {
             foreach ($this->fullAttributeSource->getAttributesByCode() as $attributeCode => $attribute) {
-                if (!in_array($attributeCode, $this->excludedAttributeCodes, true)
+                if (
+                    !in_array($attributeCode, $this->excludedAttributeCodes, true)
                     && $this->attributeRendererPool->hasAttributeRenderableValues($attribute)
                 ) {
                     $this->renderableAttributes[$attributeCode] = $attribute;

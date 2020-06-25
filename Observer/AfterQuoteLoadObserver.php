@@ -60,7 +60,8 @@ class AfterQuoteLoadObserver implements ObserverInterface
             if ($this->isImportedQuoteEvent) {
                 $this->orderImporter->tagImportedQuote($quote);
 
-                if (($store = $this->orderImporter->getImportRunningForStore())
+                if (
+                    ($store = $this->orderImporter->getImportRunningForStore())
                     && !$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
                 ) {
                     $quote->setIsSuperMode(true);
@@ -70,7 +71,8 @@ class AfterQuoteLoadObserver implements ObserverInterface
                 $quote->setIgnoreOldQty(true);
                 $quote->collectTotals();
             }
-        } elseif ($this->isImportedQuoteEvent
+        } elseif (
+            $this->isImportedQuoteEvent
             && ($productCollection = $observer->getEvent()->getData(static::EVENT_KEY_PRODUCT_COLLECTION))
             && ($productCollection instanceof CatalogProductCollection)
             && ($store = $this->orderImporter->getImportRunningForStore())

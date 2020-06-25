@@ -66,7 +66,8 @@ class DataObject extends BaseDataObject
         $keys = explode('/', $path);
 
         foreach ($keys as $key) {
-            if (!isset($data[$key])
+            if (
+                !isset($data[$key])
                 || !(is_array($data[$key]) || ($data[$key] instanceof BaseDataObject))
             ) {
                 $data[$key] = [];

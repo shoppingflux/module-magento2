@@ -136,7 +136,8 @@ class QtyResolver implements QtyResolverInterface
     private function getMsiStockResolver()
     {
         if (null === $this->msiStockResolver) {
-            if ($this->isMsiRequiredModulesEnabled()
+            if (
+                $this->isMsiRequiredModulesEnabled()
                 && interface_exists('Magento\InventorySalesApi\Api\StockResolverInterface')
             ) {
                 try {
@@ -158,7 +159,8 @@ class QtyResolver implements QtyResolverInterface
     private function getMsiGetStockItemConfigurationCommand()
     {
         if (null === $this->msiGetStockItemConfigurationCommand) {
-            if ($this->isMsiRequiredModulesEnabled()
+            if (
+                $this->isMsiRequiredModulesEnabled()
                 && interface_exists('Magento\InventoryConfigurationApi\Api\GetStockItemConfigurationInterface')
             ) {
                 try {
@@ -184,7 +186,8 @@ class QtyResolver implements QtyResolverInterface
     private function getMsiGetProductSalableQtyCommand()
     {
         if (null === $this->msiGetProductSalableQtyCommand) {
-            if ($this->isMsiRequiredModulesEnabled()
+            if (
+                $this->isMsiRequiredModulesEnabled()
                 && interface_exists('Magento\InventorySalesApi\Api\GetProductSalableQtyInterface')
             ) {
                 try {
@@ -208,7 +211,8 @@ class QtyResolver implements QtyResolverInterface
     private function getMsiGetStockSourceLinksCommand()
     {
         if (null === $this->msiGetStockSourceLinksCommand) {
-            if ($this->isMsiRequiredModulesEnabled()
+            if (
+                $this->isMsiRequiredModulesEnabled()
                 && interface_exists('Magento\InventoryApi\Api\GetStockSourceLinksInterface')
             ) {
                 try {
@@ -232,7 +236,8 @@ class QtyResolver implements QtyResolverInterface
     private function getMsiGetSourceItemsBySkuCommand()
     {
         if (null === $this->msiGetSourceItemsBySkuCommand) {
-            if ($this->isMsiRequiredModulesEnabled()
+            if (
+                $this->isMsiRequiredModulesEnabled()
                 && interface_exists('Magento\InventoryApi\Api\GetSourceItemsBySkuInterface')
             ) {
                 try {
@@ -327,7 +332,8 @@ class QtyResolver implements QtyResolverInterface
         $getStockSourceLinksCommand = $this->getMsiGetStockSourceLinksCommand();
         $getSourceItemsBySkuCommand = $this->getMsiGetSourceItemsBySkuCommand();
 
-        if ((null !== $stockResolver)
+        if (
+            (null !== $stockResolver)
             && (null !== $getProductSalableQtyCommand)
             && (null !== $getStockItemConfigurationCommand)
             && (null !== $getStockSourceLinksCommand)

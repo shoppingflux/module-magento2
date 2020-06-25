@@ -147,7 +147,8 @@ class Adapter implements AdapterInterface
 
             if (!in_array((int) $catalogProduct->getVisibility(), $this->config->getExportedVisibilities($store))) {
                 $exclusionReason = FeedProduct::EXCLUSION_REASON_FILTERED_VISIBILITY;
-            } elseif ($this->config->shouldExportSelectedOnly($store)
+            } elseif (
+                $this->config->shouldExportSelectedOnly($store)
                 && !$this->isProductSelectedForExport($store, $product)
             ) {
                 $exclusionReason = FeedProduct::EXCLUSION_REASON_UNSELECTED_PRODUCT;
