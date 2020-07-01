@@ -19,6 +19,7 @@ use ShoppingFeed\Manager\Model\LabelledValueFactory;
 class Stock extends AbstractAdapter implements StockInterface
 {
     const KEY_QUANTITY = 'qty';
+    const KEY_IS_IN_STOCK = 'is_in_stock';
 
     /**
      * @var QtyResolverInterface
@@ -55,14 +56,22 @@ class Stock extends AbstractAdapter implements StockInterface
     {
         $config = $this->getConfig();
         $quantity = $config->getDefaultQuantity($store);
+        $isInStock = ($quantity > 0);
 
         if (
             $config->shouldForceZeroQuantityForNonSalable($store)
             && !$product->getCatalogProduct()->isSalable()
         ) {
             $quantity = 0;
+            $isInStock = false;
         } elseif ($config->shouldUseActualStockState($store)) {
             $stockQuantity = $this->qtyResolver->getCatalogProductQuantity(
+                $product->getCatalogProduct(),
+                $store,
+                $config->getMsiQuantityType($store)
+            );
+
+            $isInStock = $this->qtyResolver->isCatalogProductInStock(
                 $product->getCatalogProduct(),
                 $store,
                 $config->getMsiQuantityType($store)
@@ -73,7 +82,10 @@ class Stock extends AbstractAdapter implements StockInterface
             }
         }
 
-        return [ self::KEY_QUANTITY => (int) floor($quantity) ];
+        return [
+            self::KEY_QUANTITY => (int) floor($quantity),
+            self::KEY_IS_IN_STOCK => $isInStock ? 1 : 0,
+        ];
     }
 
     public function adaptRetainedProductData(StoreInterface $store, array $productData)
@@ -102,10 +114,20 @@ class Stock extends AbstractAdapter implements StockInterface
         if (isset($productData[self::KEY_QUANTITY])) {
             $exportedProduct->setQuantity($productData[self::KEY_QUANTITY]);
         }
+
+        if (isset($productData[self::KEY_IS_IN_STOCK])) {
+            $exportedProduct->setAttribute(self::KEY_IS_IN_STOCK, $productData[self::KEY_IS_IN_STOCK]);
+        }
     }
 
     public function describeProductData(StoreInterface $store, array $productData)
     {
-        return $this->describeRawProductData([ self::KEY_QUANTITY => __('Quantity') ], $productData);
+        return $this->describeRawProductData(
+            [
+                self::KEY_QUANTITY => __('Quantity'),
+                self::KEY_IS_IN_STOCK => __('Is In Stock'),
+            ],
+            $productData
+        );
     }
 }

@@ -24,4 +24,12 @@ interface QtyResolverInterface
      * @return float|null
      */
     public function getCatalogProductQuantity(CatalogProduct $product, StoreInterface $store, $msiQuantityType);
+
+    /**
+     * @param CatalogProduct $product
+     * @param StoreInterface $store
+     * @param string $msiQuantityType
+     * @return bool|null
+     */
+    public function isCatalogProductInStock(CatalogProduct $product, StoreInterface $store, $msiQuantityType);
 }
