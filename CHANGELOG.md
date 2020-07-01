@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.37.0] - 2020-07-01
+### Added
+- Export the stock statuses under the "is_in_stock" attribute
+- Add a "Is Fulfilled" condition to the shipping method rules
+
+### Fixed
+- Fix the "Payment Method" conditions in the shipping method rules
+
 ## [0.36.0] - 2020-06-25
 ### Added
 - Implement handling of fulfilled orders
