@@ -12,6 +12,7 @@ use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\InventoryApi\Api\GetSourceItemsBySkuInterface;
 use Magento\InventoryApi\Api\GetStockSourceLinksInterface;
 use Magento\InventoryApi\Api\Data\StockSourceLinkInterface;
+use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryConfigurationApi\Api\GetStockItemConfigurationInterface;
 use Magento\InventoryConfigurationApi\Exception\SkuIsNotAssignedToStockException;
 use Magento\InventorySalesApi\Api\StockResolverInterface;
@@ -28,6 +29,8 @@ class QtyResolver implements QtyResolverInterface
         'Magento_InventorySales',
         'Magento_InventorySalesApi',
     ];
+
+    const PRODUCT_DATA_KEY_MSI_STOCK_DATA = '__sfm_msi_stock_data__';
 
     /**
      * @var ModuleManager
@@ -286,14 +289,15 @@ class QtyResolver implements QtyResolverInterface
      * @param GetSourceItemsBySkuInterface $getSourceItemsBySkuCommand
      * @param int $stockId
      * @param string $sku
-     * @return float
+     * @return array
      */
-    private function getMsiSkuStockQuantity(
+    private function getMsiSkuStockData(
         GetStockSourceLinksInterface $getStockSourceLinksCommand,
         GetSourceItemsBySkuInterface $getSourceItemsBySkuCommand,
         $stockId,
         $sku
     ) {
+        $isInStock = false;
         $quantity = 0.0;
 
         $this->searchCriteriaBuilder->addFilter(StockSourceLinkInterface::STOCK_ID, $stockId);
@@ -301,9 +305,12 @@ class QtyResolver implements QtyResolverInterface
         $sourceLinksResult = $getStockSourceLinksCommand->execute($sourceLinksSearchCriteria);
         $sourceItems = $getSourceItemsBySkuCommand->execute($sku);
         $sourceQuantities = [];
+        $sourceStatuses = [];
 
         foreach ($sourceItems as $sourceItem) {
-            $sourceQuantities[$sourceItem->getSourceCode()] = $sourceItem->getQuantity();
+            $sourceCode = $sourceItem->getSourceCode();
+            $sourceQuantities[$sourceCode] = $sourceItem->getQuantity();
+            $sourceStatuses[$sourceCode] = (int) $sourceItem->getStatus();
         }
 
         foreach ($sourceLinksResult->getItems() as $sourceLink) {
@@ -312,20 +319,28 @@ class QtyResolver implements QtyResolverInterface
             if (isset($sourceQuantities[$sourceCode])) {
                 $quantity += $sourceQuantities[$sourceCode];
             }
+
+            if (!$isInStock && isset($sourceStatuses[$sourceCode])) {
+                $isInStock = SourceItemInterface::STATUS_IN_STOCK === $sourceStatuses[$sourceCode];
+            }
         }
 
-        return $quantity;
+        return [ $isInStock, $quantity ];
     }
 
     /**
      * @param CatalogProduct $product
      * @param StoreInterface $store
      * @param string $msiQuantityType
-     * @return float|false|null
+     * @return array|false|null
      */
-    private function getCatalogProductMsiQuantity(CatalogProduct $product, StoreInterface $store, $msiQuantityType)
+    private function getCatalogProductMsiStockData(CatalogProduct $product, StoreInterface $store, $msiQuantityType)
     {
-        $quantity = false;
+        if ($product->hasData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA)) {
+            return $product->getData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA);
+        }
+
+        $stockData = false;
         $stockResolver = $this->getMsiStockResolver();
         $getProductSalableQtyCommand = $this->getMsiGetProductSalableQtyCommand();
         $getStockItemConfigurationCommand = $this->getMsiGetStockItemConfigurationCommand();
@@ -349,14 +364,12 @@ class QtyResolver implements QtyResolverInterface
                         $salableQuantity = $getProductSalableQtyCommand->execute($sku, $stockId);
                     }
 
-                    if (static::MSI_QUANTITY_TYPE_SALABLE !== $msiQuantityType) {
-                        $stockQuantity = $this->getMsiSkuStockQuantity(
-                            $getStockSourceLinksCommand,
-                            $getSourceItemsBySkuCommand,
-                            $stockId,
-                            $sku
-                        );
-                    }
+                    list($isInStock, $stockQuantity) = $this->getMsiSkuStockData(
+                        $getStockSourceLinksCommand,
+                        $getSourceItemsBySkuCommand,
+                        $stockId,
+                        $sku
+                    );
 
                     switch ($msiQuantityType) {
                         case static::MSI_QUANTITY_TYPE_STOCK:
@@ -372,24 +385,28 @@ class QtyResolver implements QtyResolverInterface
                             $quantity = $salableQuantity;
                             break;
                     }
+
+                    $stockData = [ $isInStock, $quantity ];
                 } else {
-                    $quantity = null;
+                    $stockData = null;
                 }
             } catch (SkuIsNotAssignedToStockException $e) {
-                $quantity = 0.0;
+                $stockData = [ false, 0.0 ];
             } catch (\Exception $e) {
-                $quantity = false;
+                $stockData = false;
             }
         }
 
-        return $quantity;
+        $product->setData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA, $stockData);
+
+        return $stockData;
     }
 
     public function getCatalogProductQuantity(CatalogProduct $product, StoreInterface $store, $msiQuantityType)
     {
-        $quantity = $this->getCatalogProductMsiQuantity($product, $store, $msiQuantityType);
+        $stockData = $this->getCatalogProductMsiStockData($product, $store, $msiQuantityType);
 
-        if (false === $quantity) {
+        if (false === $stockData) {
             $stockItem = $this->stockRegistry->getStockItem($product->getId(), $store->getBaseWebsiteId());
 
             if ($stockItem instanceof StockItem) {
@@ -402,8 +419,33 @@ class QtyResolver implements QtyResolverInterface
             } else {
                 $quantity = null;
             }
+        } else {
+            $quantity = $stockData[1];
         }
 
         return $quantity;
+    }
+
+    public function isCatalogProductInStock(CatalogProduct $product, StoreInterface $store, $msiQuantityType)
+    {
+        $stockData = $this->getCatalogProductMsiStockData($product, $store, $msiQuantityType);
+
+        if (false === $stockData) {
+            $stockItem = $this->stockRegistry->getStockItem($product->getId(), $store->getBaseWebsiteId());
+
+            if ($stockItem instanceof StockItem) {
+                $stockItem->setStoreId($store->getBaseStoreId());
+            }
+
+            if ($stockItem->getManageStock()) {
+                $isInStock = $stockItem->getIsInStock();
+            } else {
+                $isInStock = true;
+            }
+        } else {
+            $isInStock = $stockData[0];
+        }
+
+        return $isInStock;
     }
 }
