@@ -126,7 +126,7 @@ class Order extends AbstractCondition
         if ($this->getAttribute() === self::ATTRIBUTE_KEY_RAW_SHIPMENT_CARRIER) {
             $this->setAttribute(self::ATTRIBUTE_KEY_SHIPMENT_CARRIER);
         } elseif ($this->getAttribute() === self::ATTRIBUTE_KEY_RAW_PAYMENT_METHOD) {
-            $this->setAttribute(self::ATTRIBUTE_KEY_RAW_PAYMENT_METHOD);
+            $this->setAttribute(self::ATTRIBUTE_KEY_PAYMENT_METHOD);
         }
 
         return parent::validate($marketplaceOrder);
