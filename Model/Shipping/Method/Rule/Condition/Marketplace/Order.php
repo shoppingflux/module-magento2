@@ -25,6 +25,7 @@ class Order extends AbstractCondition
     const ATTRIBUTE_KEY_RAW_PAYMENT_METHOD = 'raw_payment_method';
     const ATTRIBUTE_KEY_SHIPMENT_CARRIER = 'shipment_carrier';
     const ATTRIBUTE_KEY_PAYMENT_METHOD = 'payment_method';
+    const ATTRIBUTE_KEY_IS_FULFILLED = 'is_fulfilled';
 
     /**
      * @var CurrencySource
@@ -55,6 +56,7 @@ class Order extends AbstractCondition
                 self::ATTRIBUTE_KEY_TOTAL_AMOUNT => __('Total Amount'),
                 self::ATTRIBUTE_KEY_RAW_SHIPMENT_CARRIER => __('Shipment Carrier'),
                 self::ATTRIBUTE_KEY_RAW_PAYMENT_METHOD => __('Payment Method'),
+                self::ATTRIBUTE_KEY_IS_FULFILLED => __('Is Fulfilled'),
             ]
         );
 
@@ -78,6 +80,9 @@ class Order extends AbstractCondition
 
             case self::ATTRIBUTE_KEY_CURRENCY_CODE:
                 return 'select';
+
+            case self::ATTRIBUTE_KEY_IS_FULFILLED:
+                return 'boolean';
         }
 
         return 'string';
@@ -87,6 +92,7 @@ class Order extends AbstractCondition
     {
         switch ($this->getAttribute()) {
             case self::ATTRIBUTE_KEY_CURRENCY_CODE:
+            case self::ATTRIBUTE_KEY_IS_FULFILLED:
                 return 'select';
         }
 
@@ -99,6 +105,20 @@ class Order extends AbstractCondition
             switch ($this->getAttribute()) {
                 case self::ATTRIBUTE_KEY_CURRENCY_CODE:
                     $options = $this->currencySource->toOptionArray();
+                    break;
+
+                case self::ATTRIBUTE_KEY_IS_FULFILLED:
+                    $options = [
+                        [
+                            'value' => 0,
+                            'label' => __('No'),
+                        ],
+                        [
+                            'value' => 1,
+                            'label' => __('Yes'),
+                        ],
+                    ];
+
                     break;
 
                 default:
