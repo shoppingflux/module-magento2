@@ -36,6 +36,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      * @param SchemaSetupInterface $setup
      * @param ModuleContextInterface $context
      * @throws \Zend_Db_Exception
+     * @throws \Exception
      */
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
@@ -1381,10 +1382,112 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     /**
      * @param SchemaSetupInterface $setup
+     * @throws \Exception
+     */
+    private function deduplicateMarketplaceOrders(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        $duplicateOrderIdField = $connection->quoteIdentifier(
+            [
+                'duplicate_table',
+                OrderInterface::ORDER_ID,
+            ]
+        );
+
+        $duplicateMarketplaceIdField = $connection->quoteIdentifier(
+            [
+                'duplicate_table',
+                OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+            ]
+        );
+
+        $duplicateMarketplaceNumberField = $connection->quoteIdentifier(
+            [
+                'duplicate_table',
+                OrderInterface::MARKETPLACE_ORDER_NUMBER,
+            ]
+        );
+
+        $originalOrderIdField = $connection->quoteIdentifier(
+            [
+                'original_table',
+                OrderInterface::ORDER_ID,
+            ]
+        );
+
+        $originalMarketplaceIdField = $connection->quoteIdentifier(
+            [
+                'original_table',
+                OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+            ]
+        );
+
+        $originalMarketplaceNumberField = $connection->quoteIdentifier(
+            [
+                'original_table',
+                OrderInterface::MARKETPLACE_ORDER_NUMBER,
+            ]
+        );
+
+        $originalCountSelect = $connection->select()
+            ->from(
+                [ 'original_table' => $marketplaceOrderTableName ],
+                [ new \Zend_Db_Expr('COUNT(*) + 1') ]
+            )
+            ->where($originalOrderIdField . ' < ' . $duplicateOrderIdField)
+            ->where($originalMarketplaceIdField . ' = ' . $duplicateMarketplaceIdField)
+            ->where($originalMarketplaceNumberField . ' = ' . $duplicateMarketplaceNumberField);
+
+        $duplicateUpdateSelect = $connection->select()
+            ->from(
+                [ 'duplicate_table' => $marketplaceOrderTableName ],
+                [
+                    OrderInterface::ORDER_ID,
+                    OrderInterface::MARKETPLACE_ORDER_NUMBER => $connection->getConcatSql(
+                        [
+                            $duplicateMarketplaceNumberField,
+                            $connection->quote('_'),
+                            '(' . $originalCountSelect->assemble() . ')',
+                            $connection->quote('_'),
+                        ]
+                    ),
+                ]
+            )
+            ->where('(' . $originalCountSelect->assemble() . ') > 1');
+
+        $duplicateUpdates = $connection->fetchPairs($duplicateUpdateSelect);
+
+        $connection->beginTransaction();
+
+        try {
+            foreach ($duplicateUpdates as $orderId => $orderNumber) {
+                $connection->update(
+                    $marketplaceOrderTableName,
+                    [ OrderInterface::MARKETPLACE_ORDER_NUMBER => $orderNumber ],
+                    $connection->quoteIdentifier(OrderInterface::ORDER_ID) . ' = ' . $connection->quote($orderId)
+                );
+            }
+
+            $connection->commit();
+        } catch (\Exception $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Exception
      */
     private function addMarketplaceOrderMarketplaceIdAndNumberUniqueIndex(SchemaSetupInterface $setup)
     {
+        $this->deduplicateMarketplaceOrders($setup);
+
         $connection = $setup->getConnection();
+
         $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
 
         $indexName = $connection->getIndexName(
