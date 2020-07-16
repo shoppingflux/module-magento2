@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.37.1] - 2020-07-16
+### Fixed
+- Deduplicate the marketplace orders before adding the new unique index
+
 ## [0.37.0] - 2020-07-01
 ### Added
 - Export the stock statuses under the "is_in_stock" attribute
