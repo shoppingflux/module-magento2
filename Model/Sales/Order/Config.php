@@ -47,6 +47,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_FORCE_CROSS_BORDER_TRADE = 'force_border_trade';
     const KEY_CREATE_INVOICE = 'create_invoice';
     const KEY_CREATE_FULFILMENT_SHIPMENT = 'create_fulfilment_shipment';
+    const KEY_ENABLE_DEBUG_MODE = 'enable_debug_mode';
 
     /**
      * @var ScopeConfigInterface
@@ -423,6 +424,20 @@ class Config extends AbstractConfig implements ConfigInterface
                         'sortOrder' => 190,
                     ]
                 ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ENABLE_DEBUG_MODE,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Enable Debug Mode'),
+                        'checkedNotice' => __(
+                            'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
+                        ),
+                        'uncheckedNotice' => __('Debug mode is disabled.'),
+                        'sortOrder' => 200,
+                    ]
+                ),
             ],
             parent::getBaseFields()
         );
@@ -718,6 +733,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldCreateFulfilmentShipment(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CREATE_FULFILMENT_SHIPMENT);
+    }
+
+    public function isDebugModeEnabled(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ENABLE_DEBUG_MODE);
     }
 
     public function getFieldsetLabel()
