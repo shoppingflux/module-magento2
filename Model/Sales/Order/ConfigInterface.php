@@ -9,9 +9,15 @@ interface ConfigInterface extends BaseConfig
 {
     /**
      * @param StoreInterface $store
-     * @return bool
+     * @return int
      */
-    public function shouldImportFulfilledOrders(StoreInterface $store);
+    public function getOrderImportDelay(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return \DateTime
+     */
+    public function getOrderImportFromDate(StoreInterface $store);
 
     /**
      * @param StoreInterface $store
@@ -122,7 +128,25 @@ interface ConfigInterface extends BaseConfig
      * @param StoreInterface $store
      * @return bool
      */
+    public function shouldImportFulfilledOrders(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
     public function shouldCreateFulfilmentShipment(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldImportShippedOrders(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldCreateShippedShipment(StoreInterface $store);
 
     /**
      * @param StoreInterface $store

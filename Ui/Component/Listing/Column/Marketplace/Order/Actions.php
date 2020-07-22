@@ -2,11 +2,16 @@
 
 namespace ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order;
 
+use Magento\Framework\AuthorizationInterface;
+use Magento\Framework\UrlInterface;
+use Magento\Framework\View\Element\UiComponent\ContextInterface;
+use Magento\Framework\View\Element\UiComponentFactory;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Marketplace\OrderAction;
-use ShoppingFeed\Manager\Ui\Component\Listing\Column\AbstractActions;
+use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
+use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 
-class Actions extends AbstractActions
+class Actions extends AbstractColumn
 {
     const ACL_VIEW_SALES_ORDER = 'Magento_Sales::actions_view';
     const ACL_IMPORT = 'ShoppingFeed_Manager::marketplace_order_import';
@@ -17,6 +22,49 @@ class Actions extends AbstractActions
     const URL_PATH_IMPORT = 'shoppingfeed_manager/marketplace_order/import';
     const URL_PATH_CANCEL_IMPORT = 'shoppingfeed_manager/marketplace_order/cancelImport';
     const URL_PATH_RESET_IMPORT_TRY_COUNT = 'shoppingfeed_manager/marketplace_order/resetImportTryCount';
+
+    /**
+     * @var AuthorizationInterface
+     */
+    private $authorizationModel;
+
+    /**
+     * @var UrlInterface
+     */
+    private $urlBuilder;
+
+    /**
+     * @param ContextInterface $context
+     * @param UiComponentFactory $uiComponentFactory
+     * @param StoreCollectionFactory $storeCollectionFactory
+     * @param OrderConfigInterface $orderGeneralConfig
+     * @param AuthorizationInterface $authorizationModel
+     * @param UrlInterface $urlBuilder
+     * @param array $components
+     * @param array $data
+     */
+    public function __construct(
+        ContextInterface $context,
+        UiComponentFactory $uiComponentFactory,
+        StoreCollectionFactory $storeCollectionFactory,
+        OrderConfigInterface $orderGeneralConfig,
+        AuthorizationInterface $authorizationModel,
+        UrlInterface $urlBuilder,
+        array $components = [],
+        array $data = []
+    ) {
+        $this->authorizationModel = $authorizationModel;
+        $this->urlBuilder = $urlBuilder;
+
+        parent::__construct(
+            $context,
+            $uiComponentFactory,
+            $storeCollectionFactory,
+            $orderGeneralConfig,
+            $components,
+            $data
+        );
+    }
 
     public function prepareDataSource(array $dataSource)
     {
@@ -46,7 +94,7 @@ class Actions extends AbstractActions
                     }
 
                     if (!$salesOrderId) {
-                        if ($isImportAllowed) {
+                        if ($isImportAllowed && $this->isImportableOrderItem($item)) {
                             $item[$this->getData('name')]['import'] = [
                                 'href' => $this->urlBuilder->getUrl(
                                     static::URL_PATH_IMPORT,

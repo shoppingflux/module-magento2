@@ -141,6 +141,14 @@
                 </item>
             </argument>
         </column>
+        <column name="shopping_feed_status">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Status</item>
+                </item>
+            </argument>
+        </column>
         <column name="importable" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Importable">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">

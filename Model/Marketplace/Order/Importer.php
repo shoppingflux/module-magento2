@@ -202,17 +202,10 @@ class Importer
      */
     public function importNewApiOrder(ApiOrder $apiOrder, StoreInterface $store)
     {
-        $isFulfilled = $this->isFulfilledApiOrder($apiOrder);
-
-        if (
-            ($isFulfilled && !$this->orderGeneralConfig->shouldImportFulfilledOrders($store))
-            || (!$isFulfilled && ($apiOrder->getStatus() !== MarketplaceOrderInterface::STATUS_WAITING_SHIPMENT))
-        ) {
-            return;
-        }
-
         $marketplaceOrder = $this->orderFactory->create();
-        $marketplaceOrder->setIsFulfilled($isFulfilled);
+
+        $marketplaceOrder->setIsFulfilled($this->isFulfilledApiOrder($apiOrder));
+
         $this->importApiBaseOrderData($apiOrder, $marketplaceOrder, $store);
 
         $billingAddress = $this->importApiOrderAddress(

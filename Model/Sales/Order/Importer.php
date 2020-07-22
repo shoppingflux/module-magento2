@@ -353,6 +353,36 @@ class Importer implements ImporterInterface
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function isImportableStoreOrder(MarketplaceOrderInterface $order, StoreInterface $store)
+    {
+        if (!empty($order->getSalesOrderId())) {
+            return false;
+        }
+
+        $createdAt = \DateTime::createFromFormat('Y-m-d H:i:s', $order->getCreatedAt());
+
+        if ($createdAt < $this->orderGeneralConfig->getOrderImportFromDate($store)) {
+            return false;
+        }
+
+        $isShipped = ($order->getShoppingFeedStatus() === MarketplaceOrderInterface::STATUS_SHIPPED);
+
+        if ($order->isFulfilled()) {
+            return $isShipped && $this->orderGeneralConfig->shouldImportFulfilledOrders($store);
+        }
+
+        if ($isShipped) {
+            return $this->orderGeneralConfig->shouldImportShippedOrders($store);
+        }
+
+        return ($order->getShoppingFeedStatus() === MarketplaceOrderInterface::STATUS_WAITING_SHIPMENT);
+    }
+
+    /**
      * @param MarketplaceOrderInterface[] $marketplaceOrders
      * @param StoreInterface $store
      * @throws \Exception
@@ -397,6 +427,10 @@ class Importer implements ImporterInterface
 
         try {
             foreach ($marketplaceOrders as $marketplaceOrder) {
+                if (!$this->isImportableStoreOrder($marketplaceOrder, $store)) {
+                    continue;
+                }
+
                 $marketplaceOrderId = $marketplaceOrder->getId();
 
                 $this->logDebugMessage(
@@ -616,6 +650,10 @@ class Importer implements ImporterInterface
             $marketplaceOrder,
             __('Could not import marketplace order:') . "\n" . $importException->getMessage(),
             (string) $importException
+        );
+
+        $this->logDebugMessage(
+            __('Could not import marketplace order:') . "\n" . $importException->getMessage()
         );
 
         if ($marketplaceOrder->getImportRemainingTryCount() === 1) {
@@ -1113,15 +1151,31 @@ class Importer implements ImporterInterface
     {
         if ($this->isImportRunning() && ($order instanceof SalesOrder)) {
             if ($this->orderGeneralConfig->shouldCreateInvoice($this->currentImportStore)) {
+                $this->logDebugMessage('Creating invoice.');
                 $this->invoiceSalesOrder($order);
+            } else {
+                $this->logDebugMessage('An invoice is not required.');
             }
 
-            if (
-                (null !== $this->currentlyImportedMarketplaceOrder)
-                && $this->currentlyImportedMarketplaceOrder->isFulfilled()
-                && $this->orderGeneralConfig->shouldCreateFulfilmentShipment($this->currentImportStore)
-            ) {
-                $this->shipSalesOrder($order);
+            if (null !== $this->currentlyImportedMarketplaceOrder) {
+                $shoppingFeedStatus = $this->currentlyImportedMarketplaceOrder->getShoppingFeedStatus();
+
+                $shouldShipOrder = (
+                        $this->currentlyImportedMarketplaceOrder->isFulfilled()
+                        && $this->orderGeneralConfig->shouldCreateFulfilmentShipment($this->currentImportStore)
+                    ) || (
+                        !$this->currentlyImportedMarketplaceOrder->isFulfilled()
+                        && (MarketplaceOrderInterface::STATUS_SHIPPED === $shoppingFeedStatus)
+                        && $this->orderGeneralConfig->shouldCreateShippedShipment($this->currentImportStore)
+                    );
+
+                if ($shouldShipOrder) {
+                    $this->logDebugMessage('Creating shipment.');
+                    $this->shipSalesOrder($order);
+                    $this->currentlyImportedMarketplaceOrder->setHasNonNotifiableShipment(true);
+                } else {
+                    $this->logDebugMessage('A shipment is not required.');
+                }
             }
         }
     }
