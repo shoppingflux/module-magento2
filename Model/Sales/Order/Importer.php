@@ -27,6 +27,7 @@ use Magento\Store\Model\Store as BaseStore;
 use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
 use Magento\Tax\Model\Config as TaxConfig;
 use Magento\Weee\Helper\Data as WeeeHelper;
+use Psr\Log\LoggerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
@@ -52,6 +53,11 @@ use ShoppingFeed\Manager\Plugin\Weee\TaxPlugin as WeeeTaxPlugin;
 
 class Importer implements ImporterInterface
 {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
     /**
      * @var TransactionFactory
      */
@@ -218,6 +224,7 @@ class Importer implements ImporterInterface
     private $isCurrentlyImportedBusinessQuote = false;
 
     /**
+     * @param LoggerInterface $logger
      * @param TransactionFactory $transactionFactory
      * @param DataObjectFactory $dataObjectFactory
      * @param TimeHelper $timeHelper
@@ -248,6 +255,7 @@ class Importer implements ImporterInterface
      * @param MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory
      */
     public function __construct(
+        LoggerInterface $logger,
         TransactionFactory $transactionFactory,
         DataObjectFactory $dataObjectFactory,
         TimeHelper $timeHelper,
@@ -277,6 +285,7 @@ class Importer implements ImporterInterface
         MarketplaceAddressCollectionFactory $marketplaceAddressCollectionFactory,
         MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory
     ) {
+        $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->timeHelper = $timeHelper;
@@ -308,6 +317,19 @@ class Importer implements ImporterInterface
     }
 
     /**
+     * @param string $message
+     */
+    private function logDebugMessage($message)
+    {
+        if (
+            (null !== $this->currentImportStore)
+            && $this->orderGeneralConfig->isDebugModeEnabled($this->currentImportStore)
+        ) {
+            $this->logger->debug($message);
+        }
+    }
+
+    /**
      * @param MarketplaceOrderInterface $order
      * @param MarketplaceItemInterface[] $orderItems
      * @return bool
@@ -328,6 +350,36 @@ class Importer implements ImporterInterface
         }
 
         return false;
+    }
+
+    /**
+     * @param MarketplaceOrderInterface $order
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function isImportableStoreOrder(MarketplaceOrderInterface $order, StoreInterface $store)
+    {
+        if (!empty($order->getSalesOrderId())) {
+            return false;
+        }
+
+        $createdAt = \DateTime::createFromFormat('Y-m-d H:i:s', $order->getCreatedAt());
+
+        if ($createdAt < $this->orderGeneralConfig->getOrderImportFromDate($store)) {
+            return false;
+        }
+
+        $isShipped = ($order->getShoppingFeedStatus() === MarketplaceOrderInterface::STATUS_SHIPPED);
+
+        if ($order->isFulfilled()) {
+            return $isShipped && $this->orderGeneralConfig->shouldImportFulfilledOrders($store);
+        }
+
+        if ($isShipped) {
+            return $this->orderGeneralConfig->shouldImportShippedOrders($store);
+        }
+
+        return ($order->getShoppingFeedStatus() === MarketplaceOrderInterface::STATUS_WAITING_SHIPMENT);
     }
 
     /**
@@ -375,7 +427,19 @@ class Importer implements ImporterInterface
 
         try {
             foreach ($marketplaceOrders as $marketplaceOrder) {
+                if (!$this->isImportableStoreOrder($marketplaceOrder, $store)) {
+                    continue;
+                }
+
                 $marketplaceOrderId = $marketplaceOrder->getId();
+
+                $this->logDebugMessage(
+                    sprintf(
+                        'Starting import for marketplace order #%s (%s).',
+                        $marketplaceOrder->getMarketplaceOrderNumber(),
+                        $marketplaceOrder->getMarketplaceName()
+                    )
+                );
 
                 try {
                     $this->currentlyImportedMarketplaceOrder = $marketplaceOrder;
@@ -397,6 +461,14 @@ class Importer implements ImporterInterface
                         );
                     }
 
+                    $this->logDebugMessage(
+                        sprintf(
+                            'Forced the "%s" currency on store #%d.',
+                            $currencyCode,
+                            $baseStore->getId()
+                        )
+                    );
+
                     $quoteId = (int) $this->quoteManager->createEmptyCart();
                     $this->currentlyImportedQuoteId = $quoteId;
 
@@ -406,9 +478,11 @@ class Importer implements ImporterInterface
                     if (!$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)) {
                         $quote->setIsSuperMode(true);
                         $this->catalogProductHelper->setSkipSaleableCheck(true);
+                        $this->logDebugMessage('Product availability and options will be checked.');
                     } else {
                         $quote->setIsSuperMode(false);
                         $this->catalogProductHelper->setSkipSaleableCheck(false);
+                        $this->logDebugMessage('Product availability and options will not be checked.');
                     }
 
                     /**
@@ -441,12 +515,16 @@ class Importer implements ImporterInterface
                         throw new LocalizedException(__('The marketplace order has no item.'));
                     }
 
+                    $this->logDebugMessage('Importing the customer.');
+
                     $this->customerImporter->importQuoteCustomer(
                         $quote,
                         $marketplaceOrder,
                         $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
                         $store
                     );
+
+                    $this->logDebugMessage('Importing the billing address.');
 
                     $this->importQuoteAddress(
                         $quote,
@@ -455,6 +533,8 @@ class Importer implements ImporterInterface
                         $isUntaxedBusinessOrder,
                         $store
                     );
+
+                    $this->logDebugMessage('Importing the shipping address.');
 
                     $this->importQuoteAddress(
                         $quote,
@@ -465,6 +545,7 @@ class Importer implements ImporterInterface
                     );
 
                     if ($isUntaxedBusinessOrder) {
+                        $this->logDebugMessage('Business order: forcing untaxed context.');
                         $this->isCurrentlyImportedBusinessQuote = true;
                         $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
                         $quote->setCustomerGroupId($this->businessTaxManager->getCustomerGroup()->getId());
@@ -473,12 +554,16 @@ class Importer implements ImporterInterface
                         $this->isCurrentlyImportedBusinessQuote = false;
                     }
 
+                    $this->logDebugMessage('Importing the items.');
+
                     $this->importQuoteItems(
                         $quote,
                         $orderItems[$marketplaceOrderId],
                         $isUntaxedBusinessOrder,
                         $store
                     );
+
+                    $this->logDebugMessage('Importing the shipping method.');
 
                     $this->importQuoteShippingMethod(
                         $quote,
@@ -487,7 +572,11 @@ class Importer implements ImporterInterface
                         $store
                     );
 
+                    $this->logDebugMessage('Importing the payment method.');
+
                     $this->importQuotePaymentMethod($quote, $marketplaceOrder, $store);
+
+                    $this->logDebugMessage('Placing the order.');
 
                     $this->quoteRepository->save($quote);
                     $transaction = $this->transactionFactory->create();
@@ -504,7 +593,10 @@ class Importer implements ImporterInterface
                     );
 
                     $transaction->save();
+
                     $salesIncrementId = $this->checkoutSession->getData('last_real_order_id');
+
+                    $this->logDebugMessage(sprintf('The order was successfully imported: #%s.', $salesIncrementId));
 
                     if (!empty($salesIncrementId)) {
                         try {
@@ -520,6 +612,14 @@ class Importer implements ImporterInterface
                     }
                 } catch (\Exception $e) {
                     $this->handleOrderImportException($e, $marketplaceOrder, $store);
+                } finally {
+                    $this->logDebugMessage(
+                        sprintf(
+                            'Ending import for marketplace order #%s (%s).',
+                            $marketplaceOrder->getMarketplaceOrderNumber(),
+                            $marketplaceOrder->getMarketplaceName()
+                        )
+                    );
                 }
             }
         } catch (\Exception $e) {
@@ -550,6 +650,10 @@ class Importer implements ImporterInterface
             $marketplaceOrder,
             __('Could not import marketplace order:') . "\n" . $importException->getMessage(),
             (string) $importException
+        );
+
+        $this->logDebugMessage(
+            __('Could not import marketplace order:') . "\n" . $importException->getMessage()
         );
 
         if ($marketplaceOrder->getImportRemainingTryCount() === 1) {
@@ -685,6 +789,8 @@ class Importer implements ImporterInterface
         foreach ($marketplaceItems as $marketplaceItem) {
             $reference = $marketplaceItem->getReference();
             $quoteStoreId = $quote->getStoreId();
+
+            $this->logDebugMessage(sprintf('Importing the item "%s".', $reference));
 
             try {
                 /** @var CatalogProduct $product */
@@ -1045,15 +1151,31 @@ class Importer implements ImporterInterface
     {
         if ($this->isImportRunning() && ($order instanceof SalesOrder)) {
             if ($this->orderGeneralConfig->shouldCreateInvoice($this->currentImportStore)) {
+                $this->logDebugMessage('Creating invoice.');
                 $this->invoiceSalesOrder($order);
+            } else {
+                $this->logDebugMessage('An invoice is not required.');
             }
 
-            if (
-                (null !== $this->currentlyImportedMarketplaceOrder)
-                && $this->currentlyImportedMarketplaceOrder->isFulfilled()
-                && $this->orderGeneralConfig->shouldCreateFulfilmentShipment($this->currentImportStore)
-            ) {
-                $this->shipSalesOrder($order);
+            if (null !== $this->currentlyImportedMarketplaceOrder) {
+                $shoppingFeedStatus = $this->currentlyImportedMarketplaceOrder->getShoppingFeedStatus();
+
+                $shouldShipOrder = (
+                        $this->currentlyImportedMarketplaceOrder->isFulfilled()
+                        && $this->orderGeneralConfig->shouldCreateFulfilmentShipment($this->currentImportStore)
+                    ) || (
+                        !$this->currentlyImportedMarketplaceOrder->isFulfilled()
+                        && (MarketplaceOrderInterface::STATUS_SHIPPED === $shoppingFeedStatus)
+                        && $this->orderGeneralConfig->shouldCreateShippedShipment($this->currentImportStore)
+                    );
+
+                if ($shouldShipOrder) {
+                    $this->logDebugMessage('Creating shipment.');
+                    $this->shipSalesOrder($order);
+                    $this->currentlyImportedMarketplaceOrder->setHasNonNotifiableShipment(true);
+                } else {
+                    $this->logDebugMessage('A shipment is not required.');
+                }
             }
         }
     }

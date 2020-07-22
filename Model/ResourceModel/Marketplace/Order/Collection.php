@@ -87,6 +87,16 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param \DateTime $fromDate
+     * @return $this
+     */
+    public function addCreatedFromDateFilter(\DateTime $fromDate)
+    {
+        $this->addFieldToFilter(OrderInterface::CREATED_AT, [ 'gteq' => $fromDate->format('Y-m-d') ]);
+        return $this;
+    }
+
+    /**
      * @return $this
      */
     public function addImportedFilter()
@@ -112,8 +122,21 @@ class Collection extends AbstractCollection
         $this->addFieldToFilter(OrderInterface::IMPORT_REMAINING_TRY_COUNT, [ 'gt' => 0 ]);
 
         $this->addFieldToFilter(
-            [ OrderInterface::SHOPPING_FEED_STATUS, OrderInterface::IS_FULFILLED ],
-            [ OrderInterface::STATUS_WAITING_SHIPMENT, true ]
+            [
+                OrderInterface::SHOPPING_FEED_STATUS,
+                OrderInterface::IS_FULFILLED,
+            ],
+            [
+                // Shopping Feed status ..
+                [
+                    'in' => [
+                        OrderInterface::STATUS_WAITING_SHIPMENT,
+                        OrderInterface::STATUS_SHIPPED,
+                    ],
+                ],
+                // .. OR is fulfilled ..
+                [ 'eq' => true ]
+            ]
         );
 
         return $this;
@@ -158,6 +181,8 @@ class Collection extends AbstractCollection
      */
     public function addNotifiableShipmentFilter()
     {
+        $this->addFieldToFilter(OrderInterface::HAS_NON_NOTIFIABLE_SHIPMENT, 0);
+
         $shipmentSelect = $this->getConnection()
             ->select()
             ->from(
@@ -171,6 +196,7 @@ class Collection extends AbstractCollection
         );
 
         $this->addHandledTicketAbsenceFilter(TicketInterface::ACTION_SHIP);
+
         return $this;
     }
 }

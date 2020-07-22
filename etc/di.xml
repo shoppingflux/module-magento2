@@ -225,12 +225,6 @@
         </arguments>
     </type>
 
-    <type name="ShoppingFeed\Manager\Model\Marketplace\Order\Manager" shared="true">
-        <arguments>
-            <argument name="localeDate" xsi:type="object">Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy</argument>
-        </arguments>
-    </type>
-
     <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\Address"/>
     <preference for="ShoppingFeed\Manager\Api\Marketplace\Order\AddressRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order\AddressRepository"/>
 
@@ -264,6 +258,7 @@
 
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Config">
         <arguments>
+            <argument name="localeDate" xsi:type="object">Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy</argument>
             <argument name="customerGroupSource" xsi:type="object">ShoppingFeed\Manager\Model\Customer\Group\Source\OnlyLoggedIn</argument>
         </arguments>
     </type>
@@ -272,13 +267,26 @@
 
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector" shared="true"/>
 
+    <virtualType name="ShoppingFeed\Manager\Model\Sales\Order\DebugHandler" type="ShoppingFeed\Manager\Model\LoggerHandler">
+        <arguments>
+            <argument name="fileName" xsi:type="string">sfm_sales_order.log</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="ShoppingFeed\Manager\Model\Sales\Order\DebugLogger" type="Magento\Framework\Logger\Monolog">
+        <arguments>
+            <argument name="handlers" xsi:type="array">
+                <item name="debug" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\DebugHandler</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Importer" shared="true">
         <arguments>
-            <argument name="directoryHelper" xsi:type="object">Magento\Directory\Helper\Data\Proxy</argument>
             <argument name="catalogProductHelper" xsi:type="object">Magento\Catalog\Helper\Product\Proxy</argument>
             <argument name="catalogProductRepository" xsi:type="object">Magento\Catalog\Api\ProductRepositoryInterface\Proxy</argument>
             <argument name="checkoutSession" xsi:type="object">Magento\Checkout\Model\Session\Proxy</argument>
+            <argument name="logger" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\DebugLogger</argument>
             <argument name="quoteManager" xsi:type="object">Magento\Quote\Api\CartManagementInterface\Proxy</argument>
             <argument name="weeeHelper" xsi:type="object">Magento\Weee\Helper\Data\Proxy</argument>
         </arguments>

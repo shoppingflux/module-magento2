@@ -4,7 +4,6 @@ namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
@@ -15,6 +14,7 @@ use ShoppingFeed\Manager\Api\Marketplace\Order\LogRepositoryInterface as OrderLo
 use ShoppingFeed\Manager\Api\Marketplace\Order\TicketRepositoryInterface as OrderTicketRepositoryInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\CollectionFactory as OrderCollectionFactory;
+use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track as ShipmentTrack;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector as SalesShipmentTrackCollector;
 use ShoppingFeed\Manager\Model\ShoppingFeed\Api\SessionManager as ApiSessionManager;
@@ -35,14 +35,14 @@ class Manager
     const API_UNACKNOWLEDGED = 'unacknowledged';
 
     /**
-     * @var TimezoneInterface
-     */
-    private $localeDate;
-
-    /**
      * @var ApiSessionManager
      */
     private $apiSessionManager;
+
+    /**
+     * @var OrderConfigInterface
+     */
+    private $orderGeneralConfig;
 
     /**
      * @var OrderCollectionFactory
@@ -75,8 +75,8 @@ class Manager
     private $salesShipmentTrackCollector;
 
     /**
-     * @param TimezoneInterface $localeDate
      * @param ApiSessionManager $apiSessionManager
+     * @param OrderConfigInterface $orderGeneralConfig
      * @param OrderCollectionFactory $orderCollectionFactory
      * @param OrderLogInterfaceFactory $orderLogFactory
      * @param OrderLogRepositoryInterface $orderLogRepository
@@ -85,8 +85,8 @@ class Manager
      * @param SalesShipmentTrackCollector $salesShipmentTrackCollector
      */
     public function __construct(
-        TimezoneInterface $localeDate,
         ApiSessionManager $apiSessionManager,
+        OrderConfigInterface $orderGeneralConfig,
         OrderCollectionFactory $orderCollectionFactory,
         OrderLogInterfaceFactory $orderLogFactory,
         OrderLogRepositoryInterface $orderLogRepository,
@@ -94,8 +94,8 @@ class Manager
         OrderTicketRepositoryInterface $orderTicketRepository,
         SalesShipmentTrackCollector $salesShipmentTrackCollector
     ) {
-        $this->localeDate = $localeDate;
         $this->apiSessionManager = $apiSessionManager;
+        $this->orderGeneralConfig = $orderGeneralConfig;
         $this->orderCollectionFactory = $orderCollectionFactory;
         $this->orderLogFactory = $orderLogFactory;
         $this->orderLogRepository = $orderLogRepository;
@@ -112,14 +112,12 @@ class Manager
     public function getStoreImportableApiOrders(StoreInterface $store)
     {
         $apiStore = $this->apiSessionManager->getStoreApiResource($store);
-        $sinceDate = $this->localeDate->scopeDate($store->getBaseStore());
-        $sinceDate->sub(new \DateInterval('P15D'));
 
         return $apiStore->getOrderApi()
             ->getAll(
                 [
                     self::API_FILTER_ACKNOWLEDGEMENT => self::API_UNACKNOWLEDGED,
-                    self::API_FILTER_SINCE => $sinceDate,
+                    self::API_FILTER_SINCE => $this->orderGeneralConfig->getOrderImportFromDate($store),
                 ]
             );
     }
@@ -134,6 +132,7 @@ class Manager
         $orderCollection = $this->orderCollectionFactory->create();
         $orderCollection->addNonImportedFilter();
         $orderCollection->addImportableFilter();
+        $orderCollection->addCreatedFromDateFilter($this->orderGeneralConfig->getOrderImportFromDate($store));
         $orderCollection->addStoreIdFilter($store->getId());
 
         if (null !== $maximumCount) {
@@ -142,6 +141,7 @@ class Manager
         }
 
         $orderCollection->load();
+
         return $orderCollection->getItems();
     }
 

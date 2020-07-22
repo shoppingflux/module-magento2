@@ -112,6 +112,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $this->addMarketplaceOrderIsFulfilledField($setup);
             $this->addMarketplaceOrderMarketplaceIdAndNumberUniqueIndex($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.38.0') < 0)) {
+            $this->addMarketplaceOrderIsAutomaticallyShippedField($setup);
+        }
     }
 
     /**
@@ -1510,6 +1514,29 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     OrderInterface::MARKETPLACE_ORDER_NUMBER,
                 ],
                 AdapterInterface::INDEX_TYPE_UNIQUE
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderIsAutomaticallyShippedField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTableName, OrderInterface::HAS_NON_NOTIFIABLE_SHIPMENT)) {
+            $connection->addColumn(
+                $marketplaceOrderTableName,
+                OrderInterface::HAS_NON_NOTIFIABLE_SHIPMENT,
+                [
+                    'type' => Table::TYPE_BOOLEAN,
+                    'nullable' => false,
+                    'default' => 0,
+                    'comment' => 'Has Non-Notifiable Shipment',
+                    'after' => OrderInterface::IMPORT_REMAINING_TRY_COUNT,
+                ]
             );
         }
     }

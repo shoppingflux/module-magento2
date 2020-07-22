@@ -29,6 +29,7 @@ interface OrderInterface
     const SHIPMENT_CARRIER = 'shipment_carrier';
     const ADDITIONAL_FIELDS = 'additional_fields';
     const IMPORT_REMAINING_TRY_COUNT = 'import_remaining_try_count';
+    const HAS_NON_NOTIFIABLE_SHIPMENT = 'has_non_notifiable_shipment';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
     const FETCHED_AT = 'fetched_at';
@@ -42,12 +43,12 @@ interface OrderInterface
     const STATUS_CREATED = 'created';
     const STATUS_WAITING_STORE_ACCEPTANCE = 'waiting_store_acceptance';
     const STATUS_REFUSED = 'refused';
+    const STATUS_CANCELLED = 'cancelled';
     const STATUS_WAITING_SHIPMENT = 'waiting_shipment';
     const STATUS_SHIPPED = 'shipped';
-    const STATUS_CANCELLED = 'cancelled';
     const STATUS_REFUNDED = 'refunded';
-    const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
     const STATUS_PARTIALLY_SHIPPED = 'partially_shipped';
+    const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
 
     const ADDITIONAL_FIELD_IS_BUSINESS_ORDER = 'is_business_order';
 
@@ -147,6 +148,11 @@ interface OrderInterface
      * @return int
      */
     public function getImportRemainingTryCount();
+
+    /**
+     * @return bool
+     */
+    public function getHasNonNotifiableShipment();
 
     /**
      * @return string
@@ -294,6 +300,12 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setImportRemainingTryCount($tryCount);
+
+    /**
+     * @param bool $hasNonNotifiableShipment
+     * @return OrderInterface
+     */
+    public function setHasNonNotifiableShipment($hasNonNotifiableShipment);
 
     /**
      * @param string $createdAt

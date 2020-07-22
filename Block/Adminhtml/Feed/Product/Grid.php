@@ -311,10 +311,13 @@ class Grid extends ExtendedGrid
                         'field' => ProductSectionsAction::REQUEST_KEY_PRODUCT_ID,
                         'data-mage-init' => json_encode($sectionsDetailsModalLinkConfig),
                         'url' => [
-                            'base' => 'shoppingfeed_manager/account_store/feedProductSections',
-                            'params' => [
-                                ProductSectionsAction::REQUEST_KEY_STORE_ID => $this->getAccountStore()->getId(),
-                            ],
+                            // The "params" field is broken in (since) 2.3.5:
+                            // https://github.com/magento/magento2/commit/6e1822d1b1243a293075e8eef2adc2d6b30d024d
+                            'base' => 'shoppingfeed_manager/account_store/feedProductSections'
+                                . '/'
+                                . ProductSectionsAction::REQUEST_KEY_STORE_ID
+                                . '/'
+                                . $this->getAccountStore()->getId(),
                         ],
                     ],
                 ],

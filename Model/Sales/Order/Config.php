@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\Information as StoreInformation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
@@ -12,8 +13,8 @@ use ShoppingFeed\Manager\Model\Config\Field\DynamicRows;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
-use ShoppingFeed\Manager\Model\Config\Value\Handler\Email as EmailHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Customer\Group\Source as CustomerGroupSource;
@@ -22,7 +23,7 @@ use ShoppingFeed\Manager\Model\StringHelper;
 
 class Config extends AbstractConfig implements ConfigInterface
 {
-    const KEY_IMPORT_FULFILLED_ORDERS = 'import_fulfilled_orders';
+    const KEY_ORDER_IMPORT_DELAY = 'order_import_delay';
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS = 'check_product_availability_and_options';
     const KEY_CHECK_PRODUCT_WEBSITES = 'check_product_websites';
@@ -46,7 +47,11 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__TITLE = 'title';
     const KEY_FORCE_CROSS_BORDER_TRADE = 'force_border_trade';
     const KEY_CREATE_INVOICE = 'create_invoice';
+    const KEY_IMPORT_FULFILLED_ORDERS = 'import_fulfilled_orders';
     const KEY_CREATE_FULFILMENT_SHIPMENT = 'create_fulfilment_shipment';
+    const KEY_IMPORT_SHIPPED_ORDERS = 'import_shipped_orders';
+    const KEY_CREATE_SHIPPED_SHIPMENT = 'create_shipped_shipment';
+    const KEY_ENABLE_DEBUG_MODE = 'enable_debug_mode';
 
     /**
      * @var ScopeConfigInterface
@@ -57,6 +62,11 @@ class Config extends AbstractConfig implements ConfigInterface
      * @var StringHelper
      */
     private $stringHelper;
+
+    /**
+     * @var TimezoneInterface
+     */
+    private $localeDate;
 
     /**
      * @var CustomerGroupSource
@@ -73,6 +83,7 @@ class Config extends AbstractConfig implements ConfigInterface
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param ScopeConfigInterface $scopeConfig
      * @param StringHelper $stringHelper
+     * @param TimezoneInterface $localeDate
      * @param CustomerGroupSource $customerGroupSource
      * @param MarketplaceSource $marketplaceSource
      */
@@ -81,11 +92,13 @@ class Config extends AbstractConfig implements ConfigInterface
         ValueHandlerFactoryInterface $valueHandlerFactory,
         ScopeConfigInterface $scopeConfig,
         StringHelper $stringHelper,
+        TimezoneInterface $localeDate,
         CustomerGroupSource $customerGroupSource,
         MarketplaceSource $marketplaceSource
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->stringHelper = $stringHelper;
+        $this->localeDate = $localeDate;
         $this->customerGroupSource = $customerGroupSource;
         $this->marketplaceSource = $marketplaceSource;
         parent::__construct($fieldFactory, $valueHandlerFactory);
@@ -148,11 +161,15 @@ class Config extends AbstractConfig implements ConfigInterface
         return array_merge(
             [
                 $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
+                    TextBox::TYPE_CODE,
                     [
-                        'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Import Fulfilled Orders'),
+                        'name' => self::KEY_ORDER_IMPORT_DELAY,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'isRequired' => true,
+                        'defaultFormValue' => 15,
+                        'defaultUseValue' => 15,
+                        'label' => __('Import Orders From'),
+                        'notice' => __('In days.'),
                         'sortOrder' => 10,
                     ]
                 ),
@@ -285,15 +302,7 @@ class Config extends AbstractConfig implements ConfigInterface
                     ]
                 ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Use Mobile Phone Number First (If Available)'),
-                        'sortOrder' => 100,
-                    ]
-                ),
+                // Default Email Address (store field)
 
                 $this->fieldFactory->create(
                     DynamicRows::TYPE_CODE,
@@ -322,9 +331,21 @@ class Config extends AbstractConfig implements ConfigInterface
                                 ]
                             ),
                         ],
+                        'sortOrder' => 110,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Use Mobile Phone Number First (If Available)'),
                         'sortOrder' => 120,
                     ]
                 ),
+
+                // Default Phone Number (store field)
 
                 $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
@@ -388,7 +409,6 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_FORCE_CROSS_BORDER_TRADE,
                         'isCheckedByDefault' => true,
                         'label' => __('Force Cross Border Trade'),
-                        'sortOrder' => 170,
                         'checkedNotice' =>
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
@@ -397,6 +417,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
                             . __('Unless you know what you are doing, this option should probably be enabled.'),
+                        'sortOrder' => 170,
                     ]
                 ),
 
@@ -415,12 +436,68 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Import Fulfilled Orders'),
+                        'sortOrder' => 190,
+                        'checkedDependentFieldNames' => [ self::KEY_CREATE_FULFILMENT_SHIPMENT ],
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_CREATE_FULFILMENT_SHIPMENT,
                         'isCheckedByDefault' => true,
                         'label' => __('Create Shipment for Fulfilled Orders'),
-                        'checkedNotice' => __('Fulfilled orders will be automatically shipped upon import.'),
-                        'uncheckedNotice' => __('Fulfilled orders will not be shipped automatically.'),
-                        'sortOrder' => 190,
+                        'checkedNotice' => __(
+                            'Orders fulfilled by the marketplaces will be automatically shipped upon import.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'Orders fulfilled by the marketplaces will not be shipped automatically.'
+                        ),
+                        'sortOrder' => 200,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_IMPORT_SHIPPED_ORDERS,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Import Already Shipped Orders'),
+                        'checkedDependentFieldNames' => [ self::KEY_CREATE_SHIPPED_SHIPMENT ],
+                        'sortOrder' => 210,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_CREATE_SHIPPED_SHIPMENT,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Create Shipment for Already Shipped Orders'),
+                        'checkedNotice' => __(
+                            'Orders already shipped on the marketplaces will be automatically shipped upon import.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'Orders already shipped on the marketplaces will not be shipped automatically.'
+                        ),
+                        'sortOrder' => 220,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ENABLE_DEBUG_MODE,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Enable Debug Mode'),
+                        'checkedNotice' => __(
+                            'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
+                        ),
+                        'uncheckedNotice' => __('Debug mode is disabled.'),
+                        'sortOrder' => 230,
                     ]
                 ),
             ],
@@ -490,7 +567,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Email Address'),
                         'notice' => $defaultEmailNotice,
-                        'sortOrder' => 110,
+                        'sortOrder' => 100,
                     ]
                 ),
 
@@ -545,9 +622,15 @@ class Config extends AbstractConfig implements ConfigInterface
         return $defaultValue;
     }
 
-    public function shouldImportFulfilledOrders(StoreInterface $store)
+    public function getOrderImportDelay(StoreInterface $store)
     {
-        return $this->getFieldValue($store, self::KEY_IMPORT_FULFILLED_ORDERS);
+        return $this->getFieldValue($store, self::KEY_ORDER_IMPORT_DELAY);
+    }
+
+    public function getOrderImportFromDate(StoreInterface $store)
+    {
+        $fromDate = $this->localeDate->scopeDate($store->getBaseStore());
+        return $fromDate->sub(new \DateInterval('P' . $this->getOrderImportDelay($store) . 'D'));
     }
 
     public function shouldUseItemReferenceAsProductId(StoreInterface $store)
@@ -715,9 +798,29 @@ class Config extends AbstractConfig implements ConfigInterface
         return $this->getFieldValue($store, self::KEY_CREATE_INVOICE);
     }
 
+    public function shouldImportFulfilledOrders(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_IMPORT_FULFILLED_ORDERS);
+    }
+
     public function shouldCreateFulfilmentShipment(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CREATE_FULFILMENT_SHIPMENT);
+    }
+
+    public function shouldImportShippedOrders(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_IMPORT_SHIPPED_ORDERS);
+    }
+
+    public function shouldCreateShippedShipment(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_CREATE_SHIPPED_SHIPMENT);
+    }
+
+    public function isDebugModeEnabled(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ENABLE_DEBUG_MODE);
     }
 
     public function getFieldsetLabel()

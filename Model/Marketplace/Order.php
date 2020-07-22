@@ -170,6 +170,11 @@ class Order extends AbstractModel implements OrderInterface
         return (int) $this->getDataByKey(self::IMPORT_REMAINING_TRY_COUNT);
     }
 
+    public function getHasNonNotifiableShipment()
+    {
+        return (bool) $this->getDataByKey(self::HAS_NON_NOTIFIABLE_SHIPMENT);
+    }
+
     public function getCreatedAt()
     {
         return $this->getDataByKey(self::CREATED_AT);
@@ -316,6 +321,11 @@ class Order extends AbstractModel implements OrderInterface
     public function setImportRemainingTryCount($tryCount)
     {
         return $this->setData(self::IMPORT_REMAINING_TRY_COUNT, max(0, (int) $tryCount));
+    }
+
+    public function setHasNonNotifiableShipment($hasNonNotifiableShipment)
+    {
+        return $this->setData(self::HAS_NON_NOTIFIABLE_SHIPMENT, (bool) $hasNonNotifiableShipment);
     }
 
     public function setCreatedAt($createdAt)
