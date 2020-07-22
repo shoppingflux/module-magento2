@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.38.0] - 2020-07-22
+### Added
+- Add an option to enable a "debug mode" for order import
+- Add an option to specify the delay within which orders can be imported
+- Add an option to import already shipped orders
+- Add a "Shopping Feed status" column to the marketplace order listing
+
+### Fixed
+- Fix links to section details in the feed product grid on 2.3.5
+
 ## [0.37.1] - 2020-07-16
 ### Fixed
 - Deduplicate the marketplace orders before adding the new unique index
