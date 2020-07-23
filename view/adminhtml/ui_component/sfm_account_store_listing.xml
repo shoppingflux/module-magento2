@@ -114,7 +114,6 @@
                 <item name="config" xsi:type="array">
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
                     <item name="dataType" xsi:type="string">date</item>
-                    <item name="filter" xsi:type="string">dateRange</item>
                     <item name="label" xsi:type="string" translate="true">Created</item>
                 </item>
             </argument>
@@ -124,7 +123,6 @@
                 <item name="config" xsi:type="array">
                     <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
                     <item name="dataType" xsi:type="string">date</item>
-                    <item name="filter" xsi:type="string">dateRange</item>
                     <item name="label" xsi:type="string" translate="true">Modified</item>
                 </item>
             </argument>
