@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.38.1] - 2020-07-23
+### Changed
+- Disable the date filters in the account listing
+
 ## [0.38.0] - 2020-07-22
 ### Added
 - Add an option to enable a "debug mode" for order import
