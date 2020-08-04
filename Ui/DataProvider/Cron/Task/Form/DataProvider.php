@@ -141,6 +141,7 @@ class DataProvider extends BaseDataProvider
                     [
                         'target' => '${$.parentName}.' . self::FIELD_CRON_EXPRESSION,
                         'callback' => $callback,
+                        '__disableTmpl' => [ 'target' => false ],
                     ],
                 ],
             ];

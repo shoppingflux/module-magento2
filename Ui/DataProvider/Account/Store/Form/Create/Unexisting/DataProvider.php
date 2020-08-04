@@ -133,6 +133,7 @@ class DataProvider extends BaseDataProvider
                         'callback' => 'suggest',
                         'params' => [ $login ],
                         'target' => '${$.parentName}.' . self::FIELD_SHOPPING_FEED_LOGIN,
+                        '__disableTmpl' => [ 'target' => false ],
                     ];
                 }
 
@@ -141,6 +142,7 @@ class DataProvider extends BaseDataProvider
                         'callback' => 'suggest',
                         'params' => [ $countryId ],
                         'target' => '${$.parentName}.' . self::FIELD_COUNTRY_ID,
+                        '__disableTmpl' => [ 'target' => false ],
                     ];
                 }
 

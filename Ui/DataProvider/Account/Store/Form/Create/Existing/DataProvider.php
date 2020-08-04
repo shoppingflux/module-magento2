@@ -120,6 +120,7 @@ class DataProvider extends BaseDataProvider
                         'callback' => 'value',
                         'params' => [ 0 ],
                         'target' => '${$.parentName}.' . self::FIELD_IS_NEW_ACCOUNT,
+                        '__disableTmpl' => [ 'target' => false ],
                     ],
                 ],
                 'value' => (string) $accountId,
