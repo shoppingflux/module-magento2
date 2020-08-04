@@ -29,7 +29,7 @@ interface QtyResolverInterface
      * @param CatalogProduct $product
      * @param StoreInterface $store
      * @param string $msiQuantityType
-     * @return bool|null
+     * @return bool
      */
     public function isCatalogProductInStock(CatalogProduct $product, StoreInterface $store, $msiQuantityType);
 }
