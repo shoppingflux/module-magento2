@@ -292,6 +292,14 @@
         </arguments>
     </type>
 
+    <preference for="ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Syncer"/>
+    <type name="ShoppingFeed\Manager\Model\Sales\Order\Syncer" shared="true">
+        <arguments>
+            <argument name="salesOrderRepository" xsi:type="object">Magento\Sales\Api\OrderRepositoryInterface\Proxy</argument>
+            <argument name="creditmemoManager" xsi:type="object">Magento\Sales\Api\CreditmemoManagementInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\CatalogInventory\Model\Spi\StockStateProviderInterface">
         <plugin name="sfm_cataloginventory_spi_stock_state_provider_plugin" type="ShoppingFeed\Manager\Plugin\CatalogInventory\Spi\StockStateProviderPlugin" sortOrder="1000000000"/>
     </type>

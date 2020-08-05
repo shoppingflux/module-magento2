@@ -87,6 +87,23 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param string|string[] $status
+     * @return $this
+     */
+    public function addShoppingFeedStatusFilter($status)
+    {
+        $statuses = array_filter(array_map('trim', (array) $status));
+
+        if (empty($statuses)) {
+            $statuses = [ '_unexisting_' ];
+        }
+
+        $this->addFieldToFilter(OrderInterface::SHOPPING_FEED_STATUS, [ 'in' => $statuses ]);
+
+        return $this;
+    }
+
+    /**
      * @param \DateTime $fromDate
      * @return $this
      */

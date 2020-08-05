@@ -112,11 +112,13 @@ abstract class AbstractField implements FieldInterface
             $actions[] = [
                 'target' => $target,
                 'callback' => $isEnabled ? 'enable' : 'hide',
+                '__disableTmpl' => [ 'target' => false ],
             ];
 
             $actions[] = [
                 'target' => $target,
                 'callback' => $isEnabled ? 'show' : 'disable',
+                '__disableTmpl' => [ 'target' => false ],
             ];
         }
 

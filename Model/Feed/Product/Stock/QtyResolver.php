@@ -419,6 +419,8 @@ class QtyResolver implements QtyResolverInterface
             } else {
                 $quantity = null;
             }
+        } elseif (null === $stockData) {
+            $quantity = null;
         } else {
             $quantity = $stockData[1];
         }
@@ -442,6 +444,8 @@ class QtyResolver implements QtyResolverInterface
             } else {
                 $isInStock = true;
             }
+        } elseif (null === $stockData) {
+            $isInStock = true;
         } else {
             $isInStock = $stockData[0];
         }

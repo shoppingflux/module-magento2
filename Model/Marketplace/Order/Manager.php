@@ -15,6 +15,7 @@ use ShoppingFeed\Manager\Api\Marketplace\Order\TicketRepositoryInterface as Orde
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\CollectionFactory as OrderCollectionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track as ShipmentTrack;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector as SalesShipmentTrackCollector;
 use ShoppingFeed\Manager\Model\ShoppingFeed\Api\SessionManager as ApiSessionManager;
@@ -106,6 +107,29 @@ class Manager
 
     /**
      * @param StoreInterface $store
+     * @return string[]
+     */
+    public function getSyncableShoppingFeedStatuses(StoreInterface $store)
+    {
+        $statuses = [];
+
+        $statusActions = [
+            OrderInterface::STATUS_REFUSED => $this->orderGeneralConfig->getOrderRefusalSyncingAction($store),
+            OrderInterface::STATUS_CANCELLED => $this->orderGeneralConfig->getOrderCancellationSyncingAction($store),
+            OrderInterface::STATUS_REFUNDED => $this->orderGeneralConfig->getOrderRefundSyncingAction($store),
+        ];
+
+        foreach ($statusActions as $status => $action) {
+            if (SalesOrderSyncerInterface::SYNCING_ACTION_NONE !== $action) {
+                $statuses[] = $status;
+            }
+        }
+
+        return $statuses;
+    }
+
+    /**
+     * @param StoreInterface $store
      * @return ApiOrder[]
      * @throws LocalizedException
      */
@@ -130,9 +154,64 @@ class Manager
     public function getStoreImportableOrders(StoreInterface $store, $maximumCount = null)
     {
         $orderCollection = $this->orderCollectionFactory->create();
+
         $orderCollection->addNonImportedFilter();
         $orderCollection->addImportableFilter();
         $orderCollection->addCreatedFromDateFilter($this->orderGeneralConfig->getOrderImportFromDate($store));
+        $orderCollection->addStoreIdFilter($store->getId());
+
+        if (null !== $maximumCount) {
+            $orderCollection->setCurPage(1);
+            $orderCollection->setPageSize($maximumCount);
+        }
+
+        $orderCollection->load();
+
+        return $orderCollection->getItems();
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @return ApiOrder[]
+     * @throws LocalizedException
+     */
+    public function getStoreSyncableApiOrders(StoreInterface $store)
+    {
+        $apiStore = $this->apiSessionManager->getStoreApiResource($store);
+        $statuses = $this->getSyncableShoppingFeedStatuses($store);
+
+        if (empty($statuses)) {
+            return [];
+        }
+
+        return $apiStore->getOrderApi()
+            ->getAll(
+                [
+                    self::API_FILTER_STATUS => $statuses,
+                    self::API_FILTER_ACKNOWLEDGEMENT => self::API_ACKNOWLEDGED,
+                    self::API_FILTER_SINCE => $this->orderGeneralConfig->getOrderSyncingFromDate($store),
+                ]
+            );
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param int|null $maximumCount
+     * @return OrderInterface[]
+     */
+    public function getStoreSyncableOrders(StoreInterface $store, $maximumCount = null)
+    {
+        $statuses = $this->getSyncableShoppingFeedStatuses($store);
+
+        if (empty($statuses)) {
+            return [];
+        }
+
+        $orderCollection = $this->orderCollectionFactory->create();
+
+        $orderCollection->addImportedFilter();
+        $orderCollection->addShoppingFeedStatusFilter($statuses);
+        $orderCollection->addCreatedFromDateFilter($this->orderGeneralConfig->getOrderSyncingFromDate($store));
         $orderCollection->addStoreIdFilter($store->getId());
 
         if (null !== $maximumCount) {

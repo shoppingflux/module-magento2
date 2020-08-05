@@ -6,7 +6,8 @@ use Magento\Framework\DataObject;
 use ShoppingFeed\Manager\Model\AbstractCommand;
 use ShoppingFeed\Manager\Model\Command\ConfigInterface;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
-use ShoppingFeed\Manager\Model\Sales\Order\Importer as SalesOrderImporter;
+use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
 
 class ImportSalesOrders extends AbstractCommand
 {
@@ -16,22 +17,30 @@ class ImportSalesOrders extends AbstractCommand
     private $marketplaceOrderManager;
 
     /**
-     * @var SalesOrderImporter
+     * @var SalesOrderImporterInterface
      */
     private $salesOrderImporter;
 
     /**
+     * @var SalesOrderSyncerInterface
+     */
+    private $salesOrderSyncer;
+
+    /**
      * @param ConfigInterface $config
      * @param MarketplaceOrderManager $marketplaceOrderManager
-     * @param SalesOrderImporter $salesOrderImporter
+     * @param SalesOrderImporterInterface $salesOrderImporter
+     * @param SalesOrderSyncerInterface $salesOrderSyncer
      */
     public function __construct(
         ConfigInterface $config,
         MarketplaceOrderManager $marketplaceOrderManager,
-        SalesOrderImporter $salesOrderImporter
+        SalesOrderImporterInterface $salesOrderImporter,
+        SalesOrderSyncerInterface $salesOrderSyncer
     ) {
         $this->marketplaceOrderManager = $marketplaceOrderManager;
         $this->salesOrderImporter = $salesOrderImporter;
+        $this->salesOrderSyncer = $salesOrderSyncer;
         parent::__construct($config);
     }
 
@@ -49,6 +58,9 @@ class ImportSalesOrders extends AbstractCommand
         foreach ($this->getConfig()->getStores($configData) as $store) {
             $importableOrders = $this->marketplaceOrderManager->getStoreImportableOrders($store);
             $this->salesOrderImporter->importStoreOrders($importableOrders, $store);
+
+            $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableOrders($store);
+            $this->salesOrderSyncer->synchronizeStoreOrders($syncableOrders, $store);
         }
     }
 }

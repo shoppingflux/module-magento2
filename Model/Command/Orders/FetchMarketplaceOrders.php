@@ -51,6 +51,9 @@ class FetchMarketplaceOrders extends AbstractCommand
         foreach ($this->getConfig()->getStores($configData) as $store) {
             $importableOrders = $this->marketplaceOrderManager->getStoreImportableApiOrders($store);
             $this->marketplaceOrderImporter->importStoreOrders($importableOrders, $store);
+
+            $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableApiOrders($store);
+            $this->marketplaceOrderImporter->importStoreOrders($syncableOrders, $store);
         }
     }
 }

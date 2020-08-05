@@ -25,12 +25,21 @@ class ImportSalesOrdersCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
+            $io->progressStart(2 * count($storeIds));
+
             $io->title('Importing marketplace orders for store IDs: ' . implode(', ', $storeIds));
-            $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
-                $marketplaceOrders = $this->marketplaceOrderManager->getStoreImportableOrders($store);
-                $this->salesOrderImporter->importStoreOrders($marketplaceOrders, $store);
+                $importableOrders = $this->marketplaceOrderManager->getStoreImportableOrders($store);
+                $this->salesOrderImporter->importStoreOrders($importableOrders, $store);
+                $io->progressAdvance(1);
+            }
+
+            $io->title('Synchronizing imported orders for store IDs: ' . implode(', ', $storeIds));
+
+            foreach ($storeCollection as $store) {
+                $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableOrders($store);
+                $this->salesOrderSyncer->synchronizeStoreOrders($syncableOrders, $store);
                 $io->progressAdvance(1);
             }
         } catch (\Exception $e) {

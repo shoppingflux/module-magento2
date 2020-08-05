@@ -9,7 +9,7 @@ use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Marketplace\OrderAction;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
-use ShoppingFeed\Manager\Model\Sales\Order\Importer as SalesOrderImporter;
+use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
 
 class Import extends OrderAction
 {
@@ -21,7 +21,7 @@ class Import extends OrderAction
     private $storeRepository;
 
     /**
-     * @var SalesOrderImporter
+     * @var SalesOrderImporterInterface
      */
     private $salesOrderImporter;
 
@@ -30,14 +30,14 @@ class Import extends OrderAction
      * @param PageResultFactory $pageResultFactory
      * @param OrderRepositoryInterface $orderRepository
      * @param StoreRepositoryInterface $storeRepository
-     * @param SalesOrderImporter $salesOrderImporter
+     * @param SalesOrderImporterInterface $salesOrderImporter
      */
     public function __construct(
         Context $context,
         PageResultFactory $pageResultFactory,
         OrderRepositoryInterface $orderRepository,
         StoreRepositoryInterface $storeRepository,
-        SalesOrderImporter $salesOrderImporter
+        SalesOrderImporterInterface $salesOrderImporter
     ) {
         $this->storeRepository = $storeRepository;
         $this->salesOrderImporter = $salesOrderImporter;
