@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.39.0] - 2020-08-05
+### Added
+- Add options to synchronize imported orders that have been refused/canceled/refunded on the marketplaces
+
+### Fixed
+- Fix dependencies in UI components with Magento 2.4.0
+- Fix fetching of stock data for products without stock management (MSI)
+
 ## [0.38.1] - 2020-07-23
 ### Changed
 - Disable the date filters in the account listing
@@ -33,7 +41,7 @@
 
 ### Changed
 - Identify marketplace orders by their marketplace ID and reference
-- Follow PSR-12 spec for multiline if / elseif structures
+- Follow PSR-12 spec for multiline if/elseif structures
 
 ## [0.35.0] - 2020-06-15
 ### Added
@@ -356,7 +364,7 @@
 
 ### Changed
 - Bumped `shoppingfeed/php-feed-generator` dependency from **1.0.0** to **1.0.2**
-- Tweak various constants (database / UI)
+- Tweak various constants (database/UI)
 
 ### Fixed
 - Fix product lists syncing after product save
