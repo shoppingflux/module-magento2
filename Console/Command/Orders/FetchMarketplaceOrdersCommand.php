@@ -25,12 +25,21 @@ class FetchMarketplaceOrdersCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
+            $io->progressStart(2 * count($storeIds));
+
             $io->title('Fetching new marketplace orders for store IDs: ' . implode(', ', $storeIds));
-            $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
                 $importableOrders = $this->marketplaceOrderManager->getStoreImportableApiOrders($store);
                 $this->marketplaceOrderImporter->importStoreOrders($importableOrders, $store);
+                $io->progressAdvance(1);
+            }
+
+            $io->title('Fetching synchronizable marketplace orders for store IDs: ' . implode(', ', $storeIds));
+
+            foreach ($storeCollection as $store) {
+                $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableApiOrders($store);
+                $this->marketplaceOrderImporter->importStoreOrders($syncableOrders, $store);
                 $io->progressAdvance(1);
             }
         } catch (\Exception $e) {

@@ -52,7 +52,7 @@ class AbstractCollection extends BaseCollection
             $filterValue = [ (int) $filterValue ];
         }
 
-        return $filterValue;
+        return empty($filterValue) ? [ -1 ] : $filterValue;
     }
 
     /**

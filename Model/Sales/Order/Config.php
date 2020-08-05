@@ -7,6 +7,7 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\Information as StoreInformation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
+use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\DynamicRows;
@@ -18,7 +19,9 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveI
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Customer\Group\Source as CustomerGroupSource;
+use ShoppingFeed\Manager\Model\Marketplace\Order\Syncing\Action\Source as OrderSyncingActionSource;
 use ShoppingFeed\Manager\Model\Marketplace\Source as MarketplaceSource;
+use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
 use ShoppingFeed\Manager\Model\StringHelper;
 
 class Config extends AbstractConfig implements ConfigInterface
@@ -51,6 +54,10 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_CREATE_FULFILMENT_SHIPMENT = 'create_fulfilment_shipment';
     const KEY_IMPORT_SHIPPED_ORDERS = 'import_shipped_orders';
     const KEY_CREATE_SHIPPED_SHIPMENT = 'create_shipped_shipment';
+    const KEY_ORDER_SYNCING_DELAY = 'order_syncing_delay';
+    const KEY_ORDER_REFUSAL_SYNCING_ACTION = 'order_refusal_syncing_action';
+    const KEY_ORDER_CANCELLATION_SYNCING_ACTION = 'order_cancellation_syncing_action';
+    const KEY_ORDER_REFUND_SYNCING_ACTION = 'order_refund_syncing_action';
     const KEY_ENABLE_DEBUG_MODE = 'enable_debug_mode';
 
     /**
@@ -79,6 +86,11 @@ class Config extends AbstractConfig implements ConfigInterface
     private $marketplaceSource;
 
     /**
+     * @var OrderSyncingActionSource
+     */
+    private $orderSyncingActionSource;
+
+    /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param ScopeConfigInterface $scopeConfig
@@ -86,6 +98,7 @@ class Config extends AbstractConfig implements ConfigInterface
      * @param TimezoneInterface $localeDate
      * @param CustomerGroupSource $customerGroupSource
      * @param MarketplaceSource $marketplaceSource
+     * @param OrderSyncingActionSource $orderSyncingActionSource
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
@@ -94,13 +107,15 @@ class Config extends AbstractConfig implements ConfigInterface
         StringHelper $stringHelper,
         TimezoneInterface $localeDate,
         CustomerGroupSource $customerGroupSource,
-        MarketplaceSource $marketplaceSource
+        MarketplaceSource $marketplaceSource,
+        OrderSyncingActionSource $orderSyncingActionSource
     ) {
         $this->scopeConfig = $scopeConfig;
         $this->stringHelper = $stringHelper;
         $this->localeDate = $localeDate;
         $this->customerGroupSource = $customerGroupSource;
         $this->marketplaceSource = $marketplaceSource;
+        $this->orderSyncingActionSource = $orderSyncingActionSource;
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
@@ -124,6 +139,15 @@ class Config extends AbstractConfig implements ConfigInterface
             [
                 'dataType' => UiNumber::NAME,
                 'optionArray' => $this->marketplaceSource->toOptionArray(),
+            ]
+        );
+
+        $orderSyncingActionHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'hasEmptyOption' => true,
+                'optionArray' => $this->orderSyncingActionSource->toOptionArray(),
             ]
         );
 
@@ -168,7 +192,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'isRequired' => true,
                         'defaultFormValue' => 15,
                         'defaultUseValue' => 15,
-                        'label' => __('Import Orders From'),
+                        'label' => __('Import Orders For'),
                         'notice' => __('In days.'),
                         'sortOrder' => 10,
                     ]
@@ -488,6 +512,62 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ORDER_SYNCING_DELAY,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'isRequired' => true,
+                        'defaultFormValue' => 15,
+                        'defaultUseValue' => 15,
+                        'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
+                        'notice' => __('In days.'),
+                        'sortOrder' => 230,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ORDER_REFUSAL_SYNCING_ACTION,
+                        'valueHandler' => $orderSyncingActionHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                        'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                        'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
+                        'notice' => __('The action will only be applied if it is compatible with the order state.'),
+                        'sortOrder' => 240,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ORDER_CANCELLATION_SYNCING_ACTION,
+                        'valueHandler' => $orderSyncingActionHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                        'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                        'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
+                        'notice' => __('The action will only be applied if it is compatible with the order state.'),
+                        'sortOrder' => 250,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ORDER_REFUND_SYNCING_ACTION,
+                        'valueHandler' => $orderSyncingActionHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                        'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                        'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
+                        'notice' => __('The action will only be applied if it is compatible with the order state.'),
+                        'sortOrder' => 260,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
                         'name' => self::KEY_ENABLE_DEBUG_MODE,
@@ -497,7 +577,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 230,
+                        'sortOrder' => 270,
                     ]
                 ),
             ],
@@ -816,6 +896,32 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldCreateShippedShipment(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CREATE_SHIPPED_SHIPMENT);
+    }
+
+    public function getOrderSyncingDelay(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ORDER_SYNCING_DELAY);
+    }
+
+    public function getOrderSyncingFromDate(StoreInterface $store)
+    {
+        $fromDate = $this->localeDate->scopeDate($store->getBaseStore());
+        return $fromDate->sub(new \DateInterval('P' . $this->getOrderSyncingDelay($store) . 'D'));
+    }
+
+    public function getOrderRefusalSyncingAction(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ORDER_REFUSAL_SYNCING_ACTION);
+    }
+
+    public function getOrderCancellationSyncingAction(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ORDER_CANCELLATION_SYNCING_ACTION);
+    }
+
+    public function getOrderRefundSyncingAction(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ORDER_REFUND_SYNCING_ACTION);
     }
 
     public function isDebugModeEnabled(StoreInterface $store)

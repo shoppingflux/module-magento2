@@ -150,6 +150,36 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return int
+     */
+    public function getOrderSyncingDelay(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return \DateTime
+     */
+    public function getOrderSyncingFromDate(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getOrderRefusalSyncingAction(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getOrderCancellationSyncingAction(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getOrderRefundSyncingAction(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return bool
      */
     public function isDebugModeEnabled(StoreInterface $store);

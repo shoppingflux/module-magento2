@@ -8,7 +8,8 @@ use ShoppingFeed\Manager\Console\AbstractCommand as BaseCommand;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Importer as MarketplaceOrderImporter;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Model\Sales\Order\Importer as SalesOrderImporter;
+use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
 
 abstract class AbstractCommand extends BaseCommand
 {
@@ -23,9 +24,14 @@ abstract class AbstractCommand extends BaseCommand
     protected $marketplaceOrderImporter;
 
     /**
-     * @var SalesOrderImporter
+     * @var SalesOrderImporterInterface
      */
     protected $salesOrderImporter;
+
+    /**
+     * @var SalesOrderSyncerInterface
+     */
+    protected $salesOrderSyncer;
 
     /**
      * @param AppState $appState
@@ -33,7 +39,8 @@ abstract class AbstractCommand extends BaseCommand
      * @param StoreCollectionFactory $storeCollectionFactory
      * @param MarketplaceOrderManager $marketplaceOrderManager
      * @param MarketplaceOrderImporter $marketplaceOrderImporter
-     * @param SalesOrderImporter $salesOrderImporter
+     * @param SalesOrderImporterInterface $salesOrderImporter
+     * @param SalesOrderSyncerInterface $salesOrderSyncer
      */
     public function __construct(
         AppState $appState,
@@ -41,11 +48,13 @@ abstract class AbstractCommand extends BaseCommand
         StoreCollectionFactory $storeCollectionFactory,
         MarketplaceOrderManager $marketplaceOrderManager,
         MarketplaceOrderImporter $marketplaceOrderImporter,
-        SalesOrderImporter $salesOrderImporter
+        SalesOrderImporterInterface $salesOrderImporter,
+        SalesOrderSyncerInterface $salesOrderSyncer
     ) {
         $this->marketplaceOrderManager = $marketplaceOrderManager;
         $this->marketplaceOrderImporter = $marketplaceOrderImporter;
         $this->salesOrderImporter = $salesOrderImporter;
+        $this->salesOrderSyncer = $salesOrderSyncer;
         parent::__construct($appState, $configScope, $storeCollectionFactory);
     }
 }

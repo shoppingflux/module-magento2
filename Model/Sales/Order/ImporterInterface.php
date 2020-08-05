@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
-use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface as SalesOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -17,7 +16,7 @@ interface ImporterInterface
     const QUOTE_KEY_STORE = 'sfm_store';
 
     /**
-     * @param array MarketplaceOrderInterface[] $marketplaceOrders
+     * @param MarketplaceOrderInterface[] $marketplaceOrders
      * @param StoreInterface $store
      */
     public function importStoreOrders(array $marketplaceOrders, StoreInterface $store);
