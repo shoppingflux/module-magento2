@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.39.1] - 2020-08-11
+### Changed
+- Use more proxies
+
 ## [0.39.0] - 2020-08-05
 ### Added
 - Add options to synchronize imported orders that have been refused/canceled/refunded on the marketplaces
