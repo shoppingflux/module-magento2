@@ -110,6 +110,7 @@ class ForceAutomaticRefresh extends AbstractCommand
 
                 $sectionFilter
                     ->setStoreIds([ $store->getId() ])
+                    ->setTypeIds([ $sectionType->getId() ])
                     ->setRefreshStates($overridableRefreshStates)
                     ->setLastRefreshTimeFilter($lastRefreshTimeFilter);
 

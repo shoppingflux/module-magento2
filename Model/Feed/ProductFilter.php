@@ -145,5 +145,15 @@ class ProductFilter extends AbstractFilter
         return $this;
     }
 
+    public function isEmpty()
+    {
+        return (null === $this->productIds)
+            && (null === $this->storeIds)
+            && (false === $this->selectedOnly)
+            && (null === $this->exportStates)
+            && (null === $this->exportStateRefreshStates)
+            && (null === $this->lastExportStateRefreshTimeFilter);
+    }
+
     // @todo also have lastExportStateRefreshStateUpdateTimeFilter
 }
