@@ -229,12 +229,22 @@ class Refresher extends AbstractDb
         // which would be needed for filtering products.
         foreach ($storeIds as $storeId) {
             $sectionFilter->setStoreIds([ $storeId ]);
-            $productFilter->setStoreIds([ $storeId ]);
 
-            $productSelect = $connection->select()
-                ->from([ 'product_table' => $this->tableDictionary->getFeedProductTableName() ], [ 'product_id' ]);
+            $storeConditions = array_merge(
+                $baseConditions,
+                $this->sectionFilterApplier->getFilterConditions($sectionFilter)
+            );
 
-            $this->productFilterApplier->applyFilterToDbSelect($productSelect, $productFilter, 'product_table');
+            if (!$productFilter->isEmpty()) {
+                $productFilter->setStoreIds([ $storeId ]);
+
+                $productSelect = $connection->select()
+                    ->from([ 'product_table' => $this->tableDictionary->getFeedProductTableName() ], [ 'product_id' ]);
+
+                $this->productFilterApplier->applyFilterToDbSelect($productSelect, $productFilter, 'product_table');
+
+                $storeConditions[] = 'product_id IN (' . $productSelect->assemble() . ')';
+            }
 
             $connection->update(
                 $this->tableDictionary->getFeedProductSectionTableName(),
@@ -242,14 +252,7 @@ class Refresher extends AbstractDb
                     FeedSectionInterface::REFRESH_STATE => $refreshState,
                     FeedSectionInterface::REFRESH_STATE_UPDATED_AT => $this->timeHelper->utcDate(),
                 ],
-                implode(
-                    ' AND ',
-                    array_merge(
-                        [ 'product_id IN (' . $productSelect->assemble() . ')' ],
-                        $baseConditions,
-                        $this->sectionFilterApplier->getFilterConditions($sectionFilter)
-                    )
-                )
+                implode(' AND ', $storeConditions)
             );
         }
     }

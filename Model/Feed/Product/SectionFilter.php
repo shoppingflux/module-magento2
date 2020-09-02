@@ -121,4 +121,13 @@ class SectionFilter extends AbstractFilter
         $this->lastRefreshTimeFilter = $lastRefreshTimeFilter;
         return $this;
     }
+
+    public function isEmpty()
+    {
+        return (null === $this->typeIds)
+            && (null === $this->productIds)
+            && (null === $this->storeIds)
+            && (null === $this->refreshStates)
+            && (null === $this->lastRefreshTimeFilter);
+    }
 }
