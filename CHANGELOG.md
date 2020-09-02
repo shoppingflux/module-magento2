@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.39.2] - 2020-09-02
+### Changed
+- Optimize the "Force Automatic Data Refresh" task
+
 ## [0.39.1] - 2020-08-11
 ### Changed
 - Use more proxies
