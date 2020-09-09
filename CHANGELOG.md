@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.39.3] - 2020-09-09
+### Fixed
+- Fix compatibility with Magento 2.3.2
+
 ## [0.39.2] - 2020-09-02
 ### Changed
 - Optimize the "Force Automatic Data Refresh" task
