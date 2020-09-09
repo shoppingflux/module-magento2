@@ -16,6 +16,7 @@ use ShoppingFeed\Manager\Model\Feed\ConfigInterface as FeedConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
+use ShoppingFeed\Manager\Ui\DataProvider\Meta\Compatibility\Fixer as MetaCompatibilityFixer;
 
 class DataProvider extends BaseDataProvider
 {
@@ -30,6 +31,11 @@ class DataProvider extends BaseDataProvider
      * @var Registry
      */
     private $coreRegistry;
+
+    /**
+     * @var MetaCompatibilityFixer
+     */
+    private $metaCompatibilityFixer;
 
     /**
      * @var FeedConfigInterface
@@ -60,6 +66,7 @@ class DataProvider extends BaseDataProvider
      * @param RequestInterface $request
      * @param FilterBuilder $filterBuilder
      * @param Registry $coreRegistry
+     * @param MetaCompatibilityFixer $metaCompatibilityFixer
      * @param FeedConfigInterface $feedConfig
      * @param ExportStateConfigInterface $feedExportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
@@ -76,6 +83,7 @@ class DataProvider extends BaseDataProvider
         RequestInterface $request,
         FilterBuilder $filterBuilder,
         Registry $coreRegistry,
+        MetaCompatibilityFixer $metaCompatibilityFixer,
         FeedConfigInterface $feedConfig,
         ExportStateConfigInterface $feedExportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
@@ -84,6 +92,7 @@ class DataProvider extends BaseDataProvider
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
+        $this->metaCompatibilityFixer = $metaCompatibilityFixer;
         $this->feedGeneralConfig = $feedConfig;
         $this->feedExportStateConfig = $feedExportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
@@ -181,7 +190,7 @@ class DataProvider extends BaseDataProvider
             $sortOrder
         );
 
-        return $this->meta;
+        return $this->metaCompatibilityFixer->fixMetaConfiguration($this->meta);
     }
 
     /**

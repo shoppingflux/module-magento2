@@ -14,6 +14,7 @@ use Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider as Base
 use Magento\Store\Model\Information as StoreInformation;
 use Magento\Store\Model\Store;
 use Magento\Store\Model\StoreManagerInterface as StoreManager;
+use ShoppingFeed\Manager\Ui\DataProvider\Meta\Compatibility\Fixer as MetaCompatibilityFixer;
 
 class DataProvider extends BaseDataProvider
 {
@@ -50,6 +51,11 @@ class DataProvider extends BaseDataProvider
     private $filterManager;
 
     /**
+     * @var MetaCompatibilityFixer
+     */
+    private $metaCompatibilityFixer;
+
+    /**
      * @param string $name
      * @param string $primaryFieldName
      * @param string $requestFieldName
@@ -61,6 +67,7 @@ class DataProvider extends BaseDataProvider
      * @param AuthSession $authSession
      * @param StoreManager $storeManager
      * @param FilterManager $filterManager
+     * @param MetaCompatibilityFixer $metaCompatibilityFixer
      * @param array $meta
      * @param array $data
      */
@@ -76,6 +83,7 @@ class DataProvider extends BaseDataProvider
         AuthSession $authSession,
         StoreManager $storeManager,
         FilterManager $filterManager,
+        MetaCompatibilityFixer $metaCompatibilityFixer,
         array $meta = [],
         array $data = []
     ) {
@@ -83,6 +91,7 @@ class DataProvider extends BaseDataProvider
         $this->authSession = $authSession;
         $this->storeManager = $storeManager;
         $this->filterManager = $filterManager;
+        $this->metaCompatibilityFixer = $metaCompatibilityFixer;
 
         parent::__construct(
             $name,
@@ -153,34 +162,35 @@ class DataProvider extends BaseDataProvider
             }
         }
 
-        return array_merge_recursive(
-            $this->meta,
-            [
-                self::FIELDSET_ACCOUNT => [
-                    'children' => [
-                        self::FIELD_BASE_STORE_ID => [
-                            'arguments' => [
-                                'data' => [
-                                    'config' => [
-                                        'switcherConfig' => [
-                                            'rules' => $baseStoreSwitcherRules,
+        return $this->metaCompatibilityFixer->fixMetaConfiguration(array_merge_recursive(
+                $this->meta,
+                [
+                    self::FIELDSET_ACCOUNT => [
+                        'children' => [
+                            self::FIELD_BASE_STORE_ID => [
+                                'arguments' => [
+                                    'data' => [
+                                        'config' => [
+                                            'switcherConfig' => [
+                                                'rules' => $baseStoreSwitcherRules,
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                            self::FIELD_EMAIL => [
+                                'arguments' => [
+                                    'data' => [
+                                        'config' => [
+                                            'default' => $this->authSession->getUser()->getEmail(),
                                         ],
                                     ],
                                 ],
                             ],
                         ],
-                        self::FIELD_EMAIL => [
-                            'arguments' => [
-                                'data' => [
-                                    'config' => [
-                                        'default' => $this->authSession->getUser()->getEmail(),
-                                    ],
-                                ],
-                            ],
-                        ],
                     ],
-                ],
-            ]
+                ]
+            )
         );
     }
 

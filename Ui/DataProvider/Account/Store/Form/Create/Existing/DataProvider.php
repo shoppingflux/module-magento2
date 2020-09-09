@@ -12,6 +12,7 @@ use Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider as Base
 use ShoppingFeed\Manager\Model\Account;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\CollectionFactory as AccountCollectionFactory;
+use ShoppingFeed\Manager\Ui\DataProvider\Meta\Compatibility\Fixer as MetaCompatibilityFixer;
 
 class DataProvider extends BaseDataProvider
 {
@@ -43,6 +44,11 @@ class DataProvider extends BaseDataProvider
     private $coreRegistry;
 
     /**
+     * @var MetaCompatibilityFixer
+     */
+    private $metaCompatibilityFixer;
+
+    /**
      * @var AccountCollectionFactory
      */
     private $accountCollectionFactory;
@@ -57,6 +63,7 @@ class DataProvider extends BaseDataProvider
      * @param FilterBuilder $filterBuilder
      * @param BackendSession $backendSession
      * @param Registry $coreRegistry
+     * @param MetaCompatibilityFixer $metaCompatibilityFixer
      * @param AccountCollectionFactory $accountCollectionFactory
      * @param array $meta
      * @param array $data
@@ -71,12 +78,14 @@ class DataProvider extends BaseDataProvider
         FilterBuilder $filterBuilder,
         BackendSession $backendSession,
         Registry $coreRegistry,
+        MetaCompatibilityFixer $metaCompatibilityFixer,
         AccountCollectionFactory $accountCollectionFactory,
         array $meta = [],
         array $data = []
     ) {
         $this->backendSession = $backendSession;
         $this->coreRegistry = $coreRegistry;
+        $this->metaCompatibilityFixer = $metaCompatibilityFixer;
         $this->accountCollectionFactory = $accountCollectionFactory;
 
         parent::__construct(
@@ -143,41 +152,43 @@ class DataProvider extends BaseDataProvider
             'account_id' => null,
         ];
 
-        return array_merge_recursive(
-            $this->meta,
-            [
-                self::FIELDSET_STORE => [
-                    'children' => [
-                        self::FIELD_IS_NEW_ACCOUNT => [
-                            'arguments' => [
-                                'data' => [
-                                    'value' => $hasAnyAccount ? 0 : 1,
+        return $this->metaCompatibilityFixer->fixMetaConfiguration(
+            array_merge_recursive(
+                $this->meta,
+                [
+                    self::FIELDSET_STORE => [
+                        'children' => [
+                            self::FIELD_IS_NEW_ACCOUNT => [
+                                'arguments' => [
+                                    'data' => [
+                                        'value' => $hasAnyAccount ? 0 : 1,
+                                    ],
                                 ],
                             ],
-                        ],
-                        self::FIELD_ACCOUNT_ID => [
-                            'arguments' => [
-                                'data' => [
-                                    'options' => $accountOptions,
-                                    'config' => [
-                                        'switcherConfig' => [
-                                            'rules' => $accountIdSwitcherRules,
+                            self::FIELD_ACCOUNT_ID => [
+                                'arguments' => [
+                                    'data' => [
+                                        'options' => $accountOptions,
+                                        'config' => [
+                                            'switcherConfig' => [
+                                                'rules' => $accountIdSwitcherRules,
+                                            ],
+                                            'visible' => $hasAnyAccount ? 1 : 0,
                                         ],
-                                        'visible' => $hasAnyAccount ? 1 : 0,
+                                    ],
+                                ],
+                            ],
+                            self::FIELD_SHOPPING_FEED_STORE_ID => [
+                                'arguments' => [
+                                    'data' => [
+                                        'options' => $storeOptions,
                                     ],
                                 ],
                             ],
                         ],
-                        self::FIELD_SHOPPING_FEED_STORE_ID => [
-                            'arguments' => [
-                                'data' => [
-                                    'options' => $storeOptions,
-                                ],
-                            ],
-                        ],
                     ],
-                ],
-            ]
+                ]
+            )
         );
     }
 
