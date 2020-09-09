@@ -19,6 +19,7 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as ConfigOptionHandle
 use ShoppingFeed\Manager\Model\CommandPoolInterface;
 use ShoppingFeed\Manager\Model\Cron\Schedule\Type\Source as ScheduleTypeSource;
 use ShoppingFeed\Manager\Model\Cron\Task\RegistryConstants;
+use ShoppingFeed\Manager\Ui\DataProvider\Meta\Compatibility\Fixer as MetaCompatibilityFixer;
 
 class DataProvider extends BaseDataProvider
 {
@@ -43,6 +44,11 @@ class DataProvider extends BaseDataProvider
      * @var Registry
      */
     private $coreRegistry;
+
+    /**
+     * @var MetaCompatibilityFixer
+     */
+    private $metaCompatibilityFixer;
 
     /**
      * @var ConfigFieldFactoryInterface
@@ -73,6 +79,7 @@ class DataProvider extends BaseDataProvider
      * @param RequestInterface $request
      * @param FilterBuilder $filterBuilder
      * @param Registry $coreRegistry
+     * @param MetaCompatibilityFixer $metaCompatibilityFixer
      * @param ConfigFieldFactoryInterface $configFieldFactory
      * @param ConfigValueHandlerFactoryInterface $configValueHandlerFactory
      * @param CommandPoolInterface $commandPool
@@ -89,6 +96,7 @@ class DataProvider extends BaseDataProvider
         RequestInterface $request,
         FilterBuilder $filterBuilder,
         Registry $coreRegistry,
+        MetaCompatibilityFixer $metaCompatibilityFixer,
         ConfigFieldFactoryInterface $configFieldFactory,
         ConfigValueHandlerFactoryInterface $configValueHandlerFactory,
         CommandPoolInterface $commandPool,
@@ -97,6 +105,7 @@ class DataProvider extends BaseDataProvider
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
+        $this->metaCompatibilityFixer = $metaCompatibilityFixer;
         $this->configFieldFactory = $configFieldFactory;
         $this->configValueHandlerFactory = $configValueHandlerFactory;
         $this->commandPool = $commandPool;
@@ -213,35 +222,35 @@ class DataProvider extends BaseDataProvider
             ]
         );
 
-        $meta = array_merge_recursive(
-            $meta,
-            [
-                self::FIELDSET_TASK_INFORMATION => [
-                    'children' => [
-                        self::FIELD_SCHEDULE_TYPE => [
-                            'arguments' => [
-                                'data' => [
-                                    'config' => [
-                                        'switcherConfig' => [
-                                            'enabled' => true,
-                                            'rules' => $scheduleTypeSwitcherConfigRules,
+        return $this->metaCompatibilityFixer->fixMetaConfiguration(
+            array_merge_recursive(
+                $meta,
+                [
+                    self::FIELDSET_TASK_INFORMATION => [
+                        'children' => [
+                            self::FIELD_SCHEDULE_TYPE => [
+                                'arguments' => [
+                                    'data' => [
+                                        'config' => [
+                                            'switcherConfig' => [
+                                                'enabled' => true,
+                                                'rules' => $scheduleTypeSwitcherConfigRules,
+                                            ],
                                         ],
                                     ],
                                 ],
                             ],
                         ],
                     ],
-                ],
-                self::FIELDSET_COMMAND => [
-                    'children' => array_merge(
-                        $commandFieldsets,
-                        [ self::FIELD_COMMAND_CODE => $commandSelect->getUiMetaConfig() ]
-                    ),
-                ],
-            ]
+                    self::FIELDSET_COMMAND => [
+                        'children' => array_merge(
+                            $commandFieldsets,
+                            [ self::FIELD_COMMAND_CODE => $commandSelect->getUiMetaConfig() ]
+                        ),
+                    ],
+                ]
+            )
         );
-
-        return $meta;
     }
 
     /**

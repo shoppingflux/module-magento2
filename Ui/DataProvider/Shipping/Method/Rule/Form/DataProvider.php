@@ -18,6 +18,7 @@ use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ConfigVal
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as ConfigOptionHandler;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as MethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\Rule\RegistryConstants;
+use ShoppingFeed\Manager\Ui\DataProvider\Meta\Compatibility\Fixer as MetaCompatibilityFixer;
 
 class DataProvider extends BaseDataProvider
 {
@@ -47,6 +48,11 @@ class DataProvider extends BaseDataProvider
     private $coreRegistry;
 
     /**
+     * @var MetaCompatibilityFixer
+     */
+    private $metaCompatibilityFixer;
+
+    /**
      * @var ConfigFieldFactoryInterface
      */
     private $configFieldFactory;
@@ -70,6 +76,7 @@ class DataProvider extends BaseDataProvider
      * @param RequestInterface $request
      * @param FilterBuilder $filterBuilder
      * @param Registry $coreRegistry
+     * @param MetaCompatibilityFixer $metaCompatibilityFixer
      * @param ConfigFieldFactoryInterface $configFieldFactory
      * @param ConfigValueHandlerFactoryInterface $configValueHandlerFactory
      * @param MethodApplierPoolInterface $methodApplierPool
@@ -85,6 +92,7 @@ class DataProvider extends BaseDataProvider
         RequestInterface $request,
         FilterBuilder $filterBuilder,
         Registry $coreRegistry,
+        MetaCompatibilityFixer $metaCompatibilityFixer,
         ConfigFieldFactoryInterface $configFieldFactory,
         ConfigValueHandlerFactoryInterface $configValueHandlerFactory,
         MethodApplierPoolInterface $methodApplierPool,
@@ -92,6 +100,7 @@ class DataProvider extends BaseDataProvider
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
+        $this->metaCompatibilityFixer = $metaCompatibilityFixer;
         $this->configFieldFactory = $configFieldFactory;
         $this->configValueHandlerFactory = $configValueHandlerFactory;
         $this->methodApplierPool = $methodApplierPool;
@@ -178,19 +187,19 @@ class DataProvider extends BaseDataProvider
             ]
         );
 
-        $meta = array_merge_recursive(
-            $meta,
-            [
-                self::FIELDSET_SHIPPING_METHOD => [
-                    'children' => array_merge(
-                        $applierFieldsets,
-                        [ self::FIELD_APPLIER_CODE => $applierSelect->getUiMetaConfig() ]
-                    ),
-                ],
-            ]
+        return $this->metaCompatibilityFixer->fixMetaConfiguration(
+            array_merge_recursive(
+                $meta,
+                [
+                    self::FIELDSET_SHIPPING_METHOD => [
+                        'children' => array_merge(
+                            $applierFieldsets,
+                            [ self::FIELD_APPLIER_CODE => $applierSelect->getUiMetaConfig() ]
+                        ),
+                    ],
+                ]
+            )
         );
-
-        return $meta;
     }
 
     /**
