@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.39.4] - 2020-09-17
+### Fixed
+- Improve compatibility with staging modules from Magento Commerce
+
 ## [0.39.3] - 2020-09-09
 ### Fixed
 - Fix compatibility with Magento 2.3.2
