@@ -34,6 +34,11 @@ class Exporter extends AbstractDb
     private $exportableProductFactory;
 
     /**
+     * @var bool|null
+     */
+    private $isCatalogStagingEnabled = null;
+
+    /**
      * @param DbContext $context
      * @param TimeHelper $timeHelper
      * @param TableDictionary $tableDictionary
@@ -75,18 +80,51 @@ class Exporter extends AbstractDb
     }
 
     /**
+     * @return bool
+     */
+    private function isCatalogStagingEnabled()
+    {
+        if (null === $this->isCatalogStagingEnabled) {
+            $this->isCatalogStagingEnabled = $this->getConnection()
+                ->tableColumnExists($this->tableDictionary->getCatalogProductTableName(), 'row_id');
+        }
+
+        return $this->isCatalogStagingEnabled;
+    }
+
+    /**
      * @param int[]|null $productIds
      * @return \Zend_Db_Expr
      */
     private function getConfigurableParentIdsQuery($productIds = null)
     {
-        $idsSelect = $this->getConnection()
-            ->select()
-            ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'parent_id' ]);
+        $idsSelect = $this->getConnection()->select();
 
-        if (is_array($productIds)) {
-            $idsSelect->where('parent_id IN (?)', $productIds);
-            $idsSelect->orWhere('product_id IN (?)', $productIds);
+        if ($this->isCatalogStagingEnabled()) {
+            $idsSelect->from(
+                [ 'catalog_product_table' => $this->tableDictionary->getCatalogProductTableName() ],
+                [ 'entity_id' ]
+            );
+
+            $idsSelect->joinInner(
+                [ 'configurable_link_table' => $this->tableDictionary->getConfigurableProductLinkTableName() ],
+                'configurable_link_table.parent_id = catalog_product_table.row_id',
+                []
+            );
+
+            if (is_array($productIds)) {
+                $idsSelect->where('entity_id IN (?)', $productIds);
+                $idsSelect->orWhere('product_id IN (?)', $productIds);
+            }
+        } else {
+            $idsSelect = $this->getConnection()
+                ->select()
+                ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'parent_id' ]);
+
+            if (is_array($productIds)) {
+                $idsSelect->where('parent_id IN (?)', $productIds);
+                $idsSelect->orWhere('product_id IN (?)', $productIds);
+            }
         }
 
         return new \Zend_Db_Expr($idsSelect);
@@ -205,11 +243,25 @@ class Exporter extends AbstractDb
      */
     private function joinChildParentIdToProductSelect(DbSelect $productSelect)
     {
-        $productSelect->joinInner(
-            [ 'configurable_link_table' => $this->tableDictionary->getConfigurableProductLinkTableName() ],
-            'product_table.product_id = configurable_link_table.product_id',
-            [ 'parent_id' ]
-        );
+        if ($this->isCatalogStagingEnabled()) {
+            $productSelect->joinInner(
+                [ 'configurable_link_table' => $this->tableDictionary->getConfigurableProductLinkTableName() ],
+                'product_table.product_id = configurable_link_table.product_id',
+                []
+            );
+
+            $productSelect->joinInner(
+                [ 'catalog_parent_table' => $this->tableDictionary->getCatalogProductTableName() ],
+                'catalog_parent_table.row_id = configurable_link_table.parent_id',
+                [ 'parent_id' => 'entity_id' ]
+            );
+        } else {
+            $productSelect->joinInner(
+                [ 'configurable_link_table' => $this->tableDictionary->getConfigurableProductLinkTableName() ],
+                'product_table.product_id = configurable_link_table.product_id',
+                [ 'parent_id' ]
+            );
+        }
     }
 
     /**

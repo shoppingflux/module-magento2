@@ -139,6 +139,7 @@ class Store extends AbstractDb
         $entityIdFieldName = $this->catalogProductResource->getEntityIdField();
 
         $insertableListSelect = $connection->select()
+            ->distinct(true)
             ->from(
                 $this->catalogProductResource->getEntityTable(),
                 [
@@ -172,6 +173,7 @@ class Store extends AbstractDb
                 ->where('store_id = ?', $storeId);
 
             $insertableListSelect = $connection->select()
+                ->distinct(true)
                 ->from(
                     $this->tableDictionary->getFeedProductTableName(),
                     [
