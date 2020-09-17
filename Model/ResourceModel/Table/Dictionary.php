@@ -237,6 +237,14 @@ class Dictionary extends AbstractDb
     /**
      * @return string
      */
+    public function getCatalogProductTableName()
+    {
+        return $this->getTable($this->getCatalogProductTableCode());
+    }
+
+    /**
+     * @return string
+     */
     public function getConfigurableProductAttributeTableCode()
     {
         return 'catalog_product_super_attribute';
