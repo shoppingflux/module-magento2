@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
 use Magento\Framework\DB\Select as DbSelect;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Model\Feed\ExportableProductFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as FeedSectionResource;
@@ -150,13 +151,19 @@ class Exporter extends AbstractDb
     /**
      * @param int $storeId
      * @param int[] $exportStates
+     * @param int $retentionDuration
      * @param bool $isChildrenSelect
      * @return DbSelect
      */
-    private function getExportableProductBaseSelect($storeId, $exportStates, $isChildrenSelect = false)
-    {
-        $baseSelect = $this->getConnection()
-            ->select()
+    private function getExportableProductBaseSelect(
+        $storeId,
+        $exportStates,
+        $retentionDuration,
+        $isChildrenSelect = false
+    ) {
+        $connection = $this->getConnection();
+
+        $baseSelect = $connection->select()
             ->from([ 'product_table' => $this->tableDictionary->getFeedProductTableName() ], [ 'product_id' ])
             ->where('product_table.store_id = ?', $storeId)
             ->where('export_state_refreshed_at IS NOT NULL');
@@ -167,6 +174,17 @@ class Exporter extends AbstractDb
         } else {
             $baseSelect->columns([ 'export_state' ]);
             $baseSelect->where('export_state IN (?)', $exportStates);
+
+            if ($retentionDuration > 0) {
+                $baseSelect->where(
+                    $connection->quoteInto('(export_state != ?)', FeedProductInterface::STATE_RETAINED)
+                    . ' OR '
+                    . $connection->quoteInto(
+                        '(export_retention_started_at >= ?)',
+                        $this->timeHelper->utcPastDate($retentionDuration)
+                    )
+                );
+            }
         }
 
         return $baseSelect;
@@ -286,6 +304,7 @@ class Exporter extends AbstractDb
      * @param int $storeId
      * @param int[] $sectionTypeIds
      * @param int[] $exportStates
+     * @param int $retentionDuration
      * @param bool $includeParentProducts
      * @param bool $includeChildProducts
      * @param int[]|null $productIds
@@ -295,11 +314,12 @@ class Exporter extends AbstractDb
         $storeId,
         array $sectionTypeIds,
         array $exportStates,
+        $retentionDuration,
         $includeParentProducts,
         $includeChildProducts,
         $productIds = null
     ) {
-        $productSelect = $this->getExportableProductBaseSelect($storeId, $exportStates);
+        $productSelect = $this->getExportableProductBaseSelect($storeId, $exportStates, $retentionDuration);
         $this->joinSectionTablesToProductSelect($productSelect, $sectionTypeIds);
 
         if (!$includeParentProducts) {
@@ -336,6 +356,7 @@ class Exporter extends AbstractDb
      * @param int[] $sectionTypeIds
      * @param int[] $parentExportStates
      * @param int[] $childExportStates
+     * @param int $retentionDuration
      * @param int[]|null $productIds
      * @param bool $exportAllChildren
      * @return \Iterator
@@ -345,17 +366,18 @@ class Exporter extends AbstractDb
         array $sectionTypeIds,
         array $parentExportStates,
         array $childExportStates,
+        $retentionDuration,
         $productIds = null,
         $exportAllChildren = false
     ) {
         $connection = $this->getConnection();
 
-        $parentSelect = $this->getExportableProductBaseSelect($storeId, $parentExportStates);
+        $parentSelect = $this->getExportableProductBaseSelect($storeId, $parentExportStates, $retentionDuration);
         $parentSelect->where('product_table.product_id IN (?)', $this->getConfigurableParentIdsQuery($productIds));
         $this->joinSectionTablesToProductSelect($parentSelect, $sectionTypeIds);
         $parentSelect->order('product_id ASC');
 
-        $childrenSelect = $this->getExportableProductBaseSelect($storeId, $childExportStates, true);
+        $childrenSelect = $this->getExportableProductBaseSelect($storeId, $childExportStates, $retentionDuration, true);
         $this->joinChildParentIdToProductSelect($childrenSelect);
         $this->joinSectionTablesToProductSelect($childrenSelect, $sectionTypeIds);
         $childrenSelect->order('parent_id ASC');

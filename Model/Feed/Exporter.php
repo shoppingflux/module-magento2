@@ -263,7 +263,14 @@ class Exporter
      */
     private function getStoreProductsIterator(StoreInterface $store, $productIds = null)
     {
-        $childrenExportMode = $this->exportStateConfig->getChildrenExportMode($store);
+        $mainExportStates = [ FeedProduct::STATE_EXPORTED ];
+        $retentionDuration = 0;
+        $variationExportMode = $this->exportStateConfig->getChildrenExportMode($store);
+
+        if ($this->exportStateConfig->shouldRetainPreviouslyExported($store)) {
+            $mainExportStates[] = FeedProduct::STATE_RETAINED;
+            $retentionDuration = $this->exportStateConfig->getPreviouslyExportedRetentionDuration($store);
+        }
 
         $productsIterator = new \AppendIterator();
 
@@ -271,14 +278,15 @@ class Exporter
             $this->resource->getExportableProductsIterator(
                 $store->getId(),
                 $this->sectionTypePool->getTypeIds(),
-                [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
+                $mainExportStates,
+                $retentionDuration,
                 in_array(
-                    $childrenExportMode,
+                    $variationExportMode,
                     [ self::CHILDREN_EXPORT_MODE_NONE, self::CHILDREN_EXPORT_MODE_SEPARATELY ],
                     true
                 ),
                 in_array(
-                    $childrenExportMode,
+                    $variationExportMode,
                     [ self::CHILDREN_EXPORT_MODE_BOTH, self::CHILDREN_EXPORT_MODE_SEPARATELY ],
                     true
                 ),
@@ -287,15 +295,16 @@ class Exporter
         );
 
         if (
-            (self::CHILDREN_EXPORT_MODE_BOTH === $childrenExportMode)
-            || (self::CHILDREN_EXPORT_MODE_WITHIN_PARENTS === $childrenExportMode)
+            (self::CHILDREN_EXPORT_MODE_BOTH === $variationExportMode)
+            || (self::CHILDREN_EXPORT_MODE_WITHIN_PARENTS === $variationExportMode)
         ) {
             $productsIterator->append(
                 $this->resource->getExportableParentProductsIterator(
                     $store->getId(),
                     $this->sectionTypePool->getTypeIds(),
-                    [ FeedProduct::STATE_EXPORTED, FeedProduct::STATE_RETAINED ],
+                    $mainExportStates,
                     [ FeedProduct::STATE_EXPORTED ],
+                    $retentionDuration,
                     $productIds,
                     true
                 )
