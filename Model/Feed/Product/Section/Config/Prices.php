@@ -12,7 +12,6 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Customer\Group\Source as CustomerGroupSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Prices as PricesSection;
 
 class Prices extends AbstractConfig implements PricesInterface
 {

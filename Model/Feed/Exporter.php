@@ -140,33 +140,39 @@ class Exporter
      * @param StoreInterface $store
      * @param ExportableProduct $product
      * @param bool $adaptAsRetained
-     * @param bool $adaptAsParent
-     * @param bool $adaptAsChild
      */
     private function adaptExportableProductSectionsData(
         StoreInterface $store,
         ExportableProduct $product,
-        $adaptAsRetained,
-        $adaptAsParent = false,
-        $adaptAsChild = false
+        $adaptAsRetained
     ) {
+        $adaptAsRetained = $adaptAsRetained || $product->isNonExportable();
+
         foreach ($this->sectionTypePool->getTypes() as $sectionType) {
             $typeAdapter = $sectionType->getAdapter();
             $typeId = $sectionType->getId();
             $productData = (array) $product->getSectionTypeData($typeId);
 
-            if ($adaptAsParent) {
+            if ($product->isParent()) {
                 $productData = $typeAdapter->adaptParentProductData(
                     $store,
                     $productData,
                     $product->getChildrenSectionTypeData($typeId)
                 );
-            } elseif ($adaptAsChild) {
+            } elseif ($product->isBundle()) {
+                $productData = $typeAdapter->adaptBundleProductData(
+                    $store,
+                    $productData,
+                    $product->getChildrenSectionTypeData($typeId),
+                    $product->getChildrenBundledQuantities()
+                );
+            } elseif ($product->isChild()) {
                 $productData = $typeAdapter->adaptChildProductData($store, $productData);
             }
 
             if ($adaptAsRetained) {
                 $productData = $typeAdapter->adaptRetainedProductData($store, $productData);
+                $productData = $typeAdapter->adaptNonExportableProductData($store, $productData);
             }
 
             $product->setSectionTypeData($typeId, $productData);
@@ -186,23 +192,17 @@ class Exporter
     ) {
         $feedGenerator->addProcessor(
             function (ExportableProduct $product) use ($store) {
-                $isParent = $product->hasChildren();
-                $isRetained = (FeedProduct::STATE_RETAINED === $product->getExportState());
+                $isRetained = $product->isRetained();
+                $hasChildren = $product->hasChildren();
 
-                if ($isParent || $isRetained) {
-                    $this->adaptExportableProductSectionsData($store, $product, $isRetained, $isParent);
+                if ($hasChildren) {
+                    foreach ($product->getChildren() as $childProduct) {
+                        $this->adaptExportableProductSectionsData($store, $childProduct, $isRetained);
+                    }
                 }
 
-                if ($isParent) {
-                    foreach ($product->getChildren() as $childProduct) {
-                        $this->adaptExportableProductSectionsData(
-                            $store,
-                            $childProduct,
-                            $isRetained,
-                            false,
-                            true
-                        );
-                    }
+                if ($hasChildren || $isRetained) {
+                    $this->adaptExportableProductSectionsData($store, $product, $isRetained);
                 }
 
                 return $product;
@@ -214,20 +214,22 @@ class Exporter
                 $exportedProduct->setAttribute(self::PRODUCT_ID_ATTRIBUTE_NAME, $product->getId());
 
                 foreach ($this->sectionTypePool->getTypes() as $sectionType) {
-                    $sectionType->getAdapter()->exportBaseProductData(
+                    $adapter = $sectionType->getAdapter();
+
+                    $adapter->exportBaseProductData(
                         $store,
                         $product->getSectionTypeData($sectionType->getId()),
                         $exportedProduct
                     );
 
-                    $sectionType->getAdapter()->exportMainProductData(
+                    $adapter->exportMainProductData(
                         $store,
                         $product->getSectionTypeData($sectionType->getId()),
                         $exportedProduct
                     );
                 }
 
-                if ($product->hasChildren()) {
+                if ($product->isParent()) {
                     $configurableAttributeCodes = $product->getConfigurableAttributeCodes();
 
                     foreach ($product->getChildren() as $childProduct) {
@@ -235,13 +237,15 @@ class Exporter
                         $exportedVariation->setAttribute(self::PRODUCT_ID_ATTRIBUTE_NAME, $childProduct->getId());
 
                         foreach ($this->sectionTypePool->getTypes() as $sectionType) {
-                            $sectionType->getAdapter()->exportBaseProductData(
+                            $adapter = $sectionType->getAdapter();
+
+                            $adapter->exportBaseProductData(
                                 $store,
                                 $childProduct->getSectionTypeData($sectionType->getId()),
                                 $exportedVariation
                             );
 
-                            $sectionType->getAdapter()->exportVariationProductData(
+                            $adapter->exportVariationProductData(
                                 $store,
                                 $childProduct->getSectionTypeData($sectionType->getId()),
                                 $configurableAttributeCodes,
@@ -311,6 +315,16 @@ class Exporter
             );
         }
 
+        $productsIterator->append(
+            $this->resource->getExportableBundleProductsIterator(
+                $store->getId(),
+                $this->sectionTypePool->getTypeIds(),
+                $mainExportStates,
+                $retentionDuration,
+                $productIds
+            )
+        );
+
         return $productsIterator;
     }
 
@@ -342,6 +356,14 @@ class Exporter
         $feedGenerator->setUri($uri);
         $feedGenerator->setWriter(ProductListWriter::ALIAS);
 
+        // Filter out unrelated products, in case we end up with more products than expected.
+        $feedGenerator->addFilter(
+            function (ExportableProduct $product) use ($productIds) {
+                return in_array($product->getId(), $productIds, true)
+                    || !empty(array_intersect($product->getChildrenIds(), $productIds));
+            }
+        );
+
         $this->writeStoreProductsToGenerator(
             $store,
             $feedGenerator,
@@ -352,15 +374,12 @@ class Exporter
         $exportableProducts = [];
 
         foreach ($products as $product) {
-            $productId = $this->getExportedProductId($product);
-
-            if (in_array($productId, $productIds, true)) {
-                $exportableProducts[] = $product;
-            }
+            $exportableProducts[] = $product;
 
             foreach ($product->getVariations() as $childProduct) {
                 $childProductId = $this->getExportedProductId($childProduct);
 
+                // Variations did not pass through the filter.
                 if (in_array($childProductId, $productIds, true)) {
                     $exportableProducts[] = $childProduct;
                 }

@@ -88,7 +88,7 @@ class Stock extends AbstractAdapter implements StockInterface
         ];
     }
 
-    public function adaptRetainedProductData(StoreInterface $store, array $productData)
+    public function adaptNonExportableProductData(StoreInterface $store, array $productData)
     {
         if (isset($productData[self::KEY_QUANTITY])) {
             $productData[self::KEY_QUANTITY] = 0;
@@ -104,6 +104,29 @@ class Stock extends AbstractAdapter implements StockInterface
         }
 
         return $parentData;
+    }
+
+    public function adaptBundleProductData(
+        StoreInterface $store,
+        array $bundleData,
+        array $childrenData,
+        array $childrenQuantities
+    ) {
+        $bundleData[self::KEY_QUANTITY] = empty($childrenData) ? 0 : PHP_INT_MAX;
+
+        foreach ($childrenData as $key => $childData) {
+            $baseQuantity = $childData[self::KEY_QUANTITY] ?? 0;
+            $bundledQuantity = max(1, $childrenQuantities[$key] ?? 0);
+
+            $bundleData[self::KEY_QUANTITY] = min(
+                $bundleData[self::KEY_QUANTITY],
+                (int) floor($baseQuantity / $bundledQuantity)
+            );
+        }
+
+        $bundleData[self::KEY_IS_IN_STOCK] = ($bundleData[self::KEY_QUANTITY] > 0) ? 1 : 0;
+
+        return $bundleData;
     }
 
     public function exportBaseProductData(

@@ -2,6 +2,9 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
+use Magento\Bundle\Model\Product\Price as BundleProductPrice;
+use Magento\Bundle\Model\Product\Type as BundleProductType;
+use Magento\Bundle\Model\Selection as BundleProductSelection;
 use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Helper\Product as CatalogProductHelper;
@@ -729,7 +732,7 @@ class Importer implements ImporterInterface
             $amount = $weeeAttribute->getAmount();
             $taxAmount = $weeeAttribute->getTaxAmount();
 
-            // The components of the total WEEE amount that will subtracted from the product amount. 
+            // The components of the total WEEE amount that will subtracted from the product amount.
             // We must not convert those, because the product amount is expected to be in the store currency.
             $totalWeeeAmountExclTax += $amountExclTax;
             $totalWeeeAmount += $amount;
@@ -767,6 +770,236 @@ class Importer implements ImporterInterface
         }
 
         return $totalWeeeAmount;
+    }
+
+    /**
+     * @param float[] $numbers
+     * @return float
+     */
+    private function getKahanSum(array $numbers)
+    {
+        $sum = 0.0;
+        $carry = 0.0;
+
+        foreach ($numbers as $number) {
+            $x = $number + $carry;
+            $y = $sum + $x;
+            $carry = ($y - $sum) - $x;
+            $sum = $y;
+        }
+
+        return $sum;
+    }
+
+    /**
+     * @param Quote $quote
+     * @param MarketplaceItemInterface $marketplaceItem
+     * @param CatalogProduct $product
+     * @param bool $isUntaxedBusinessOrder
+     * @param bool $isWeeeEnabled
+     * @param StoreInterface $store
+     * @throws LocalizedException
+     */
+    public function addNonParentProductToQuote(
+        Quote $quote,
+        MarketplaceItemInterface $marketplaceItem,
+        CatalogProduct $product,
+        $isUntaxedBusinessOrder,
+        $isWeeeEnabled,
+        StoreInterface $store
+    ) {
+        $itemPrice = $marketplaceItem->getPrice();
+
+        if ($isWeeeEnabled) {
+            $itemPrice -= $this->getCatalogProductWeeeAmount($product, $quote, $isUntaxedBusinessOrder, $store);
+        }
+
+        $buyRequest = $this->dataObjectFactory->create(
+            [
+                'data' => [
+                    'qty' => $marketplaceItem->getQuantity(),
+                    'custom_price' => $itemPrice,
+                ],
+            ]
+        );
+
+        $product->setData('cart_qty', $marketplaceItem->getQuantity());
+
+        if ($isUntaxedBusinessOrder) {
+            $product->setData('tax_class_id', $this->businessTaxManager->getProductTaxClass()->getClassId());
+        }
+
+        $quote->addProduct(
+            $product,
+            $buyRequest,
+            ProductType::PROCESS_MODE_LITE
+        );
+    }
+
+    /**
+     * @param Quote $quote
+     * @param MarketplaceItemInterface $marketplaceItem
+     * @param CatalogProduct $product
+     * @param bool $isUntaxedBusinessOrder
+     * @param bool $isWeeeEnabled
+     * @param StoreInterface $store
+     * @throws LocalizedException
+     */
+    public function addBundleProductToQuote(
+        Quote $quote,
+        MarketplaceItemInterface $marketplaceItem,
+        CatalogProduct $product,
+        $isUntaxedBusinessOrder,
+        $isWeeeEnabled,
+        StoreInterface $store
+    ) {
+        /** @var BundleProductType $bundleType */
+        $bundleType = $product->getTypeInstance();
+        /** @var BundleProductPrice $bundlePrice */
+        $bundlePrice = $product->getPriceModel();
+
+        $bundleOptions = [];
+
+        // Add all the default selections to the quote.
+
+        $selectionCollection = $bundleType->getSelectionsCollection($bundleType->getOptionsIds($product), $product);
+
+        /** @var BundleProductSelection $selection */
+        foreach ($selectionCollection as $selection) {
+            if ($selection->getIsDefault()) {
+                $optionId = $selection->getOptionId();
+                $bundleOptions[$optionId][] = $selection->getSelectionId();
+            } else {
+                $selectionCollection->removeItemByKey($selection->getSelectionId());
+            }
+        }
+
+        if (empty($bundleOptions)) {
+            throw new LocalizedException(
+                __(
+                    'The bundle product "%s" could not be added to the quote (missing options).',
+                    $marketplaceItem->getReference()
+                )
+            );
+        }
+
+        foreach ($bundleOptions as $optionId => $selectionIds) {
+            if (count($selectionIds) === 1) {
+                $bundleOptions[$optionId] = reset($selectionIds);
+            }
+        }
+
+        $itemPrice = $marketplaceItem->getPrice();
+
+        $buyRequest = $this->dataObjectFactory->create(
+            [
+                'data' => [
+                    'qty' => $marketplaceItem->getQuantity(),
+                    'custom_price' => $itemPrice,
+                    'bundle_option' => $bundleOptions,
+                    'bundle_option_qty' => [],
+                ],
+            ]
+        );
+
+        $product->setData('cart_qty', $marketplaceItem->getQuantity());
+
+        if ($isUntaxedBusinessOrder) {
+            $product->setData('tax_class_id', $this->businessTaxManager->getProductTaxClass()->getClassId());
+        }
+
+        $bundleItem = $quote->addProduct(
+            $product,
+            $buyRequest,
+            ProductType::PROCESS_MODE_LITE
+        );
+
+        // Check that every selection has been added to the quote, and gather their original prices.
+
+        $selectionItems = [];
+        $selectionOriginalPrices = [];
+
+        foreach ($bundleItem->getChildren() as $childItem) {
+            if (
+                ($selectionOption = $childItem->getOptionByCode('selection_id'))
+                && ($selectionId = (int) $selectionOption->getValue())
+                && ($selection = $selectionCollection->getItemById($selectionId))
+            ) {
+                $childProduct = $childItem->getProduct();
+                $selectionItems[$selectionId] = $childItem;
+
+                $selectionCollection->removeItemByKey($selectionId);
+
+                if ($isUntaxedBusinessOrder) {
+                    $childProduct->setData(
+                        'tax_class_id',
+                        $this->businessTaxManager->getProductTaxClass()->getClassId()
+                    );
+                }
+
+                $selectionOriginalPrices[$selectionId] = $bundlePrice->getSelectionFinalTotalPrice(
+                    $product,
+                    $childProduct,
+                    $marketplaceItem->getQuantity(),
+                    $selection->getSelectionQty(),
+                    false,
+                    true
+                );
+            } else {
+                throw new LocalizedException(
+                    __(
+                        'The bundle product "%s" could not be added to the quote (missing items).',
+                        $marketplaceItem->getReference()
+                    )
+                );
+            }
+        }
+
+        if ($selectionCollection->count() > 0) {
+            throw new LocalizedException(
+                __(
+                    'The bundle product "%s" could not be added to the quote (missing items).',
+                    $marketplaceItem->getReference()
+                )
+            );
+        }
+
+        // Assign a new (proportional) price to each selection, and fix their quantities.
+
+        $selectionFinalPrices = [];
+        $priceMultiplier = $itemPrice / $this->getKahanSum($selectionOriginalPrices);
+
+        foreach ($selectionItems as $selectionId => $childItem) {
+            $finalPrice = round($priceMultiplier * $selectionOriginalPrices[$selectionId], 2);
+
+            $selectionFinalPrices[] = $finalPrice;
+
+            if ($isWeeeEnabled) {
+                $finalPrice -= $this->getCatalogProductWeeeAmount(
+                    $childItem->getProduct(),
+                    $quote,
+                    $isUntaxedBusinessOrder,
+                    $store
+                );
+            }
+
+            $childItem->setCustomPrice($finalPrice);
+            $childItem->setOriginalCustomPrice($finalPrice);
+
+            // Prevent ending up with squared quantities.
+            $childItem->setQty(1);
+            $childItem->setQtyToAdd(1);
+        }
+
+        // Prevent any rounding problem.
+
+        $itemPriceDifference = round($itemPrice - $this->getKahanSum($selectionFinalPrices), 2);
+
+        if (abs($itemPriceDifference) >= 0.01) {
+            $finalPrice = $childItem->getCustomPrice() + $itemPriceDifference;
+            $childItem->setCustomPrice($finalPrice);
+            $childItem->setOriginalCustomPrice($finalPrice);
+        }
     }
 
     /**
@@ -831,32 +1064,25 @@ class Importer implements ImporterInterface
                     );
                 }
 
-                $itemPrice = $marketplaceItem->getPrice();
-
-                if ($isWeeeEnabled) {
-                    $itemPrice -= $this->getCatalogProductWeeeAmount($product, $quote, $isUntaxedBusinessOrder, $store);
+                if ($product->getTypeId() === BundleProductType::TYPE_CODE) {
+                    $this->addBundleProductToQuote(
+                        $quote,
+                        $marketplaceItem,
+                        $product,
+                        $isUntaxedBusinessOrder,
+                        $isWeeeEnabled,
+                        $store
+                    );
+                } else {
+                    $this->addNonParentProductToQuote(
+                        $quote,
+                        $marketplaceItem,
+                        $product,
+                        $isUntaxedBusinessOrder,
+                        $isWeeeEnabled,
+                        $store
+                    );
                 }
-
-                $buyRequest = $this->dataObjectFactory->create(
-                    [
-                        'data' => [
-                            'qty' => $marketplaceItem->getQuantity(),
-                            'custom_price' => $itemPrice,
-                        ],
-                    ]
-                );
-
-                $product->setData('cart_qty', $marketplaceItem->getQuantity());
-
-                if ($isUntaxedBusinessOrder) {
-                    $product->setData('tax_class_id', $this->businessTaxManager->getProductTaxClass()->getClassId());
-                }
-
-                $quote->addProduct(
-                    $product,
-                    $buyRequest,
-                    ProductType::PROCESS_MODE_LITE
-                );
             } catch (LocalizedException $e) {
                 throw new LocalizedException(
                     __(
@@ -1121,7 +1347,7 @@ class Importer implements ImporterInterface
             $shipment = $this->salesOrderConverter->toShipment($order);
 
             if ($shipment) {
-                foreach ($order->getAllItems() AS $orderItem) {
+                foreach ($order->getAllItems() as $orderItem) {
                     if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
                         continue;
                     }

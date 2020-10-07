@@ -3,6 +3,7 @@
     <module name="ShoppingFeed_Manager" setup_version="0.39.0">
         <sequence>
             <module name="Magento_Backend"/>
+            <module name="Magento_Bundle"/>
             <module name="Magento_Checkout"/>
             <module name="Magento_Catalog"/>
             <module name="Magento_CatalogInventory"/>

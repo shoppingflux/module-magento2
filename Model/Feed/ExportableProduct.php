@@ -2,12 +2,24 @@
 
 namespace ShoppingFeed\Manager\Model\Feed;
 
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
+
 class ExportableProduct
 {
+    const TYPE_INDEPENDENT = 'independent';
+    const TYPE_PARENT = 'parent';
+    const TYPE_BUNDLE = 'bundle';
+    const TYPE_CHILD = 'child';
+
     /**
      * @var int
      */
     private $id;
+
+    /**
+     * @var string
+     */
+    private $type = self::TYPE_INDEPENDENT;
 
     /**
      * @var int
@@ -28,6 +40,11 @@ class ExportableProduct
      * @var string[]
      */
     private $configurableAttributeCodes = [];
+
+    /**
+     * @var int
+     */
+    private $bundledQuantity = 1;
 
     /**
      * @return int
@@ -87,6 +104,20 @@ class ExportableProduct
     }
 
     /**
+     * @return int[]
+     */
+    public function getChildrenIds()
+    {
+        $childrenIds = [];
+
+        foreach ($this->children as $child) {
+            $childrenIds[] = $child->getId();
+        }
+
+        return array_filter($childrenIds);
+    }
+
+    /**
      * @param int $sectionTypeId
      * @return array
      */
@@ -102,11 +133,88 @@ class ExportableProduct
     }
 
     /**
+     * @return int[]
+     */
+    public function getChildrenBundledQuantities()
+    {
+        $childrenQuantities = [];
+
+        foreach ($this->children as $child) {
+            $childrenQuantities[] = $child->getBundledQuantity();
+        }
+
+        return $childrenQuantities;
+    }
+
+    /**
      * @return string[]
      */
     public function getConfigurableAttributeCodes()
     {
         return $this->configurableAttributeCodes;
+    }
+
+    /**
+     * @return int
+     */
+    public function getBundledQuantity()
+    {
+        return $this->bundledQuantity;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isExported()
+    {
+        return in_array(
+            $this->getExportState(),
+            [
+                FeedProductInterface::STATE_EXPORTED,
+                FeedProductInterface::STATE_RETAINED,
+            ],
+            true
+        );
+    }
+
+    /**
+     * @return bool
+     */
+    public function isRetained()
+    {
+        return ($this->getExportState() === FeedProductInterface::STATE_RETAINED);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isNonExportable()
+    {
+        return ($this->getExportState() !== FeedProductInterface::STATE_EXPORTED);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isParent()
+    {
+        return (self::TYPE_PARENT === $this->type);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isBundle()
+    {
+        return (self::TYPE_BUNDLE === $this->type);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isChild()
+    {
+        return (self::TYPE_CHILD === $this->type);
     }
 
     /**
@@ -116,6 +224,16 @@ class ExportableProduct
     public function setId($id)
     {
         $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @param string $type
+     * @return $this
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
         return $this;
     }
 
@@ -152,13 +270,31 @@ class ExportableProduct
 
     /**
      * @param array $children
-     * @param string[] $configurableAttributeCodes
      * @return $this
      */
-    public function setChildren(array $children, array $configurableAttributeCodes = [])
+    public function setChildren(array $children)
     {
         $this->children = $children;
-        $this->configurableAttributeCodes = $configurableAttributeCodes;
+        return $this;
+    }
+
+    /**
+     * @param string[] $attributeCodes
+     * @return $this
+     */
+    public function setConfigurableAttributeCodes(array $attributeCodes)
+    {
+        $this->configurableAttributeCodes = $attributeCodes;
+        return $this;
+    }
+
+    /**
+     * @param int $bundledQuantity
+     * @return $this
+     */
+    public function setBundledQuantity($bundledQuantity)
+    {
+        $this->bundledQuantity = max(1, (int) $bundledQuantity);
         return $this;
     }
 }

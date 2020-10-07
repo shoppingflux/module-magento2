@@ -4,7 +4,8 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 
 use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
-use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableType;
+use Magento\Bundle\Model\Product\Type as BundleProductType;
+use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProductType;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
@@ -92,7 +93,7 @@ class Config extends RefreshableConfig implements ConfigInterface
 
         $defaultExportedProductTypes = [
             ProductType::TYPE_SIMPLE,
-            ConfigurableType::TYPE_CODE,
+            ConfigurableProductType::TYPE_CODE,
         ];
 
         return array_merge(
@@ -265,7 +266,8 @@ class Config extends RefreshableConfig implements ConfigInterface
         return [
             ProductType::TYPE_SIMPLE,
             ProductType::TYPE_VIRTUAL,
-            ConfigurableType::TYPE_CODE,
+            ConfigurableProductType::TYPE_CODE,
+            BundleProductType::TYPE_CODE,
         ];
     }
 

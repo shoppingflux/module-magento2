@@ -145,7 +145,7 @@
 
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter\Prices">
         <arguments>
-            <argument name="configurableProductType" xsi:type="object">Magento\ConfigurableProduct\Model\Product\Type\Configurable</argument>
+            <argument name="localeDate" xsi:type="object">Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy</argument>
             <argument name="taxCalculator" xsi:type="object">Magento\Tax\Api\TaxCalculationInterface\Proxy</argument>
         </arguments>
     </type>

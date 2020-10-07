@@ -2,9 +2,11 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
+use Magento\Bundle\Model\ResourceModel\Selection\CollectionFactory as BundleSelectionCollectionFactory;
 use Magento\Framework\DB\Select as DbSelect;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
+use ShoppingFeed\Manager\Model\Feed\ExportableProduct;
 use ShoppingFeed\Manager\Model\Feed\ExportableProductFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as FeedSectionResource;
@@ -23,6 +25,11 @@ class Exporter extends AbstractDb
      * @var QueryIteratorFactory
      */
     private $queryIteratorFactory;
+
+    /**
+     * @var BundleSelectionCollectionFactory
+     */
+    private $bundleSelectionCollectionFactory;
 
     /**
      * @var FeedSectionResource
@@ -46,6 +53,7 @@ class Exporter extends AbstractDb
      * @param ProductFilterApplier $productFilterApplier
      * @param SectionFilterApplier $sectionFilterApplier
      * @param QueryIteratorFactory $queryIteratorFactory
+     * @param BundleSelectionCollectionFactory $bundleSelectionCollectionFactory
      * @param FeedSectionResourceFactory $feedSectionResourceFactory
      * @param ExportableProductFactory $exportableProductFactory
      * @param string|null $connectionName
@@ -57,11 +65,13 @@ class Exporter extends AbstractDb
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
         QueryIteratorFactory $queryIteratorFactory,
+        BundleSelectionCollectionFactory $bundleSelectionCollectionFactory,
         FeedSectionResourceFactory $feedSectionResourceFactory,
         ExportableProductFactory $exportableProductFactory,
         $connectionName = null
     ) {
         $this->queryIteratorFactory = $queryIteratorFactory;
+        $this->bundleSelectionCollectionFactory = $bundleSelectionCollectionFactory;
         $this->feedSectionResource = $feedSectionResourceFactory->create();
         $this->exportableProductFactory = $exportableProductFactory;
 
@@ -99,7 +109,9 @@ class Exporter extends AbstractDb
      */
     private function getConfigurableParentIdsQuery($productIds = null)
     {
-        $idsSelect = $this->getConnection()->select();
+        $idsSelect = $this->getConnection()
+            ->select()
+            ->distinct(true);
 
         if ($this->isCatalogStagingEnabled()) {
             $idsSelect->from(
@@ -139,10 +151,54 @@ class Exporter extends AbstractDb
     {
         $idsSelect = $this->getConnection()
             ->select()
+            ->distinct(true)
             ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [ 'product_id' ]);
 
         if (is_array($productIds)) {
             $idsSelect->where('product_id IN (?)', $productIds);
+        }
+
+        return new \Zend_Db_Expr($idsSelect);
+    }
+
+    /**
+     * @param int[]|null $productIds
+     * @return \Zend_Db_Expr
+     */
+    private function getBundleParentIdsQuery($productIds = null)
+    {
+        $idsSelect = $this->getConnection()
+            ->select()
+            ->distinct(true);
+
+        if ($this->isCatalogStagingEnabled()) {
+            $idsSelect->from(
+                [ 'catalog_product_table' => $this->tableDictionary->getCatalogProductTableName() ],
+                [ 'entity_id' ]
+            );
+
+            $idsSelect->joinInner(
+                [ 'bundle_selection_table' => $this->tableDictionary->getBundleProductSelectionTableName() ],
+                'bundle_selection_table.parent_product_id = catalog_product_table.row_id',
+                []
+            );
+
+            if (is_array($productIds)) {
+                $idsSelect->where('catalog_product_table.entity_id IN (?)', $productIds);
+                $idsSelect->orWhere('bundle_selection_table.product_id IN (?)', $productIds);
+            }
+        } else {
+            $idsSelect = $this->getConnection()
+                ->select()
+                ->from(
+                    [ 'bundle_selection_table' => $this->tableDictionary->getBundleProductSelectionTableName() ],
+                    [ 'parent_product_id' ]
+                );
+
+            if (is_array($productIds)) {
+                $idsSelect->where('bundle_selection_table.parent_product_id IN (?)', $productIds);
+                $idsSelect->orWhere('bundle_selection_table.product_id IN (?)', $productIds);
+            }
         }
 
         return new \Zend_Db_Expr($idsSelect);
@@ -231,8 +287,11 @@ class Exporter extends AbstractDb
      * @param DbSelect $productSelect
      * @param int[] $sectionTypeIds
      */
-    private function joinSectionTablesToProductSelect(DbSelect $productSelect, array $sectionTypeIds)
-    {
+    private function joinSectionTablesToProductSelect(
+        DbSelect $productSelect,
+        array $sectionTypeIds,
+        $joinType = DbSelect::INNER_JOIN
+    ) {
         $feedSectionTable = $this->tableDictionary->getFeedProductSectionTableName();
         $connection = $this->getConnection();
 
@@ -240,26 +299,39 @@ class Exporter extends AbstractDb
             $sectionTableAlias = sprintf('section_%d_table', $sectionTypeId);
             $sectionDataKey = sprintf(self::BASE_SECTION_DATA_KEY, $sectionTypeId);
 
-            $productSelect->joinInner(
-                [ $sectionTableAlias => $feedSectionTable ],
-                implode(
-                    ' AND ',
-                    [
-                        'product_table.product_id = ' . $sectionTableAlias . '.product_id',
-                        'product_table.store_id = ' . $sectionTableAlias . '.store_id',
-                        $sectionTableAlias . '.refreshed_at IS NOT NULL',
-                        $connection->quoteInto($sectionTableAlias . '.type_id = ?', $sectionTypeId),
-                    ]
-                ),
-                [ $sectionDataKey => 'data' ]
+            $joinConditions = implode(
+                ' AND ',
+                [
+                    'product_table.product_id = ' . $sectionTableAlias . '.product_id',
+                    'product_table.store_id = ' . $sectionTableAlias . '.store_id',
+                    $sectionTableAlias . '.refreshed_at IS NOT NULL',
+                    $connection->quoteInto($sectionTableAlias . '.type_id = ?', $sectionTypeId),
+                ]
             );
+
+            if (DbSelect::INNER_JOIN === $joinType) {
+                $productSelect->joinInner(
+                    [ $sectionTableAlias => $feedSectionTable ],
+                    $joinConditions,
+                    [ $sectionDataKey => 'data' ]
+                );
+            } elseif (DbSelect::LEFT_JOIN === $joinType) {
+                $productSelect->joinLeft(
+                    [ $sectionTableAlias => $feedSectionTable ],
+                    $joinConditions,
+                    [ $sectionDataKey => 'data' ]
+                );
+            } else {
+                throw new Exception(sprintf('Unsupported join type: "%s".', $joinType));
+            }
         }
     }
 
     /**
      * @param DbSelect $productSelect
+     * @param int[]|null $productIds
      */
-    private function joinChildParentIdToProductSelect(DbSelect $productSelect)
+    private function joinConfigurableParentIdToChildrenSelect(DbSelect $productSelect, $productIds = null)
     {
         if ($this->isCatalogStagingEnabled()) {
             $productSelect->joinInner(
@@ -273,12 +345,67 @@ class Exporter extends AbstractDb
                 'catalog_parent_table.row_id = configurable_link_table.parent_id',
                 [ 'parent_id' => 'entity_id' ]
             );
+
+            if (is_array($productIds)) {
+                $productSelect->where(
+                    'catalog_parent_table.entity_id IN (?)',
+                    $this->getConfigurableParentIdsQuery($productIds)
+                );
+            }
         } else {
             $productSelect->joinInner(
                 [ 'configurable_link_table' => $this->tableDictionary->getConfigurableProductLinkTableName() ],
                 'product_table.product_id = configurable_link_table.product_id',
                 [ 'parent_id' ]
             );
+
+            if (is_array($productIds)) {
+                $productSelect->where(
+                    'configurable_link_table.parent_id IN (?)',
+                    $this->getConfigurableParentIdsQuery($productIds)
+                );
+            }
+        }
+    }
+
+    /**
+     * @param DbSelect $productSelect
+     * @param int[]|null $productIds
+     */
+    private function joinBundleParentIdToChildrenSelect(DbSelect $productSelect, $productIds = null)
+    {
+        if ($this->isCatalogStagingEnabled()) {
+            $productSelect->joinInner(
+                [ 'bundle_option_table' => $this->tableDictionary->getBundleProductOptionTableName() ],
+                'bundle_option_table.option_id = selection.option_id',
+                []
+            );
+
+            $idsSelect->joinInner(
+                [ 'catalog_parent_table' => $this->tableDictionary->getCatalogProductTableName() ],
+                'bundle_option_table.parent_id = catalog_product_table.row_id',
+                [ 'parent_id' => 'entity_id' ]
+            );
+
+            if (is_array($productIds)) {
+                $productSelect->where(
+                    'catalog_parent_table.entity_id IN (?)',
+                    $this->getBundleParentIdsQuery($productIds)
+                );
+            }
+        } else {
+            $productSelect->joinInner(
+                [ 'bundle_option_table' => $this->tableDictionary->getBundleProductOptionTableName() ],
+                'bundle_option_table.option_id = selection.option_id',
+                [ 'parent_id' ]
+            );
+
+            if (is_array($productIds)) {
+                $productSelect->where(
+                    'bundle_option_table.parent_id IN (?)',
+                    $this->getBundleParentIdsQuery($productIds)
+                );
+            }
         }
     }
 
@@ -305,7 +432,7 @@ class Exporter extends AbstractDb
      * @param int[] $sectionTypeIds
      * @param int[] $exportStates
      * @param int $retentionDuration
-     * @param bool $includeParentProducts
+     * @param bool $includeConfigurableProducts
      * @param bool $includeChildProducts
      * @param int[]|null $productIds
      * @return \Iterator
@@ -315,20 +442,23 @@ class Exporter extends AbstractDb
         array $sectionTypeIds,
         array $exportStates,
         $retentionDuration,
-        $includeParentProducts,
+        $includeConfigurableProducts,
         $includeChildProducts,
         $productIds = null
     ) {
         $productSelect = $this->getExportableProductBaseSelect($storeId, $exportStates, $retentionDuration);
+
         $this->joinSectionTablesToProductSelect($productSelect, $sectionTypeIds);
 
-        if (!$includeParentProducts) {
+        if (!$includeConfigurableProducts) {
             $productSelect->where('product_table.product_id NOT IN (?)', $this->getConfigurableParentIdsQuery());
         }
 
         if (!$includeChildProducts) {
             $productSelect->where('product_table.product_id NOT IN (?)', $this->getConfigurableChildrenIdsQuery());
         }
+
+        $productSelect->where('product_table.product_id NOT IN (?)', $this->getBundleParentIdsQuery());
 
         if (is_array($productIds)) {
             $productSelect->where('product_table.product_id IN (?)', $productIds);
@@ -342,6 +472,7 @@ class Exporter extends AbstractDb
 
                     $exportableProduct = $this->exportableProductFactory->create()
                         ->setId((int) $row['product_id'])
+                        ->setType(ExportableProduct::TYPE_INDEPENDENT)
                         ->setExportState((int) $row['export_state'])
                         ->setSectionsData($this->prepareRowSectionsData($row, $sectionTypeIds));
 
@@ -361,7 +492,7 @@ class Exporter extends AbstractDb
      * @param bool $exportAllChildren
      * @return \Iterator
      */
-    public function getExportableParentProductsIterator(
+    public function getExportableConfigurableProductsIterator(
         $storeId,
         array $sectionTypeIds,
         array $parentExportStates,
@@ -378,7 +509,7 @@ class Exporter extends AbstractDb
         $parentSelect->order('product_id ASC');
 
         $childrenSelect = $this->getExportableProductBaseSelect($storeId, $childExportStates, $retentionDuration, true);
-        $this->joinChildParentIdToProductSelect($childrenSelect);
+        $this->joinConfigurableParentIdToChildrenSelect($childrenSelect, $productIds);
         $this->joinSectionTablesToProductSelect($childrenSelect, $sectionTypeIds);
         $childrenSelect->order('parent_id ASC');
 
@@ -430,15 +561,170 @@ class Exporter extends AbstractDb
                     foreach ($childRows as $childRow) {
                         $children[] = $this->exportableProductFactory->create()
                             ->setId((int) $childRow['product_id'])
+                            ->setType(ExportableProduct::TYPE_CHILD)
                             ->setExportState((int) $childRow['export_state'])
                             ->setSectionsData($this->prepareRowSectionsData($childRow, $sectionTypeIds));
                     }
 
                     $parent = $this->exportableProductFactory->create()
-                        ->setChildren($children, $parentConfigurableAttributeCodes[$parentId] ?? [])
                         ->setId((int) $parentRow['product_id'])
+                        ->setType(ExportableProduct::TYPE_PARENT)
                         ->setExportState((int) $parentRow['export_state'])
-                        ->setSectionsData($this->prepareRowSectionsData($parentRow, $sectionTypeIds));
+                        ->setSectionsData($this->prepareRowSectionsData($parentRow, $sectionTypeIds))
+                        ->setChildren($children)
+                        ->setConfigurableAttributeCodes($parentConfigurableAttributeCodes[$parentId] ?? []);
+
+                    return $parent;
+                },
+                'rewindCallback' => function () use (
+                    $connection,
+                    $childrenSelect,
+                    &$childrenQuery,
+                    &$previousChildRow
+                ) {
+                    if ($childrenQuery instanceof Zend_Db_Statement_Interface) {
+                        $childrenQuery->closeCursor();
+                    }
+
+                    $childrenQuery = $connection->query($childrenSelect);
+                    $previousChildRow = null;
+                },
+            ]
+        );
+    }
+
+    /**
+     * @param int $storeId
+     * @param int[] $sectionTypeIds
+     * @param int[] $parentExportStates
+     * @param int[] $childExportStates
+     * @param int $retentionDuration
+     * @param int[]|null $productIds
+     * @param bool $exportAllChildren
+     * @return \Iterator
+     * @deprecated
+     */
+    public function getExportableParentProductsIterator(
+        $storeId,
+        array $sectionTypeIds,
+        array $parentExportStates,
+        array $childExportStates,
+        $retentionDuration,
+        $productIds = null,
+        $exportAllChildren = false
+    ) {
+        return $this->getExportableConfigurableProductsIterator(
+            $storeId,
+            $sectionTypeIds,
+            $parentExportStates,
+            $childExportStates,
+            $retentionDuration,
+            $productIds,
+            $exportAllChildren
+        );
+    }
+
+    /**
+     * @param $storeId
+     * @param array $sectionTypeIds
+     * @param array $parentExportStates
+     * @param int $retentionDuration
+     * @param null $productIds
+     */
+    public function getExportableBundleProductsIterator(
+        $storeId,
+        array $sectionTypeIds,
+        array $exportStates,
+        $retentionDuration,
+        $productIds = null
+    ) {
+        $connection = $this->getConnection();
+
+        $parentSelect = $this->getExportableProductBaseSelect($storeId, $exportStates, $retentionDuration);
+        $parentSelect->where('product_table.product_id IN (?)', $this->getBundleParentIdsQuery($productIds));
+        $this->joinSectionTablesToProductSelect($parentSelect, $sectionTypeIds);
+        $parentSelect->order('product_id ASC');
+
+        // The retrieval of children products is driven by the selections, because we can't afford to miss any.
+        $selectionCollection = $this->bundleSelectionCollectionFactory->create();
+        $selectionCollection->setFlag('product_children', true);
+        $selectionCollection->addFilterByRequiredOptions();
+
+        $childrenSelect = $selectionCollection->getSelect();
+
+        $childrenSelect->joinLeft(
+            [ 'product_table' => $this->tableDictionary->getFeedProductTableName() ],
+            'product_table.product_id = selection.product_id'
+            . ' AND '
+            . $connection->quoteInto('product_table.store_id = ?', $storeId),
+            [
+                'export_state' => $connection->getIfNullSql(
+                    'child_export_state',
+                    FeedProductInterface::STATE_NOT_EXPORTED
+                ),
+            ]
+        );
+
+        $this->joinBundleParentIdToChildrenSelect($childrenSelect, $productIds);
+        $this->joinSectionTablesToProductSelect($childrenSelect, $sectionTypeIds, DbSelect::LEFT_JOIN);
+
+        $childrenSelect->where('is_default', 1);
+        $childrenSelect->order('parent_id ASC');
+
+        $childrenQuery = null;
+        $previousChildRow = null;
+
+        return $this->queryIteratorFactory->create(
+            [
+                'query' => $parentSelect,
+                'itemCallback' => function ($args) use (
+                    $sectionTypeIds,
+                    &$childrenQuery,
+                    &$previousChildRow
+                ) {
+                    $parentRow = $args['row'];
+                    $parentId = (int) $parentRow['product_id'];
+                    $childRows = [];
+
+                    if (is_array($previousChildRow)) {
+                        if ($previousChildRow['parent_id'] === $parentId) {
+                            $childRows[] = $previousChildRow;
+                            $previousChildRow = null;
+                        } elseif ($previousChildRow['parent_id'] < $parentId) {
+                            $previousChildRow = null;
+                        }
+                    }
+
+                    if ((null === $previousChildRow) && ($childrenQuery instanceof \Zend_Db_Statement_Interface)) {
+                        while (is_array($childRow = $childrenQuery->fetch())) {
+                            $childRow['parent_id'] = (int) $childRow['parent_id'];
+
+                            if ($childRow['parent_id'] > $parentId) {
+                                $previousChildRow = $childRow;
+                                break;
+                            } elseif ($childRow['parent_id'] === $parentId) {
+                                $childRows[] = $childRow;
+                            }
+                        }
+                    }
+
+                    $children = [];
+
+                    foreach ($childRows as $childRow) {
+                        $children[] = $this->exportableProductFactory->create()
+                            ->setId((int) $childRow['product_id'])
+                            ->setType(ExportableProduct::TYPE_CHILD)
+                            ->setExportState((int) $childRow['export_state'])
+                            ->setSectionsData($this->prepareRowSectionsData($childRow, $sectionTypeIds))
+                            ->setBundledQuantity((int) $childRow['selection_qty']);
+                    }
+
+                    $parent = $this->exportableProductFactory->create()
+                        ->setId((int) $parentRow['product_id'])
+                        ->setType(ExportableProduct::TYPE_BUNDLE)
+                        ->setExportState((int) $parentRow['export_state'])
+                        ->setSectionsData($this->prepareRowSectionsData($parentRow, $sectionTypeIds))
+                        ->setChildren($children);
 
                     return $parent;
                 },
