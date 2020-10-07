@@ -239,6 +239,7 @@
 "Indicates whether to refresh the section data on a regular basis:","Indique s'il faut rafraîchir les données de la section régulièrement :"
 "Invalid connection.","Connection invalide."
 "Invalid query.","Requête invalide."
+"Is Backorderable","Commandable au delà des stocks"
 "Is Fulfilled","Expédiée par la place de marché"
 "Is In Stock","Disponible"
 "Is there a corresponding cron job scheduled regularly?","Y a-t-il une tâche cron correspondante programmée régulièrement ?"

@@ -20,6 +20,7 @@ class Stock extends AbstractAdapter implements StockInterface
 {
     const KEY_QUANTITY = 'qty';
     const KEY_IS_IN_STOCK = 'is_in_stock';
+    const KEY_IS_BACKORDERABLE = 'is_backorderable';
 
     /**
      * @var QtyResolverInterface
@@ -55,24 +56,23 @@ class Stock extends AbstractAdapter implements StockInterface
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
         $config = $this->getConfig();
+
+        $catalogProduct = $product->getCatalogProduct();
         $quantity = $config->getDefaultQuantity($store);
         $isInStock = ($quantity > 0);
 
-        if (
-            $config->shouldForceZeroQuantityForNonSalable($store)
-            && !$product->getCatalogProduct()->isSalable()
-        ) {
+        if ($config->shouldForceZeroQuantityForNonSalable($store) && !$catalogProduct->isSalable()) {
             $quantity = 0;
             $isInStock = false;
         } elseif ($config->shouldUseActualStockState($store)) {
             $stockQuantity = $this->qtyResolver->getCatalogProductQuantity(
-                $product->getCatalogProduct(),
+                $catalogProduct,
                 $store,
                 $config->getMsiQuantityType($store)
             );
 
             $isInStock = $this->qtyResolver->isCatalogProductInStock(
-                $product->getCatalogProduct(),
+                $catalogProduct,
                 $store,
                 $config->getMsiQuantityType($store)
             );
@@ -85,6 +85,9 @@ class Stock extends AbstractAdapter implements StockInterface
         return [
             self::KEY_QUANTITY => (int) floor($quantity),
             self::KEY_IS_IN_STOCK => $isInStock ? 1 : 0,
+            self::KEY_IS_BACKORDERABLE => $this->qtyResolver->isCatalogProductBackorderable($catalogProduct, $store)
+                ? 1
+                : 0,
         ];
     }
 
@@ -103,6 +106,10 @@ class Stock extends AbstractAdapter implements StockInterface
             unset($parentData[self::KEY_QUANTITY]);
         }
 
+        if (isset($parentData[self::KEY_IS_BACKORDERABLE])) {
+            unset($parentData[self::KEY_IS_BACKORDERABLE]);
+        }
+
         return $parentData;
     }
 
@@ -112,6 +119,10 @@ class Stock extends AbstractAdapter implements StockInterface
         array $childrenData,
         array $childrenQuantities
     ) {
+        if (isset($bundleData[self::KEY_IS_BACKORDERABLE])) {
+            unset($bundleData[self::KEY_IS_BACKORDERABLE]);
+        }
+
         $bundleData[self::KEY_QUANTITY] = empty($childrenData) ? 0 : PHP_INT_MAX;
 
         foreach ($childrenData as $key => $childData) {
@@ -141,6 +152,10 @@ class Stock extends AbstractAdapter implements StockInterface
         if (isset($productData[self::KEY_IS_IN_STOCK])) {
             $exportedProduct->setAttribute(self::KEY_IS_IN_STOCK, $productData[self::KEY_IS_IN_STOCK]);
         }
+
+        if (isset($productData[self::KEY_IS_BACKORDERABLE])) {
+            $exportedProduct->setAttribute(self::KEY_IS_BACKORDERABLE, $productData[self::KEY_IS_BACKORDERABLE]);
+        }
     }
 
     public function describeProductData(StoreInterface $store, array $productData)
@@ -149,6 +164,7 @@ class Stock extends AbstractAdapter implements StockInterface
             [
                 self::KEY_QUANTITY => __('Quantity'),
                 self::KEY_IS_IN_STOCK => __('Is In Stock'),
+                self::KEY_IS_BACKORDERABLE => __('Is Backorderable'),
             ],
             $productData
         );
