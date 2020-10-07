@@ -122,12 +122,13 @@ class Importer
     /**
      * @param ApiOrder[] $apiOrders
      * @param StoreInterface $store
+     * @param bool $updateOnly
      * @throws \Exception
      */
-    public function importStoreOrders($apiOrders, StoreInterface $store)
+    public function importStoreOrders($apiOrders, StoreInterface $store, $updateOnly = false)
     {
         foreach ($apiOrders as $apiOrder) {
-            $this->importApiOrder($apiOrder, $store);
+            $this->importApiOrder($apiOrder, $store, $updateOnly);
         }
     }
 
@@ -179,9 +180,10 @@ class Importer
     /**
      * @param ApiOrder $apiOrder
      * @param StoreInterface $store
+     * @param bool $updateOnly
      * @throws \Exception
      */
-    public function importApiOrder(ApiOrder $apiOrder, StoreInterface $store)
+    public function importApiOrder(ApiOrder $apiOrder, StoreInterface $store, $updateOnly)
     {
         try {
             $marketplaceOrder = $this->orderRepository->getByMarketplaceIdAndNumber(
@@ -191,7 +193,9 @@ class Importer
 
             $this->importExistingApiOrder($apiOrder, $marketplaceOrder, $store);
         } catch (NoSuchEntityException $e) {
-            $this->importNewApiOrder($apiOrder, $store);
+            if (!$updateOnly) {
+                $this->importNewApiOrder($apiOrder, $store);
+            }
         }
     }
 
