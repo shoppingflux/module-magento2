@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.40.0] - 2020-10-08
+### Added
+- Implement handling of bundle products (feed export and orders import)
+- Add "is_backorderable" attribute to the feed
+- Improve the feed product listing (save parameters in session, display the limit date for product retention)
+
+### Changed
+- Optimize the feed refresh and generation process
+- Apply retention filters also when exporting the feed
+- Do not fetch new orders when syncing existing orders
+
+### Fixed
+- Fix compatibility with Magento 2.1.18 and 2.2.9
+- Show empty options in the filters of the feed product listing
+
 ## [0.39.4] - 2020-09-17
 ### Fixed
 - Improve compatibility with staging modules from Magento Commerce
