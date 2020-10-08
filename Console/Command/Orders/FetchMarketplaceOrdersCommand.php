@@ -31,7 +31,7 @@ class FetchMarketplaceOrdersCommand extends AbstractCommand
 
             foreach ($storeCollection as $store) {
                 $importableOrders = $this->marketplaceOrderManager->getStoreImportableApiOrders($store);
-                $this->marketplaceOrderImporter->importStoreOrders($importableOrders, $store);
+                $this->marketplaceOrderImporter->importStoreOrders($importableOrders, $store, false);
                 $io->progressAdvance(1);
             }
 
@@ -39,7 +39,7 @@ class FetchMarketplaceOrdersCommand extends AbstractCommand
 
             foreach ($storeCollection as $store) {
                 $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableApiOrders($store);
-                $this->marketplaceOrderImporter->importStoreOrders($syncableOrders, $store);
+                $this->marketplaceOrderImporter->importStoreOrders($syncableOrders, $store, true);
                 $io->progressAdvance(1);
             }
         } catch (\Exception $e) {

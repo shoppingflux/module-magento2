@@ -38,6 +38,11 @@ class ProductFilter extends AbstractFilter
     private $lastExportStateRefreshTimeFilter = null;
 
     /**
+     * @var TimeFilter|null
+     */
+    private $exportRetentionStartTimeFilter = null;
+
+    /**
      * @return int[]|null
      */
     public function getProductIds()
@@ -83,6 +88,14 @@ class ProductFilter extends AbstractFilter
     public function getLastExportStateRefreshTimeFilter()
     {
         return $this->lastExportStateRefreshTimeFilter;
+    }
+
+    /**
+     * @return TimeFilter|null
+     */
+    public function getExportRetentionStartTimeFilter()
+    {
+        return $this->exportRetentionStartTimeFilter;
     }
 
     /**
@@ -145,6 +158,12 @@ class ProductFilter extends AbstractFilter
         return $this;
     }
 
+    public function setExportRetentionStartTimeFilter(TimeFilter $exportRetentionStartTimeFilter)
+    {
+        $this->exportRetentionStartTimeFilter = $exportRetentionStartTimeFilter;
+        return $this;
+    }
+
     public function isEmpty()
     {
         return (null === $this->productIds)
@@ -152,7 +171,8 @@ class ProductFilter extends AbstractFilter
             && (false === $this->selectedOnly)
             && (null === $this->exportStates)
             && (null === $this->exportStateRefreshStates)
-            && (null === $this->lastExportStateRefreshTimeFilter);
+            && (null === $this->lastExportStateRefreshTimeFilter)
+            && (null === $this->exportRetentionStartTimeFilter);
     }
 
     // @todo also have lastExportStateRefreshStateUpdateTimeFilter

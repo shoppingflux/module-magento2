@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface;
 use ShoppingFeed\Manager\Model\AbstractFilter;
 use ShoppingFeed\Manager\Model\Feed\ProductFilter;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractFilterApplier;
@@ -63,6 +64,28 @@ class ProductFilterApplier extends AbstractFilterApplier
                 . ' OR '
                 . $this->getQuotedCondition(
                     'export_state_refreshed_at',
+                    $operator,
+                    $this->timeHelper->utcPastDate($seconds),
+                    $productTableAlias
+                )
+                . ')';
+        }
+
+        if ($retentionStartFilter = $productFilter->getExportRetentionStartTimeFilter()) {
+            $seconds = $retentionStartFilter->getSeconds();
+            $operator = ($retentionStartFilter->getMode() === TimeFilter::MODE_BEFORE) ? '<= ?' : '>= ?';
+
+            $conditions[] =
+                '('
+                . $this->getQuotedCondition(
+                    'export_state',
+                    '!= ?',
+                    ProductInterface::STATE_RETAINED,
+                    $productTableAlias
+                )
+                . ' OR '
+                . $this->getQuotedCondition(
+                    'export_retention_started_at',
                     $operator,
                     $this->timeHelper->utcPastDate($seconds),
                     $productTableAlias

@@ -7,20 +7,34 @@ use Magento\Framework\DataObject;
 
 class State extends OptionsRenderer
 {
+    /**
+     * @param string $date
+     * @return string
+     */
+    private function formatDateValue($date)
+    {
+        return $this->_localeDate->formatDateTime(
+            $date,
+            \IntlDateFormatter::SHORT,
+            \IntlDateFormatter::SHORT
+        );
+    }
+
     public function render(DataObject $row)
     {
         $value = '<div><strong>' . parent::render($row) . '</strong></div>';
-        $dateIndex = trim($this->getColumn()->getDataByKey('refresh_date_index'));
+        $untilDateIndex = trim($this->getColumn()->getDataByKey('until_date_index'));
+        $refreshDateIndex = trim($this->getColumn()->getDataByKey('refresh_date_index'));
 
-        if (!empty($dateIndex)) {
-            if ($date = $row->getDataByKey($dateIndex)) {
-                $refreshDate = $this->_localeDate->formatDateTime(
-                    $date,
-                    \IntlDateFormatter::SHORT,
-                    \IntlDateFormatter::SHORT,
-                    null,
-                    'UTC'
-                );
+        if (!empty($untilDateIndex) && ($untilDate = $row->getDataByKey($untilDateIndex))) {
+            $untilDate = $this->formatDateValue($untilDate);
+            $value .= '<div><em>' . $this->escapeHtml(__('Until:')) . '</em></div>';
+            $value .= '<div>' . $this->escapeHtml($untilDate) . '</div>';
+        }
+
+        if (!empty($refreshDateIndex)) {
+            if ($refreshDate = $row->getDataByKey($refreshDateIndex)) {
+                $refreshDate = $this->formatDateValue($refreshDate);
             } else {
                 $refreshDate = __('Never');
             }

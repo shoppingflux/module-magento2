@@ -13,6 +13,7 @@ use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
 use Magento\Directory\Model\Currency;
+use Magento\Framework\DB\Adapter\AdapterInterface as DbAdapterInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Registry;
 use Magento\Store\Model\ScopeInterface;
@@ -21,6 +22,7 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterfac
 use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer\State as StateRenderer;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\Store\FeedProductSections as ProductSectionsAction;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
+use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\Source as ProductExportStateSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Exclusion\Reason\Source as ProductExclusionReasonSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Refresh\State\Source as ProductRefreshStateSource;
@@ -38,6 +40,11 @@ class Grid extends ExtendedGrid
      * @var ProductCollectionFactory
      */
     private $productCollectionFactory;
+
+    /**
+     * @var ExportStateConfigInterface
+     */
+    private $exportStateConfig;
 
     /**
      * @var ProductType
@@ -74,6 +81,7 @@ class Grid extends ExtendedGrid
      * @param BackendHelper $backendHelper
      * @param Registry $coreRegistry
      * @param ProductCollectionFactory $productCollectionFactory
+     * @param ExportStateConfigInterface $exportStateConfig
      * @param ProductType $productType
      * @param ProductVisibility $productVisibility
      * @param ProductStatusSource $productStatusSource
@@ -87,6 +95,7 @@ class Grid extends ExtendedGrid
         BackendHelper $backendHelper,
         Registry $coreRegistry,
         ProductCollectionFactory $productCollectionFactory,
+        ExportStateConfigInterface $exportStateConfig,
         ProductType $productType,
         ProductVisibility $productVisibility,
         ProductStatusSource $productStatusSource,
@@ -97,6 +106,7 @@ class Grid extends ExtendedGrid
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->productCollectionFactory = $productCollectionFactory;
+        $this->exportStateConfig = $exportStateConfig;
         $this->productType = $productType;
         $this->productVisibility = $productVisibility;
         $this->productStatusSource = $productStatusSource;
@@ -112,6 +122,7 @@ class Grid extends ExtendedGrid
         $this->setId('sfm_feed_product_grid');
         $this->setDefaultSort('entity_id');
         $this->setUseAjax(true);
+        $this->setSaveParametersInSession(true);
     }
 
     /**
@@ -124,10 +135,34 @@ class Grid extends ExtendedGrid
 
     protected function _prepareCollection()
     {
+        $store = $this->getAccountStore();
+
         /** @var ProductCollection $collection */
-        $collection = $this->getAccountStore()->getCatalogProductCollection();
+        $collection = $store->getCatalogProductCollection();
+
         $collection->addAttributeToSelect([ 'sku', 'name', 'price', 'status', 'visibility' ]);
+
+        if (
+            $this->exportStateConfig->shouldRetainPreviouslyExported($store)
+            && ($retentionDuration = $this->exportStateConfig->getPreviouslyExportedRetentionDuration($store))
+            && ($retentionDuration > 0)
+        ) {
+            $connection = $collection->getConnection();
+
+            $collection->getSelect()
+                ->columns(
+                    [
+                        'export_retention_ending_at' => $connection->getDateAddSql(
+                            'export_retention_started_at',
+                            $retentionDuration,
+                            DbAdapterInterface::INTERVAL_SECOND
+                        ),
+                    ]
+                );
+        }
+
         $this->setCollection($collection);
+
         return parent::_prepareCollection();
     }
 
@@ -254,6 +289,7 @@ class Grid extends ExtendedGrid
                 'filter' => SelectFilter::class,
                 'renderer' => StateRenderer::class,
                 'options' => $this->productExportStateSource->toOptionArray(),
+                'until_date_index' => 'export_retention_ending_at',
             ]
         );
 

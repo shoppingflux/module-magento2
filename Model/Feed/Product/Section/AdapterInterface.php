@@ -29,8 +29,23 @@ interface AdapterInterface extends BaseInterface
      * @param StoreInterface $store
      * @param array $productData
      * @return array
+     * @deprecated
      */
     public function adaptRetainedProductData(StoreInterface $store, array $productData);
+
+    /**
+     * @param StoreInterface $store
+     * @param array $productData
+     * @return array
+     */
+    public function adaptNonExportableProductData(StoreInterface $store, array $productData);
+
+    /**
+     * @param StoreInterface $store
+     * @param array $productData
+     * @return array
+     */
+    public function adaptChildProductData(StoreInterface $store, array $productData);
 
     /**
      * @param StoreInterface $store
@@ -42,10 +57,17 @@ interface AdapterInterface extends BaseInterface
 
     /**
      * @param StoreInterface $store
-     * @param array $productData
+     * @param array $bundleData
+     * @param array[] $childrenData
+     * @param int[] $childrenQuantities
      * @return array
      */
-    public function adaptChildProductData(StoreInterface $store, array $productData);
+    public function adaptBundleProductData(
+        StoreInterface $store,
+        array $bundleData,
+        array $childrenData,
+        array $childrenQuantities
+    );
 
     /**
      * @param StoreInterface $store

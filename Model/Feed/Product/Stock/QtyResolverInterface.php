@@ -32,4 +32,11 @@ interface QtyResolverInterface
      * @return bool
      */
     public function isCatalogProductInStock(CatalogProduct $product, StoreInterface $store, $msiQuantityType);
+
+    /**
+     * @param CatalogProduct $product
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function isCatalogProductBackorderable(CatalogProduct $product, StoreInterface $store);
 }

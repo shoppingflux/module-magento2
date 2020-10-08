@@ -2,12 +2,15 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 
+use Magento\Bundle\Model\Product\Price as BundleProductPrice;
+use Magento\Bundle\Model\Product\Type as BundleProductType;
+use Magento\Bundle\Model\Selection as BundleProductSelection;
 use Magento\Catalog\Model\Product as CatalogProduct;
-use Magento\Catalog\Model\Product\Type as CatalogProductType;
 use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Catalog\Model\ResourceModel\ProductFactory as CatalogProductResourceFactory;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProductType;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Tax\Api\TaxCalculationInterface as TaxCalculationInterface;
 use Magento\Tax\Model\Config as TaxConfig;
@@ -28,6 +31,7 @@ class Prices extends AbstractAdapter implements PricesInterface
     const KEY_BASE_PRICE = 'base_price';
     const KEY_SPECIAL_PRICE = 'special_price';
     const KEY_FINAL_PRICE = 'final_price';
+    const KEY_TIER_PRICE = 'tier_price';
     const KEY_SPECIAL_PRICE_FROM_DATE = 'special_price_from_date';
     const KEY_SPECIAL_PRICE_TO_DATE = 'special_price_to_date';
 
@@ -37,14 +41,14 @@ class Prices extends AbstractAdapter implements PricesInterface
     private $catalogProductResourceFactory;
 
     /**
+     * @var TimezoneInterface
+     */
+    private $localeDate;
+
+    /**
      * @var CatalogProductResource|null
      */
     private $catalogProductResource = null;
-
-    /**
-     * @var ConfigurableProductType
-     */
-    private $configurableProductType;
 
     /**
      * @var TaxCalculationInterface
@@ -56,7 +60,7 @@ class Prices extends AbstractAdapter implements PricesInterface
      * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param CatalogProductResourceFactory $catalogProductResourceFactory
-     * @param ConfigurableProductType $configurableProductType
+     * @param TimezoneInterface $localeDate
      * @param TaxCalculationInterface $taxCalculator
      */
     public function __construct(
@@ -64,11 +68,11 @@ class Prices extends AbstractAdapter implements PricesInterface
         LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         CatalogProductResourceFactory $catalogProductResourceFactory,
-        ConfigurableProductType $configurableProductType,
+        TimezoneInterface $localeDate,
         TaxCalculationInterface $taxCalculator
     ) {
         $this->catalogProductResourceFactory = $catalogProductResourceFactory;
-        $this->configurableProductType = $configurableProductType;
+        $this->localeDate = $localeDate;
         $this->taxCalculator = $taxCalculator;
         parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
@@ -80,7 +84,14 @@ class Prices extends AbstractAdapter implements PricesInterface
 
     public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
     {
-        $productCollection->addAttributeToSelect('special_price');
+        $productCollection->addAttributeToSelect(
+            [
+                'price_type',
+                'special_price',
+                'special_from_date',
+                'special_to_date',
+            ]
+        );
 
         $productCollection->addPriceData(
             $this->getConfig()->getCustomerGroupId($store),
@@ -134,10 +145,55 @@ class Prices extends AbstractAdapter implements PricesInterface
 
     /**
      * @param CatalogProduct $product
+     * @return float
+     */
+    private function getProductBasePrice(CatalogProduct $product)
+    {
+        if ($product->getTypeInstance() instanceof BundleProductType) {
+            $product = clone $product;
+            $product->setData('tier_price', []);
+            $product->unsetData('special_price');
+            return $product->getFinalPrice(1);
+        }
+
+        return $product->getPrice();
+    }
+
+    /**
+     * @param CatalogProduct $product
+     * @return float
+     */
+    private function getProductSpecialPrice(CatalogProduct $product)
+    {
+        return (float) $product->getSpecialPrice();
+    }
+
+    /**
+     * @param CatalogProduct $product
+     * @return float
+     */
+    private function getProductFinalPrice(CatalogProduct $product)
+    {
+        return $product->getFinalPrice(1);
+    }
+
+    /**
+     * @param CatalogProduct $product
+     * @return float
+     */
+    private function getProductTierPrice(CatalogProduct $product)
+    {
+        $tierPrice = $product->getTierPrice(1);
+
+        return is_numeric($tierPrice) ? $tierPrice : 0.0;
+    }
+
+    /**
+     * @param CatalogProduct $product
      * @param StoreInterface $store
      * @return array
      */
-    private function getSimpleProductPriceData(CatalogProduct $product, StoreInterface $store)
+    private function getBasicProductPriceData(CatalogProduct $product, StoreInterface $store)
     {
         $taxRate = false;
         $isPriceIncludingTax = (bool) $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_PRICE_INCLUDES_TAX);
@@ -150,14 +206,16 @@ class Prices extends AbstractAdapter implements PricesInterface
 
         $originalCustomerGroupId = $product->getCustomerGroupId();
         $originalWebsiteId = $product->getWebsiteId();
+
         $product->setCustomerGroupId($this->getConfig()->getCustomerGroupId($store));
         $product->setWebsiteId($store->getBaseStore()->getWebsiteId());
 
         $product->unsetData('final_price');
         $product->unsetData('calculated_final_price');
-        $basePrice = $this->applyTaxRateOnPrice($product->getPrice(), $taxRate);
-        $specialPrice = $this->applyTaxRateOnPrice($product->getSpecialPrice(), $taxRate);
-        $finalPrice = $this->applyTaxRateOnPrice($product->getFinalPrice(1), $taxRate);
+
+        $basePrice = $this->applyTaxRateOnPrice($this->getProductBasePrice($product), $taxRate);
+        $specialPrice = $this->applyTaxRateOnPrice($this->getProductSpecialPrice($product), $taxRate);
+        $finalPrice = $this->applyTaxRateOnPrice($this->getProductFinalPrice($product), $taxRate);
 
         $product->setCustomerGroupId($originalCustomerGroupId);
         $product->setWebsiteId($originalWebsiteId);
@@ -185,22 +243,29 @@ class Prices extends AbstractAdapter implements PricesInterface
     }
 
     /**
+     * @param ConfigurableProductType $productType
      * @param CatalogProduct $product
      * @param StoreInterface $store
      * @param string $priceType
      * @return array
      */
-    private function getConfigurablePriceData(CatalogProduct $product, StoreInterface $store, $priceType)
-    {
-        $variationCollection = $this->configurableProductType->getUsedProductCollection($product);
+    private function getConfigurablePriceData(
+        ConfigurableProductType $productType,
+        CatalogProduct $product,
+        StoreInterface $store,
+        $priceType
+    ) {
+        $variationCollection = $productType->getUsedProductCollection($product);
         $variationCollection->addStoreFilter($store->getBaseStoreId());
+
         $this->prepareLoadableProductCollection($store, $variationCollection);
+
         $priceData = [];
         $currentFinalPrice = 0;
 
         /** @var CatalogProduct $variation */
         foreach ($variationCollection as $variation) {
-            $variationPriceData = $this->getSimpleProductPriceData($variation, $store);
+            $variationPriceData = $this->getBasicProductPriceData($variation, $store);
             $variationFinalPrice = $variationPriceData[self::KEY_FINAL_PRICE] ?? 0;
 
             if (!empty($variationFinalPrice)) {
@@ -217,23 +282,143 @@ class Prices extends AbstractAdapter implements PricesInterface
         return $priceData;
     }
 
+    /**
+     * @param BundleProductType $productType
+     * @param CatalogProduct $product
+     * @param StoreInterface $store
+     * @return array
+     */
+    private function getBundleFixedPriceData(
+        BundleProductType $productType,
+        CatalogProduct $product,
+        StoreInterface $store
+    ) {
+        /** @var BundleProductPrice $bundlePrice */
+        $bundlePrice = $product->getPriceModel();
+
+        // Prepare the product so that each default selection is taken into account using its default quantity.
+        $allOptionIds = $productType->getOptionsIds($product);
+        $defaultSelectionIds = [];
+        $selectionCollection = $productType->getSelectionsCollection($allOptionIds, $product);
+
+        /** @var BundleProductSelection $selection */
+        foreach ($selectionCollection as $selection) {
+            if ($selection->getIsDefault()) {
+                $selectionId = (int) $selection->getSelectionId();
+                $defaultSelectionIds[] = $selectionId;
+                $product->addCustomOption('selection_qty_' . $selectionId, $selection->getSelectionQty());
+            }
+        }
+
+        $product->addCustomOption('bundle_selection_ids', json_encode($defaultSelectionIds));
+
+        $priceData = $this->getBasicProductPriceData($product, $store);
+
+        // Clean up the product to avoid any inconsistent behavior in other sections.
+        $product->setCustomOptions([]);
+
+        return $priceData;
+    }
+
+    /**
+     * @param CatalogProduct $product
+     * @param StoreInterface $store
+     */
+    private function getBundleDynamicPriceData(CatalogProduct $product, StoreInterface $store)
+    {
+        $priceData = [
+            self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($store, $product, 'special_from_date'),
+            self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($store, $product, 'special_to_date'),
+        ];
+
+        $tierPrice = $this->getProductTierPrice($product);
+
+        if ($tierPrice > 0.0) {
+            $priceData[self::KEY_TIER_PRICE] = $tierPrice;
+        }
+
+        $specialPrice = $this->getProductSpecialPrice($product);
+
+        if (
+            ($specialPrice > 0.0)
+            && $this->localeDate->isScopeDateInInterval(
+                $store->getBaseStore(),
+                $product->getSpecialFromDate(),
+                $product->getSpecialToDate()
+            )
+        ) {
+            $priceData[self::KEY_SPECIAL_PRICE] = $specialPrice;
+        }
+
+        return $priceData;
+    }
+
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
-        $catalogProduct = $product->getCatalogProduct();
-        $productTypeId = $catalogProduct->getTypeId();
         $productData = [];
 
-        if (ConfigurableProductType::TYPE_CODE === $productTypeId) {
+        $catalogProduct = $product->getCatalogProduct();
+        $productType = $catalogProduct->getTypeInstance();
+
+        if ($productType instanceof ConfigurableProductType) {
             $priceType = $this->getConfig()->getConfigurableProductPriceType($store);
 
             if (ConfigInterface::CONFIGURABLE_PRODUCT_PRICE_TYPE_NONE !== $priceType) {
-                $productData = $this->getConfigurablePriceData($catalogProduct, $store, $priceType);
+                $productData = $this->getConfigurablePriceData($productType, $catalogProduct, $store, $priceType);
+            }
+        } elseif ($productType instanceof BundleProductType) {
+            if ((int) $catalogProduct->getPriceType() === BundleProductPrice::PRICE_TYPE_FIXED) {
+                $productData = $this->getBundleFixedPriceData($productType, $catalogProduct, $store);
+            } else {
+                $productData = $this->getBundleDynamicPriceData($catalogProduct, $store);
             }
         } else {
-            $productData = $this->getSimpleProductPriceData($catalogProduct, $store);
+            $productData = $this->getBasicProductPriceData($catalogProduct, $store);
         }
 
         return $productData;
+    }
+
+    public function adaptBundleProductData(
+        StoreInterface $store,
+        array $bundleData,
+        array $childrenData,
+        array $childrenQuantities
+    ) {
+        if (isset($bundleData[self::KEY_FINAL_PRICE])) {
+            // Fixed prices are handled at refresh time.
+            return $bundleData;
+        }
+
+        $basePrice = 0.0;
+        $finalPrice = 0.0;
+
+        foreach ($childrenData as $key => $childData) {
+            $bundledQuantity = max(1, $childrenQuantities[$key] ?? 0);
+            $basePrice += ((float) ($childData[self::KEY_BASE_PRICE] ?? 0.0)) * $bundledQuantity;
+            $finalPrice += ((float) ($childData[self::KEY_FINAL_PRICE] ?? 0.0)) * $bundledQuantity;
+        }
+
+        if (($bundleData[self::KEY_SPECIAL_PRICE] ?? 0.0) > 0.0) {
+            $specialPrice = $finalPrice * ($bundleData[self::KEY_SPECIAL_PRICE] / 100);
+
+            if ($specialPrice < $finalPrice) {
+                $finalPrice = $specialPrice;
+            }
+        }
+
+        if (($bundleData[self::KEY_TIER_PRICE] ?? 0.0) > 0.0) {
+            $tierPrice = $finalPrice - $finalPrice * ($bundleData[self::KEY_TIER_PRICE] / 100);
+
+            if ($tierPrice < $finalPrice) {
+                $finalPrice = $tierPrice;
+            }
+        }
+
+        $bundleData[self::KEY_BASE_PRICE] = $basePrice;
+        $bundleData[self::KEY_FINAL_PRICE] = $finalPrice;
+
+        return $bundleData;
     }
 
     public function exportBaseProductData(

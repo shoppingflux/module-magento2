@@ -191,7 +191,7 @@ class Refresher
         $storeId = $store->getId();
         $refreshableProduct->getCatalogProduct()->setStoreId($store->getBaseStoreId());
 
-        if ($refreshExportState) {
+        if ($refreshExportState && $refreshableProduct->hasRefreshableExportState()) {
             $previousBaseExportState = $refreshableProduct->getFeedProduct()->getExportState();
             $exportStates = $this->exportStateAdapter->getProductExportStates($store, $refreshableProduct);
             list ($baseExportState, $childExportState, $exclusionReason) = $exportStates;
@@ -209,16 +209,18 @@ class Refresher
         }
 
         foreach ($refreshableSectionTypeIds as $typeId) {
-            $sectionType = $this->sectionTypePool->getTypeById($typeId);
-            $sectionData = $sectionType->getAdapter()->getProductData($store, $refreshableProduct);
+            if ($refreshableProduct->hasRefreshableSectionType($typeId)) {
+                $sectionType = $this->sectionTypePool->getTypeById($typeId);
+                $sectionData = $sectionType->getAdapter()->getProductData($store, $refreshableProduct);
 
-            $this->feedSectionResource->updateSectionData(
-                $sectionType->getId(),
-                $productId,
-                $storeId,
-                $sectionData,
-                FeedProduct::REFRESH_STATE_UP_TO_DATE
-            );
+                $this->feedSectionResource->updateSectionData(
+                    $sectionType->getId(),
+                    $productId,
+                    $storeId,
+                    $sectionData,
+                    FeedProduct::REFRESH_STATE_UP_TO_DATE
+                );
+            }
         }
     }
 
@@ -339,6 +341,7 @@ class Refresher
             );
 
             $refreshableProduct->setCatalogProduct($catalogProduct, true);
+
             $this->refreshProduct($refreshableProduct, $store, $refreshExportState, $refreshableSectionTypeIds);
         }
     }

@@ -39,6 +39,7 @@
     white-space: nowrap;
 }
 
-select[name^=sfm_feed_attributes] option:empty {
+select[name^=sfm_feed_attributes] option:empty,
+#sfm_feed_product_grid .data-grid-filters option:empty {
     display: inherit;
 }

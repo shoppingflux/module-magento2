@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Stock;
 
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\CatalogInventory\Api\StockRegistryInterface;
+use Magento\CatalogInventory\Model\Stock;
 use Magento\CatalogInventory\Model\Stock\Item as StockItem;
 use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -451,5 +452,19 @@ class QtyResolver implements QtyResolverInterface
         }
 
         return $isInStock;
+    }
+
+    public function isCatalogProductBackorderable(CatalogProduct $product, StoreInterface $store)
+    {
+        $stockItem = $this->stockRegistry->getStockItem($product->getId(), $store->getBaseWebsiteId());
+
+        return in_array(
+            (int) $stockItem->getBackorders(),
+            [
+                Stock::BACKORDERS_YES_NONOTIFY,
+                Stock::BACKORDERS_YES_NOTIFY,
+            ],
+            true
+        );
     }
 }

@@ -221,6 +221,38 @@ class Dictionary extends AbstractDb
     /**
      * @return string
      */
+    public function getBundleProductOptionTableCode()
+    {
+        return 'catalog_product_bundle_option';
+    }
+
+    /**
+     * @return string
+     */
+    public function getBundleProductOptionTableName()
+    {
+        return $this->getTable($this->getBundleProductOptionTableCode());
+    }
+
+    /**
+     * @return string
+     */
+    public function getBundleProductSelectionTableCode()
+    {
+        return 'catalog_product_bundle_selection';
+    }
+
+    /**
+     * @return string
+     */
+    public function getBundleProductSelectionTableName()
+    {
+        return $this->getTable($this->getBundleProductSelectionTableCode());
+    }
+
+    /**
+     * @return string
+     */
     public function getCatalogCategoryTableCode()
     {
         return 'catalog_category_entity';

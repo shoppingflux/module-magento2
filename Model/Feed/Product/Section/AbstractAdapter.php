@@ -84,9 +84,23 @@ abstract class AbstractAdapter implements AdapterInterface
         return $productData;
     }
 
+    public function adaptNonExportableProductData(StoreInterface $store, array $productData)
+    {
+        return $productData;
+    }
+
     public function adaptParentProductData(StoreInterface $store, array $parentData, array $childrenData)
     {
         return $parentData;
+    }
+
+    public function adaptBundleProductData(
+        StoreInterface $store,
+        array $bundleData,
+        array $childrenData,
+        array $childrenQuantities
+    ) {
+        return $bundleData;
     }
 
     public function adaptChildProductData(StoreInterface $store, array $productData)
