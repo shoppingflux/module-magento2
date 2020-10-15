@@ -52,6 +52,8 @@ class Fpt extends AbstractRenderer
             }
 
             $value = empty($countryRows) ? '' : $countryRows;
+        } else {
+            $value = '';
         }
 
         return $value;
