@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
+use \Psr\Log\LoggerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
@@ -25,6 +26,11 @@ use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
 
 class Importer
 {
+    /**
+     * @var LoggerInterface
+     */
+    private $logger;
+
     /**
      * @var TimezoneInterface
      */
@@ -81,6 +87,7 @@ class Importer
     private $transactionFactory;
 
     /**
+     * @param LoggerInterface $logger
      * @param TimezoneInterface $localeDate
      * @param DataObjectFactory $dataObjectFactory
      * @param OrderConfigInterface $orderGeneralConfig
@@ -94,6 +101,7 @@ class Importer
      * @param TransactionFactory $transactionFactory
      */
     public function __construct(
+        LoggerInterface $logger,
         TimezoneInterface $localeDate,
         DataObjectFactory $dataObjectFactory,
         OrderConfigInterface $orderGeneralConfig,
@@ -106,6 +114,7 @@ class Importer
         ItemCollectionFactory $itemCollectionFactory,
         TransactionFactory $transactionFactory
     ) {
+        $this->logger = $logger;
         $this->localeDate = $localeDate;
         $this->dataObjectFactory = $dataObjectFactory;
         $this->orderGeneralConfig = $orderGeneralConfig;
@@ -128,7 +137,11 @@ class Importer
     public function importStoreOrders($apiOrders, StoreInterface $store, $updateOnly = false)
     {
         foreach ($apiOrders as $apiOrder) {
-            $this->importApiOrder($apiOrder, $store, $updateOnly);
+            try {
+                $this->importApiOrder($apiOrder, $store, $updateOnly);
+            } catch (\Exception $e) {
+                $this->logger->critical($e);
+            }
         }
     }
 
