@@ -1,5 +1,23 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\CreateUnexistingFormButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\LinkButton">
+        <arguments>
+            <argument name="aclResource" xsi:type="string">ShoppingFeed_Manager::account_store_create_unexisting</argument>
+            <argument name="name" xsi:type="string">create_unexisting</argument>
+            <argument name="label" xsi:type="string">Create an Account</argument>
+            <argument name="urlRoute" xsi:type="string">*/*/create_form_unexisting</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\CreateExistingFormButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\LinkButton">
+        <arguments>
+            <argument name="aclResource" xsi:type="string">ShoppingFeed_Manager::account_store_create_existing</argument>
+            <argument name="name" xsi:type="string">create_existing</argument>
+            <argument name="label" xsi:type="string">Import an Account</argument>
+            <argument name="urlRoute" xsi:type="string">*/*/create_form_existing</argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\CreateButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
         <arguments>
             <argument name="label" xsi:type="string">Create Account</argument>
@@ -18,9 +36,26 @@
         </arguments>
     </virtualType>
 
+
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Cron\Task\CreateFormButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\LinkButton">
+        <arguments>
+            <argument name="name" xsi:type="string">create</argument>
+            <argument name="label" xsi:type="string">Add New Task</argument>
+            <argument name="urlRoute" xsi:type="string">*/*/create</argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Cron\Task\Edit\SaveButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
         <arguments>
             <argument name="label" xsi:type="string">Save Task</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\CreateFormButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\LinkButton">
+        <arguments>
+            <argument name="name" xsi:type="string">create</argument>
+            <argument name="label" xsi:type="string">Add New Rule</argument>
+            <argument name="urlRoute" xsi:type="string">*/*/create</argument>
         </arguments>
     </virtualType>
 

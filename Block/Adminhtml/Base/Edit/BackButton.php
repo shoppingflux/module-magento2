@@ -11,19 +11,14 @@ class BackButton extends AbstractButton
      */
     public function getButtonData()
     {
-        return [
-            'label' => __('Back'),
-            'on_click' => sprintf("location.href = '%s';", $this->getBackUrl()),
-            'class' => 'back',
-            'sort_order' => 1000,
-        ];
-    }
-
-    /**
-     * @return string
-     */
-    public function getBackUrl()
-    {
-        return $this->getUrl('*/*/');
+        return !$this->isAllowed()
+            ? []
+            : [
+                'name' => $this->getName('back'),
+                'label' => $this->getLabel('Back'),
+                'class' => $this->getClass('back'),
+                'sort_order' => $this->getSortOrder(1000),
+                'on_click' => sprintf("location.href = '%s';", $this->getUrl('*/*/')),
+            ];
     }
 }

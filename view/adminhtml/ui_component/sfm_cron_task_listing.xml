@@ -3,12 +3,7 @@
     <argument name="data" xsi:type="array">
         <item name="acl" xsi:type="string">ShoppingFeed_Manager::cron_tasks</item>
         <item name="buttons" xsi:type="array">
-            <item name="create" xsi:type="array">
-                <item name="class" xsi:type="string">primary</item>
-                <item name="label" xsi:type="string" translate="true">Add New Task</item>
-                <item name="name" xsi:type="string">create</item>
-                <item name="url" xsi:type="string">*/*/create</item>
-            </item>
+            <item name="create" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Cron\Task\CreateFormButton</item>
         </item>
         <item name="js_config" xsi:type="array">
             <item name="deps" xsi:type="string">sfm_cron_task_listing.sfm_cron_task_listing_data_source</item>

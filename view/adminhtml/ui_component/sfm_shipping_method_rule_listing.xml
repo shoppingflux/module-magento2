@@ -3,12 +3,7 @@
     <argument name="data" xsi:type="array">
         <item name="acl" xsi:type="string">ShoppingFeed_Manager::shipping_method_rules</item>
         <item name="buttons" xsi:type="array">
-            <item name="create_existing" xsi:type="array">
-                <item name="class" xsi:type="string">primary</item>
-                <item name="label" xsi:type="string" translate="true">Add New Rule</item>
-                <item name="name" xsi:type="string">create</item>
-                <item name="url" xsi:type="string">*/*/create</item>
-            </item>
+            <item name="create" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\CreateFormButton</item>
         </item>
         <item name="js_config" xsi:type="array">
             <item name="deps" xsi:type="string">sfm_shipping_method_rule_listing.sfm_shipping_method_rule_listing_data_source</item>
