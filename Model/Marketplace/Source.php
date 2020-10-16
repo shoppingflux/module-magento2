@@ -100,6 +100,7 @@ class Source implements OptionSourceInterface
                         $this->storeMarketplaces[$storeId][$code] = [
                             'value' => $code,
                             'label' => $name,
+                            'channel_id' => $channel->getId(),
                         ];
                     }
                 }
@@ -116,15 +117,14 @@ class Source implements OptionSourceInterface
 
         if (null === $this->defaultMarketplaces) {
             $orderResource = $this->orderResourceFactory->create();
-            $marketplaces = $orderResource->getMarketplaceList();
+            $marketplaces = $orderResource->getChannelMap();
             $this->defaultMarketplaces = [];
 
-            foreach ($marketplaces as $marketplace) {
-                $code = $this->stringHelper->getNormalizedCode($marketplace);
-
-                $this->defaultMarketplaces[$code] = [
-                    'value' => $code,
-                    'label' => trim($marketplace),
+            foreach ($marketplaces as $channelId => $marketplaceName) {
+                $this->defaultMarketplaces[$channelId] = [
+                    'value' => $this->stringHelper->getNormalizedCode($marketplaceName),
+                    'label' => trim($marketplaceName),
+                    'channel_id' => (int) $channelId,
                 ];
             }
 

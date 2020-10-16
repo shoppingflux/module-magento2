@@ -26,6 +26,8 @@ use ShoppingFeed\Sdk\Api\Task\TicketResource as ApiTicket;
 class Manager
 {
     const API_FILTER_ACKNOWLEDGEMENT = 'acknowledgment';
+    const API_FILTER_CHANNEL_ID = 'channelId';
+    const API_FILTER_REFERENCE = 'reference';
     const API_FILTER_SINCE = 'since';
     const API_FILTER_STATUS = 'status';
 
@@ -126,6 +128,44 @@ class Manager
         }
 
         return $statuses;
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param int $channelId
+     * @param string $reference
+     * @return ApiOrder|null
+     * @throws LocalizedException
+     */
+    public function getStoreImportableApiOrderByChannelAndReference(StoreInterface $store, $channelId, $reference)
+    {
+        if (empty($channelId) || empty($reference)) {
+            return null;
+        }
+
+        $apiStore = $this->apiSessionManager->getStoreApiResource($store);
+
+        $orders = $apiStore->getOrderApi()
+            ->getAll(
+                [
+                    self::API_FILTER_ACKNOWLEDGEMENT => self::API_UNACKNOWLEDGED,
+                    self::API_FILTER_CHANNEL_ID => (int) $channelId,
+                    self::API_FILTER_REFERENCE => trim($reference),
+                ]
+            );
+
+        $singleOrder = null;
+
+        foreach ($orders as $order) {
+            if (null !== $singleOrder) {
+                $singleOrder = null;
+                break;
+            }
+
+            $singleOrder = $order;
+        }
+
+        return $singleOrder;
     }
 
     /**

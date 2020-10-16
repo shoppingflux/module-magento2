@@ -36,6 +36,20 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Marketplace\Order\FetchFormButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\LinkButton">
+        <arguments>
+            <argument name="aclResource" xsi:type="string">ShoppingFeed_Manager::marketplace_order_fetch</argument>
+            <argument name="name" xsi:type="string">fetch</argument>
+            <argument name="label" xsi:type="string">Fetch an Order</argument>
+            <argument name="urlRoute" xsi:type="string">*/*/fetch_form</argument>
+        </arguments>
+    </virtualType>
+
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Marketplace\Order\FetchButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
+        <arguments>
+            <argument name="label" xsi:type="string">Fetch Order</argument>
+        </arguments>
+    </virtualType>
 
     <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Cron\Task\CreateFormButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\LinkButton">
         <arguments>

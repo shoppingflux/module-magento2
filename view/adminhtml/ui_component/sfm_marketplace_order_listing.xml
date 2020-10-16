@@ -2,6 +2,9 @@
 <listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
     <argument name="data" xsi:type="array">
         <item name="acl" xsi:type="string">ShoppingFeed_Manager::marketplace_orders</item>
+        <item name="buttons" xsi:type="array">
+            <item name="fetch" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Marketplace\Order\FetchFormButton</item>
+        </item>
         <item name="js_config" xsi:type="array">
             <item name="deps" xsi:type="string">sfm_marketplace_order_listing.sfm_marketplace_order_listing_data_source</item>
             <item name="provider" xsi:type="string">sfm_marketplace_order_listing.sfm_marketplace_order_listing_data_source</item>

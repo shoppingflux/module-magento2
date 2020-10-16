@@ -82,7 +82,7 @@ class Order extends AbstractDb
             [ 'import_remaining_try_count' => new \Zend_Db_Expr('import_remaining_try_count - 1') ],
             $connection->quoteInto('order_id = ?', $orderId)
             . ' AND '
-            . $connection->quoteInto('import_remaining_try_count > ?', 0) 
+            . $connection->quoteInto('import_remaining_try_count > ?', 0)
         );
     }
 
@@ -103,5 +103,30 @@ class Order extends AbstractDb
         }
 
         return $connection->fetchCol($marketplaceSelect);
+    }
+
+    /**
+     * @param int|null $storeId
+     * @return array
+     */
+    public function getChannelMap($storeId = null)
+    {
+        $connection = $this->getConnection();
+
+        $marketplaceSelect = $connection->select()
+            ->distinct(true)
+            ->from(
+                $this->getMainTable(),
+                [
+                    OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                    OrderInterface::MARKETPLACE_NAME,
+                ]
+            );
+
+        if (null !== $storeId) {
+            $marketplaceSelect->where(OrderInterface::STORE_ID . ' = ?', (int) $storeId);
+        }
+
+        return $connection->fetchPairs($marketplaceSelect);
     }
 }
