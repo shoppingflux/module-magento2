@@ -157,12 +157,14 @@ class Manager
         $singleOrder = null;
 
         foreach ($orders as $order) {
-            if (null !== $singleOrder) {
-                $singleOrder = null;
-                break;
+            if ($order->getReference() === $reference) {
+                if (null === $singleOrder) {
+                    $singleOrder = $order;
+                } else {
+                    $singleOrder = null;
+                    break;
+                }
             }
-
-            $singleOrder = $order;
         }
 
         return $singleOrder;
