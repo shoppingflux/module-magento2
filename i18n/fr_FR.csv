@@ -466,7 +466,7 @@
 "This cron task does no longer exist.","Cette tâche cron n'existe plus."
 "This email address will be used when none is available for a given address.","Cette adresse email sera utilisée quand aucune n'est disponible pour une adresse donnée."
 "This marketplace order does no longer exist.","Cette commande place de marché n'existe plus."
-"This marketplace order does not exist or has already been fetched.","Cette commande place de marché n'existe pas ou a déjà été récupérée."
+"This marketplace order does not exist or has already been imported.","Cette commande place de marché n'existe pas ou a déjà été importée."
 "This may slow down product and inventory updates.","Cela pourrait ralentir la sauvegarde des stocks et des produits."
 "This method is (much) faster, but in some rare cases insufficient to fetch specific data.","Cette méthode est (beaucoup) plus rapide, mais dans certains cas rares insuffisante pour récupérer certaines données."
 "This method is (much) slower, and should therefore only be used if the other is insufficient.","Cette méthode est (beaucoup) plus lente, et ne devrait donc être utilisée que si l'autre est insuffisante."

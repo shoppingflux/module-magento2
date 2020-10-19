@@ -78,7 +78,7 @@ class Fetch extends OrderAction
 
                 if (null === $apiOrder) {
                     throw new LocalizedException(
-                        __('This marketplace order does not exist or has already been fetched.')
+                        __('This marketplace order does not exist or has already been imported.')
                     );
                 }
 
