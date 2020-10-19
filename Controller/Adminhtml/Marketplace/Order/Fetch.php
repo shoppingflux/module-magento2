@@ -4,11 +4,9 @@ namespace ShoppingFeed\Manager\Controller\Adminhtml\Marketplace\Order;
 
 use Magento\Backend\App\Action\Context;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface;
-use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
 use ShoppingFeed\Manager\Controller\Adminhtml\Marketplace\OrderAction;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Importer as MarketplaceOrderImporter;
@@ -36,6 +34,7 @@ class Fetch extends OrderAction
     /**
      * @param Context $context
      * @param PageResultFactory $pageResultFactory
+     * @param OrderRepositoryInterface $orderRepository
      * @param StoreRepositoryInterface $storeRepository
      * @param MarketplaceOrderManager $marketplaceOrderManager
      * @param MarketplaceOrderImporter $marketplaceOrderImporter

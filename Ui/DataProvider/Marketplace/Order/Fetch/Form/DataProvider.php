@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Fetch\Form;
 
-use Magento\Backend\Model\Session as BackendSession;
 use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Api\Search\ReportingInterface;
 use Magento\Framework\Api\Search\SearchCriteriaBuilder;
@@ -13,7 +12,6 @@ use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants as StoreRegistryConstants;
 use ShoppingFeed\Manager\Model\Marketplace\Source as MarketplaceSource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Manager\Ui\DataProvider\Meta\Compatibility\Fixer as MetaCompatibilityFixer;
 
 class DataProvider extends BaseDataProvider
 {
@@ -48,9 +46,7 @@ class DataProvider extends BaseDataProvider
      * @param SearchCriteriaBuilder $searchCriteriaBuilder
      * @param RequestInterface $request
      * @param FilterBuilder $filterBuilder
-     * @param BackendSession $backendSession
      * @param Registry $coreRegistry
-     * @param MetaCompatibilityFixer $metaCompatibilityFixer
      * @param StoreCollectionFactory $storeCollectionFactory ,
      * @param MarketplaceSource $marketplaceSource
      * @param array $meta
@@ -64,9 +60,7 @@ class DataProvider extends BaseDataProvider
         SearchCriteriaBuilder $searchCriteriaBuilder,
         RequestInterface $request,
         FilterBuilder $filterBuilder,
-        BackendSession $backendSession,
         Registry $coreRegistry,
-        MetaCompatibilityFixer $metaCompatibilityFixer,
         StoreCollectionFactory $storeCollectionFactory,
         MarketplaceSource $marketplaceSource,
         array $meta = [],

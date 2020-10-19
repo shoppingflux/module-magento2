@@ -21,7 +21,7 @@ abstract class AbstractButton implements ButtonProviderInterface
     /**
      * @var string|null
      */
-    private $aclResource = null;
+    private $aclResource;
 
     /**
      * @var string|null
