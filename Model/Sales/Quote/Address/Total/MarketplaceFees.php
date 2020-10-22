@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Quote\Address\Total;
 
-use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Quote\Api\Data\ShippingAssignmentInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address\Total;
@@ -15,22 +14,15 @@ class MarketplaceFees extends AbstractTotal
     const AMOUNT_KEY_STORE = 'store';
 
     /**
-     * @var PriceCurrencyInterface
-     */
-    private $priceCurrency;
-
-    /**
      * @var OrderImporterInterface
      */
     private $orderImporter;
 
     /**
-     * @param PriceCurrencyInterface $priceCurrency
      * @param OrderImporterInterface $orderImporter
      */
-    public function __construct(PriceCurrencyInterface $priceCurrency, OrderImporterInterface $orderImporter)
+    public function __construct(OrderImporterInterface $orderImporter)
     {
-        $this->priceCurrency = $priceCurrency;
         $this->orderImporter = $orderImporter;
     }
 
@@ -45,8 +37,13 @@ class MarketplaceFees extends AbstractTotal
             && $this->orderImporter->isCurrentlyImportedQuote($quote)
             && ($marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder())
         ) {
+            $store = $quote->getStore();
             $feesAmount = $marketplaceOrder->getFeesAmount();
-            $baseFeesAmount = $this->priceCurrency->convert($feesAmount, $quote->getStore());
+            $baseFeesAmount = $feesAmount;
+
+            if ($store->getCurrentCurrencyCode() !== $store->getBaseCurrencyCode()) {
+                $baseFeesAmount /= $store->getCurrentCurrencyRate();
+            }
 
             return [
                 self::AMOUNT_KEY_STORE => $feesAmount,
