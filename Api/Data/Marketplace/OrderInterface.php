@@ -37,6 +37,11 @@ interface OrderInterface
     const ACKNOWLEDGED_AT = 'acknowledged_at';
     /**#@+*/
 
+    const SALES_ENTITY_FIELD_NAME_BUNDLE_ADJUSTMENT = 'sfm_bundle_adjustment';
+    const SALES_ENTITY_FIELD_NAME_BASE_BUNDLE_ADJUSTMENT = 'sfm_base_bundle_adjustment';
+    const SALES_ENTITY_FIELD_NAME_BUNDLE_ADJUSTMENT_INCL_TAX = 'sfm_bundle_adjustment_incl_tax';
+    const SALES_ENTITY_FIELD_NAME_BASE_BUNDLE_ADJUSTMENT_INCL_TAX = 'sfm_base_bundle_adjustment_incl_tax';
+
     const SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_AMOUNT = 'sfm_marketplace_fees_amount';
     const SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_BASE_AMOUNT = 'sfm_marketplace_fees_base_amount';
 

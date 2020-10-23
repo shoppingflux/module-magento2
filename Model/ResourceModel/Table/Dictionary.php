@@ -325,6 +325,22 @@ class Dictionary extends AbstractDb
     /**
      * @return string
      */
+    public function getQuoteAddressTableCode()
+    {
+        return 'quote_address';
+    }
+
+    /**
+     * @return string
+     */
+    public function getQuoteAddressTableName()
+    {
+        return $this->getTable($this->getQuoteAddressTableCode());
+    }
+
+    /**
+     * @return string
+     */
     public function getSalesOrderTableCode()
     {
         return 'sales_order';

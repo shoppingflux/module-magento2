@@ -3,5 +3,6 @@
     <extension_attributes for="Magento\Quote\Api\Data\AddressInterface">
         <attribute code="sfm_is_shopping_feed_order" type="bool"/>
         <attribute code="sfm_is_shopping_feed_business_order" type="bool"/>
+        <attribute code="sfm_bundle_adjustments" type="array"/>
     </extension_attributes>
 </config>

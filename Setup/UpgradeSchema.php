@@ -116,6 +116,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.38.0') < 0)) {
             $this->addMarketplaceOrderIsAutomaticallyShippedField($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.41.0') < 0)) {
+            $this->addSalesEntityBundleAdjustmentFields(
+                $setup,
+                [
+                    $this->tableDictionary->getQuoteAddressTableName(),
+                    $this->tableDictionary->getSalesOrderTableName(),
+                    $this->tableDictionary->getSalesInvoiceTableName(),
+                    $this->tableDictionary->getSalesCreditmemoTableName(),
+                ]
+            );
+        }
     }
 
     /**
@@ -1538,6 +1550,48 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'after' => OrderInterface::IMPORT_REMAINING_TRY_COUNT,
                 ]
             );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @param string[] $salesEntityTableNames
+     */
+    private function addSalesEntityBundleAdjustmentFields(SchemaSetupInterface $setup, array $salesEntityTableNames)
+    {
+        $connection = $setup->getConnection();
+
+        $baseFieldDefinition = [
+            'type' => Table::TYPE_DECIMAL,
+            'length' => '12,4',
+            'nullable' => true,
+        ];
+
+        $fieldDefinitions = [
+            OrderInterface::SALES_ENTITY_FIELD_NAME_BUNDLE_ADJUSTMENT => array_merge(
+                $baseFieldDefinition,
+                [ 'comment' => 'Bundle Adjustment' ]
+            ),
+            OrderInterface::SALES_ENTITY_FIELD_NAME_BUNDLE_ADJUSTMENT_INCL_TAX => array_merge(
+                $baseFieldDefinition,
+                [ 'comment' => 'Bundle Adjustment Incl Tax' ]
+            ),
+            OrderInterface::SALES_ENTITY_FIELD_NAME_BASE_BUNDLE_ADJUSTMENT => array_merge(
+                $baseFieldDefinition,
+                [ 'comment' => 'Base Bundle Adjustment' ]
+            ),
+            OrderInterface::SALES_ENTITY_FIELD_NAME_BASE_BUNDLE_ADJUSTMENT_INCL_TAX => array_merge(
+                $baseFieldDefinition,
+                [ 'comment' => 'Base Bundle Adjustment Incl Tax' ]
+            ),
+        ];
+
+        foreach ($salesEntityTableNames as $salesEntityTableName) {
+            foreach ($fieldDefinitions as $fieldName => $fieldDefinition) {
+                if (!$connection->tableColumnExists($salesEntityTableName, $fieldName)) {
+                    $connection->addColumn($salesEntityTableName, $fieldName, $fieldDefinition);
+                }
+            }
         }
     }
 }
