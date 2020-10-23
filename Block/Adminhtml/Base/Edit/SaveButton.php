@@ -8,14 +8,21 @@ class SaveButton extends AbstractButton
 {
     public function getButtonData()
     {
-        return [
-            'label' => __($this->getLabel('Save')),
-            'class' => 'save primary',
-            'data_attribute' => [
-                'mage-init' => [ 'button' => [ 'event' => 'save' ] ],
-                'form-role' => 'save',
-            ],
-            'sort_order' => 9000,
-        ];
+        return !$this->isAllowed()
+            ? []
+            : [
+                'name' => $this->getName('save'),
+                'label' => $this->getLabel('Save'),
+                'class' => $this->getClass('save primary'),
+                'sort_order' => $this->getSortOrder(9000),
+                'data_attribute' => [
+                    'mage-init' => [
+                        'button' => [
+                            'event' => 'save',
+                        ],
+                    ],
+                    'form-role' => 'save',
+                ],
+            ];
     }
 }

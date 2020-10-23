@@ -17,6 +17,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Filter\Template as TemplateFilter;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
+use Magento\Quote\Api\Data\AddressExtensionInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Quote\Model\Quote;
@@ -220,6 +221,11 @@ class Importer implements ImporterInterface
      * @var int|null
      */
     private $currentlyImportedQuoteId = null;
+
+    /**
+     * @var float[]|null
+     */
+    private $currentlyImportedQuoteBundleAdjustments = [];
 
     /**
      * @var bool
@@ -632,6 +638,7 @@ class Importer implements ImporterInterface
             $this->currentImportStore = null;
             $this->currentlyImportedMarketplaceOrder = null;
             $this->currentlyImportedQuoteId = null;
+            $this->currentlyImportedQuoteBundleAdjustments = [];
             $this->isCurrentlyImportedBusinessQuote = false;
             $baseStore->setCurrentCurrencyCode($originalBaseStoreCurrencyCode);
             $this->baseStoreManager->setCurrentStore($originalCurrentBaseStore);
@@ -911,7 +918,7 @@ class Importer implements ImporterInterface
         $bundleItem = $quote->addProduct(
             $product,
             $buyRequest,
-            ProductType::PROCESS_MODE_LITE
+            ProductType::PROCESS_MODE_FULL
         );
 
         // Check that every selection has been added to the quote, and gather their original prices.
@@ -942,7 +949,7 @@ class Importer implements ImporterInterface
                     $childProduct,
                     $marketplaceItem->getQuantity(),
                     $selection->getSelectionQty(),
-                    false,
+                    true,
                     true
                 );
             } else {
@@ -964,18 +971,20 @@ class Importer implements ImporterInterface
             );
         }
 
-        // Assign a new (proportional) price to each selection, and fix their quantities.
+        // Assign a new (proportional) price to each selection.
 
         $selectionFinalPrices = [];
         $priceMultiplier = $itemPrice / $this->getKahanSum($selectionOriginalPrices);
 
         foreach ($selectionItems as $selectionId => $childItem) {
-            $finalPrice = round($priceMultiplier * $selectionOriginalPrices[$selectionId], 2);
+            // This is the base quantity of the child item (irrespective of the quantity of the parent).
+            $itemQuantity = $childItem->getQty();
+            $finalUnitPrice = round($priceMultiplier * $selectionOriginalPrices[$selectionId] / $itemQuantity, 2);
 
-            $selectionFinalPrices[] = $finalPrice;
+            $selectionFinalPrices[] = round($finalUnitPrice * $itemQuantity, 2);
 
             if ($isWeeeEnabled) {
-                $finalPrice -= $this->getCatalogProductWeeeAmount(
+                $finalUnitPrice -= $this->getCatalogProductWeeeAmount(
                     $childItem->getProduct(),
                     $quote,
                     $isUntaxedBusinessOrder,
@@ -983,12 +992,8 @@ class Importer implements ImporterInterface
                 );
             }
 
-            $childItem->setCustomPrice($finalPrice);
-            $childItem->setOriginalCustomPrice($finalPrice);
-
-            // Prevent ending up with squared quantities.
-            $childItem->setQty(1);
-            $childItem->setQtyToAdd(1);
+            $childItem->setCustomPrice($finalUnitPrice);
+            $childItem->setOriginalCustomPrice($finalUnitPrice);
         }
 
         // Prevent any rounding problem.
@@ -996,9 +1001,62 @@ class Importer implements ImporterInterface
         $itemPriceDifference = round($itemPrice - $this->getKahanSum($selectionFinalPrices), 2);
 
         if (abs($itemPriceDifference) >= 0.01) {
-            $finalPrice = $childItem->getCustomPrice() + $itemPriceDifference;
-            $childItem->setCustomPrice($finalPrice);
-            $childItem->setOriginalCustomPrice($finalPrice);
+            $isRoundingFixed = false;
+
+            // Prefer adapting custom prices whenever possible.
+            foreach ($selectionItems as $childItem) {
+                if ($itemPriceDifference * 100 % $childItem->getQty() === 0) {
+                    $finalUnitPrice = $childItem->getCustomPrice() + $itemPriceDifference / $childItem->getQty();
+
+                    if ($finalUnitPrice <= 0.0) {
+                        continue;
+                    }
+
+                    $isRoundingFixed = true;
+                    $childItem->setCustomPrice($finalUnitPrice);
+                    $childItem->setOriginalCustomPrice($finalUnitPrice);
+
+                    break;
+                }
+            }
+
+            if (!$isRoundingFixed) {
+                // In last resort, move the adjustment to an additional total on the quote.
+
+                if ($itemPriceDifference < 0) {
+                    // Tax is not calculated on negative adjustments: adapt item prices to get a positive adjustment.
+                    foreach ($selectionItems as $childItem) {
+                        $itemQty = $childItem->getQty();
+                        $itemUnitPrice = $childItem->getCustomPrice();
+
+                        $itemAdjustment = min(
+                            max(
+                                0.0,
+                                $itemUnitPrice - 0.01
+                            ),
+                            max(
+                                0.01,
+                                ceil(abs($itemPriceDifference) / $itemQty * 100.0) / 100.0
+                            )
+                        );
+
+                        $itemPriceDifference += $itemAdjustment * $childItem->getQty();
+
+                        $childItem->setCustomPrice($itemUnitPrice - $itemAdjustment);
+                        $childItem->setOriginalCustomPrice($itemUnitPrice - $itemAdjustment);
+
+                        if ($itemPriceDifference >= 0) {
+                            break;
+                        }
+                    }
+                }
+
+                $taxClassId = (int) $childItem->getProduct()->getData('tax_class_id');
+
+                $this->currentlyImportedQuoteBundleAdjustments[$taxClassId] =
+                    ($this->currentlyImportedQuoteBundleAdjustments[$taxClassId] ?? 0.0)
+                    + ($itemPriceDifference * $marketplaceItem->getQuantity());
+            }
         }
     }
 
@@ -1099,6 +1157,8 @@ class Importer implements ImporterInterface
                 );
             }
         }
+
+        $this->applyBundleAdjustmentsOnQuote($quote);
     }
 
     /**
@@ -1284,17 +1344,39 @@ class Importer implements ImporterInterface
 
     /**
      * @param QuoteAddressInterface $quoteAddress
+     * @return AddressExtensionInterface
+     */
+    private function getQuoteAddressExtensionAttributes(QuoteAddressInterface $quoteAddress)
+    {
+        if (!$extensionAttributes = $quoteAddress->getExtensionAttributes()) {
+            $extensionAttributes = $this->quoteAddressExtensionFactory->create();
+            $quoteAddress->setExtensionAttributes($extensionAttributes);
+        }
+
+        return $extensionAttributes;
+    }
+
+    /**
+     * @param Quote $quote
+     */
+    private function applyBundleAdjustmentsOnQuote(Quote $quote)
+    {
+        if (!empty($this->currentlyImportedQuoteBundleAdjustments)) {
+            $quoteAddress = $quote->getShippingAddress();
+            $extensionAttributes = $this->getQuoteAddressExtensionAttributes($quoteAddress);
+            $extensionAttributes->setSfmBundleAdjustments($this->currentlyImportedQuoteBundleAdjustments);
+        }
+    }
+
+    /**
+     * @param QuoteAddressInterface $quoteAddress
      * @param bool $isUntaxedBusinessOrder
      */
     private function tagImportedQuoteAddress(QuoteAddressInterface $quoteAddress, $isUntaxedBusinessOrder)
     {
-        if (!$extensionAttributes = $quoteAddress->getExtensionAttributes()) {
-            $extensionAttributes = $this->quoteAddressExtensionFactory->create();
-        }
-
+        $extensionAttributes = $this->getQuoteAddressExtensionAttributes($quoteAddress);
         $extensionAttributes->setSfmIsShoppingFeedOrder(true);
         $extensionAttributes->setSfmIsShoppingFeedBusinessOrder($isUntaxedBusinessOrder);
-        $quoteAddress->setExtensionAttributes($extensionAttributes);
     }
 
     public function tagImportedQuote(Quote $quote)
@@ -1305,13 +1387,17 @@ class Importer implements ImporterInterface
             $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
         }
 
-        if ($quoteAddress = $quote->getBillingAddress()) {
-            $this->tagImportedQuoteAddress($quoteAddress, $this->isCurrentlyImportedBusinessQuote);
-        }
+        $this->tagImportedQuoteAddress(
+            $quote->getBillingAddress(),
+            $this->isCurrentlyImportedBusinessQuote
+        );
 
-        if ($quoteAddress = $quote->getShippingAddress()) {
-            $this->tagImportedQuoteAddress($quoteAddress, $this->isCurrentlyImportedBusinessQuote);
-        }
+        $this->tagImportedQuoteAddress(
+            $quote->getShippingAddress(),
+            $this->isCurrentlyImportedBusinessQuote
+        );
+
+        $this->applyBundleAdjustmentsOnQuote($quote);
     }
 
     public function isCurrentlyImportedSalesOrder(SalesOrderInterface $order)

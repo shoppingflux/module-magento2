@@ -3,18 +3,8 @@
     <argument name="data" xsi:type="array">
         <item name="acl" xsi:type="string">ShoppingFeed_Manager::account_stores</item>
         <item name="buttons" xsi:type="array">
-            <item name="create_unexisting" xsi:type="array">
-                <item name="class" xsi:type="string">primary</item>
-                <item name="label" xsi:type="string" translate="true">Create an Account</item>
-                <item name="name" xsi:type="string">create_unexisting</item>
-                <item name="url" xsi:type="string">*/*/create_form_unexisting</item>
-            </item>
-            <item name="create_existing" xsi:type="array">
-                <item name="class" xsi:type="string">primary</item>
-                <item name="label" xsi:type="string" translate="true">Import an Account</item>
-                <item name="name" xsi:type="string">create_existing</item>
-                <item name="url" xsi:type="string">*/*/create_form_existing</item>
-            </item>
+            <item name="create_unexisting" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\CreateUnexistingFormButton</item>
+            <item name="create_existing" xsi:type="string">ShoppingFeed\Manager\Block\Adminhtml\Account\Store\Edit\CreateExistingFormButton</item>
         </item>
         <item name="js_config" xsi:type="array">
             <item name="deps" xsi:type="string">sfm_account_store_listing.sfm_account_store_listing_data_source</item>

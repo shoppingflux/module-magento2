@@ -6,8 +6,8 @@
                 <resource id="ShoppingFeed_Manager::main" title="Shopping Feed" translate="title" sortOrder="100000">
                     <resource id="ShoppingFeed_Manager::main_marketing" title="Marketing" translate="title" sortOrder="10000">
                         <resource id="ShoppingFeed_Manager::account_stores" title="Stores" translate="title" sortOrder="10000">
-                            <resource id="ShoppingFeed_Manager::account_store_create_unexisting" title="Create Account" translate="title" sortOrder="10000"/>
-                            <resource id="ShoppingFeed_Manager::account_store_create_existing" title="Import Account" translate="title" sortOrder="20000"/>
+                            <resource id="ShoppingFeed_Manager::account_store_create_unexisting" title="Create an Account" translate="title" sortOrder="10000"/>
+                            <resource id="ShoppingFeed_Manager::account_store_create_existing" title="Import an Account" translate="title" sortOrder="20000"/>
                             <resource id="ShoppingFeed_Manager::account_store_edit" title="Edit Account" translate="title" sortOrder="30000"/>
                             <resource id="ShoppingFeed_Manager::account_store_delete" title="Delete Account" translate="title" sortOrder="40000"/>
                         </resource>
@@ -26,9 +26,10 @@
                         </resource>
 
                         <resource id="ShoppingFeed_Manager::marketplace_orders" title="Marketplace Orders" translate="title" sortOrder="20000">
-                            <resource id="ShoppingFeed_Manager::marketplace_order_import" title="Import" translate="title" sortOrder="10000"/>
-                            <resource id="ShoppingFeed_Manager::marketplace_order_cancel_import" title="Cancel Import" translate="title" sortOrder="20000"/>
-                            <resource id="ShoppingFeed_Manager::marketplace_order_reset_import_try_count" title="Reset Import Attempts" translate="title" sortOrder="30000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_fetch" title="Fetch an Order" translate="title" sortOrder="10000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_import" title="Import an Order" translate="title" sortOrder="20000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_cancel_import" title="Cancel an Import" translate="title" sortOrder="30000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_reset_import_try_count" title="Reset Import Attempts" translate="title" sortOrder="40000"/>
                         </resource>
 
                         <resource id="ShoppingFeed_Manager::marketplace_order_logs" title="Order Logs" translate="title" sortOrder="30000"/>

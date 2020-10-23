@@ -105,6 +105,30 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         $productCollection->addUrlRewrite();
     }
 
+    public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
+        $weeeAttributes = [];
+
+        foreach ($this->getConfig()->getAllAttributes($store) as $attribute) {
+            if ('weee' === $attribute->getFrontendInput()) {
+                $weeeAttributes[] = $attribute;
+            }
+        }
+
+        if (!empty($weeeAttributes)) {
+            /** @var CatalogProduct $product */
+            foreach ($productCollection as $product) {
+                foreach ($weeeAttributes as $weeeAttribute) {
+                    try {
+                        $weeeAttribute->getBackend()->afterLoad($product);
+                    } catch (\Exception $e) {
+                        // The attribute backend is invalid, not exporting anything is fine then.
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * @param StoreInterface $store
      * @param CatalogProduct $product

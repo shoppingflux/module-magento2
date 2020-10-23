@@ -34,16 +34,31 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
             && ($quote instanceof Quote)
             && ($order = $observer->getEvent()->getData(self::EVENT_KEY_ORDER))
             && ($order instanceof Order)
-            && is_array($feesAmounts = $this->quoteFeesTotal->getQuoteMarketplaceFeesAmounts($quote))
         ) {
-            $order->setData(
-                MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_AMOUNT,
-                $feesAmounts[QuoteFeesTotal::AMOUNT_KEY_STORE] ?? 0
-            );
+            if (is_array($feesAmounts = $this->quoteFeesTotal->getQuoteMarketplaceFeesAmounts($quote))) {
+                $order->setData(
+                    MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_AMOUNT,
+                    $feesAmounts[QuoteFeesTotal::AMOUNT_KEY_STORE] ?? 0
+                );
 
-            $order->setData(
-                MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_BASE_AMOUNT,
-                $feesAmounts[QuoteFeesTotal::AMOUNT_KEY_BASE] ?? 0
+                $order->setData(
+                    MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_BASE_AMOUNT,
+                    $feesAmounts[QuoteFeesTotal::AMOUNT_KEY_BASE] ?? 0
+                );
+            }
+
+            $order->addData(
+                array_intersect_key(
+                    $quote->getShippingAddress()->getData(),
+                    array_flip(
+                        [
+                            MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_BUNDLE_ADJUSTMENT,
+                            MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_BUNDLE_ADJUSTMENT_INCL_TAX,
+                            MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_BASE_BUNDLE_ADJUSTMENT,
+                            MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_BASE_BUNDLE_ADJUSTMENT_INCL_TAX,
+                        ]
+                    )
+                )
             );
         }
     }

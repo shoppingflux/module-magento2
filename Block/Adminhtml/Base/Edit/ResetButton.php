@@ -8,11 +8,14 @@ class ResetButton extends AbstractButton
 {
     public function getButtonData()
     {
-        return [
-            'label' => __('Reset'),
-            'class' => 'reset',
-            'on_click' => 'location.reload();',
-            'sort_order' => 3000,
-        ];
+        return !$this->isAllowed()
+            ? []
+            : [
+                'name' => $this->getName('reset'),
+                'label' => $this->getLabel('Reset'),
+                'class' => $this->getClass('reset'),
+                'on_click' => 'location.reload();',
+                'sort_order' => $this->getSortOrder(3000),
+            ];
     }
 }
