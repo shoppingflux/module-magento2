@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.41.0] - 2020-10-23
+### Added
+- Add an option to fetch a marketplace order by channel and reference
+
+### Changed
+- Optimize the "shoppingfeed:feed:force-automatic-refresh" CLI command
+- Catch and log errors when fetching marketplace orders
+- Streamline / improve buttons in UI components
+
+### Fixed
+- Fix handling of bundle products when importing marketplace orders
+- Fix base fees amount in multi-currency contexts
+- Ensure that WEEE tax data are loaded when using product collections
+- Do not export invalid FPT values
+- Improve wordings in some places
+
 ## [0.40.0] - 2020-10-08
 ### Added
 - Implement handling of bundle products (feed export and orders import)
