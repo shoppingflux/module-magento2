@@ -18,12 +18,12 @@
 
 ## [0.40.0] - 2020-10-08
 ### Added
-- Implement handling of bundle products (feed export and orders import)
-- Add "is_backorderable" attribute to the feed
+- Implement handling of bundle products (feed export and order import)
+- Add an "is_backorderable" attribute to the feed
 - Improve the feed product listing (save parameters in session, display the limit date for product retention)
 
 ### Changed
-- Optimize the feed refresh and generation process
+- Optimize the feed refresh and generation processes
 - Apply retention filters also when exporting the feed
 - Do not fetch new orders when syncing existing orders
 
