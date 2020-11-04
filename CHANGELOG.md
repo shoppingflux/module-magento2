@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.41.1] - 2020-11-04
+### Fixed
+- Fix the type of the "sfm_bundle_adjustments" extension attribute
+
 ## [0.41.0] - 2020-10-23
 ### Added
 - Add an option to fetch a marketplace order by channel and reference
