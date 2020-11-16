@@ -9,6 +9,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
 use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
+use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\UrlInterface;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
@@ -40,6 +41,11 @@ class Exporter
      * @var AppMetadataInterface
      */
     private $appMetadata;
+
+    /**
+     * @var ModuleListInterface
+     */
+    private $moduleList;
 
     /**
      * @var FileSystem
@@ -85,6 +91,7 @@ class Exporter
      * @param FileSystem $fileSystem
      * @param ExporterResource $resource
      * @param AppMetadataInterface $appMetadata
+     * @param ModuleListInterface $moduleList
      * @param FeedGeneratorFactory $feedGeneratorFactory
      * @param ConfigInterface $generalConfig
      * @param ExportStateConfigInterface $exportStateConfig
@@ -95,6 +102,7 @@ class Exporter
         FileSystem $fileSystem,
         ExporterResource $resource,
         AppMetadataInterface $appMetadata,
+        ModuleListInterface $moduleList,
         FeedGeneratorFactory $feedGeneratorFactory,
         FeedConfigInterface $generalConfig,
         ExportStateConfigInterface $exportStateConfig,
@@ -104,6 +112,7 @@ class Exporter
         $this->fileSystem = $fileSystem;
         $this->resource = $resource;
         $this->appMetadata = $appMetadata;
+        $this->moduleList = $moduleList;
         $this->feedGeneratorFactory = $feedGeneratorFactory;
         $this->generalConfig = $generalConfig;
         $this->exportStateConfig = $exportStateConfig;
@@ -420,6 +429,13 @@ class Exporter
         $baseStore = $store->getBaseStore();
         $feedGenerator->setAttribute('storeName', $baseStore->getName());
         $feedGenerator->setAttribute('storeUrl', $baseStore->getUrl());
+
+        if ($this->moduleList->has('ShoppingFeed_Manager')) {
+            $feedGenerator->setAttribute(
+                'moduleVersion',
+                $this->moduleList->getOne('ShoppingFeed_Manager')['setup_version'] ?? '?'
+            );
+        }
 
         if ($this->generalConfig->shouldUseGzipCompression($store)) {
             $feedAbsoluteFilePath .= '.gz';
