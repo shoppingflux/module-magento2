@@ -106,6 +106,59 @@ abstract class AbstractColumn extends Column
     }
 
     /**
+     * @param int $storeId
+     * @param string $shoppingFeedStatus
+     * @param bool $isFulfilled
+     * @param int $salesOrderId
+     * @param \DateTime $createdAt
+     * @return string|null
+     */
+    private function getNonImportableOrderDataReason(
+        $storeId,
+        $shoppingFeedStatus,
+        $isFulfilled,
+        $salesOrderId,
+        \DateTime $createdAt
+    ) {
+        if (!empty($salesOrderId)) {
+            return __('already imported');
+        }
+
+        /** @var StoreInterface $store */
+        $store = $this->getStoreCollection()->getItemById($storeId);
+
+        if (!$store instanceof StoreInterface) {
+            return __('unexisting account');
+        }
+
+        if ($createdAt < $this->orderGeneralConfig->getOrderImportFromDate($store)) {
+            return __('too old');
+        }
+
+        $isShipped = ($shoppingFeedStatus === OrderInterface::STATUS_SHIPPED);
+
+        if ($isFulfilled) {
+            if (!$this->orderGeneralConfig->shouldImportFulfilledOrders($store)) {
+                return __('import of fulfilled orders is disabled');
+            } elseif (!$isShipped) {
+                return __('status is not "shipped"');
+            }
+        }
+
+        if ($isShipped) {
+            if (!$this->orderGeneralConfig->shouldImportShippedOrders($store)) {
+                return __('import of shipped orders is disabled');
+            }
+        }
+
+        if (OrderInterface::STATUS_WAITING_SHIPMENT !== $shoppingFeedStatus) {
+            return __('status is not "waiting_shipment"');
+        }
+
+        return null;
+    }
+
+    /**
      * @param array $item
      * @return bool|null
      */
@@ -128,5 +181,44 @@ abstract class AbstractColumn extends Column
         }
 
         return null;
+    }
+
+    /**
+     * @param array $item
+     * @return string
+     */
+    public function getOrderItemImportableStatus(array $item)
+    {
+        if (
+            isset($item[OrderInterface::STORE_ID])
+            && isset($item[OrderInterface::SHOPPING_FEED_STATUS])
+            && isset($item[OrderInterface::IS_FULFILLED])
+            && array_key_exists(OrderInterface::SALES_ORDER_ID, $item)
+            && isset($item[OrderInterface::CREATED_AT])
+        ) {
+            $isImportable = $this->isImportableOrderData(
+                (int) $item[OrderInterface::STORE_ID],
+                trim($item[OrderInterface::SHOPPING_FEED_STATUS]),
+                (bool) $item[OrderInterface::IS_FULFILLED],
+                (int) $item[OrderInterface::SALES_ORDER_ID],
+                \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])
+            );
+
+            if ($isImportable) {
+                return (string) __('Yes');
+            }
+
+            $reason = $this->getNonImportableOrderDataReason(
+                (int) $item[OrderInterface::STORE_ID],
+                trim($item[OrderInterface::SHOPPING_FEED_STATUS]),
+                (bool) $item[OrderInterface::IS_FULFILLED],
+                (int) $item[OrderInterface::SALES_ORDER_ID],
+                \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])
+            );
+
+            return (string) __('No (%1)', $reason);
+        }
+
+        return (string) __('Undetermined (missing data)');
     }
 }

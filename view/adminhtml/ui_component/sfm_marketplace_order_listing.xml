@@ -155,12 +155,10 @@
         <column name="importable" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Marketplace\Order\Importable">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
-                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="dataType" xsi:type="string">text</item>
                     <item name="label" xsi:type="string" translate="true">Importable</item>
                     <item name="sortable" xsi:type="boolean">false</item>
                 </item>
-                <item name="options" xsi:type="object">Magento\Config\Model\Config\Source\Yesno</item>
             </argument>
         </column>
         <column name="import_remaining_try_count">
