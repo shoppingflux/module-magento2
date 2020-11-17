@@ -83,6 +83,12 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldSplitLastNameWhenEmptyFirstName(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return string
      */
     public function getDefaultPhoneNumber(StoreInterface $store);

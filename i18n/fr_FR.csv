@@ -402,6 +402,7 @@
 "Short Description Attribute","Attribut description courte"
 "SKU","Référence"
 "Special","Spécial"
+"Split Last Name When Empty First Name","Découper le nom quand le prénom est vide"
 "Status","Statut"
 "Stock","Stock"
 "Store","Magasin"
