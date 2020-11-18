@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.42.0] - 2020-11-18
+### Added
+- Add the module version to the product feed
+- Display the reason why marketplace orders can not be imported
+- Add an option to force using the default email address when importing orders
+- Add an option to split last names when first names are empty in order addresses
+
 ## [0.41.1] - 2020-11-04
 ### Fixed
 - Fix the type of the "sfm_bundle_adjustments" extension attribute
