@@ -83,6 +83,13 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @param string $marketplace
+     * @return mixed
+     */
+    public function shouldForceDefaultEmailAddressForMarketplace(StoreInterface $store, $marketplace);
+
+    /**
+     * @param StoreInterface $store
      * @return bool
      */
     public function shouldSplitLastNameWhenEmptyFirstName(StoreInterface $store);
