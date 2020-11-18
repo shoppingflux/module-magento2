@@ -14,11 +14,7 @@ class Importable extends AbstractColumn
             $fieldName = $this->getData('name');
 
             foreach ($dataSource['data']['items'] as &$item) {
-                $isImportable = $this->isImportableOrderItem($item);
-
-                if (null !== $isImportable) {
-                    $item[$fieldName] = (int) $isImportable;
-                }
+                $item[$fieldName] = $this->getOrderItemImportableStatus($item);
             }
         }
 

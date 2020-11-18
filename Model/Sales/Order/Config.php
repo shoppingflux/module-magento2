@@ -3,15 +3,18 @@
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\Information as StoreInformation;
 use Magento\Store\Model\ScopeInterface;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants as StoreRegistryConstants;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\DynamicRows;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
+use ShoppingFeed\Manager\Model\Config\Field\MultiSelect;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
@@ -41,6 +44,8 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES = 'marketplace_default_email_addresses';
     const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__MARKETPLACE = 'marketplace';
     const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__ADDRESS = 'address';
+    const KEY_FORCE_DEFAULT_EMAIL_ADDRESS_FOR_MARKETPLACES = 'force_default_email_address_for_marketplaces';
+    const KEY_SPLIT_LAST_NAME_WHEN_EMPTY_FIRST_NAME = 'split_last_name_when_empty_first_name';
     const KEY_DEFAULT_PHONE_NUMBER = 'default_phone_number';
     const KEY_ADDRESS_FIELD_PLACEHOLDER = 'address_field_placeholder';
     const KEY_USE_MOBILE_PHONE_NUMBER_FIRST = 'use_mobile_phone_number_first';
@@ -59,6 +64,11 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_ORDER_CANCELLATION_SYNCING_ACTION = 'order_cancellation_syncing_action';
     const KEY_ORDER_REFUND_SYNCING_ACTION = 'order_refund_syncing_action';
     const KEY_ENABLE_DEBUG_MODE = 'enable_debug_mode';
+
+    /**
+     * @var Registry
+     */
+    private $coreRegistry;
 
     /**
      * @var ScopeConfigInterface
@@ -93,6 +103,7 @@ class Config extends AbstractConfig implements ConfigInterface
     /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
+     * @param Registry $coreRegistry
      * @param ScopeConfigInterface $scopeConfig
      * @param StringHelper $stringHelper
      * @param TimezoneInterface $localeDate
@@ -103,6 +114,7 @@ class Config extends AbstractConfig implements ConfigInterface
     public function __construct(
         FieldFactoryInterface $fieldFactory,
         ValueHandlerFactoryInterface $valueHandlerFactory,
+        Registry $coreRegistry,
         ScopeConfigInterface $scopeConfig,
         StringHelper $stringHelper,
         TimezoneInterface $localeDate,
@@ -110,6 +122,7 @@ class Config extends AbstractConfig implements ConfigInterface
         MarketplaceSource $marketplaceSource,
         OrderSyncingActionSource $orderSyncingActionSource
     ) {
+        $this->coreRegistry = $coreRegistry;
         $this->scopeConfig = $scopeConfig;
         $this->stringHelper = $stringHelper;
         $this->localeDate = $localeDate;
@@ -131,14 +144,6 @@ class Config extends AbstractConfig implements ConfigInterface
             [
                 'dataType' => UiNumber::NAME,
                 'optionArray' => $this->customerGroupSource->toOptionArray(),
-            ]
-        );
-
-        $marketplaceHandler = $this->valueHandlerFactory->create(
-            OptionHandler::TYPE_CODE,
-            [
-                'dataType' => UiNumber::NAME,
-                'optionArray' => $this->marketplaceSource->toOptionArray(),
             ]
         );
 
@@ -295,67 +300,19 @@ class Config extends AbstractConfig implements ConfigInterface
                     ]
                 ),
 
-                $this->fieldFactory->create(
-                    DynamicRows::TYPE_CODE,
-                    [
-                        'name' => self::KEY_MARKETPLACE_CUSTOMER_GROUPS,
-                        'label' => __('Marketplace Customer Groups'),
-                        'fields' => [
-                            $this->fieldFactory->create(
-                                Select::TYPE_CODE,
-                                [
-                                    'name' => self::KEY_MARKETPLACE_CUSTOMER_GROUPS__MARKETPLACE,
-                                    'valueHandler' => $marketplaceHandler,
-                                    'isRequired' => true,
-                                    'label' => __('Marketplace'),
-                                    'sortOrder' => 10,
-                                ]
-                            ),
-                            $this->fieldFactory->create(
-                                Select::TYPE_CODE,
-                                [
-                                    'name' => self::KEY_MARKETPLACE_CUSTOMER_GROUPS__CUSTOMER_GROUP,
-                                    'valueHandler' => $customerGroupHandler,
-                                    'isRequired' => true,
-                                    'label' => __('Customer Group'),
-                                    'sortOrder' => 20,
-                                ]
-                            ),
-                        ],
-                        'sort_order' => 90,
-                    ]
-                ),
-
-                // Default Email Address (store field)
+                // Store fields:
+                // * Marketplace Customer Groups
+                // * Default Email Address
+                // * Marketplace Default Email Addresses
+                // * Force Default Email Address For
 
                 $this->fieldFactory->create(
-                    DynamicRows::TYPE_CODE,
+                    Checkbox::TYPE_CODE,
                     [
-                        'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES,
-                        'label' => __('Marketplace Default Email Addresses'),
-                        'fields' => [
-                            $this->fieldFactory->create(
-                                Select::TYPE_CODE,
-                                [
-                                    'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__MARKETPLACE,
-                                    'valueHandler' => $marketplaceHandler,
-                                    'isRequired' => true,
-                                    'label' => __('Marketplace'),
-                                    'sortOrder' => 10,
-                                ]
-                            ),
-                            $this->fieldFactory->create(
-                                TextBox::TYPE_CODE,
-                                [
-                                    'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__ADDRESS,
-                                    'valueHandler' => $textHandler,
-                                    'isRequired' => true,
-                                    'label' => __('Email Address'),
-                                    'sortOrder' => 20,
-                                ]
-                            ),
-                        ],
-                        'sortOrder' => 110,
+                        'name' => self::KEY_SPLIT_LAST_NAME_WHEN_EMPTY_FIRST_NAME,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Split Last Name When Empty First Name'),
+                        'sortOrder' => 130,
                     ]
                 ),
 
@@ -365,7 +322,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
                         'isCheckedByDefault' => true,
                         'label' => __('Use Mobile Phone Number First (If Available)'),
-                        'sortOrder' => 120,
+                        'sortOrder' => 140,
                     ]
                 ),
 
@@ -381,7 +338,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => $this->getDefaultAddressFieldPlaceholder(),
                         'label' => __('Default Address Field Value'),
                         'notice' => __('This value will be used as the default for other missing required fields.'),
-                        'sortOrder' => 140,
+                        'sortOrder' => 160,
                     ]
                 ),
 
@@ -392,40 +349,12 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $textHandler,
                         'label' => __('Default Payment Method Title'),
                         'notice' => $paymentMethodTitleNotice,
-                        'sortOrder' => 150,
+                        'sortOrder' => 170,
                     ]
                 ),
 
-                $this->fieldFactory->create(
-                    DynamicRows::TYPE_CODE,
-                    [
-                        'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES,
-                        'label' => __('Marketplace Payment Method Titles'),
-                        'fields' => [
-                            $this->fieldFactory->create(
-                                Select::TYPE_CODE,
-                                [
-                                    'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__MARKETPLACE,
-                                    'valueHandler' => $marketplaceHandler,
-                                    'isRequired' => true,
-                                    'label' => __('Marketplace'),
-                                    'sortOrder' => 10,
-                                ]
-                            ),
-                            $this->fieldFactory->create(
-                                TextBox::TYPE_CODE,
-                                [
-                                    'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__TITLE,
-                                    'valueHandler' => $textHandler,
-                                    'isRequired' => true,
-                                    'label' => __('Title'),
-                                    'sortOrder' => 20,
-                                ]
-                            ),
-                        ],
-                        'sort_order' => 160,
-                    ]
-                ),
+                // Store fields:
+                // * Marketplace Payment Method Titles
 
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
@@ -441,7 +370,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
                             . __('Unless you know what you are doing, this option should probably be enabled.'),
-                        'sortOrder' => 170,
+                        'sortOrder' => 190,
                     ]
                 ),
 
@@ -453,7 +382,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'label' => __('Create Invoice'),
                         'checkedNotice' => __('Orders will be automatically invoiced upon import.'),
                         'uncheckedNotice' => __('Orders will not be invoiced automatically.'),
-                        'sortOrder' => 180,
+                        'sortOrder' => 200,
                     ]
                 ),
 
@@ -463,7 +392,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
                         'isCheckedByDefault' => false,
                         'label' => __('Import Fulfilled Orders'),
-                        'sortOrder' => 190,
+                        'sortOrder' => 210,
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_FULFILMENT_SHIPMENT ],
                     ]
                 ),
@@ -480,7 +409,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders fulfilled by the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 200,
+                        'sortOrder' => 220,
                     ]
                 ),
 
@@ -491,7 +420,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'isCheckedByDefault' => false,
                         'label' => __('Import Already Shipped Orders'),
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_SHIPPED_SHIPMENT ],
-                        'sortOrder' => 210,
+                        'sortOrder' => 230,
                     ]
                 ),
 
@@ -507,7 +436,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders already shipped on the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 220,
+                        'sortOrder' => 240,
                     ]
                 ),
 
@@ -521,7 +450,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => 15,
                         'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
                         'notice' => __('In days.'),
-                        'sortOrder' => 230,
+                        'sortOrder' => 250,
                     ]
                 ),
 
@@ -535,7 +464,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 240,
+                        'sortOrder' => 260,
                     ]
                 ),
 
@@ -549,7 +478,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 250,
+                        'sortOrder' => 270,
                     ]
                 ),
 
@@ -563,7 +492,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 260,
+                        'sortOrder' => 280,
                     ]
                 ),
 
@@ -577,7 +506,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 270,
+                        'sortOrder' => 290,
                     ]
                 ),
             ],
@@ -587,6 +516,32 @@ class Config extends AbstractConfig implements ConfigInterface
 
     protected function getStoreFields(StoreInterface $store)
     {
+        $oldCurrentStore = $this->coreRegistry->registry(StoreRegistryConstants::CURRENT_ACCOUNT_STORE);
+
+        $this->coreRegistry->unregister(StoreRegistryConstants::CURRENT_ACCOUNT_STORE);
+        $this->coreRegistry->register(StoreRegistryConstants::CURRENT_ACCOUNT_STORE, $store);
+
+        $marketplaceHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiNumber::NAME,
+                'optionArray' => $this->marketplaceSource->toOptionArray(),
+            ]
+        );
+
+        $this->coreRegistry->unregister(StoreRegistryConstants::CURRENT_ACCOUNT_STORE);
+        $this->coreRegistry->register(StoreRegistryConstants::CURRENT_ACCOUNT_STORE, $oldCurrentStore);
+
+        $customerGroupHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiNumber::NAME,
+                'optionArray' => $this->customerGroupSource->toOptionArray(),
+            ]
+        );
+
+        $textHandler = $this->valueHandlerFactory->create(TextHandler::TYPE_CODE);
+
         $emailTemplateVariableNotices = [
             'marketplace' => 'The name of the marketplace.',
             'order_id' => 'The ID of the marketplace order.',
@@ -641,6 +596,37 @@ class Config extends AbstractConfig implements ConfigInterface
         return array_merge(
             [
                 $this->fieldFactory->create(
+                    DynamicRows::TYPE_CODE,
+                    [
+                        'name' => self::KEY_MARKETPLACE_CUSTOMER_GROUPS,
+                        'label' => __('Marketplace Customer Groups'),
+                        'fields' => [
+                            $this->fieldFactory->create(
+                                Select::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_CUSTOMER_GROUPS__MARKETPLACE,
+                                    'valueHandler' => $marketplaceHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Marketplace'),
+                                    'sortOrder' => 10,
+                                ]
+                            ),
+                            $this->fieldFactory->create(
+                                Select::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_CUSTOMER_GROUPS__CUSTOMER_GROUP,
+                                    'valueHandler' => $customerGroupHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Customer Group'),
+                                    'sortOrder' => 20,
+                                ]
+                            ),
+                        ],
+                        'sort_order' => 90,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_DEFAULT_EMAIL_ADDRESS,
@@ -652,13 +638,86 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    DynamicRows::TYPE_CODE,
+                    [
+                        'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES,
+                        'label' => __('Marketplace Default Email Addresses'),
+                        'fields' => [
+                            $this->fieldFactory->create(
+                                Select::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__MARKETPLACE,
+                                    'valueHandler' => $marketplaceHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Marketplace'),
+                                    'sortOrder' => 10,
+                                ]
+                            ),
+                            $this->fieldFactory->create(
+                                TextBox::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__ADDRESS,
+                                    'valueHandler' => $textHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Email Address'),
+                                    'sortOrder' => 20,
+                                ]
+                            ),
+                        ],
+                        'sortOrder' => 110,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    MultiSelect::TYPE_CODE,
+                    [
+                        'name' => self::KEY_FORCE_DEFAULT_EMAIL_ADDRESS_FOR_MARKETPLACES,
+                        'valueHandler' => $marketplaceHandler,
+                        'allowAll' => true,
+                        'label' => __('Force Default Email Address For'),
+                        'sortOrder' => 120,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_DEFAULT_PHONE_NUMBER,
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Phone Number'),
                         'notice' => $defaultPhoneNotice,
-                        'sortOrder' => 130,
+                        'sortOrder' => 150,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    DynamicRows::TYPE_CODE,
+                    [
+                        'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES,
+                        'label' => __('Marketplace Payment Method Titles'),
+                        'fields' => [
+                            $this->fieldFactory->create(
+                                Select::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__MARKETPLACE,
+                                    'valueHandler' => $marketplaceHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Marketplace'),
+                                    'sortOrder' => 10,
+                                ]
+                            ),
+                            $this->fieldFactory->create(
+                                TextBox::TYPE_CODE,
+                                [
+                                    'name' => self::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__TITLE,
+                                    'valueHandler' => $textHandler,
+                                    'isRequired' => true,
+                                    'label' => __('Title'),
+                                    'sortOrder' => 20,
+                                ]
+                            ),
+                        ],
+                        'sortOrder' => 180,
                     ]
                 ),
             ],
@@ -710,6 +769,7 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getOrderImportFromDate(StoreInterface $store)
     {
         $fromDate = $this->localeDate->scopeDate($store->getBaseStore());
+
         return $fromDate->sub(new \DateInterval('P' . $this->getOrderImportDelay($store) . 'D'));
     }
 
@@ -778,6 +838,7 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getDefaultEmailAddress(StoreInterface $store)
     {
         $defaultEmail = $this->getFieldValue($store, self::KEY_DEFAULT_EMAIL_ADDRESS);
+
         return ('' !== $defaultEmail) ? $defaultEmail : $this->geStoreDefaultEmailAddress($store);
     }
 
@@ -791,6 +852,20 @@ class Config extends AbstractConfig implements ConfigInterface
             $marketplace,
             $this->getDefaultEmailAddress($store)
         );
+    }
+
+    public function shouldForceDefaultEmailAddressForMarketplace(StoreInterface $store, $marketplace)
+    {
+        return in_array(
+            $this->stringHelper->getNormalizedCode($marketplace),
+            $this->getFieldValue($store, self::KEY_FORCE_DEFAULT_EMAIL_ADDRESS_FOR_MARKETPLACES),
+            true
+        );
+    }
+
+    public function shouldSplitLastNameWhenEmptyFirstName(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_SPLIT_LAST_NAME_WHEN_EMPTY_FIRST_NAME);
     }
 
     /**
@@ -906,6 +981,7 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getOrderSyncingFromDate(StoreInterface $store)
     {
         $fromDate = $this->localeDate->scopeDate($store->getBaseStore());
+
         return $fromDate->sub(new \DateInterval('P' . $this->getOrderSyncingDelay($store) . 'D'));
     }
 

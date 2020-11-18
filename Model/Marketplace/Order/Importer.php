@@ -350,6 +350,18 @@ class Importer
         StoreInterface $store,
         AddressInterface $address = null
     ) {
+        $firstName = trim($apiAddressData['firstName'] ?? '');
+        $lastName = trim($apiAddressData['lastName'] ?? '');
+
+        if (('' === $firstName) && $this->orderGeneralConfig->shouldSplitLastNameWhenEmptyFirstName($store)) {
+            $nameParts = preg_split('/\s+/', $lastName, 2);
+
+            if (isset($nameParts[1])) {
+                $firstName = $nameParts[0];
+                $lastName = $nameParts[1];
+            }
+        }
+
         $streetLines = [
             $apiAddressData['street'] ?? '',
             $apiAddressData['street2'] ?? '',
@@ -360,8 +372,8 @@ class Importer
         }
 
         $address->setType($type);
-        $address->setFirstName($apiAddressData['firstName'] ?? '');
-        $address->setLastName($apiAddressData['lastName'] ?? '');
+        $address->setFirstName($firstName);
+        $address->setLastName($lastName);
         $address->setCompany($apiAddressData['company'] ?? '');
         $address->setStreet(trim(implode("\n", array_map('trim', $streetLines))));
         $address->setPostalCode($apiAddressData['postalCode'] ?? '');

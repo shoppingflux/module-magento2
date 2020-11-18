@@ -88,27 +88,51 @@ class Select extends AbstractField
             : [ 'value' => $this->getEmptyOptionValue(), 'label' => $this->getEmptyOptionLabel() ];
     }
 
-    public function getBaseUiMetaConfig()
+    /**
+     * @return array
+     */
+    protected function getAllOptions()
     {
         $valueHandler = $this->getValueHandler();
         $options = $valueHandler->getOptionArray();
+
+        if (!$valueHandler->hasEmptyOption()) {
+            array_unshift($options, $this->getEmptyOption());
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getAllOptionValues()
+    {
+        $valueHandler = $this->getValueHandler();
         $optionValues = $valueHandler->getOptionValues();
 
         if (!$valueHandler->hasEmptyOption()) {
             $optionValues[] = $this->getEmptyOptionValue();
-            array_unshift($options, $this->getEmptyOption());
         }
 
+        return $optionValues;
+    }
+
+    public function getBaseUiMetaConfig()
+    {
         $metaConfig = array_merge(
             parent::getBaseUiMetaConfig(),
             [
                 'formElement' => UiSelect::NAME,
-                'options' => $options,
+                'options' => $this->getAllOptions(),
             ]
         );
 
         if (!empty($this->dependencies)) {
-            $metaConfig['switcherConfig'] = $this->getSwitcherConfig($this->dependencies, $optionValues);
+            $metaConfig['switcherConfig'] = $this->getSwitcherConfig(
+                $this->dependencies,
+                $this->getAllOptionValues()
+            );
         }
 
         return $metaConfig;

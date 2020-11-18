@@ -313,15 +313,20 @@ class Importer
         StoreInterface $store
     ) {
         $email = $address->getEmail();
+        $marketplace = $order->getMarketplaceName();
 
         try {
-            if (('' === $email) || !\Zend_Validate::is($email, EmailAddressValidator::class)) {
+            if (
+                $this->orderGeneralConfig->shouldForceDefaultEmailAddressForMarketplace($store, $marketplace)
+                || ('' === $email)
+                || !\Zend_Validate::is($email, EmailAddressValidator::class)
+            ) {
                 $this->templateFilter->setVariables(
                     array_merge(
                         array_map(
                             [ $this, 'getAddressEmailVariableValue' ],
                             [
-                                'marketplace' => $order->getMarketplaceName(),
+                                'marketplace' => $marketplace,
                                 'order_id' => $order->getId(),
                                 'order_number' => $order->getMarketplaceOrderNumber(),
                                 'payment_method' => $order->getPaymentMethod(),
@@ -520,7 +525,7 @@ class Importer
         $customerAddress->setCustomerId($customer->getId());
         $this->customerAddressResource->save($customerAddress);
 
-        // Remove the customer from the registry cache, because the cached version does not know about the new address. 
+        // Remove the customer from the registry cache, because the cached version does not know about the new address.
         $this->customerRegistry->remove($customer->getId());
 
         $quoteAddress = $this->getBaseQuoteAddress($quote, $address);
