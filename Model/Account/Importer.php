@@ -3,8 +3,8 @@
 namespace ShoppingFeed\Manager\Model\Account;
 
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\RequestException as HttpRequestException;
 use GuzzleHttp\RequestOptions as HttpRequestOptions;
-use GuzzleHttp\Exception\GuzzleException;
 use Magento\Framework\DB\TransactionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -382,11 +382,30 @@ class Importer
                     ],
                 ]
             );
-        } catch (GuzzleException $e) {
+        } catch (\Exception $e) {
+            if ($e instanceof HttpRequestException) {
+                $errorData = json_decode((string) $e->getResponse()->getBody(), true);
+                $errorMessage = null;
+
+                if (is_array($errorData)) {
+                    if (isset($errorData['validationMessages']['owner']['login']['alreadyExists'])) {
+                        $errorMessage = __('An account already exists for this username');
+                    } elseif (!empty($errorData['details'])) {
+                        $errorMessage = __($errorData['details']);
+                    }
+                }
+
+                if (null !== $errorMessage) {
+                    throw new LocalizedException(
+                        __('Could not create the account on Shopping Feed: %1.', $errorMessage)
+                    );
+                }
+            }
+
             throw new LocalizedException(__('Could not create the account on Shopping Feed. Please try again later.'));
         }
 
-        $accountData = json_decode($response->getBody(), true);
+        $accountData = json_decode((string) $response->getBody(), true);
 
         if (!is_array($accountData) || !isset($accountData['token']) || empty($accountData['token'])) {
             throw new LocalizedException(__('Could not create the account on Shopping Feed. Please try again later.'));

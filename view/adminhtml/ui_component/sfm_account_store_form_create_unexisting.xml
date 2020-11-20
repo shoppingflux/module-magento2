@@ -94,6 +94,7 @@
                     <item name="label" xsi:type="string" translate="true">Shopping Feed Password</item>
                     <item name="validation" xsi:type="array">
                         <item name="required-entry" xsi:type="boolean">true</item>
+                        <item name="min_text_length" xsi:type="number">8</item>
                     </item>
                 </item>
             </argument>
