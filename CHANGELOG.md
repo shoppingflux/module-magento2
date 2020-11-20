@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.42.1] - 2020-11-19
+### Changed
+- Display more precise errors when creating a Shopping Feed account
+- Add a validation for the Shopping Feed password in the account creation form
+
 ## [0.42.0] - 2020-11-18
 ### Added
 - Add the module version to the product feed
