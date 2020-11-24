@@ -674,6 +674,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_FORCE_DEFAULT_EMAIL_ADDRESS_FOR_MARKETPLACES,
                         'valueHandler' => $marketplaceHandler,
                         'allowAll' => true,
+                        'defaultUseValue' => [],
                         'label' => __('Force Default Email Address For'),
                         'sortOrder' => 120,
                     ]
@@ -858,7 +859,7 @@ class Config extends AbstractConfig implements ConfigInterface
     {
         return in_array(
             $this->stringHelper->getNormalizedCode($marketplace),
-            $this->getFieldValue($store, self::KEY_FORCE_DEFAULT_EMAIL_ADDRESS_FOR_MARKETPLACES),
+            (array) $this->getFieldValue($store, self::KEY_FORCE_DEFAULT_EMAIL_ADDRESS_FOR_MARKETPLACES),
             true
         );
     }
