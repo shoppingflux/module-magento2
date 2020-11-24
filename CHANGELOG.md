@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.42.2] - 2020-11-24
+### Fixed
+- Fix order import when an account has not been saved after upgrading to version 0.42.x
+
 ## [0.42.1] - 2020-11-19
 ### Changed
 - Display more precise errors when creating a Shopping Feed account
