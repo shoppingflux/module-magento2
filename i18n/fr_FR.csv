@@ -257,6 +257,7 @@
 "Is Fulfilled","Expédiée par la place de marché"
 "Is In Stock","Disponible"
 "Is there a corresponding cron job scheduled regularly?","Y a-t-il une tâche cron correspondante programmée régulièrement ?"
+"Is Variation","Est une variation"
 "It seems that the store product list is not in sync with the catalog product list.","Il semble que la liste de produits du magasin n'est pas synchronisée avec la liste de produits du catalogue."
 "Last Update:","Dernière mise à jour :"
 "Leave empty if all the categories of a given product should be considered.","Laisser vide si toutes les catégories d'un produit donné doivent être considérées."
