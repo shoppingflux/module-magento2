@@ -54,4 +54,10 @@ interface CategoriesInterface extends ConfigInterface
      * @return float
      */
     public function getParentWeightMultiplier(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getTieBreakingSelection(StoreInterface $store);
 }
