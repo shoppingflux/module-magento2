@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.43.0] - 2020-12-09
+### Added
+- Add an "Is Variation" column to the feed product listing
+- Add an option to choose how to break tied category selections
+
 ## [0.42.2] - 2020-11-24
 ### Fixed
 - Fix order import when an account has not been saved after upgrading to version 0.42.x
