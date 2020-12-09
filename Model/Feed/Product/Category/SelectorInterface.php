@@ -11,6 +11,10 @@ interface SelectorInterface
     const SELECTION_MODE_EXCLUDE = 'exclude';
     const SELECTION_MODE_INCLUDE = 'include';
 
+    const TIE_BREAKING_SELECTION_UNDETERMINED = 'undetermined';
+    const TIE_BREAKING_SELECTION_FIRST_IN_TREE = 'first_in_tree';
+    const TIE_BREAKING_SELECTION_LAST_IN_TREE = 'last_in_tree';
+
     /**
      * @param StoreInterface $store
      * @return array
@@ -29,6 +33,7 @@ interface SelectorInterface
      * @param int $includableParentCount
      * @param int $minimumParentLevel
      * @param int $parentWeightMultiplier
+     * @param string $tieBreakingSelection
      * @return FeedCategory[]|null
      */
     public function getCatalogProductCategoryPath(
@@ -42,6 +47,7 @@ interface SelectorInterface
         $useParentCategories = false,
         $includableParentCount = 1,
         $minimumParentLevel = 1,
-        $parentWeightMultiplier = 1
+        $parentWeightMultiplier = 1,
+        $tieBreakingSelection = self::TIE_BREAKING_SELECTION_UNDETERMINED
     );
 }

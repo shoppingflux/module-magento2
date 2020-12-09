@@ -4,13 +4,16 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
 use Magento\Framework\Registry;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Category\MultiSelect as CategoryMultiSelect;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
+use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\FieldInterface;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Number as NumberHandler;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category\SelectorInterface as CategorySelectorInterface;
@@ -26,6 +29,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
     const KEY_INCLUDABLE_PARENT_COUNT = 'includable_parent_count';
     const KEY_MINIMUM_PARENT_LEVEL = 'minimum_parent_level';
     const KEY_PARENT_WEIGHT_MULTIPLIER = 'parent_weight_multiplier';
+    const KEY_TIE_BREAKING_SELECTION = 'tie_breaking_selection';
 
     /**
      * @var Registry
@@ -66,6 +70,27 @@ class Categories extends AbstractConfig implements CategoriesInterface
     {
         $numberHandler = $this->valueHandlerFactory->create(NumberHandler::TYPE_CODE);
         $positiveIntegerHandler = $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE);
+
+        $tieBreakingSelectionHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => [
+                    [
+                        'label' => __('Undetermined'),
+                        'value' => CategorySelectorInterface::TIE_BREAKING_SELECTION_UNDETERMINED,
+                    ],
+                    [
+                        'label' => __('First in the Tree'),
+                        'value' => CategorySelectorInterface::TIE_BREAKING_SELECTION_FIRST_IN_TREE,
+                    ],
+                    [
+                        'label' => __('Last in the Tree'),
+                        'value' => CategorySelectorInterface::TIE_BREAKING_SELECTION_LAST_IN_TREE,
+                    ],
+                ],
+            ]
+        );
 
         return array_merge(
             [
@@ -192,6 +217,29 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'sortOrder' => 80,
                     ]
                 ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_TIE_BREAKING_SELECTION,
+                        'valueHandler' => $tieBreakingSelectionHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_UNDETERMINED,
+                        'defaultUseValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_UNDETERMINED,
+                        'label' => __('Selection in Case of Ties'),
+                        'notice' => implode(
+                            "\n",
+                            [
+                                __('Without changes to the categories, the selections are stable.'),
+                                __('For better predictability, choose "First" or "Last in the Tree".'),
+                                __( 'For more stability in the case of changes, limit the available choices by:'),
+                                __('- choosing above the categories to include or exclude from the selection,'),
+                                __('- defining the "Forced Category" on the product pages.')
+                            ]
+                        ),
+                        'sortOrder' => 90,
+                    ]
+                ),
             ],
             parent::getBaseFields()
         );
@@ -264,5 +312,10 @@ class Categories extends AbstractConfig implements CategoriesInterface
     public function getParentWeightMultiplier(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_PARENT_WEIGHT_MULTIPLIER);
+    }
+
+    public function getTieBreakingSelection(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_TIE_BREAKING_SELECTION);
     }
 }

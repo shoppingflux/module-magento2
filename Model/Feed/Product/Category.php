@@ -32,6 +32,16 @@ class Category
     private $level;
 
     /**
+     * @var int
+     */
+    private $position;
+
+    /**
+     * @var int
+     */
+    private $globalPosition;
+
+    /**
      * @var bool
      */
     private $isActive;
@@ -46,6 +56,8 @@ class Category
         $this->name = trim($catalogCategory->getName());
         $this->url = $catalogCategory->getUrl();
         $this->level = (int) $catalogCategory->getLevel();
+        $this->position = (int) $catalogCategory->getPosition();
+        $this->globalPosition = $this->position;
         $this->isActive = (bool) $catalogCategory->getIsActive();
     }
 
@@ -90,10 +102,74 @@ class Category
     }
 
     /**
+     * @return int
+     */
+    public function getPosition()
+    {
+        return $this->position;
+    }
+
+    /**
+     * @return int
+     */
+    public function getGlobalPosition()
+    {
+        return $this->globalPosition;
+    }
+
+    /**
      * @return bool
      */
     public function isActive()
     {
         return $this->isActive;
+    }
+
+    /**
+     * @param string $name
+     */
+    public function setName($name)
+    {
+        $this->name = (string) $name;
+    }
+
+    /**
+     * @param string $url
+     */
+    public function setUrl($url)
+    {
+        $this->url = (string) $url;
+    }
+
+    /**
+     * @param int $level
+     */
+    public function setLevel($level)
+    {
+        $this->level = (int) $level;
+    }
+
+    /**
+     * @param int $position
+     */
+    public function setPosition($position)
+    {
+        $this->position = (int) $position;
+    }
+
+    /**
+     * @param int $globalPosition
+     */
+    public function setGlobalPosition($globalPosition)
+    {
+        $this->globalPosition = (int) $globalPosition;
+    }
+
+    /**
+     * @param bool $isActive
+     */
+    public function setIsActive($isActive)
+    {
+        $this->isActive = (bool) $isActive;
     }
 }

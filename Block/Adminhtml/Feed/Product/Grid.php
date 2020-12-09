@@ -26,6 +26,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as Expo
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\Source as ProductExportStateSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Exclusion\Reason\Source as ProductExclusionReasonSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Refresh\State\Source as ProductRefreshStateSource;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 
 class Grid extends ExtendedGrid
 {
@@ -35,6 +36,11 @@ class Grid extends ExtendedGrid
      * @var Registry
      */
     private $coreRegistry;
+
+    /**
+     * @var TableDictionary
+     */
+    private $tableDictionary;
 
     /**
      * @var ProductCollectionFactory
@@ -80,6 +86,7 @@ class Grid extends ExtendedGrid
      * @param Context $context
      * @param BackendHelper $backendHelper
      * @param Registry $coreRegistry
+     * @param TableDictionary $tableDictionary
      * @param ProductCollectionFactory $productCollectionFactory
      * @param ExportStateConfigInterface $exportStateConfig
      * @param ProductType $productType
@@ -94,6 +101,7 @@ class Grid extends ExtendedGrid
         Context $context,
         BackendHelper $backendHelper,
         Registry $coreRegistry,
+        TableDictionary $tableDictionary,
         ProductCollectionFactory $productCollectionFactory,
         ExportStateConfigInterface $exportStateConfig,
         ProductType $productType,
@@ -105,6 +113,7 @@ class Grid extends ExtendedGrid
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
+        $this->tableDictionary = $tableDictionary;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->exportStateConfig = $exportStateConfig;
         $this->productType = $productType;
@@ -139,6 +148,7 @@ class Grid extends ExtendedGrid
 
         /** @var ProductCollection $collection */
         $collection = $store->getCatalogProductCollection();
+        $connection = $collection->getConnection();
 
         $collection->addAttributeToSelect([ 'sku', 'name', 'price', 'status', 'visibility' ]);
 
@@ -147,8 +157,6 @@ class Grid extends ExtendedGrid
             && ($retentionDuration = $this->exportStateConfig->getPreviouslyExportedRetentionDuration($store))
             && ($retentionDuration > 0)
         ) {
-            $connection = $collection->getConnection();
-
             $collection->getSelect()
                 ->columns(
                     [
@@ -160,6 +168,16 @@ class Grid extends ExtendedGrid
                     ]
                 );
         }
+
+        $variationIdsSelect = $connection->select()
+            ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [])
+            ->columns([ 'product_id']);
+
+        $collection->addExpressionAttributeToSelect(
+            'is_variation',
+            '({{entity_id}} IN (' . $variationIdsSelect->assemble() . '))',
+            'entity_id'
+        );
 
         $this->setCollection($collection);
 
@@ -278,6 +296,17 @@ class Grid extends ExtendedGrid
                     Currency::XML_PATH_CURRENCY_BASE,
                     ScopeInterface::SCOPE_STORE
                 ),
+            ]
+        );
+
+        $this->addColumn(
+            'is_variation',
+            [
+                'index' => 'is_variation',
+                'header' => __('Is Variation'),
+                'type' => 'options',
+                'filter' => false,
+                'options' => [ __('No'), __('Yes') ],
             ]
         );
 

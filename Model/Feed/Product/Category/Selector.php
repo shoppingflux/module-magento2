@@ -85,6 +85,26 @@ class Selector implements SelectorInterface
     }
 
     /**
+     * @param int[] $rootIds
+     * @param int[] $parentChildIds
+     * @return array
+     */
+    private function getCategoryIdTree(array $rootIds, array $parentChildIds)
+    {
+        $tree = [];
+
+        foreach ($rootIds as $rootId) {
+            $tree[] = $rootId;
+
+            if (isset($parentChildIds[$rootId]) && is_array($parentChildIds[$rootId])) {
+                $tree[] = $this->getCategoryIdTree($parentChildIds[$rootId], $parentChildIds);
+            }
+        }
+
+        return $tree;
+    }
+
+    /**
      * @param StoreInterface $store
      * @return FeedCategory[]
      * @throws LocalizedException
@@ -99,20 +119,46 @@ class Selector implements SelectorInterface
             $rootCategoryId = $baseStoreGroup->getRootCategoryId();
 
             $categoryCollection = $this->categoryCollectionFactory->create();
+
             $categoryCollection->setStoreId($storeId);
             $categoryCollection->addPathFilter('^' . CatalogCategory::TREE_ROOT_ID . '/' . $rootCategoryId);
             $categoryCollection->addNameToResult();
             $categoryCollection->addUrlRewriteToResult();
             $categoryCollection->addAttributeToSelect('is_active');
+            $categoryCollection->addAttributeToSort('position', 'asc');
 
             $this->frontendUrlBuilder->setScope($store->getBaseStoreId());
+
+            $parentChildIds = [];
 
             /** @var CatalogCategory $category */
             foreach ($categoryCollection as $category) {
                 // Force the category URL as the URL instance does not use the emulated scope (if any).
                 $this->initializeCategoryUrl($category);
-                $feedCategory = $this->feedCategoryFactory->create([ 'catalogCategory' => $category ]);
-                $this->storeCategoryList[$storeId][$category->getId()] = $feedCategory;
+                $parentChildIds[$category->getParentId()][] = (int) $categoryId = $category->getId();
+            }
+
+            $idTree = $this->getCategoryIdTree(
+                $parentChildIds[$rootCategoryId] ?? [],
+                $parentChildIds
+            );
+
+            $sortedIds = [];
+
+            array_walk_recursive(
+                $idTree,
+                function ($categoryId) use (&$sortedIds) {
+                    $sortedIds[] = $categoryId;
+                }
+            );
+
+            foreach ($sortedIds as $index => $categoryId) {
+                /** @var CatalogCategory $category */
+                if ($category = $categoryCollection->getItemById($categoryId)) {
+                    $feedCategory = $this->feedCategoryFactory->create([ 'catalogCategory' => $category ]);
+                    $feedCategory->setGlobalPosition($index + 1);
+                    $this->storeCategoryList[$storeId][$category->getId()] = $feedCategory;
+                }
             }
         }
 
@@ -191,6 +237,7 @@ class Selector implements SelectorInterface
         }
 
         $isSelected = in_array($category->getId(), $selectionIds, true);
+
         return ($selectionMode === self::SELECTION_MODE_INCLUDE) ? $isSelected : !$isSelected;
     }
 
@@ -205,7 +252,8 @@ class Selector implements SelectorInterface
         $useParentCategories = false,
         $includableParentCount = 1,
         $minimumParentLevel = 1,
-        $parentWeightMultiplier = 1
+        $parentWeightMultiplier = 1,
+        $tieBreakingSelection = self::TIE_BREAKING_SELECTION_UNDETERMINED
     ) {
         $categories = $this->getStoreCategoryList($store);
         $categoryIds = $product->getCategoryIds();
@@ -261,9 +309,28 @@ class Selector implements SelectorInterface
                 return null;
             }
 
-            arsort($categoryWeights, SORT_NUMERIC);
-            reset($categoryWeights);
-            $selectedCategoryId = key($categoryWeights);
+            $candidateIds = array_keys($categoryWeights, max($categoryWeights));
+
+            if (self::TIE_BREAKING_SELECTION_UNDETERMINED === $tieBreakingSelection) {
+                arsort($categoryWeights, SORT_NUMERIC);
+                reset($categoryWeights);
+                $selectedCategoryId = key($categoryWeights);
+            } else {
+                $candidatePositions = [];
+
+                foreach ($candidateIds as $candidateId) {
+                    $candidatePositions[$candidateId] = $categories[$candidateId]->getGlobalPosition();
+                }
+
+                if (self::TIE_BREAKING_SELECTION_FIRST_IN_TREE === $tieBreakingSelection) {
+                    asort($candidatePositions);
+                } else {
+                    arsort($candidatePositions);
+                }
+
+                reset($candidatePositions);
+                $selectedCategoryId = key($candidatePositions);
+            }
         }
 
         return $this->getCategoryPath($categories[$selectedCategoryId], $categories);

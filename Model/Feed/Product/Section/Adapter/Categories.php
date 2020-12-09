@@ -71,7 +71,8 @@ class Categories extends AbstractAdapter implements CategoriesInterface
             $config->shouldUseParentCategories($store),
             $config->getIncludableParentCount($store),
             $config->getMinimumParentLevel($store),
-            $config->getParentWeightMultiplier($store)
+            $config->getParentWeightMultiplier($store),
+            $config->getTieBreakingSelection($store)
         );
 
         if (is_array($categoryPath) && !empty($categoryPath)) {
