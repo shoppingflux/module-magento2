@@ -381,9 +381,9 @@ class Exporter extends AbstractDb
                 []
             );
 
-            $idsSelect->joinInner(
+            $productSelect->joinInner(
                 [ 'catalog_parent_table' => $this->tableDictionary->getCatalogProductTableName() ],
-                'bundle_option_table.parent_id = catalog_product_table.row_id',
+                'bundle_option_table.parent_id = catalog_parent_table.row_id',
                 [ 'parent_id' => 'entity_id' ]
             );
 
