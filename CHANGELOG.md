@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.43.1] - 2021-01-05
+### Fixed
+- Fix compatibility with staging modules from Magento Commerce
+
 ## [0.43.0] - 2020-12-09
 ### Added
 - Add an "Is Variation" column to the feed product listing
