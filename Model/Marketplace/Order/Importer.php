@@ -178,16 +178,21 @@ class Importer
      */
     public function isFulfilledApiOrder(ApiOrder $apiOrder)
     {
+        $orderData = $apiOrder->toArray();
         $marketplace = strtolower(trim($apiOrder->getChannel()->getName()));
         $paymentMethod = strtolower(trim($apiOrder->getPaymentInformation()['method'] ?? ''));
+        $additionalFields = !is_array($orderData['additionalFields']) ? [] : $orderData['additionalFields'];
 
         return
             // Amazon
-            ('amazon' === $marketplace) && ('afn' === $paymentMethod)
+            (('amazon' === $marketplace)
+                && ('afn' === $paymentMethod))
             // Cdiscount
-            || ('cdiscount' === $marketplace) && ('clogistique' === $paymentMethod)
+            || (('cdiscount' === $marketplace)
+                && ('clogistique' === $paymentMethod))
             // ManoMano
-            || ('epmm' === $marketplace);
+            || (in_array($marketplace, [ 'manomanopro', 'monechelle' ])
+                && (strtolower(trim($additionalFields['env'] ?? '')) === 'epmm'));
     }
 
     /**
