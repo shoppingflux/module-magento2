@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.43.2] - 2021-01-12
+### Fixed
+- Fix detection of ManoMano fulfilled orders
+
 ## [0.43.1] - 2021-01-05
 ### Fixed
 - Fix compatibility with staging modules from Magento Commerce
