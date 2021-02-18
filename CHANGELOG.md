@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.43.3] - 2021-02-18
+### Fixed
+- Fix multi-select config fields when a saved value becomes missing
+
 ## [0.43.2] - 2021-01-12
 ### Fixed
 - Fix detection of ManoMano fulfilled orders
