@@ -153,7 +153,7 @@ class MultiSelect extends Select
             }
         }
 
-        return $value;
+        return array_values($value);
     }
 
     public function prepareRawValueForForm($value)
