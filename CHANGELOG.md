@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.43.4] - 2021-03-02
+### Fixed
+- Fix compatibility with `Mageplaza_CustomOrderNumber` module
+
 ## [0.43.3] - 2021-02-18
 ### Fixed
 - Fix multi-select config fields when a saved value becomes missing
