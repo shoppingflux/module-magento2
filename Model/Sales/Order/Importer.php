@@ -86,7 +86,7 @@ class Importer implements ImporterInterface
     /**
      * @var Registry
      */
-    protected $coreRegistry;
+    private $coreRegistry;
 
     /**
      * @var BaseStoreManagerInterface
