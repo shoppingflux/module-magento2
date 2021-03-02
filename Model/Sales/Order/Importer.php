@@ -15,6 +15,7 @@ use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Filter\Template as TemplateFilter;
+use Magento\Framework\Registry;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
 use Magento\Quote\Api\Data\AddressExtensionInterface;
@@ -81,6 +82,11 @@ class Importer implements ImporterInterface
      * @var TemplateFilter
      */
     private $templateFilter;
+
+    /**
+     * @var Registry
+     */
+    private $coreRegistry;
 
     /**
      * @var BaseStoreManagerInterface
@@ -238,6 +244,7 @@ class Importer implements ImporterInterface
      * @param DataObjectFactory $dataObjectFactory
      * @param TimeHelper $timeHelper
      * @param TemplateFilter $templateFilter
+     * @param Registry $coreRegistry
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param ConfigInterface $orderGeneralConfig
      * @param CatalogProductHelper $catalogProductHelper
@@ -269,6 +276,7 @@ class Importer implements ImporterInterface
         DataObjectFactory $dataObjectFactory,
         TimeHelper $timeHelper,
         TemplateFilter $templateFilter,
+        Registry $coreRegistry,
         BaseStoreManagerInterface $baseStoreManager,
         OrderConfigInterface $orderGeneralConfig,
         CatalogProductHelper $catalogProductHelper,
@@ -299,6 +307,7 @@ class Importer implements ImporterInterface
         $this->dataObjectFactory = $dataObjectFactory;
         $this->timeHelper = $timeHelper;
         $this->templateFilter = $templateFilter;
+        $this->coreRegistry = $coreRegistry;
         $this->baseStoreManager = $baseStoreManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
         $this->catalogProductHelper = $catalogProductHelper;
@@ -1419,6 +1428,9 @@ class Importer implements ImporterInterface
             $transaction->addObject($invoice);
             $transaction->addObject($order);
             $transaction->save();
+
+            // Compatibility with Mageplaza_CustomOrderNumber.
+            $this->coreRegistry->unregister('con_new_invoice');
         }
     }
 
