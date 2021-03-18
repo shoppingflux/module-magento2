@@ -26,6 +26,7 @@ interface SelectorInterface
      * @param StoreInterface $storeInterface
      * @param int|null $preselectedCategoryId
      * @param int[] $selectionIds
+     * @param bool $includeSubCategoriesInSelection
      * @param string $selectionMode
      * @param int $maximumLevel
      * @param int $levelWeightMultiplier
@@ -41,6 +42,7 @@ interface SelectorInterface
         StoreInterface $storeInterface,
         $preselectedCategoryId,
         array $selectionIds,
+        $includeSubCategoriesInSelection,
         $selectionMode,
         $maximumLevel = PHP_INT_MAX,
         $levelWeightMultiplier = 1,

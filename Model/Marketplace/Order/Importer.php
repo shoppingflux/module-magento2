@@ -230,6 +230,8 @@ class Importer
 
         $this->importApiBaseOrderData($apiOrder, $marketplaceOrder, $store);
 
+        $this->importApiPaymentAndShipmentOrderData($apiOrder, $marketplaceOrder, $store);
+
         $billingAddress = $this->importApiOrderAddress(
             MarketplaceAddressInterface::TYPE_BILLING,
             $apiOrder->getBillingAddress(),
@@ -298,10 +300,26 @@ class Importer
         $marketplaceOrder->setMarketplaceName($channel->getName());
         $marketplaceOrder->setShoppingFeedStatus($apiOrder->getStatus());
 
+        $marketplaceOrder->setCreatedAt($apiOrder->getCreatedAt()->format('Y-m-d H:i:s'));
+        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt()->format('Y-m-d H:i:s'));
+        $marketplaceOrder->setFetchedAt($this->localeDate->date(null, null, false)->format('Y-m-d H:i:s'));
+    }
+
+    /**
+     * @param ApiOrder $apiOrder
+     * @param MarketplaceOrderInterface $marketplaceOrder
+     * @param StoreInterface $store
+     */
+    public function importApiPaymentAndShipmentOrderData(
+        ApiOrder $apiOrder,
+        MarketplaceOrderInterface $marketplaceOrder,
+        StoreInterface $store
+    ) {
         $paymentData = $apiOrder->getPaymentInformation();
         $productAmount = (float) $paymentData['productAmount'] ?? 0.0;
         $shippingAmount = (float) $paymentData['shippingAmount'] ?? 0.0;
         $totalAmount = (float) $paymentData['totalAmount'] ?? ($productAmount + $shippingAmount);
+
         $marketplaceOrder->setProductAmount($productAmount);
         $marketplaceOrder->setShippingAmount($shippingAmount);
         $marketplaceOrder->setTotalAmount($totalAmount);
@@ -310,10 +328,6 @@ class Importer
 
         $shipmentData = $apiOrder->getShipment();
         $marketplaceOrder->setShipmentCarrier($shipmentData['carrier'] ?? $this->getDefaultShippingMethod($store));
-
-        $marketplaceOrder->setCreatedAt($apiOrder->getCreatedAt()->format('Y-m-d H:i:s'));
-        $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt()->format('Y-m-d H:i:s'));
-        $marketplaceOrder->setFetchedAt($this->localeDate->date(null, null, false)->format('Y-m-d H:i:s'));
     }
 
     /**
@@ -439,6 +453,8 @@ class Importer
         $deletableItems = [];
 
         if (!$marketplaceOrder->getSalesOrderId()) {
+            $this->importApiPaymentAndShipmentOrderData($apiOrder, $marketplaceOrder, $store);
+
             if ($this->orderGeneralConfig->shouldSyncNonImportedAddresses($store)) {
                 try {
                     $billingAddress = $this->addressRepository->getByOrderIdAndType(

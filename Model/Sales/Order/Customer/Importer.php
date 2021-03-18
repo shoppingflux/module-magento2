@@ -411,6 +411,9 @@ class Importer
             return null;
         }
 
+        $quote->setCustomerIsGuest(false);
+        $quote->setCheckoutMethod(Quote::CHECKOUT_METHOD_LOGIN_IN);
+
         $customerEmail = $this->getAddressEmail($order, $billingAddress, $store);
 
         $customer = $this->customerFactory->create();

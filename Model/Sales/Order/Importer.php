@@ -1429,8 +1429,9 @@ class Importer implements ImporterInterface
             $transaction->addObject($order);
             $transaction->save();
 
-            // Compatibility with Mageplaza_CustomOrderNumber.
+            // Compatibility with Mageplaza_CustomOrderNumber and Mageplaza_SameOrderNumber.
             $this->coreRegistry->unregister('con_new_invoice');
+            $this->coreRegistry->unregister('son_new_invoice');
         }
     }
 

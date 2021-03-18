@@ -17,6 +17,11 @@ class Category
     private $parentId;
 
     /**
+     * @var int[]
+     */
+    private $pathIds;
+
+    /**
      * @var string
      */
     private $name;
@@ -53,6 +58,7 @@ class Category
     {
         $this->id = (int) $catalogCategory->getId();
         $this->parentId = (int) $catalogCategory->getParentId();
+        $this->pathIds = array_map('intval', $catalogCategory->getPathIds());
         $this->name = trim($catalogCategory->getName());
         $this->url = $catalogCategory->getUrl();
         $this->level = (int) $catalogCategory->getLevel();
@@ -75,6 +81,14 @@ class Category
     public function getParentId()
     {
         return $this->parentId;
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getPathIds()
+    {
+        return $this->pathIds;
     }
 
     /**
