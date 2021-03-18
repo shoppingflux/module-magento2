@@ -295,7 +295,7 @@ class FeedAttributes extends AbstractModifier
                                     'selectionBaseValues' => $selectionBaseIds,
                                     'isSelectionBaseExcluding' => $isSelectionBaseExcluding,
                                     'nonSelectionOptionSelectedNote' => __(
-                                        'Attention: you have chosen a category which is not currently part of the selection in the feed configuration.'
+                                        'Warning: you have chosen a category that is currently excluded according to the feed configuration.'
                                     ),
                                 ],
                             ],
