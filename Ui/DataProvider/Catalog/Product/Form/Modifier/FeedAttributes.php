@@ -179,12 +179,42 @@ class FeedAttributes extends AbstractModifier
     }
 
     /**
+     * @param int[] $baseSelectionIds
+     * @param array $categoryTree
+     * @param bool $isExcluded
+     * @return int[]
+     */
+    private function getFullCategorySelectionIds(array $baseSelectionIds, array $categoryTree, $isExcluded = false)
+    {
+        $selectionIds = [];
+
+        foreach ($categoryTree as $category) {
+            $isBranchExcluded = $isExcluded || in_array($category['value'], $baseSelectionIds, true);
+
+            if ($isBranchExcluded) {
+                $selectionIds[] = $category['value'];
+            }
+
+            if (isset($category['optgroup'])) {
+                $selectionIds = array_merge(
+                    $selectionIds,
+                    $this->getFullCategorySelectionIds($baseSelectionIds, $category['optgroup'], $isBranchExcluded)
+                );
+            }
+        }
+
+        return $selectionIds;
+    }
+
+    /**
      * @param Store $store
      * @return array
      * @throws LocalizedException
      */
     private function getStoreFieldsMeta(Store $store)
     {
+        $categoryTree = $this->categorySelector->getStoreCategoryTree($store);
+
         /** @var CategoriesSectionType $categoriesSection */
         $categoriesSection = $this->sectionTypePool->getTypeByCode(CategoriesSectionType::CODE);
         $categoriesConfig = $categoriesSection->getConfig();
@@ -192,6 +222,10 @@ class FeedAttributes extends AbstractModifier
         $selectionBaseIds = $categoriesConfig->getCategorySelectionIds($store);
         $selectionMode = $categoriesConfig->getCategorySelectionMode($store);
         $isSelectionBaseExcluding = CategorySelectorInterface::SELECTION_MODE_EXCLUDE === $selectionMode;
+
+        if ($categoriesConfig->shouldIncludeSubCategoriesInSelection($store)) {
+            $selectionBaseIds = $this->getFullCategorySelectionIds($selectionBaseIds, $categoryTree);
+        }
 
         return [
             static::CONTAINER_PREFIX . static::FIELD_IS_SELECTED => [
@@ -248,7 +282,7 @@ class FeedAttributes extends AbstractModifier
                                     'component' => 'ShoppingFeed_Manager/js/form/element/ui-select',
                                     'formElement' => UiSelect::NAME,
                                     'elementTmpl' => 'ShoppingFeed_Manager/form/element/ui-select',
-                                    'options' => $this->categorySelector->getStoreCategoryTree($store),
+                                    'options' => $categoryTree,
                                     'multiple' => false,
                                     'filterOptions' => true,
                                     'chipsEnabled' => false,

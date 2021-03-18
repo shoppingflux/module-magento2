@@ -45,6 +45,11 @@ class Selector implements SelectorInterface
     private $storeCategoryList = [];
 
     /**
+     * @var int[]
+     */
+    private $storeFullSelectionIds = [];
+
+    /**
      * @param BaseStoreManagerInterface $baseStoreManager
      * @param UrlInterface $frontendUrlBuilder
      * @param CategoryCollectionFactory $categoryCollectionFactory
@@ -246,6 +251,7 @@ class Selector implements SelectorInterface
         StoreInterface $store,
         $preselectedCategoryId,
         array $selectionIds,
+        $includeSubCategoriesInSelection,
         $selectionMode,
         $maximumLevel = PHP_INT_MAX,
         $levelWeightMultiplier = 1,
@@ -255,9 +261,28 @@ class Selector implements SelectorInterface
         $parentWeightMultiplier = 1,
         $tieBreakingSelection = self::TIE_BREAKING_SELECTION_UNDETERMINED
     ) {
+        $storeId = $store->getId();
+
         $categories = $this->getStoreCategoryList($store);
         $categoryIds = $product->getCategoryIds();
         $selectedCategoryId = null;
+
+        if ($includeSubCategoriesInSelection) {
+            if (!isset($this->storeFullSelectionIds[$storeId])) {
+                $this->storeFullSelectionIds[$storeId] = $selectionIds;
+
+                foreach ($categories as $categoryId => $category) {
+                    if (
+                        !in_array($categoryId, $selectionIds, true)
+                        && !empty(array_intersect($category->getPathIds(), $selectionIds))
+                    ) {
+                        $this->storeFullSelectionIds[$storeId][] = $categoryId;
+                    }
+                }
+            }
+
+            $selectionIds = $this->storeFullSelectionIds[$storeId];
+        }
 
         if (
             !empty($preselectedCategoryId)

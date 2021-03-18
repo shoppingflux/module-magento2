@@ -65,6 +65,7 @@ class Categories extends AbstractAdapter implements CategoriesInterface
             $store,
             $product->getFeedProduct()->getSelectedCategoryId(),
             $config->getCategorySelectionIds($store),
+            $config->shouldIncludeSubCategoriesInSelection($store),
             $config->getCategorySelectionMode($store),
             $config->getMaximumCategoryLevel($store),
             $config->getLevelWeightMultiplier($store),

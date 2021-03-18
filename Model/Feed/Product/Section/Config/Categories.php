@@ -22,6 +22,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
 class Categories extends AbstractConfig implements CategoriesInterface
 {
     const KEY_CATEGORY_SELECTION_IDS = 'category_selection_ids';
+    const KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION = 'include_sub_categories_in_selection';
     const KEY_CATEGORY_SELECTION_MODE = 'category_selection_mode';
     const KEY_MAXIMUM_CATEGORY_LEVEL = 'maximum_category_level';
     const KEY_LEVEL_WEIGHT_MULTIPLIER = 'level_weight_multiplier';
@@ -97,13 +98,22 @@ class Categories extends AbstractConfig implements CategoriesInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION,
+                        'label' => __('Include Sub-Categories in Selection'),
+                        'sortOrder' => 20,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_CATEGORY_SELECTION_MODE,
                         'label' => __('Category Selection Mode'),
                         'checkedLabel' => __('Include'),
                         'uncheckedLabel' => __('Exclude'),
                         'checkedNotice' => __('Only the selected categories will be considered.'),
                         'uncheckedNotice' => __('The selected categories will not be considered.'),
-                        'sortOrder' => 20,
+                        'sortOrder' => 30,
                     ]
                 ),
 
@@ -122,7 +132,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 __('The root category has a level of 1.'),
                             ]
                         ),
-                        'sortOrder' => 30,
+                        'sortOrder' => 40,
                     ]
                 ),
 
@@ -146,7 +156,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 ),
                             ]
                         ),
-                        'sortOrder' => 40,
+                        'sortOrder' => 50,
                     ]
                 ),
 
@@ -162,7 +172,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                             self::KEY_MINIMUM_PARENT_LEVEL,
                             self::KEY_PARENT_WEIGHT_MULTIPLIER,
                         ],
-                        'sortOrder' => 50,
+                        'sortOrder' => 60,
                     ]
                 ),
 
@@ -178,7 +188,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'notice' => __(
                             'For each category of a given product, the number of its most immediate parents that will also be considered.'
                         ),
-                        'sortOrder' => 60,
+                        'sortOrder' => 70,
                     ]
                 ),
 
@@ -198,7 +208,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 __('The root category has a level of 1.'),
                             ]
                         ),
-                        'sortOrder' => 70,
+                        'sortOrder' => 80,
                     ]
                 ),
 
@@ -214,7 +224,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'notice' => __(
                             'The multiplier that will additionally be used to determine the weights of parent categories.'
                         ),
-                        'sortOrder' => 80,
+                        'sortOrder' => 90,
                     ]
                 ),
 
@@ -232,12 +242,12 @@ class Categories extends AbstractConfig implements CategoriesInterface
                             [
                                 __('Without changes to the categories, the selections are stable.'),
                                 __('For better predictability, choose "First" or "Last in the Tree".'),
-                                __( 'For more stability in the case of changes, limit the available choices by:'),
+                                __('For more stability in the case of changes, limit the available choices by:'),
                                 __('- choosing above the categories to include or exclude from the selection,'),
-                                __('- defining the "Forced Category" on the product pages.')
+                                __('- defining the "Forced Category" on the product pages.'),
                             ]
                         ),
-                        'sortOrder' => 90,
+                        'sortOrder' => 100,
                     ]
                 ),
             ],
@@ -275,6 +285,11 @@ class Categories extends AbstractConfig implements CategoriesInterface
     public function getCategorySelectionIds(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CATEGORY_SELECTION_IDS) ?? [];
+    }
+
+    public function shouldIncludeSubCategoriesInSelection(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION);
     }
 
     public function getCategorySelectionMode(StoreInterface $store)
