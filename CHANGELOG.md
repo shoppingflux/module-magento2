@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.44.0] - 2021-03-18
+### Added
+- Add an option to include sub-categories in the category selection
+- Add a missing French translation
+
+### Changed
+- Improve the warning message when an excluded category is selected
+- Synchronize more data when fetching existing marketplace orders
+
+### Fixed
+- Ensure guest mode is disabled when importing order customers
+- Fix compatibility with `Mageplaza_SameOrderNumber` module
+
 ## [0.43.4] - 2021-03-02
 ### Fixed
 - Fix compatibility with `Mageplaza_CustomOrderNumber` module
