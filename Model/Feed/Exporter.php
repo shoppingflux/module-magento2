@@ -469,4 +469,20 @@ class Exporter
             . '.xml'
             . ($this->generalConfig->shouldUseGzipCompression($store) ? '.gz' : '');
     }
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function isStoreFeedAvailable(StoreInterface $store)
+    {
+        $mediaDirectoryReader = $this->getMediaDirectoryReader();
+
+        $feedPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory)
+            . '/'
+            . $store->getFeedFileNameBase()
+            . '.xml';
+
+        return file_exists($feedPath);
+    }
 }

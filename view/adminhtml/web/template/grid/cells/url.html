@@ -1,1 +1,10 @@
-<a class="action-menu-item" text="$col.getLabel($row())" attr="href: $col.getLabel($row())"/>
+<p>
+    <a class="action-menu-item"
+       text="$col.getLabel($row())['label']"
+       attr="href: $col.getLabel($row())['url']" />
+</p>
+<!-- ko if: $col.getLabel($row())['suffix'] !== "" -->
+<p>
+    <em text="$col.getLabel($row())['suffix']" />
+</p>
+<!-- /ko -->

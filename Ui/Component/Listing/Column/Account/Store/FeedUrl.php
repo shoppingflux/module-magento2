@@ -60,7 +60,10 @@ class FeedUrl extends Column
 
             /** @var StoreInterface $store */
             foreach ($storeCollection as $store) {
-                $this->storeFeedUrls[$store->getId()] = $this->feedExporter->getStoreFeedUrl($store);
+                $this->storeFeedUrls[$store->getId()] = [
+                    'url' => $this->feedExporter->getStoreFeedUrl($store),
+                    'is_available' => $this->feedExporter->isStoreFeedAvailable($store),
+                ];
             }
         }
 
@@ -78,7 +81,20 @@ class FeedUrl extends Column
                     && isset($storeFeedUrls[$item[StoreInterface::STORE_ID]])
                 ) {
                     $feedUrl = $storeFeedUrls[$item[StoreInterface::STORE_ID]];
-                    $item[self::COLUMN_FEED_URL] = $feedUrl;;
+
+                    if ($feedUrl['is_available']) {
+                        $item[self::COLUMN_FEED_URL] = [
+                            'url' => $feedUrl['url'],
+                            'label' => $feedUrl['url'],
+                            'suffix' => '',
+                        ];
+                    } else {
+                        $item[self::COLUMN_FEED_URL] = [
+                            'url' => '#',
+                            'label' => $feedUrl['url'],
+                            'suffix' => __('(the feed will automatically be generated in a few moments)'),
+                        ];
+                    }
                 }
             }
         }

@@ -7,6 +7,7 @@
 "%1 Attribute","Attribut %1"
 """%1"":","""%1"" :"
 "(main)","(principal)"
+"(the feed will automatically be generated in a few moments)","(le flux sera généré automatiquement dans quelques instants)"
 "A customer account will be created for each order, using the billing email address.","Un compte client sera créé pour chaque commande, en utilisant l'adresse email de facturation."
 "Account for API token ""%1"" does not exist.","Aucun compte n'existe pour le token API ""%1""."
 "Account","Compte"
