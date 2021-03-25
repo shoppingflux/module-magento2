@@ -193,6 +193,12 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return int|null
+     */
+    public function getShipmentSyncingMaximumDelay(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return bool
      */
     public function isDebugModeEnabled(StoreInterface $store);

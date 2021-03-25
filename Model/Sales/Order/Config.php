@@ -63,6 +63,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_ORDER_REFUSAL_SYNCING_ACTION = 'order_refusal_syncing_action';
     const KEY_ORDER_CANCELLATION_SYNCING_ACTION = 'order_cancellation_syncing_action';
     const KEY_ORDER_REFUND_SYNCING_ACTION = 'order_refund_syncing_action';
+    const KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY = 'shipment_syncing_maximum_delay';
     const KEY_ENABLE_DEBUG_MODE = 'enable_debug_mode';
 
     /**
@@ -497,6 +498,22 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'isRequired' => true,
+                        'defaultFormValue' => 24,
+                        'defaultUseValue' => 24,
+                        'label' => __('Maximum Delay before Synchronizing Shipments'),
+                        'notice' => __(
+                            'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
+                        ),
+                        'sortOrder' => 290,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
                         'name' => self::KEY_ENABLE_DEBUG_MODE,
@@ -506,7 +523,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 290,
+                        'sortOrder' => 300,
                     ]
                 ),
             ],
@@ -999,6 +1016,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getOrderRefundSyncingAction(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_ORDER_REFUND_SYNCING_ACTION);
+    }
+
+    public function getShipmentSyncingMaximumDelay(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY);
     }
 
     public function isDebugModeEnabled(StoreInterface $store)

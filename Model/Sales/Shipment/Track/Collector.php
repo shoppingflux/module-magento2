@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Sales\Shipment\Track;
 
 use Magento\Framework\DataObject;
+use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
 use Magento\Sales\Api\Data\ShipmentInterface as ShipmentInterface;
 use Magento\Sales\Model\ResourceModel\Order\Shipment\CollectionFactory as SalesShipmentCollectionFactory;
 use Magento\Shipping\Model\Order\Track as SalesOrderTrack;
@@ -10,9 +11,20 @@ use Magento\Shipping\Model\ResourceModel\Order\Track\CollectionFactory as SalesO
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track as ShipmentTrack;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector as OriginalCollector;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\TrackFactory as ShipmentTrackFactory;
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Collector extends OriginalCollector
 {
+    /**
+     * @var TimeHelper
+     */
+    private $timeHelper;
+
+    /**
+     * @var TimezoneInterface
+     */
+    private $localeDate;
+
     /**
      * @var SalesShipmentCollectionFactory
      */
@@ -29,15 +41,21 @@ class Collector extends OriginalCollector
     private $shipmentTrackFactory;
 
     /**
+     * @param TimeHelper $timeHelper
+     * @param TimezoneInterface $localeDate
      * @param SalesShipmentCollectionFactory $salesShipmentCollectionFactory
      * @param SalesOrderTrackCollectionFactory $salesOrderTrackCollectionFactory
      * @param ShipmentTrackFactory $shipmentTrackFactory
      */
     public function __construct(
+        TimeHelper $timeHelper,
+        TimezoneInterface $localeDate,
         SalesShipmentCollectionFactory $salesShipmentCollectionFactory,
         SalesOrderTrackCollectionFactory $salesOrderTrackCollectionFactory,
         ShipmentTrackFactory $shipmentTrackFactory
     ) {
+        $this->timeHelper = $timeHelper;
+        $this->localeDate = $localeDate;
         $this->salesShipmentCollectionFactory = $salesShipmentCollectionFactory;
         $this->salesOrderTrackCollectionFactory = $salesOrderTrackCollectionFactory;
         $this->shipmentTrackFactory = $shipmentTrackFactory;
@@ -50,10 +68,22 @@ class Collector extends OriginalCollector
      */
     public function getShipmentTracks(ShipmentInterface $shipment)
     {
-        $shipmentTracks = [];
+        $storeId = $shipment->getStoreId();
+
+        $nowTimestamp = $this->timeHelper->utcTimestamp();
+
+        $shipmentDate = $this->localeDate->scopeDate(
+            $storeId,
+            $shipment->getCreatedAt(),
+            true
+        );
+
+        $shipmentDelay = (int) floor(($nowTimestamp - $shipmentDate->getTimestamp()) / 3600);
 
         $salesOrderTrackCollection = $this->salesOrderTrackCollectionFactory->create();
         $salesOrderTrackCollection->setShipmentFilter($shipment->getEntityId());
+
+        $shipmentTracks = [];
 
         /** @var SalesOrderTrack $salesOrderTrack */
         foreach ($salesOrderTrackCollection as $salesOrderTrack) {
@@ -122,6 +152,20 @@ class Collector extends OriginalCollector
                     'trackingNumber' => $trackingNumber,
                     'trackingUrl' => $trackingUrl,
                     'relevance' => $relevance,
+                    'delay' => $shipmentDelay,
+                ]
+            );
+        }
+
+        if (empty($shipmentTracks)) {
+            $shipmentTracks[] = $this->shipmentTrackFactory->create(
+                [
+                    'carrierCode' => static::DEFAULT_CARRIER_CODE,
+                    'carrierTitle' => '',
+                    'trackingNumber' => '',
+                    'trackingUrl' => '',
+                    'relevance' => '0',
+                    'delay' => $shipmentDelay,
                 ]
             );
         }
