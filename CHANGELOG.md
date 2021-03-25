@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.45.0] - 2021-03-19
+### Added
+- Indicate if a feed has not been generated yet in the account listing
+
 ## [0.44.0] - 2021-03-18
 ### Added
 - Add an option to include sub-categories in the category selection
