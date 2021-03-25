@@ -622,7 +622,7 @@ class Config extends AbstractConfig implements ConfigInterface
                                 ]
                             ),
                         ],
-                        'sort_order' => 90,
+                        'sortOrder' => 90,
                     ]
                 ),
 
