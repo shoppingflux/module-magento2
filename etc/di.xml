@@ -219,6 +219,12 @@
     <preference for="ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface" type="ShoppingFeed\Manager\Model\Marketplace\Order"/>
     <preference for="ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface" type="ShoppingFeed\Manager\Model\Marketplace\OrderRepository"/>
 
+    <type name="ShoppingFeed\Manager\Model\Marketplace\Order\Manager" shared="true">
+        <arguments>
+            <argument name="salesShipmentTrackCollector" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Shipment\Track\Collector\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Marketplace\Order\Importer" shared="true">
         <arguments>
             <argument name="localeDate" xsi:type="object">Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy</argument>
