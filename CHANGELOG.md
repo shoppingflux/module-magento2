@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.46.0] - 2021-03-26
+### Added
+- Add an option to limit the length of street lines in addresses
+- Add an option to specify the maximum time to wait before syncing a shipment
+
+### Changed
+- Improve detection of shipment tracking data
+
 ## [0.45.0] - 2021-03-19
 ### Added
 - Indicate if a feed has not been generated yet in the account listing
