@@ -48,6 +48,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_SPLIT_LAST_NAME_WHEN_EMPTY_FIRST_NAME = 'split_last_name_when_empty_first_name';
     const KEY_DEFAULT_PHONE_NUMBER = 'default_phone_number';
     const KEY_ADDRESS_FIELD_PLACEHOLDER = 'address_field_placeholder';
+    const KEY_ADDRESS_MAXIMUM_STREET_LINE_LENGTH = 'address_maximum_street_line_length';
     const KEY_USE_MOBILE_PHONE_NUMBER_FIRST = 'use_mobile_phone_number_first';
     const KEY_DEFAULT_PAYMENT_METHOD_TITLE = 'default_payment_method_title';
     const KEY_MARKETPLACE_PAYMENT_METHOD_TITLES = 'marketplace_payment_method_titles';
@@ -346,11 +347,24 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
+                        'name' => self::KEY_ADDRESS_MAXIMUM_STREET_LINE_LENGTH,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'defaultFormValue' => null,
+                        'defaultUseValue' => null,
+                        'label' => __('Maximum Length for Street Lines'),
+                        'notice' => __('Leave empty to keep the original street lines.'),
+                        'sortOrder' => 170,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
                         'name' => self::KEY_DEFAULT_PAYMENT_METHOD_TITLE,
                         'valueHandler' => $textHandler,
                         'label' => __('Default Payment Method Title'),
                         'notice' => $paymentMethodTitleNotice,
-                        'sortOrder' => 170,
+                        'sortOrder' => 180,
                     ]
                 ),
 
@@ -371,7 +385,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
                             . __('Unless you know what you are doing, this option should probably be enabled.'),
-                        'sortOrder' => 190,
+                        'sortOrder' => 200,
                     ]
                 ),
 
@@ -383,7 +397,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'label' => __('Create Invoice'),
                         'checkedNotice' => __('Orders will be automatically invoiced upon import.'),
                         'uncheckedNotice' => __('Orders will not be invoiced automatically.'),
-                        'sortOrder' => 200,
+                        'sortOrder' => 210,
                     ]
                 ),
 
@@ -393,7 +407,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
                         'isCheckedByDefault' => false,
                         'label' => __('Import Fulfilled Orders'),
-                        'sortOrder' => 210,
+                        'sortOrder' => 220,
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_FULFILMENT_SHIPMENT ],
                     ]
                 ),
@@ -410,7 +424,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders fulfilled by the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 220,
+                        'sortOrder' => 230,
                     ]
                 ),
 
@@ -421,7 +435,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'isCheckedByDefault' => false,
                         'label' => __('Import Already Shipped Orders'),
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_SHIPPED_SHIPMENT ],
-                        'sortOrder' => 230,
+                        'sortOrder' => 240,
                     ]
                 ),
 
@@ -437,7 +451,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders already shipped on the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 240,
+                        'sortOrder' => 250,
                     ]
                 ),
 
@@ -451,7 +465,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => 15,
                         'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
                         'notice' => __('In days.'),
-                        'sortOrder' => 250,
+                        'sortOrder' => 260,
                     ]
                 ),
 
@@ -465,7 +479,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 260,
+                        'sortOrder' => 270,
                     ]
                 ),
 
@@ -479,7 +493,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 270,
+                        'sortOrder' => 280,
                     ]
                 ),
 
@@ -493,7 +507,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 280,
+                        'sortOrder' => 290,
                     ]
                 ),
 
@@ -509,7 +523,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
                         ),
-                        'sortOrder' => 290,
+                        'sortOrder' => 300,
                     ]
                 ),
 
@@ -523,7 +537,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 300,
+                        'sortOrder' => 310,
                     ]
                 ),
             ],
@@ -735,7 +749,7 @@ class Config extends AbstractConfig implements ConfigInterface
                                 ]
                             ),
                         ],
-                        'sortOrder' => 180,
+                        'sortOrder' => 190,
                     ]
                 ),
             ],
@@ -935,6 +949,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getAddressFieldPlaceholder(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_ADDRESS_FIELD_PLACEHOLDER);
+    }
+
+    public function getAddressMaximumStreetLineLength(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ADDRESS_MAXIMUM_STREET_LINE_LENGTH);
     }
 
     public function shouldUseMobilePhoneNumberFirst(StoreInterface $store)

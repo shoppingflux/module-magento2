@@ -4,11 +4,10 @@ namespace ShoppingFeed\Manager\Model;
 
 use Magento\Framework\Filter\FilterManager;
 use Magento\Framework\Locale\ResolverInterface as LocaleResolverInterface;
+use Magento\Framework\Stdlib\StringUtils;
 
-class StringHelper
+class StringHelper extends StringUtils
 {
-    const ICONV_CHARSET = 'UTF-8';
-
     /**
      * @var LocaleResolverInterface
      */

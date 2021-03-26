@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Sales\Order\Customer;
 
 use Magento\Customer\Api\CustomerMetadataInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
+use Magento\Customer\Helper\Address as CustomerAddressHelper;
 use Magento\Customer\Model\AddressFactory as CustomerAddressFactory;
 use Magento\Customer\Model\CustomerFactory;
 use Magento\Customer\Model\CustomerRegistry;
@@ -64,6 +65,11 @@ class Importer
     private $directoryHelper;
 
     /**
+     * @var CustomerAddressHelper
+     */
+    private $customerAddressHelper;
+
+    /**
      * @var CustomerFactory
      */
     private $customerFactory;
@@ -100,6 +106,7 @@ class Importer
      * @param TemplateFilter $templateFilter
      * @param RegionCollectionFactory $regionCollectionFactory
      * @param DirectoryHelper $directoryHelper
+     * @param CustomerAddressHelper $customerAddressHelper
      * @param CustomerFactory $customerFactory
      * @param CustomerResourceFactory $customerResourceFactory
      * @param CustomerRegistry $customerRegistry
@@ -114,6 +121,7 @@ class Importer
         TemplateFilter $templateFilter,
         RegionCollectionFactory $regionCollectionFactory,
         DirectoryHelper $directoryHelper,
+        CustomerAddressHelper $customerAddressHelper,
         CustomerFactory $customerFactory,
         CustomerResourceFactory $customerResourceFactory,
         CustomerRegistry $customerRegistry,
@@ -127,6 +135,7 @@ class Importer
         $this->templateFilter = $templateFilter;
         $this->regionCollectionFactory = $regionCollectionFactory;
         $this->directoryHelper = $directoryHelper;
+        $this->customerAddressHelper = $customerAddressHelper;
         $this->customerFactory = $customerFactory;
         $this->customerResource = $customerResourceFactory->create();
         $this->customerRegistry = $customerRegistry;
@@ -200,7 +209,44 @@ class Importer
         MarketplaceAddressInterface $address,
         StoreInterface $store
     ) {
-        return $this->getAddressRequiredFieldValue($address->getStreet(), $store);
+        $street = $this->getAddressRequiredFieldValue($address->getStreet(), $store);
+
+        $maximumLineCount = $this->customerAddressHelper->getStreetLines($store->getBaseStore());
+        $maximumLineLength = $this->orderGeneralConfig->getAddressMaximumStreetLineLength($store);
+
+        if ($maximumLineLength > 0) {
+            $baseLines = explode("\n", $street);
+            $splitLines = [];
+
+            foreach ($baseLines as $streetLine) {
+                if ($this->stringHelper->strlen($streetLine) > $maximumLineLength) {
+                    $splitLines = array_merge(
+                        $splitLines,
+                        $this->stringHelper->split($streetLine, $maximumLineLength, true, true)
+                    );
+                } else {
+                    $splitLines[] = $streetLine;
+                }
+            }
+
+            if (count($splitLines) > max($maximumLineCount, count($baseLines))) {
+                $splitLines = $this->stringHelper->split(
+                    implode('︱', $baseLines),
+                    $maximumLineLength,
+                    true,
+                    false,
+                    '[\s︱]'
+                );
+
+                foreach ($splitLines as $key => $streetLine) {
+                    $splitLines[$key] = trim(preg_replace('/︱+/u', ' - ', $streetLine));
+                }
+            }
+
+            $street = implode("\n", $splitLines);
+        }
+
+        return $street;
     }
 
     /**

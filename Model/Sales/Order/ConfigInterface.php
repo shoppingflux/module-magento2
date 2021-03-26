@@ -108,6 +108,12 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return int|null
+     */
+    public function getAddressMaximumStreetLineLength(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return bool
      */
     public function shouldUseMobilePhoneNumberFirst(StoreInterface $store);
