@@ -456,6 +456,8 @@ class Manager
      */
     public function notifyStoreOrderShipmentUpdates(StoreInterface $store)
     {
+        $maximumDelay = $this->orderGeneralConfig->getShipmentSyncingMaximumDelay($store);
+
         $shippedCollection = $this->orderCollectionFactory->create();
         $shippedCollection->addStoreIdFilter($store->getId());
         $shippedCollection->addIsFulfilledFilter(false);
@@ -471,15 +473,22 @@ class Manager
         foreach ($shippedCollection as $marketplaceOrder) {
             $salesOrderId = (int) $marketplaceOrder->getSalesOrderId();
 
-            if (isset($salesShipmentTracks[$salesOrderId]) && !empty($salesShipmentTracks[$salesOrderId])) {
+            if (!empty($salesShipmentTracks[$salesOrderId])) {
                 /** @var ShipmentTrack $chosenTrack */
                 $chosenTrack = null;
 
-                /** @var ShipmentTrack $shipmentTrack */
                 foreach ($salesShipmentTracks[$salesOrderId] as $shipmentTrack) {
                     if ((null === $chosenTrack) || ($shipmentTrack->getRelevance() >= $chosenTrack->getRelevance())) {
                         $chosenTrack = $shipmentTrack;
                     }
+                }
+
+                if (
+                    ($maximumDelay > 0)
+                    && !$chosenTrack->hasTrackingData()
+                    && ($chosenTrack->getDelay() <= $maximumDelay)
+                ) {
+                    continue;
                 }
 
                 $this->notifyStoreOrderShipment($marketplaceOrder, $chosenTrack, $store);

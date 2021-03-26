@@ -30,19 +30,32 @@ class Track
     private $relevance;
 
     /**
+     * @var int
+     */
+    private $delay;
+
+    /**
      * @param string $carrierCode
      * @param string $carrierTitle
      * @param string $trackingNumber
      * @param string $trackingUrl
      * @param int $relevance
+     * @param int $delay
      */
-    public function __construct($carrierCode, $carrierTitle, $trackingNumber, $trackingUrl, $relevance)
-    {
+    public function __construct(
+        $carrierCode,
+        $carrierTitle,
+        $trackingNumber,
+        $trackingUrl,
+        $relevance,
+        $delay = 0
+    ) {
         $this->setCarrierCode($carrierCode);
         $this->setCarrierTitle($carrierTitle);
         $this->setTrackingNumber($trackingNumber);
         $this->setTrackingUrl($trackingUrl);
         $this->setRelevance($relevance);
+        $this->setDelay($delay);
     }
 
     /**
@@ -83,6 +96,22 @@ class Track
     public function getRelevance()
     {
         return $this->relevance;
+    }
+
+    /**
+     * @return int|null
+     */
+    public function getDelay()
+    {
+        return $this->delay;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasTrackingData()
+    {
+        return !empty($this->getTrackingNumber()) || !empty($this->getTrackingUrl());
     }
 
     /**
@@ -131,7 +160,17 @@ class Track
      */
     public function setRelevance($relevance)
     {
-        $this->relevance = min(0, (int) $relevance);
+        $this->relevance = max(0, (int) $relevance);
+        return $this;
+    }
+
+    /**
+     * @param int $delay
+     * @return $this
+     */
+    public function setDelay($delay)
+    {
+        $this->delay = max(0, (int) $delay);
         return $this;
     }
 }
