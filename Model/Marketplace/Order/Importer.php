@@ -495,7 +495,7 @@ class Importer
                 $itemCollection = $this->itemCollectionFactory->create();
                 $itemCollection->addOrderIdFilter($orderId);
                 $oldItems = $itemCollection->getItems();
-                $referenceAliases = $apiOrder->getItemsReferencesAliases();
+                $referenceAliases = (array) $apiOrder->getItemsReferencesAliases();
 
                 foreach ($apiOrder->getItems() as $apiItem) {
                     $isNewItem = true;
