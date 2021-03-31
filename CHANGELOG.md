@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.46.1] - 2021-03-31
+### Fixed
+- Fix syncing of marketplace orders in some cases (SF API change)
+
 ## [0.46.0] - 2021-03-26
 ### Added
 - Add an option to limit the length of street lines in addresses
