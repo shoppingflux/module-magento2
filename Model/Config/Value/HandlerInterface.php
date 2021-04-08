@@ -28,6 +28,13 @@ interface HandlerInterface
     public function isEqualValues($valueA, $valueB);
 
     /**
+     * @param array $valuesA
+     * @param array $valuesB
+     * @return bool
+     */
+    public function isEqualValueLists(array $valuesA, array $valuesB);
+
+    /**
      * @param mixed $value
      * @param mixed $defaultValue
      * @param bool $isRequired
