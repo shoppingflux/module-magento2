@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.46.2] - 2021-04-29
+### Fixed
+- Fix calculation of shipment delays on Magento 2.3.4 to 2.3.6
+- Fix detection of changes in configuration values on some edge cases
+- Fix French translation
+
 ## [0.46.1] - 2021-03-31
 ### Fixed
 - Fix syncing of marketplace orders in some (rare) edge cases
@@ -137,7 +143,7 @@
 - Add a "Shopping Feed status" column to the marketplace order listing
 
 ### Fixed
-- Fix links to section details in the feed product grid on 2.3.5
+- Fix links to section details in the feed product grid on Magento 2.3.5
 
 ## [0.37.1] - 2020-07-16
 ### Fixed
