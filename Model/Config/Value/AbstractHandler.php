@@ -26,6 +26,14 @@ abstract class AbstractHandler implements HandlerInterface
         return $valueA === $valueB;
     }
 
+    public function isEqualValueLists(array $valuesA, array $valuesB)
+    {
+        sort($valuesA);
+        sort($valuesB);
+
+        return $valuesA === $valuesB;
+    }
+
     /**
      * @param mixed $value
      * @param bool $isRequired

@@ -68,15 +68,13 @@ class Collector extends OriginalCollector
      */
     public function getShipmentTracks(ShipmentInterface $shipment)
     {
-        $storeId = $shipment->getStoreId();
-
         $nowTimestamp = $this->timeHelper->utcTimestamp();
 
-        $shipmentDate = $this->localeDate->scopeDate(
-            $storeId,
-            $shipment->getCreatedAt(),
-            true
-        );
+        /**
+         * @see TimezoneInterface::scopeDate() is not reliable on M2.3.x versions >= 2.3.4.
+         * See https://github.com/magento/magento2/issues/26675 for examples why.
+         */
+        $shipmentDate = \DateTime::createFromFormat('Y-m-d H:i:s', $shipment->getCreatedAt());
 
         $shipmentDelay = (int) floor(($nowTimestamp - $shipmentDate->getTimestamp()) / 3600);
 
