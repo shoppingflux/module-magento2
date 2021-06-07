@@ -1,15 +1,15 @@
 <?php
 
-namespace ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log\Grid;
+namespace ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket\Grid;
 
 use Magento\Framework\Api\Search\AggregationInterface as SearchAggregationInterface;
 use Magento\Framework\Api\Search\SearchResultInterface;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\View\Element\UiComponent\DataProvider\Document as UiDocument;
-use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log as LogResource;
-use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log\Collection as LogCollection;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket as TicketResource;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket\Collection as TicketCollection;
 
-class Collection extends LogCollection implements SearchResultInterface
+class Collection extends TicketCollection implements SearchResultInterface
 {
     const FIELD_SHOPPING_FEED_ACCOUNT_NAME = 'shopping_feed_account_name';
 
@@ -20,7 +20,7 @@ class Collection extends LogCollection implements SearchResultInterface
 
     protected function _construct()
     {
-        $this->_init(UiDocument::class, LogResource::class);
+        $this->_init(UiDocument::class, TicketResource::class);
     }
 
     protected function _initSelect()

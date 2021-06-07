@@ -33,6 +33,7 @@
                         </resource>
 
                         <resource id="ShoppingFeed_Manager::marketplace_order_logs" title="Order Logs" translate="title" sortOrder="30000"/>
+                        <resource id="ShoppingFeed_Manager::marketplace_order_tickets" title="Order Sync Tickets" translate="title" sortOrder="40000"/>
                     </resource>
                 </resource>
             </resource>

@@ -24,7 +24,7 @@ class Ticket extends AbstractDb
 
         $idSelect = $connection->select()
             ->from($this->getMainTable())
-            ->where('ticket_id = ?', $ticketId);
+            ->where('log_id = ?', $ticketId);
 
         return !empty($this->getConnection()->fetchOne($idSelect));
     }
