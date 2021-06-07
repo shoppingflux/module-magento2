@@ -587,6 +587,8 @@ class Config extends AbstractConfig implements ConfigInterface
         $textHandler = $this->valueHandlerFactory->create(TextHandler::TYPE_CODE);
 
         $emailTemplateVariableNotices = [
+            'billing_email' => 'The email address entered in the billing address.',
+            'shipping_email' => 'The email address entered in the shipping address.',
             'marketplace' => 'The name of the marketplace.',
             'order_id' => 'The ID of the marketplace order.',
             'order_number' => 'The reference of the order on the marketplace.',

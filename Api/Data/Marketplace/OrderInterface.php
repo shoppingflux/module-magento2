@@ -341,4 +341,11 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setAcknowledgedAt($acknowledgedAt);
+
+    /**
+     * @param AddressInterface $billingAddress
+     * @param AddressInterface $shippingAddress
+     * @return OrderInterface
+     */
+    public function setAddresses(AddressInterface $billingAddress, AddressInterface $shippingAddress);
 }
