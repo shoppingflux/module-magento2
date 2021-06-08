@@ -544,6 +544,11 @@ class Importer implements ImporterInterface
                         throw new LocalizedException(__('The marketplace order has no item.'));
                     }
 
+                    $marketplaceOrder->setAddresses(
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING]
+                    );
+
                     $this->logDebugMessage('Importing the customer.');
 
                     $this->customerImporter->importQuoteCustomer(
