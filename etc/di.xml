@@ -372,6 +372,15 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Console\Command\Orders\AbstractCommand">
+        <arguments>
+            <argument name="marketplaceOrderManager" xsi:type="object">ShoppingFeed\Manager\Model\Marketplace\Order\Manager\Proxy</argument>
+            <argument name="marketplaceOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Marketplace\Order\Importer\Proxy</argument>
+            <argument name="salesOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+            <argument name="salesOrderSyncer" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Customer\Group\Source">
         <arguments>
             <argument name="fullSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
