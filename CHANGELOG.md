@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.47.0] - 2021-06-09
+### Added
+- Add an option to disable the automatic import of marketplace orders
+- Add `billing_email` and `shipping_email` variables to default email address templates
+- Add a listing for order synchronization tickets
+- Add ability to choose which cron group to associate each cron task with
+- Add a better error message for registration using an unsupported country
+
+### Changed
+- Use proxies for objects injected to order-related CLI commands
+
+### Fixed
+- Fix shipping of fulfilled orders when MSI stock has multiple sources
+
 ## [0.46.2] - 2021-04-29
 ### Fixed
 - Fix calculation of shipment delays on Magento 2.3.4 to 2.3.6
