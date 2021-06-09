@@ -35,16 +35,17 @@ class ConfigPlugin
             $taskCollection = $this->taskCollectionFactory->create();
             $taskCollection->addActiveFilter(true);
 
-            if (!isset($jobs[static::CRON_GROUP])) {
-                $jobs[static::CRON_GROUP] = [];
-            }
-
             /** @var Task $task */
             foreach ($taskCollection as $task) {
                 if ($cronExpression = $task->getCronExpression()) {
                     $jobName = $task->getUniqueJobName();
+                    $cronGroup = $task->getCronGroup();
 
-                    $jobs[static::CRON_GROUP][$jobName] = [
+                    if (!isset($jobs[$cronGroup])) {
+                        $jobs[$cronGroup] = [];
+                    }
+
+                    $jobs[$cronGroup][$jobName] = [
                         'name' => $jobName,
                         'instance' => RunTask::class,
                         'method' => sprintf(RunTask::BASE_TASK_RUN_METHOD_NAME, $task->getId()),

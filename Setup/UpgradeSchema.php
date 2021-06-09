@@ -128,6 +128,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 ]
             );
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.47.0') < 0)) {
+            $this->addCronTaskCronGroupField($setup);
+        }
     }
 
     /**
@@ -1592,6 +1596,29 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     $connection->addColumn($salesEntityTableName, $fieldName, $fieldDefinition);
                 }
             }
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addCronTaskCronGroupField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $cronTaskTableName = $this->tableDictionary->getCronTaskTableName();
+
+        if (!$connection->tableColumnExists($cronTaskTableName, CronTaskInterface::CRON_GROUP)) {
+            $connection->addColumn(
+                $cronTaskTableName,
+                CronTaskInterface::CRON_GROUP,
+                [
+                    'type' => Table::TYPE_TEXT,
+                    'nullable' => true,
+                    'default' => null,
+                    'comment' => 'Cron Group',
+                    'after' => CronTaskInterface::CRON_EXPRESSION,
+                ]
+            );
         }
     }
 }

@@ -17,6 +17,8 @@ interface TaskInterface
     const SCHEDULE_TYPE_EVERY_MONDAY_AT_4AM = 'every_monday_at_4am';
     const SCHEDULE_TYPE_EVERY_MONTH_FIRST_DAY_AT_4AM = 'every_month_first_day_at_4am';
 
+    const DEFAULT_CRON_GROUP = 'default';
+
     /**#@+*/
     const TASK_ID = 'task_id';
     const NAME = 'name';
@@ -25,6 +27,7 @@ interface TaskInterface
     const COMMAND_CONFIGURATION = 'command_configuration';
     const SCHEDULE_TYPE = 'schedule_type';
     const CRON_EXPRESSION = 'cron_expression';
+    const CRON_GROUP = 'cron_group';
     const IS_ACTIVE = 'is_active';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -69,6 +72,11 @@ interface TaskInterface
      * @return string
      */
     public function getUniqueJobName();
+
+    /**
+     * @return string
+     */
+    public function getCronGroup();
 
     /**
      * @return bool
@@ -126,6 +134,12 @@ interface TaskInterface
      * @return TaskInterface
      */
     public function setCronExpression($cronExpression);
+
+    /**
+     * @param string $cronGroup
+     * @return TaskInterface
+     */
+    public function setCronGroup($cronGroup);
 
     /**
      * @param bool $isActive

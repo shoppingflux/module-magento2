@@ -38,6 +38,7 @@ class DataProvider extends BaseDataProvider
     const FIELD_COMMAND_CODE = 'command_code';
     const FIELD_SCHEDULE_TYPE = 'schedule_type';
     const FIELD_CRON_EXPRESSION = 'cron_expression';
+    const FIELD_CRON_GROUP = 'cron_group';
     const FIELD_IS_ACTIVE = 'is_active';
 
     /**
@@ -277,6 +278,7 @@ class DataProvider extends BaseDataProvider
             $scheduleType = $task->getScheduleType();
             $hasCronExpression = (TaskInterface::SCHEDULE_TYPE_CUSTOM === $scheduleType);
             $cronExpression = $hasCronExpression ? $task->getCronExpression() : null;
+            $cronGroup = $task->getCronGroup();
 
             $data[$taskId] = array_merge(
                 $data[$taskId] ?? [],
@@ -288,6 +290,7 @@ class DataProvider extends BaseDataProvider
                         self::FIELD_DESCRIPTION => $task->getDescription(),
                         self::FIELD_SCHEDULE_TYPE => $scheduleType,
                         self::FIELD_CRON_EXPRESSION => $cronExpression,
+                        self::FIELD_CRON_GROUP => $cronGroup,
                         self::FIELD_IS_ACTIVE => $task->isActive() ? '1' : '0',
 
                         self::DATA_SCOPE_COMMAND => array_merge(

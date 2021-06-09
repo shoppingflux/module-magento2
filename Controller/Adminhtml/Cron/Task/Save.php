@@ -97,6 +97,7 @@ class Save extends TaskAction
             $task->setCommandConfiguration($this->dataObjectFactory->create([ 'data' => $commandConfigData ]));
             $task->setCronExpression($taskData[TaskFormDataProvider::FIELD_CRON_EXPRESSION]);
             $task->setScheduleType($taskData[TaskFormDataProvider::FIELD_SCHEDULE_TYPE]);
+            $task->setCronGroup($taskData[TaskFormDataProvider::FIELD_CRON_GROUP]);
             $task->setIsActive($taskData[TaskFormDataProvider::FIELD_IS_ACTIVE]);
 
             $this->taskRepository->save($task);
