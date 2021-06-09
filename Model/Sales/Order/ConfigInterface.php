@@ -9,6 +9,12 @@ interface ConfigInterface extends BaseConfig
 {
     /**
      * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldImportOrders(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return int
      */
     public function getOrderImportDelay(StoreInterface $store);

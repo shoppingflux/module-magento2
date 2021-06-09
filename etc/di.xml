@@ -372,6 +372,15 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Console\Command\Orders\AbstractCommand">
+        <arguments>
+            <argument name="marketplaceOrderManager" xsi:type="object">ShoppingFeed\Manager\Model\Marketplace\Order\Manager\Proxy</argument>
+            <argument name="marketplaceOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Marketplace\Order\Importer\Proxy</argument>
+            <argument name="salesOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+            <argument name="salesOrderSyncer" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Customer\Group\Source">
         <arguments>
             <argument name="fullSource" xsi:type="object">Magento\Customer\Model\Customer\Source\Group\Proxy</argument>
@@ -444,6 +453,7 @@
                 <item name="sfm_shipping_method_rule_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Grid\Collection</item>
                 <item name="sfm_marketplace_order_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Grid\Collection</item>
                 <item name="sfm_marketplace_order_log_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log\Grid\Collection</item>
+                <item name="sfm_marketplace_order_ticket_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket\Grid\Collection</item>
                 <item name="sfm_cron_task_listing_data_source" xsi:type="string">ShoppingFeed\Manager\Model\ResourceModel\Cron\Task\Grid\Collection</item>
             </argument>
         </arguments>
@@ -453,6 +463,7 @@
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Log\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
+    <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Marketplace\Order\Ticket\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
     <virtualType name="ShoppingFeed\Manager\Ui\DataProvider\Cron\Task\Listing\DataProvider" type="Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider"/>
 
     <type name="Magento\Framework\Console\CommandList">

@@ -11,6 +11,7 @@ use Magento\Catalog\Helper\Product as CatalogProductHelper;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as CatalogProductStatus;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
 use Magento\Checkout\Model\Session as CheckoutSession;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
@@ -28,6 +29,7 @@ use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory as ShippingRateMe
 use Magento\Sales\Api\Data\OrderInterface as SalesOrderInterface;
 use Magento\Sales\Model\Convert\Order as SalesOrderConverter;
 use Magento\Sales\Model\Order as SalesOrder;
+use Magento\Sales\Model\Order\ShipmentFactory as SalesShipmentFactory;
 use Magento\Store\Model\Store as BaseStore;
 use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
 use Magento\Tax\Model\Config as TaxConfig;
@@ -184,6 +186,11 @@ class Importer implements ImporterInterface
     private $salesOrderConverter;
 
     /**
+     * @var SalesShipmentFactory
+     */
+    private $salesShipmentFactory;
+
+    /**
      * @var MarketplacePaymentConfig
      */
     private $marketplacePaymentConfig;
@@ -269,6 +276,7 @@ class Importer implements ImporterInterface
      * @param MarketplaceOrderResourceFactory $marketplaceOrderResourceFactory
      * @param MarketplaceAddressCollectionFactory $marketplaceAddressCollectionFactory
      * @param MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory
+     * @param SalesShipmentFactory|null $salesShipmentFactory
      */
     public function __construct(
         LoggerInterface $logger,
@@ -300,7 +308,8 @@ class Importer implements ImporterInterface
         MarketplaceOrderRepositoryInterface $marketplaceOrderRepository,
         MarketplaceOrderResourceFactory $marketplaceOrderResourceFactory,
         MarketplaceAddressCollectionFactory $marketplaceAddressCollectionFactory,
-        MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory
+        MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory,
+        SalesShipmentFactory $salesShipmentFactory = null
     ) {
         $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;
@@ -332,6 +341,8 @@ class Importer implements ImporterInterface
         $this->marketplaceOrderResourceFactory = $marketplaceOrderResourceFactory;
         $this->marketplaceAddressCollectionFactory = $marketplaceAddressCollectionFactory;
         $this->marketplaceItemCollectionFactory = $marketplaceItemCollectionFactory;
+        $this->salesShipmentFactory = $salesShipmentFactory
+            ?? ObjectManager::getInstance()->get(SalesShipmentFactory::class);
     }
 
     /**
@@ -532,6 +543,11 @@ class Importer implements ImporterInterface
                     } else {
                         throw new LocalizedException(__('The marketplace order has no item.'));
                     }
+
+                    $marketplaceOrder->setAddresses(
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING]
+                    );
 
                     $this->logDebugMessage('Importing the customer.');
 
@@ -1443,20 +1459,18 @@ class Importer implements ImporterInterface
     private function shipSalesOrder(SalesOrder $order)
     {
         if ($order->canShip()) {
-            $shipment = $this->salesOrderConverter->toShipment($order);
+            $shippableItems = [];
 
-            if ($shipment) {
-                foreach ($order->getAllItems() as $orderItem) {
-                    if (!$orderItem->getQtyToShip() || $orderItem->getIsVirtual()) {
-                        continue;
-                    }
+            foreach ($order->getAllItems() as $orderItem) {
+                $shippableQty = $orderItem->getQtyToShip();
 
-                    $shipmentItem = $this->salesOrderConverter->itemToShipmentItem($orderItem);
-                    $shipmentItem->setQty($orderItem->getQtyToShip());
-
-                    $shipment->addItem($shipmentItem);
+                if (($shippableQty > 0) && !$orderItem->getIsVirtual()) {
+                    $shippableItems[$orderItem->getId()] = $shippableQty;
                 }
+            }
 
+            if (!empty($shippableItems)) {
+                $shipment = $this->salesShipmentFactory->create($order, $shippableItems);
                 $shipment->register();
 
                 $transaction = $this->transactionFactory->create();

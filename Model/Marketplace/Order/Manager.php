@@ -177,6 +177,10 @@ class Manager
      */
     public function getStoreImportableApiOrders(StoreInterface $store)
     {
+        if (!$this->orderGeneralConfig->shouldImportOrders($store)) {
+            return [];
+        }
+
         $apiStore = $this->apiSessionManager->getStoreApiResource($store);
 
         return $apiStore->getOrderApi()
@@ -195,6 +199,10 @@ class Manager
      */
     public function getStoreImportableOrders(StoreInterface $store, $maximumCount = null)
     {
+        if (!$this->orderGeneralConfig->shouldImportOrders($store)) {
+            return [];
+        }
+
         $orderCollection = $this->orderCollectionFactory->create();
 
         $orderCollection->addNonImportedFilter();
@@ -219,6 +227,10 @@ class Manager
      */
     public function getStoreSyncableApiOrders(StoreInterface $store)
     {
+        if (!$this->orderGeneralConfig->shouldImportOrders($store)) {
+            return [];
+        }
+
         $apiStore = $this->apiSessionManager->getStoreApiResource($store);
         $statuses = $this->getSyncableShoppingFeedStatuses($store);
 
@@ -243,6 +255,10 @@ class Manager
      */
     public function getStoreSyncableOrders(StoreInterface $store, $maximumCount = null)
     {
+        if (!$this->orderGeneralConfig->shouldImportOrders($store)) {
+            return [];
+        }
+
         $statuses = $this->getSyncableShoppingFeedStatuses($store);
 
         if (empty($statuses)) {

@@ -369,6 +369,16 @@ class Importer
             ) {
                 $this->templateFilter->setVariables(
                     array_merge(
+                        array_filter(
+                            [
+                                'billing_email' => $order->getBillingAddress()->getEmail(),
+                                'shipping_email' => $order->getShippingAddress()->getEmail(),
+                            ],
+                            function ($email) {
+                                return ('' !== $email)
+                                    && \Zend_Validate::is($email, EmailAddressValidator::class);
+                            }
+                        ),
                         array_map(
                             [ $this, 'getAddressEmailVariableValue' ],
                             [

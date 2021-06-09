@@ -29,6 +29,7 @@ use ShoppingFeed\Manager\Model\StringHelper;
 
 class Config extends AbstractConfig implements ConfigInterface
 {
+    const KEY_IMPORT_ORDERS = 'import_orders';
     const KEY_ORDER_IMPORT_DELAY = 'order_import_delay';
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS = 'check_product_availability_and_options';
@@ -191,6 +192,18 @@ class Config extends AbstractConfig implements ConfigInterface
 
         return array_merge(
             [
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_IMPORT_ORDERS,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Import Orders'),
+                        'checkedNotice' => __('Orders will automatically be imported.'),
+                        'uncheckedNotice' => __('Orders will not be imported automatically.'),
+                        'sortOrder' => 0,
+                    ]
+                ),
+
                 $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
@@ -574,6 +587,8 @@ class Config extends AbstractConfig implements ConfigInterface
         $textHandler = $this->valueHandlerFactory->create(TextHandler::TYPE_CODE);
 
         $emailTemplateVariableNotices = [
+            'billing_email' => 'The email address entered in the billing address.',
+            'shipping_email' => 'The email address entered in the shipping address.',
             'marketplace' => 'The name of the marketplace.',
             'order_id' => 'The ID of the marketplace order.',
             'order_number' => 'The reference of the order on the marketplace.',
@@ -791,6 +806,11 @@ class Config extends AbstractConfig implements ConfigInterface
         }
 
         return $defaultValue;
+    }
+
+    public function shouldImportOrders(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_IMPORT_ORDERS);
     }
 
     public function getOrderImportDelay(StoreInterface $store)

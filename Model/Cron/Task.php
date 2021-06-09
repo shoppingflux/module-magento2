@@ -125,6 +125,13 @@ class Task extends AbstractModel implements TaskInterface
         return sprintf(static::BASE_CRON_JOB_NAME, $this->getId());
     }
 
+    public function getCronGroup()
+    {
+        $group = trim($this->getData(self::CRON_GROUP));
+
+        return ('' !== $group) ? $group : static::DEFAULT_CRON_GROUP;
+    }
+
     public function isActive()
     {
         return (bool) $this->getData(self::IS_ACTIVE);
@@ -178,8 +185,12 @@ class Task extends AbstractModel implements TaskInterface
 
     public function setCronExpression($cronExpression)
     {
-        $this->setData(self::CRON_EXPRESSION, $cronExpression);
-        return $this;
+        return $this->setData(self::CRON_EXPRESSION, $cronExpression);
+    }
+
+    public function setCronGroup($cronGroup)
+    {
+        return $this->setData(self::CRON_GROUP, $cronGroup);
     }
 
     public function setIsActive($isActive)

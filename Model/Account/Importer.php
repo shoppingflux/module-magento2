@@ -390,6 +390,8 @@ class Importer
                 if (is_array($errorData)) {
                     if (isset($errorData['validationMessages']['owner']['login']['alreadyExists'])) {
                         $errorMessage = __('An account already exists for this username');
+                    } elseif (isset($errorData['validationMessages']['country']['notInArray'])) {
+                        $errorMessage = __('Registration is not available for this country');
                     } elseif (!empty($errorData['details'])) {
                         $errorMessage = __($errorData['details']);
                     }

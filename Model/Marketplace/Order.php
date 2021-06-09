@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Marketplace;
 
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
@@ -351,5 +352,40 @@ class Order extends AbstractModel implements OrderInterface
     public function setAcknowledgedAt($acknowledgedAt)
     {
         return $this->setData(self::ACKNOWLEDGED_AT, $acknowledgedAt);
+    }
+
+    /**
+     * @param AddressInterface $address
+     * @param string $addressType
+     * @throws LocalizedException
+     */
+    private function addAddress(AddressInterface $address, $addressType)
+    {
+        if ($this->getId() !== $address->getOrderId()) {
+            throw new LocalizedException(__('The address does not belong to this marketplace order.'));
+        }
+
+        if ($address->getType() !== $addressType) {
+            throw new LocalizedException(
+                __(
+                    'The address does not match the expected type (""%1"" instead of ""%2"").',
+                    $addressType,
+                    $address->getType()
+                )
+            );
+        }
+
+        if (!is_array($this->addresses)) {
+            $this->addresses = [];
+        }
+
+        $this->addresses[] = $address;
+    }
+
+    public function setAddresses(AddressInterface $billingAddress, AddressInterface $shippingAddress)
+    {
+        $this->addAddress($billingAddress, AddressInterface::TYPE_BILLING);
+        $this->addAddress($shippingAddress, AddressInterface::TYPE_SHIPPING);
+        return $this;
     }
 }
