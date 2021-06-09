@@ -39,6 +39,7 @@ class Collection extends TicketCollection implements SearchResultInterface
                 [ static::FIELD_SHOPPING_FEED_ACCOUNT_NAME => 'store_table.shopping_feed_name' ]
             );
 
+        $this->addFilterToMap('order_id', 'main_table.order_id');
         $this->addFilterToMap('store_id', 'order_table.store_id');
         $this->addFilterToMap('created_at', 'main_table.created_at');
 
