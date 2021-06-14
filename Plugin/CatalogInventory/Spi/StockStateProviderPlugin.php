@@ -66,7 +66,7 @@ class StockStateProviderPlugin
         StockItemInterface $stockItem,
         $itemQty,
         $qtyToCheck,
-        $origQty
+        $origQty = 0
     ) {
         return $this->shouldPreventQtyCheck()
             ? $this->dataObjectFactory->create()
