@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.48.0] - 2021-06-16
+### Added
+- Add mass-actions to the marketplace order listing
+
+### Fixed
+- Fix import of orders with bundle products in some specific cases
+- Fix signature of `checkQuoteItemQty` plugin (thanks to [Viper9x](https://github.com/Viper9x))
+
 ## [0.47.0] - 2021-06-09
 ### Added
 - Add an option to disable the automatic import of marketplace orders
