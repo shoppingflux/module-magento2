@@ -890,11 +890,12 @@ class Importer implements ImporterInterface
         /** @var BundleProductPrice $bundlePrice */
         $bundlePrice = $product->getPriceModel();
 
-        $bundleOptions = [];
-
         // Add all the default selections to the quote.
 
-        $selectionCollection = $bundleType->getSelectionsCollection($bundleType->getOptionsIds($product), $product);
+        $bundleOptionIds = $bundleType->getOptionsIds($product);
+        $bundleOptions = array_fill_keys($bundleOptionIds, []);
+
+        $selectionCollection = $bundleType->getSelectionsCollection($bundleOptionIds, $product);
 
         /** @var BundleProductSelection $selection */
         foreach ($selectionCollection as $selection) {
@@ -922,11 +923,12 @@ class Importer implements ImporterInterface
         }
 
         $itemPrice = $marketplaceItem->getPrice();
+        $itemQuantity = $marketplaceItem->getQuantity();
 
         $buyRequest = $this->dataObjectFactory->create(
             [
                 'data' => [
-                    'qty' => $marketplaceItem->getQuantity(),
+                    'qty' => $itemQuantity,
                     'custom_price' => $itemPrice,
                     'bundle_option' => $bundleOptions,
                     'bundle_option_qty' => [],
@@ -934,7 +936,7 @@ class Importer implements ImporterInterface
             ]
         );
 
-        $product->setData('cart_qty', $marketplaceItem->getQuantity());
+        $product->setData('cart_qty', $itemQuantity);
 
         if ($isUntaxedBusinessOrder) {
             $product->setData('tax_class_id', $this->businessTaxManager->getProductTaxClass()->getClassId());
@@ -945,6 +947,12 @@ class Importer implements ImporterInterface
             $buyRequest,
             ProductType::PROCESS_MODE_FULL
         );
+
+        if (is_string($bundleItem)) {
+            throw new \Exception($bundleItem);
+        }
+
+        $isFixedPriceBundle = (int) $product->getPriceType() === BundleProductPrice::PRICE_TYPE_FIXED;
 
         // Check that every selection has been added to the quote, and gather their original prices.
 
@@ -972,7 +980,7 @@ class Importer implements ImporterInterface
                 $selectionOriginalPrices[$selectionId] = $bundlePrice->getSelectionFinalTotalPrice(
                     $product,
                     $childProduct,
-                    $marketplaceItem->getQuantity(),
+                    $itemQuantity,
                     $selection->getSelectionQty(),
                     true,
                     true
@@ -999,16 +1007,27 @@ class Importer implements ImporterInterface
         // Assign a new (proportional) price to each selection.
 
         $selectionFinalPrices = [];
-        $priceMultiplier = $itemPrice / $this->getKahanSum($selectionOriginalPrices);
+
+        $itemPriceComparisonBase = !$isFixedPriceBundle
+            ? $this->getKahanSum($selectionOriginalPrices)
+            : $bundlePrice->getFinalPrice($itemQuantity, $product);
+
+        $priceMultiplier = empty($itemPriceComparisonBase) ? 0 : $itemPrice / $itemPriceComparisonBase;
 
         foreach ($selectionItems as $selectionId => $childItem) {
             // This is the base quantity of the child item (irrespective of the quantity of the parent).
-            $itemQuantity = $childItem->getQty();
-            $finalUnitPrice = round($priceMultiplier * $selectionOriginalPrices[$selectionId] / $itemQuantity, 2);
+            $childItemQuantity = $childItem->getQty();
 
-            $selectionFinalPrices[] = round($finalUnitPrice * $itemQuantity, 2);
+            $finalUnitPrice = round(
+                $selectionOriginalPrices[$selectionId]
+                / $childItemQuantity
+                * $priceMultiplier,
+                2
+            );
 
-            if ($isWeeeEnabled) {
+            $selectionFinalPrices[] = round($finalUnitPrice * $childItemQuantity, 2);
+
+            if ($isWeeeEnabled && !$isFixedPriceBundle) {
                 $finalUnitPrice -= $this->getCatalogProductWeeeAmount(
                     $childItem->getProduct(),
                     $quote,
@@ -1022,6 +1041,15 @@ class Importer implements ImporterInterface
         }
 
         // Prevent any rounding problem.
+
+        if ($isFixedPriceBundle) {
+            /**
+             * Rounding problems are not relevant when the bundle price is "fixed":
+             * in this case, selection prices are actually not used when calculating the item price,
+             * only the (total) custom price that was provided to @see Quote::addProduct().
+             */
+            return;
+        }
 
         $itemPriceDifference = round($itemPrice - $this->getKahanSum($selectionFinalPrices), 2);
 
@@ -1051,24 +1079,24 @@ class Importer implements ImporterInterface
                 if ($itemPriceDifference < 0) {
                     // Tax is not calculated on negative adjustments: adapt item prices to get a positive adjustment.
                     foreach ($selectionItems as $childItem) {
-                        $itemQty = $childItem->getQty();
-                        $itemUnitPrice = $childItem->getCustomPrice();
+                        $childItemQuantity = $childItem->getQty();
+                        $childItemUnitPrice = $childItem->getCustomPrice();
 
                         $itemAdjustment = min(
                             max(
                                 0.0,
-                                $itemUnitPrice - 0.01
+                                $childItemUnitPrice - 0.01
                             ),
                             max(
                                 0.01,
-                                ceil(abs($itemPriceDifference) / $itemQty * 100.0) / 100.0
+                                ceil(abs($itemPriceDifference) / $childItemQuantity * 100.0) / 100.0
                             )
                         );
 
-                        $itemPriceDifference += $itemAdjustment * $childItem->getQty();
+                        $itemPriceDifference += $itemAdjustment * $childItemQuantity;
 
-                        $childItem->setCustomPrice($itemUnitPrice - $itemAdjustment);
-                        $childItem->setOriginalCustomPrice($itemUnitPrice - $itemAdjustment);
+                        $childItem->setCustomPrice($childItemUnitPrice - $itemAdjustment);
+                        $childItem->setOriginalCustomPrice($childItemUnitPrice - $itemAdjustment);
 
                         if ($itemPriceDifference >= 0) {
                             break;
@@ -1080,7 +1108,7 @@ class Importer implements ImporterInterface
 
                 $this->currentlyImportedQuoteBundleAdjustments[$taxClassId] =
                     ($this->currentlyImportedQuoteBundleAdjustments[$taxClassId] ?? 0.0)
-                    + ($itemPriceDifference * $marketplaceItem->getQuantity());
+                    + ($itemPriceDifference * $itemQuantity);
             }
         }
     }
@@ -1098,8 +1126,8 @@ class Importer implements ImporterInterface
         $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
-        $shouldUseItemReferenceAsProductId = $this->orderGeneralConfig->shouldUseItemReferenceAsProductId($store);
         $isWeeeEnabled = $this->weeeHelper->isEnabled($store->getBaseStore());
+        $shouldUseItemReferenceAsProductId = $this->orderGeneralConfig->shouldUseItemReferenceAsProductId($store);
 
         /** @var MarketplaceItemInterface $marketplaceItem */
         foreach ($marketplaceItems as $marketplaceItem) {

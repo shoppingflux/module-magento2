@@ -43,9 +43,46 @@
                 </item>
             </argument>
         </filters>
+        <massaction name="listing_massaction">
+            <action name="cancelImport">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="type" xsi:type="string">cancel_import</item>
+                        <item name="label" xsi:type="string" translate="true">Cancel Import</item>
+                        <item name="url" xsi:type="url" path="shoppingfeed_manager/marketplace_order/massCancelImport"/>
+                        <item name="confirm" xsi:type="array">
+                            <item name="title" xsi:type="string" translate="true">Cancel Import</item>
+                            <item name="message" xsi:type="string" translate="true">Are you sure you want to cancel the import of these orders?</item>
+                        </item>
+                    </item>
+                </argument>
+            </action>
+            <action name="resetImport">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="type" xsi:type="string">reset_import</item>
+                        <item name="label" xsi:type="string" translate="true">Reset Import Attempts</item>
+                        <item name="url" xsi:type="url" path="shoppingfeed_manager/marketplace_order/massResetImport"/>
+                        <item name="confirm" xsi:type="array">
+                            <item name="title" xsi:type="string" translate="true">Reset Import Attempts</item>
+                            <item name="message" xsi:type="string" translate="true">Are you sure you want to reset the import attempts of these orders?</item>
+                        </item>
+                    </item>
+                </argument>
+            </action>
+        </massaction>
         <paging name="listing_paging"/>
     </listingToolbar>
     <columns name="sfm_marketplace_order_columns">
+        <selectionsColumn name="ids">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="indexField" xsi:type="string">order_id</item>
+                    <item name="resizeEnabled" xsi:type="boolean">false</item>
+                    <item name="resizeDefaultWidth" xsi:type="number">55</item>
+                </item>
+            </argument>
+        </selectionsColumn>
         <column name="order_id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
