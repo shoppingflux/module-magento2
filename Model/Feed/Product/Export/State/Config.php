@@ -8,6 +8,7 @@ use Magento\Bundle\Model\Product\Type as BundleProductType;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProductType;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Model\Account\Store\ConfigManager;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\MultiSelect;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
@@ -31,6 +32,7 @@ class Config extends RefreshableConfig implements ConfigInterface
     const KEY_EXPORTED_PRODUCT_TYPES = 'exported_product_types';
     const KEY_EXPORTED_VISIBILITIES = 'exported_visibilities';
     const KEY_EXPORT_OUT_OF_STOCK = 'export_out_of_stock';
+    const KEY_EXPORT_DISABLED = 'export_disabled';
     const KEY_EXPORT_NOT_SALABLE = 'export_not_salable';
     const KEY_CHILDREN_EXPORT_MODE = 'children_export_mode';
     const KEY_RETAIN_PREVIOUSLY_EXPORTED = 'retain_previously_exported';
@@ -176,6 +178,14 @@ class Config extends RefreshableConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_EXPORT_DISABLED,
+                        'label' => __('Export Disabled Products'),
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_EXPORT_NOT_SALABLE,
                         'label' => __('Export Not Salable Products'),
                     ]
@@ -286,6 +296,11 @@ class Config extends RefreshableConfig implements ConfigInterface
         return $this->getFieldValue($store, self::KEY_EXPORT_OUT_OF_STOCK);
     }
 
+    public function shouldExportDisabled(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_EXPORT_DISABLED);
+    }
+
     public function shouldExportNotSalable(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_EXPORT_NOT_SALABLE);
@@ -304,5 +319,16 @@ class Config extends RefreshableConfig implements ConfigInterface
     public function getPreviouslyExportedRetentionDuration(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_PREVIOUSLY_EXPORTED_RETENTION_DURATION) * 3600;
+    }
+
+    public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)
+    {
+        if (version_compare($moduleVersion, '0.49.0', '<')) {
+            $this->setFieldValue(
+                $store,
+                self::KEY_EXPORT_DISABLED,
+                $this->shouldExportNotSalable($store)
+            );
+        }
     }
 }
