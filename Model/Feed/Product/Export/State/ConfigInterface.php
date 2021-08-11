@@ -48,6 +48,12 @@ interface ConfigInterface extends BaseConfig, RefreshableConfigInterface
      * @param StoreInterface $store
      * @return bool
      */
+    public function shouldExportDisabled(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
     public function shouldExportNotSalable(StoreInterface $store);
 
     /**

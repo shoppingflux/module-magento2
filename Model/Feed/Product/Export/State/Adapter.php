@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 
 use Magento\Catalog\Model\Product as CatalogProduct;
+use Magento\Catalog\Model\Product\Attribute\Source\Status as CatalogProductStatus;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
@@ -76,6 +77,15 @@ class Adapter implements AdapterInterface
      * @param CatalogProduct $product
      * @return bool
      */
+    public function isDisabledProduct(CatalogProduct $product)
+    {
+        return ($product->getStatus() === CatalogProductStatus::STATUS_DISABLED);
+    }
+
+    /**
+     * @param CatalogProduct $product
+     * @return bool
+     */
     public function isNotSalableProduct(CatalogProduct $product)
     {
         return !$product->isSalable();
@@ -141,7 +151,9 @@ class Adapter implements AdapterInterface
         } elseif ($this->isNotSalableProduct($catalogProduct) && !$this->config->shouldExportNotSalable($store)) {
             $exclusionReason = FeedProduct::EXCLUSION_REASON_NOT_SALABLE;
         } elseif ($this->isOutOfStockProduct($catalogProduct) && !$this->config->shouldExportOutOfStock($store)) {
-            $exclusionReason = FeedProduct::EXCLUSION_REASON_NOT_SALABLE;
+            $exclusionReason = FeedProduct::EXCLUSION_REASON_OUT_OF_STOCK;
+        } elseif ($this->isDisabledProduct($catalogProduct) && !$this->config->shouldExportDisabled($store)) {
+            $exclusionReason = FeedProduct::EXCLUSION_REASON_DISABLED;
         } else {
             $childExportState = FeedProduct::STATE_EXPORTED;
 
