@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.49.0] - 2021-08-11
+### Added
+- Add an option to (not) export disabled products
+
 ## [0.48.0] - 2021-06-16
 ### Added
 - Add mass-actions to the marketplace order listing
