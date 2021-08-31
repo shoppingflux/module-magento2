@@ -175,6 +175,20 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @param string $marketplace
+     * @return bool
+     */
+    public function shouldSendOrderEmailForMarketplace(StoreInterface $store, $marketplace);
+
+    /**
+     * @param StoreInterface $store
+     * @param string $marketplace
+     * @return bool
+     */
+    public function shouldSendInvoiceEmailForMarketplace(StoreInterface $store, $marketplace);
+
+    /**
+     * @param StoreInterface $store
      * @return int
      */
     public function getOrderSyncingDelay(StoreInterface $store);
