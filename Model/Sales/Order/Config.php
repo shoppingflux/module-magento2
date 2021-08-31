@@ -61,6 +61,8 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_CREATE_FULFILMENT_SHIPMENT = 'create_fulfilment_shipment';
     const KEY_IMPORT_SHIPPED_ORDERS = 'import_shipped_orders';
     const KEY_CREATE_SHIPPED_SHIPMENT = 'create_shipped_shipment';
+    const KEY_SEND_ORDER_EMAIL_FOR_MARKETPLACES = 'send_order_email_for_marketplaces';
+    const KEY_SEND_INVOICE_EMAIL_FOR_MARKETPLACES = 'send_invoice_email_for_marketplaces';
     const KEY_ORDER_SYNCING_DELAY = 'order_syncing_delay';
     const KEY_ORDER_REFUSAL_SYNCING_ACTION = 'order_refusal_syncing_action';
     const KEY_ORDER_CANCELLATION_SYNCING_ACTION = 'order_cancellation_syncing_action';
@@ -478,7 +480,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => 15,
                         'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
                         'notice' => __('In days.'),
-                        'sortOrder' => 260,
+                        'sortOrder' => 280,
                     ]
                 ),
 
@@ -492,7 +494,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 270,
+                        'sortOrder' => 290,
                     ]
                 ),
 
@@ -506,7 +508,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 280,
+                        'sortOrder' => 300,
                     ]
                 ),
 
@@ -520,7 +522,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 290,
+                        'sortOrder' => 310,
                     ]
                 ),
 
@@ -536,7 +538,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
                         ),
-                        'sortOrder' => 300,
+                        'sortOrder' => 320,
                     ]
                 ),
 
@@ -550,7 +552,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 310,
+                        'sortOrder' => 330,
                     ]
                 ),
             ],
@@ -765,6 +767,32 @@ class Config extends AbstractConfig implements ConfigInterface
                             ),
                         ],
                         'sortOrder' => 190,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    MultiSelect::TYPE_CODE,
+                    [
+                        'name' => self::KEY_SEND_ORDER_EMAIL_FOR_MARKETPLACES,
+                        'valueHandler' => $marketplaceHandler,
+                        'allowAll' => true,
+                        'defaultUseValue' => [],
+                        'label' => __('Send Order Email For'),
+                        'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
+                        'sortOrder' => 260,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    MultiSelect::TYPE_CODE,
+                    [
+                        'name' => self::KEY_SEND_INVOICE_EMAIL_FOR_MARKETPLACES,
+                        'valueHandler' => $marketplaceHandler,
+                        'allowAll' => true,
+                        'defaultUseValue' => [],
+                        'label' => __('Send Invoice Email For'),
+                        'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
+                        'sortOrder' => 270,
                     ]
                 ),
             ],
@@ -1028,6 +1056,24 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldCreateShippedShipment(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CREATE_SHIPPED_SHIPMENT);
+    }
+
+    public function shouldSendOrderEmailForMarketplace(StoreInterface $store, $marketplace)
+    {
+        return in_array(
+            $this->stringHelper->getNormalizedCode($marketplace),
+            (array) $this->getFieldValue($store, self::KEY_SEND_ORDER_EMAIL_FOR_MARKETPLACES),
+            true
+        );
+    }
+
+    public function shouldSendInvoiceEmailForMarketplace(StoreInterface $store, $marketplace)
+    {
+        return in_array(
+            $this->stringHelper->getNormalizedCode($marketplace),
+            (array) $this->getFieldValue($store, self::KEY_SEND_INVOICE_EMAIL_FOR_MARKETPLACES),
+            true
+        );
     }
 
     public function getOrderSyncingDelay(StoreInterface $store)

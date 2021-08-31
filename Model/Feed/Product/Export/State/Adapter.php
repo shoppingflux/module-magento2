@@ -79,7 +79,7 @@ class Adapter implements AdapterInterface
      */
     public function isDisabledProduct(CatalogProduct $product)
     {
-        return ($product->getStatus() === CatalogProductStatus::STATUS_DISABLED);
+        return ((int) $product->getStatus() !== CatalogProductStatus::STATUS_ENABLED);
     }
 
     /**
