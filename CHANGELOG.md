@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.50.0] - 2021-08-31
+### Added
+- Add options to send order and/or invoice emails for marketplace orders
+
+### Fixed
+- Fix detection of disabled products due to an invalid status value
+
 ## [0.49.0] - 2021-08-11
 ### Added
 - Add an option to (not) export disabled products
