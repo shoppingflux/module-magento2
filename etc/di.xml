@@ -344,6 +344,26 @@
         </arguments>
     </type>
 
+    <type name="Magento\CatalogInventory\Observer\ReindexQuoteInventoryObserver">
+        <plugin name="sfm_cataloginventory_reindex_quote_inventory_observer_plugin" type="ShoppingFeed\Manager\Plugin\CatalogInventory\Observer\ReindexQuoteInventoryObserverPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\InventorySalesApi\Api\PlaceReservationsForSalesEventInterface">
+        <plugin name="sfm_msi_place_reservations_for_sales_event_plugin" type="ShoppingFeed\Manager\Plugin\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\InventoryShipping\Observer\SourceDeductionProcessor">
+        <plugin name="sfm_msi_source_deduction_processor" type="ShoppingFeed\Manager\Plugin\InventoryShipping\Observer\SourceDeductionProcessorPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\CatalogInventory\Observer\CancelOrderItemObserver">
+        <plugin name="sfm_cataloginventory_cancel_order_item_observer_plugin" type="ShoppingFeed\Manager\Plugin\CatalogInventory\Observer\CancelOrderItemObserverPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\InventorySales\Observer\CatalogInventory\CancelOrderItemObserver">
+        <plugin name="sfm_msi_cancel_order_item_observer" type="ShoppingFeed\Manager\Plugin\InventorySales\Observer\CatalogInventory\CancelOrderItemObserverPlugin" sortOrder="0"/>
+    </type>
+
     <preference for="ShoppingFeed\Manager\Api\Data\Cron\TaskInterface" type="ShoppingFeed\Manager\Model\Cron\Task"/>
     <preference for="ShoppingFeed\Manager\Api\Cron\TaskRepositoryInterface" type="ShoppingFeed\Manager\Model\Cron\TaskRepository"/>
     <type name="ShoppingFeed\Manager\Model\Cron\Task\Runner" shared="true"/>
