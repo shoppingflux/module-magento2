@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.51.0] - 2021-09-09
+### Added
+- Add a "Fulfilled by marketplace" note on the order view page when relevant
+
+### Fixed
+- Do not decrement stock when importing fulfilled orders
+
 ## [0.50.0] - 2021-08-31
 ### Added
 - Add options to send order and/or invoice emails for marketplace orders
