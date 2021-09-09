@@ -68,6 +68,13 @@ class AfterQuoteLoadObserver implements ObserverInterface
                     $this->catalogProductHelper->setSkipSaleableCheck(true);
                 }
 
+                if (
+                    ($marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder())
+                    && $marketplaceOrder->isFulfilled()
+                ) {
+                    $quote->setInventoryProcessed(true);
+                }
+
                 $quote->setIgnoreOldQty(true);
                 $quote->collectTotals();
             }

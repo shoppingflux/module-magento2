@@ -28,6 +28,13 @@
                             <th><?= $block->escapeHtml(__('Shipping Method')) ?></th>
                             <td><?= $block->escapeHtml($marketplaceOrder->getShipmentCarrier()) ?></td>
                         </tr>
+                        <?php if ($marketplaceOrder->isFulfilled()): ?>
+                            <tr>
+                                <th colspan="2">
+                                    <strong><?= $block->escapeHtml(__('Fulfilled by the marketplace')) ?></strong>
+                                </th>
+                            </tr>
+                        <?php endif ?>
                         </tbody>
                     </table>
                 </div>
