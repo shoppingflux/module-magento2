@@ -5,8 +5,10 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Export\State;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as CatalogProductStatus;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Framework\App\ObjectManager;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
+use ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolverInterface;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 use ShoppingFeed\Manager\Model\TimeHelper;
 
@@ -23,13 +25,25 @@ class Adapter implements AdapterInterface
     private $config;
 
     /**
+     * @var QtyResolverInterface
+     */
+    private $qtyResolver;
+
+    /**
+     * @var StoreInterface|null
+     */
+    private $currentStore = null;
+
+    /**
      * @param TimeHelper $timeHelper
      * @param Config $config
+     * @param QtyResolverInterface|null $qtyResolver
      */
-    public function __construct(TimeHelper $timeHelper, Config $config)
+    public function __construct(TimeHelper $timeHelper, Config $config, QtyResolverInterface $qtyResolver = null)
     {
         $this->timeHelper = $timeHelper;
         $this->config = $config;
+        $this->qtyResolver = $qtyResolver ?? ObjectManager::getInstance()->get(QtyResolverInterface::class);
     }
 
     public function requiresLoadedProduct(StoreInterface $store)
@@ -70,7 +84,15 @@ class Adapter implements AdapterInterface
      */
     public function isOutOfStockProduct(CatalogProduct $product)
     {
-        return !$product->isInStock();
+        if (null === $this->currentStore) {
+            return !$product->isInStock();
+        }
+
+        return !$this->qtyResolver->isCatalogProductInStock(
+            $product,
+            $this->currentStore,
+            QtyResolverInterface::MSI_QUANTITY_TYPE_SALABLE
+        );
     }
 
     /**
@@ -134,6 +156,8 @@ class Adapter implements AdapterInterface
 
     public function getProductExportStates(StoreInterface $store, RefreshableProduct $product)
     {
+        $this->currentStore = $store;
+
         $feedProduct = $product->getFeedProduct();
         $catalogProduct = $product->getCatalogProduct();
         $baseExportState = FeedProduct::STATE_NOT_EXPORTED;
