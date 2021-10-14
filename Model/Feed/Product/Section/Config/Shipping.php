@@ -7,7 +7,7 @@ use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
-use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveNumber as PositiveNumberHandler;
+use ShoppingFeed\Manager\Model\Config\Value\Handler\NonNegativeNumber as NonNegativeNumberHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
@@ -95,7 +95,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_DEFAULT_FEES,
-                        'valueHandler' => $this->valueHandlerFactory->create(PositiveNumberHandler::TYPE_CODE),
+                        'valueHandler' => $this->valueHandlerFactory->create(NonNegativeNumberHandler::TYPE_CODE),
                         'label' => __('Default Fees'),
                         'sortOrder' => 50,
                     ]
