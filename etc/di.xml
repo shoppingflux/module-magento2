@@ -100,7 +100,6 @@
             <argument name="excludedAttributeCodes" xsi:type="array">
                 <item name="attribute_set_id" xsi:type="string">attribute_set_id</item>
                 <item name="category_ids" xsi:type="string">category_ids</item>
-                <item name="created_at" xsi:type="string">created_at</item>
                 <item name="custom_design" xsi:type="string">custom_design</item>
                 <item name="custom_design_from" xsi:type="string">custom_design_from</item>
                 <item name="custom_design_to" xsi:type="string">custom_design_to</item>
@@ -127,7 +126,6 @@
                 <item name="sku_type" xsi:type="string">sku_type</item>
                 <item name="tier_price" xsi:type="string">tier_price</item>
                 <item name="type_id" xsi:type="string">type_id</item>
-                <item name="updated_at" xsi:type="string">updated_at</item>
                 <item name="url_key" xsi:type="string">url_key</item>
                 <item name="url_path" xsi:type="string">url_path</item>
                 <item name="weight_type" xsi:type="string">weight_type</item>
