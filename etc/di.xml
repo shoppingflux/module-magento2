@@ -34,6 +34,7 @@
             <argument name="typeFactories" xsi:type="array">
                 <item name="boolean" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\BooleanFactory</item>
                 <item name="integer" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\IntegerFactory</item>
+                <item name="non_negative_number" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\NonNegativeNumberFactory</item>
                 <item name="number" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\NumberFactory</item>
                 <item name="option" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\OptionFactory</item>
                 <item name="positive_integer" xsi:type="object">ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveIntegerFactory</item>
