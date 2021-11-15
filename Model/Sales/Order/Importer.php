@@ -654,6 +654,8 @@ class Importer implements ImporterInterface
                             $marketplaceOrder->getMarketplaceName()
                         )
                     );
+
+                    $this->currentlyImportedQuoteBundleAdjustments = [];
                 }
             }
         } catch (\Exception $e) {
