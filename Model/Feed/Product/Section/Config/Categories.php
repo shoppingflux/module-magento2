@@ -234,8 +234,8 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'name' => self::KEY_TIE_BREAKING_SELECTION,
                         'valueHandler' => $tieBreakingSelectionHandler,
                         'isRequired' => true,
-                        'defaultFormValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_UNDETERMINED,
-                        'defaultUseValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_UNDETERMINED,
+                        'defaultFormValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_FIRST_IN_TREE,
+                        'defaultUseValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_FIRST_IN_TREE,
                         'label' => __('Selection in Case of Ties'),
                         'notice' => implode(
                             "\n",
