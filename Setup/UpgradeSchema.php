@@ -132,6 +132,10 @@ class UpgradeSchema implements UpgradeSchemaInterface
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.47.0') < 0)) {
             $this->addCronTaskCronGroupField($setup);
         }
+
+        if (empty($moduleVersion) || (version_compare($moduleVersion, '0.52.0') < 0)) {
+            $this->complementMarketplaceOrderMarketplaceIdAndNumberUniqueIndex($setup);
+        }
     }
 
     /**
@@ -1618,6 +1622,54 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     'comment' => 'Cron Group',
                     'after' => CronTaskInterface::CRON_EXPRESSION,
                 ]
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function complementMarketplaceOrderMarketplaceIdAndNumberUniqueIndex(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+
+        $marketplaceOrderTableName = $this->tableDictionary->getMarketplaceOrderTableName();
+
+        $oldIndexName = $connection->getIndexName(
+            $marketplaceOrderTableName,
+            [
+                OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                OrderInterface::MARKETPLACE_ORDER_NUMBER,
+            ],
+            AdapterInterface::INDEX_TYPE_UNIQUE
+        );
+
+        $newIndexName = $connection->getIndexName(
+            $marketplaceOrderTableName,
+            [
+                OrderInterface::STORE_ID,
+                OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                OrderInterface::MARKETPLACE_ORDER_NUMBER,
+            ],
+            AdapterInterface::INDEX_TYPE_UNIQUE
+        );
+
+        $indexList = $connection->getIndexList($marketplaceOrderTableName);
+
+        if (isset($indexList[$oldIndexName])) {
+            $connection->dropIndex($marketplaceOrderTableName, $oldIndexName);
+        }
+
+        if (!isset($indexList[$newIndexName])) {
+            $connection->addIndex(
+                $marketplaceOrderTableName,
+                $newIndexName,
+                [
+                    OrderInterface::STORE_ID,
+                    OrderInterface::SHOPPING_FEED_MARKETPLACE_ID,
+                    OrderInterface::MARKETPLACE_ORDER_NUMBER,
+                ],
+                AdapterInterface::INDEX_TYPE_UNIQUE
             );
         }
     }

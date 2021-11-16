@@ -204,7 +204,8 @@ class Importer
     public function importApiOrder(ApiOrder $apiOrder, StoreInterface $store, $updateOnly)
     {
         try {
-            $marketplaceOrder = $this->orderRepository->getByMarketplaceIdAndNumber(
+            $marketplaceOrder = $this->orderRepository->getByStoreAndMarketplaceIdAndNumber(
+                $store->getId(),
                 $apiOrder->getChannel()->getId(),
                 $apiOrder->getReference()
             );
