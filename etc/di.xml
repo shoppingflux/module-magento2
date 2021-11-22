@@ -178,6 +178,12 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Categories">
+        <arguments>
+            <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Shipping">
         <arguments>
             <argument name="renderableAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable</argument>

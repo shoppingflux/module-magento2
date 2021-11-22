@@ -50,6 +50,13 @@ class Categories extends AbstractAdapter implements CategoriesInterface
         return Type::CODE;
     }
 
+    public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
+    {
+        if ($categoryAttribute = $this->getConfig()->getCategoryAttribute($store)) {
+            $productCollection->addAttributeToSelect($categoryAttribute->getAttributeCode());
+        }
+    }
+
     public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
     {
         $productCollection->addCategoryIds();
@@ -60,32 +67,43 @@ class Categories extends AbstractAdapter implements CategoriesInterface
         $data = [];
         $config = $this->getConfig();
 
-        $categoryPath = $this->productCategorySelector->getCatalogProductCategoryPath(
-            $product->getCatalogProduct(),
-            $store,
-            $product->getFeedProduct()->getSelectedCategoryId(),
-            $config->getCategorySelectionIds($store),
-            $config->shouldIncludeSubCategoriesInSelection($store),
-            $config->getCategorySelectionMode($store),
-            $config->getMaximumCategoryLevel($store),
-            $config->getLevelWeightMultiplier($store),
-            $config->shouldUseParentCategories($store),
-            $config->getIncludableParentCount($store),
-            $config->getMinimumParentLevel($store),
-            $config->getParentWeightMultiplier($store),
-            $config->getTieBreakingSelection($store)
-        );
+        if (
+            $config->shouldUseAttributeValue($store)
+            && ($categoryAttribute = $config->getCategoryAttribute($store))
+        ) {
+            $data[self::KEY_CATEGORY_NAME] = $this->getCatalogProductAttributeValue(
+                $store,
+                $product->getCatalogProduct(),
+                $categoryAttribute
+            );
+        } else {
+            $categoryPath = $this->productCategorySelector->getCatalogProductCategoryPath(
+                $product->getCatalogProduct(),
+                $store,
+                $product->getFeedProduct()->getSelectedCategoryId(),
+                $config->getCategorySelectionIds($store),
+                $config->shouldIncludeSubCategoriesInSelection($store),
+                $config->getCategorySelectionMode($store),
+                $config->getMaximumCategoryLevel($store),
+                $config->getLevelWeightMultiplier($store),
+                $config->shouldUseParentCategories($store),
+                $config->getIncludableParentCount($store),
+                $config->getMinimumParentLevel($store),
+                $config->getParentWeightMultiplier($store),
+                $config->getTieBreakingSelection($store)
+            );
 
-        if (is_array($categoryPath) && !empty($categoryPath)) {
-            $mainCategory = reset($categoryPath);
-            $data[self::KEY_CATEGORY_URL] = $mainCategory->getUrl();
-            $pathNames = [];
+            if (is_array($categoryPath) && !empty($categoryPath)) {
+                $mainCategory = reset($categoryPath);
+                $data[self::KEY_CATEGORY_URL] = $mainCategory->getUrl();
+                $pathNames = [];
 
-            foreach ($categoryPath as $category) {
-                $pathNames[] = $category->getName();
+                foreach ($categoryPath as $category) {
+                    $pathNames[] = $category->getName();
+                }
+
+                $data[self::KEY_CATEGORY_NAME] = implode(self::CATEGORY_NAME_SEPARATOR, array_reverse($pathNames));
             }
-
-            $data[self::KEY_CATEGORY_NAME] = implode(self::CATEGORY_NAME_SEPARATOR, array_reverse($pathNames));
         }
 
         return $data;
