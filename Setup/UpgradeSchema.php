@@ -135,6 +135,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
         if (empty($moduleVersion) || (version_compare($moduleVersion, '0.52.0') < 0)) {
             $this->complementMarketplaceOrderMarketplaceIdAndNumberUniqueIndex($setup);
+            $this->addMarketplaceOrderTicketSalesEntityIdField($setup);
         }
     }
 
@@ -1670,6 +1671,30 @@ class UpgradeSchema implements UpgradeSchemaInterface
                     OrderInterface::MARKETPLACE_ORDER_NUMBER,
                 ],
                 AdapterInterface::INDEX_TYPE_UNIQUE
+            );
+        }
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     */
+    private function addMarketplaceOrderTicketSalesEntityIdField(SchemaSetupInterface $setup)
+    {
+        $connection = $setup->getConnection();
+        $marketplaceOrderTicketTableName = $this->tableDictionary->getMarketplaceOrderTicketTableName();
+
+        if (!$connection->tableColumnExists($marketplaceOrderTicketTableName, TicketInterface::SALES_ENTITY_ID)) {
+            $connection->addColumn(
+                $marketplaceOrderTicketTableName,
+                TicketInterface::SALES_ENTITY_ID,
+                [
+                    'type' => Table::TYPE_INTEGER,
+                    'nullable' => true,
+                    'unsigned' => true,
+                    'default' => null,
+                    'comment' => 'Sales Entity ID',
+                    'after' => TicketInterface::ORDER_ID,
+                ]
             );
         }
     }
