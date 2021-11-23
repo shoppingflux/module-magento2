@@ -41,6 +41,15 @@ interface OrderRepositoryInterface
     public function getByMarketplaceIdAndNumber($marketplaceId, $marketplaceNumber);
 
     /**
+     * @param int $storeId
+     * @param int $marketplaceId
+     * @param string $marketplaceNumber
+     * @return OrderInterface
+     * @throws NoSuchEntityException
+     */
+    public function getByStoreAndMarketplaceIdAndNumber($storeId, $marketplaceId, $marketplaceNumber);
+
+    /**
      * @param int $orderId
      * @return OrderInterface
      * @throws NoSuchEntityException

@@ -16,11 +16,15 @@ use ShoppingFeed\Manager\Model\Config\Value\Handler\Number as NumberHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category\SelectorInterface as CategorySelectorInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
 class Categories extends AbstractConfig implements CategoriesInterface
 {
+    const KEY_USE_ATTRIBUTE_VALUE = 'use_attribute_value';
+    const KEY_CATEGORY_ATTRIBUTE = 'category_attribute';
     const KEY_CATEGORY_SELECTION_IDS = 'category_selection_ids';
     const KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION = 'include_sub_categories_in_selection';
     const KEY_CATEGORY_SELECTION_MODE = 'category_selection_mode';
@@ -48,29 +52,43 @@ class Categories extends AbstractConfig implements CategoriesInterface
     private $categorySelector;
 
     /**
+     * @var AttributeSourceInterface
+     */
+    private $renderableAttributeSource;
+
+    /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param Registry $coreRegistry
      * @param StoreManagerInterface $storeManager
      * @param CategorySelectorInterface $categorySelector
+     * @param AttributeSourceInterface $renderableAttributeSource
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
         ValueHandlerFactoryInterface $valueHandlerFactory,
         Registry $coreRegistry,
         StoreManagerInterface $storeManager,
-        CategorySelectorInterface $categorySelector
+        CategorySelectorInterface $categorySelector,
+        AttributeSourceInterface $renderableAttributeSource
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->storeManager = $storeManager;
         $this->categorySelector = $categorySelector;
+        $this->renderableAttributeSource = $renderableAttributeSource;
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
     protected function getBaseFields()
     {
         $numberHandler = $this->valueHandlerFactory->create(NumberHandler::TYPE_CODE);
+
         $positiveIntegerHandler = $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE);
+
+        $renderableAttributeHandler = $this->valueHandlerFactory->create(
+            AttributeHandler::TYPE_CODE,
+            [ 'attributeSource' => $this->renderableAttributeSource ]
+        );
 
         $tieBreakingSelectionHandler = $this->valueHandlerFactory->create(
             OptionHandler::TYPE_CODE,
@@ -98,9 +116,40 @@ class Categories extends AbstractConfig implements CategoriesInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_USE_ATTRIBUTE_VALUE,
+                        'label' => __('Use Attribute Value Instead of Product Categories'),
+                        'checkedNotice' => __(
+                            'The value of the chosen attribute will be exported as the product category.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'The exported category for each product will be determined using the options below.'
+                        ),
+                        'checkedDependentFieldNames' => [
+                            self::KEY_CATEGORY_ATTRIBUTE,
+                        ],
+                        'sortOrder' => 10,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_CATEGORY_ATTRIBUTE,
+                        'valueHandler' => $renderableAttributeHandler,
+                        'isRequired' => true,
+                        'label' => __('Category Attribute'),
+                        'sortOrder' => 20,
+                    ]
+                ),
+
+                // Category selection IDs
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION,
                         'label' => __('Include Sub-Categories in Selection'),
-                        'sortOrder' => 20,
+                        'sortOrder' => 40,
                     ]
                 ),
 
@@ -113,7 +162,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'uncheckedLabel' => __('Exclude'),
                         'checkedNotice' => __('Only the selected categories will be considered.'),
                         'uncheckedNotice' => __('The selected categories will not be considered.'),
-                        'sortOrder' => 30,
+                        'sortOrder' => 50,
                     ]
                 ),
 
@@ -132,7 +181,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 __('The root category has a level of 1.'),
                             ]
                         ),
-                        'sortOrder' => 40,
+                        'sortOrder' => 60,
                     ]
                 ),
 
@@ -156,7 +205,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 ),
                             ]
                         ),
-                        'sortOrder' => 50,
+                        'sortOrder' => 70,
                     ]
                 ),
 
@@ -172,7 +221,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                             self::KEY_MINIMUM_PARENT_LEVEL,
                             self::KEY_PARENT_WEIGHT_MULTIPLIER,
                         ],
-                        'sortOrder' => 60,
+                        'sortOrder' => 80,
                     ]
                 ),
 
@@ -188,7 +237,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'notice' => __(
                             'For each category of a given product, the number of its most immediate parents that will also be considered.'
                         ),
-                        'sortOrder' => 70,
+                        'sortOrder' => 90,
                     ]
                 ),
 
@@ -202,13 +251,13 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'defaultUseValue' => 2,
                         'label' => __('Minimum Parent Level'),
                         'notice' => implode(
-                            '',
+                            ' ',
                             [
                                 __('Only parent categories with a greater or equal level will be considered.'),
                                 __('The root category has a level of 1.'),
                             ]
                         ),
-                        'sortOrder' => 80,
+                        'sortOrder' => 100,
                     ]
                 ),
 
@@ -224,7 +273,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'notice' => __(
                             'The multiplier that will additionally be used to determine the weights of parent categories.'
                         ),
-                        'sortOrder' => 90,
+                        'sortOrder' => 110,
                     ]
                 ),
 
@@ -234,8 +283,8 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'name' => self::KEY_TIE_BREAKING_SELECTION,
                         'valueHandler' => $tieBreakingSelectionHandler,
                         'isRequired' => true,
-                        'defaultFormValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_UNDETERMINED,
-                        'defaultUseValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_UNDETERMINED,
+                        'defaultFormValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_FIRST_IN_TREE,
+                        'defaultUseValue' => CategorySelectorInterface::TIE_BREAKING_SELECTION_FIRST_IN_TREE,
                         'label' => __('Selection in Case of Ties'),
                         'notice' => implode(
                             "\n",
@@ -247,7 +296,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 __('- defining the "Forced Category" on the product pages.'),
                             ]
                         ),
-                        'sortOrder' => 100,
+                        'sortOrder' => 120,
                     ]
                 ),
             ],
@@ -269,7 +318,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'name' => self::KEY_CATEGORY_SELECTION_IDS,
                         'categoryTree' => $this->categorySelector->getStoreCategoryTree($store),
                         'label' => __('Category Selection'),
-                        'sortOrder' => 10,
+                        'sortOrder' => 30,
                     ]
                 ),
             ],
@@ -280,6 +329,16 @@ class Categories extends AbstractConfig implements CategoriesInterface
     public function getFieldsetLabel()
     {
         return __('Feed - Categories Section');
+    }
+
+    public function shouldUseAttributeValue(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_USE_ATTRIBUTE_VALUE);
+    }
+
+    public function getCategoryAttribute(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_CATEGORY_ATTRIBUTE);
     }
 
     public function getCategorySelectionIds(StoreInterface $store)

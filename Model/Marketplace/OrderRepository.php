@@ -85,6 +85,7 @@ class OrderRepository implements OrderRepositoryInterface
 
         $orderCollection->addMarketplaceIdFilter($marketplaceId);
         $orderCollection->addMarketplaceNumberFilter($marketplaceNumber);
+
         $orderIds = $orderCollection->getAllIds();
 
         if (empty($orderIds)) {
@@ -93,6 +94,30 @@ class OrderRepository implements OrderRepositoryInterface
                     'Marketplace order with marketplace ID "%1" and number "%2" does not exist.',
                     $marketplaceId,
                     $marketplaceNumber
+                )
+            );
+        }
+
+        return $this->getById($orderIds[0]);
+    }
+
+    public function getByStoreAndMarketplaceIdAndNumber($storeId, $marketplaceId, $marketplaceNumber)
+    {
+        $orderCollection = $this->orderCollectionFactory->create();
+
+        $orderCollection->addStoreIdFilter($storeId);
+        $orderCollection->addMarketplaceIdFilter($marketplaceId);
+        $orderCollection->addMarketplaceNumberFilter($marketplaceNumber);
+
+        $orderIds = $orderCollection->getAllIds();
+
+        if (empty($orderIds)) {
+            throw new NoSuchEntityException(
+                __(
+                    'Marketplace order with marketplace ID "%1" and number "%2" does not exist.',
+                    $marketplaceId,
+                    $marketplaceNumber,
+                    $storeId
                 )
             );
         }

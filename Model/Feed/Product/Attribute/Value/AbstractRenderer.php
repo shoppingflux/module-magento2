@@ -78,8 +78,9 @@ abstract class AbstractRenderer implements RendererInterface
     protected function isDateAttribute(AbstractAttribute $attribute)
     {
         try {
-            return ($attribute->getFrontendInput() === 'date')
-                && ($attribute->getBackend() instanceof DateTimeBackend);
+            return in_array($attribute->getAttributeCode(), [ 'created_at', 'updated_at' ], true)
+                || (($attribute->getFrontendInput() === 'date')
+                    && ($attribute->getBackend() instanceof DateTimeBackend));
         } catch (LocalizedException $e) {
             return false;
         }

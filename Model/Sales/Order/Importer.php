@@ -55,6 +55,7 @@ use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingM
 use ShoppingFeed\Manager\Model\TimeHelper;
 use ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider as PaymentConfigProvider;
 use ShoppingFeed\Manager\Payment\Gateway\Config\Config as MarketplacePaymentConfig;
+use ShoppingFeed\Manager\Plugin\Bundle\Product\PricePlugin as BundleProductPricePlugin;
 use ShoppingFeed\Manager\Plugin\Tax\ConfigPlugin as TaxConfigPlugin;
 use ShoppingFeed\Manager\Plugin\Weee\TaxPlugin as WeeeTaxPlugin;
 
@@ -654,6 +655,8 @@ class Importer implements ImporterInterface
                             $marketplaceOrder->getMarketplaceName()
                         )
                     );
+
+                    $this->currentlyImportedQuoteBundleAdjustments = [];
                 }
             }
         } catch (\Exception $e) {
@@ -952,12 +955,18 @@ class Importer implements ImporterInterface
             throw new \Exception($bundleItem);
         }
 
-        $isFixedPriceBundle = (int) $product->getPriceType() === BundleProductPrice::PRICE_TYPE_FIXED;
-
         // Check that every selection has been added to the quote, and gather their original prices.
+
+        $isFixedPriceBundle = (int) $product->getPriceType() === BundleProductPrice::PRICE_TYPE_FIXED;
 
         $selectionItems = [];
         $selectionOriginalPrices = [];
+
+        if ($isFixedPriceBundle && $product->hasData(BundleProductPricePlugin::KEY_ORIGINAL_PRICE_TYPE)) {
+            // Temporarily restore the original price type to compute the correct original price for each selection.
+            $product->setData(BundleProductPricePlugin::KEY_SKIP_PRICE_TYPE_OVERRIDE, true);
+            $product->setPriceType($product->getData(BundleProductPricePlugin::KEY_ORIGINAL_PRICE_TYPE));
+        }
 
         foreach ($bundleItem->getChildren() as $childItem) {
             if (
@@ -1013,6 +1022,8 @@ class Importer implements ImporterInterface
             : $bundlePrice->getFinalPrice($itemQuantity, $product);
 
         $priceMultiplier = empty($itemPriceComparisonBase) ? 0 : $itemPrice / $itemPriceComparisonBase;
+
+        $product->unsetData(BundleProductPricePlugin::KEY_SKIP_PRICE_TYPE_OVERRIDE);
 
         foreach ($selectionItems as $selectionId => $childItem) {
             // This is the base quantity of the child item (irrespective of the quantity of the parent).

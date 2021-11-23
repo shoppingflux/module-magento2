@@ -34,6 +34,9 @@ class Options extends AbstractRenderer
 
         $source = $attribute->getSource();
 
+        $oldStoreId = $attribute->getData('store_id');
+        $attribute->setData('store_id', $store->getBaseStoreId());
+
         foreach ($value as $key => $subValue) {
             $subLabel = $source->getOptionText($subValue);
 
@@ -51,6 +54,8 @@ class Options extends AbstractRenderer
                 unset($value[$key]);
             }
         }
+
+        $attribute->setData('store_id', $oldStoreId);
 
         return empty($value) ? null : implode(', ', $value);
     }

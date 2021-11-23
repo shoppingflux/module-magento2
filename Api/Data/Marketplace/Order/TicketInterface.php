@@ -20,6 +20,7 @@ interface TicketInterface
     const TICKET_ID = 'log_id';
     const SHOPPING_FEED_TICKET_ID = 'shopping_feed_ticket_id';
     const ORDER_ID = 'order_id';
+    const SALES_ENTITY_ID = 'sales_entity_id';
     const ACTION = 'action';
     const STATUS = 'status';
     const CREATED_AT = 'created_at';
