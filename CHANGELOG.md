@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.52.0] - 2021-11-23
+### Added
+- Add an option to export an attribute value as the product category
+- Allow to export the `created_at` and `updated_at` product attributes
+
+### Changed
+- Export by default the first category in the tree in case of a tie
+- Allow default shipping fees to be set to zero
+
+### Fixed
+- Fix detection of out-of-stock products when filtering
+- Improve export of options-based attributes in multi-store contexts
+- Account for marketplace orders that can be split over multiple accounts
+- Fix bundle adjustments not reset between two consecutive order imports
+
 ## [0.51.0] - 2021-09-09
 ### Added
 - Add a "Fulfilled by marketplace" note on the order view page when relevant
