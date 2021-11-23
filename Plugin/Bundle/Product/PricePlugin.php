@@ -9,6 +9,7 @@ use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImport
 class PricePlugin
 {
     const KEY_ORIGINAL_PRICE_TYPE = '_sfm_original_price_type_';
+    const KEY_SKIP_PRICE_TYPE_OVERRIDE = '_sfm_skip_price_type_override_';
 
     /**
      * @var SalesOrderImporterInterface
@@ -38,6 +39,7 @@ class PricePlugin
         if (
             $this->shouldForceFixedPriceType
             && $this->salesOrderImporter->isImportRunning()
+            && !$product->getData(self::KEY_SKIP_PRICE_TYPE_OVERRIDE)
         ) {
             if (!$product->hasData(self::KEY_ORIGINAL_PRICE_TYPE)) {
                 $product->setData(self::KEY_ORIGINAL_PRICE_TYPE, $product->getPriceType());

@@ -964,6 +964,7 @@ class Importer implements ImporterInterface
 
         if ($isFixedPriceBundle && $product->hasData(BundleProductPricePlugin::KEY_ORIGINAL_PRICE_TYPE)) {
             // Temporarily restore the original price type to compute the correct original price for each selection.
+            $product->setData(BundleProductPricePlugin::KEY_SKIP_PRICE_TYPE_OVERRIDE, true);
             $product->setPriceType($product->getData(BundleProductPricePlugin::KEY_ORIGINAL_PRICE_TYPE));
         }
 
@@ -1021,6 +1022,8 @@ class Importer implements ImporterInterface
             : $bundlePrice->getFinalPrice($itemQuantity, $product);
 
         $priceMultiplier = empty($itemPriceComparisonBase) ? 0 : $itemPrice / $itemPriceComparisonBase;
+
+        $product->unsetData(BundleProductPricePlugin::KEY_SKIP_PRICE_TYPE_OVERRIDE);
 
         foreach ($selectionItems as $selectionId => $childItem) {
             // This is the base quantity of the child item (irrespective of the quantity of the parent).
