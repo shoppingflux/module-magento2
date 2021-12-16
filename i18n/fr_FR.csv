@@ -151,6 +151,7 @@
 "Default Phone Number","Numéro de téléphone par défaut"
 "Default Quantity","Quantité par défaut"
 "Default shipping method applier with code ""%1"" does not exist.","Aucun applicateur de mode de livraison par défaut n'existe pour le code""%1""."
+"Default value is: ""%1"".","La valeur par défaut est : ""%1""."
 "Delay","Délai"
 "Delay Attribute","Attribut délai"
 "Delete Account","Supprimer un compte"
