@@ -22,6 +22,22 @@ interface SelectorInterface
     public function getStoreCategoryTree(StoreInterface $store);
 
     /**
+     * @param StoreInterface $store
+     * @param int[] $selectionIds
+     * @param bool $includeSubCategoriesInSelection
+     * @param string $selectionMode
+     * @param int $maximumLevel
+     * @return int[]
+     */
+    public function getStoreSelectableCategoryIds(
+        StoreInterface $store,
+        array $selectionIds,
+        $includeSubCategoriesInSelection,
+        $selectionMode,
+        $maximumLevel = PHP_INT_MAX
+    );
+
+    /**
      * @param CatalogProduct $product
      * @param StoreInterface $storeInterface
      * @param int|null $preselectedCategoryId

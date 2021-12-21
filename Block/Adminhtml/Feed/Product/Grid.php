@@ -7,27 +7,36 @@ use Magento\Backend\Block\Widget\Grid\Column;
 use Magento\Backend\Block\Widget\Grid\Column\Filter\Select as SelectFilter;
 use Magento\Backend\Block\Widget\Grid\Extended as ExtendedGrid;
 use Magento\Backend\Helper\Data as BackendHelper;
+use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as ProductStatusSource;
 use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Catalog\Model\Product\Visibility as ProductVisibility;
-use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as ProductCollectionFactory;
+use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
+use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
 use Magento\Directory\Model\Currency;
-use Magento\Framework\DB\Adapter\AdapterInterface as DbAdapterInterface;
+use Magento\Framework\DataObject;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Registry;
 use Magento\Store\Model\ScopeInterface;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterface;
+use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer\Categorization\Status as CategorizationStatusRenderer;
 use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer\State as StateRenderer;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\Store\FeedProductSections as ProductSectionsAction;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
+use ShoppingFeed\Manager\Model\Feed\Product\Category\SelectorInterface as CategorySelectorInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Categories as CategoriesSection;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\CategoriesInterface as CategoriesSectionConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\Source as ProductExportStateSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Exclusion\Reason\Source as ProductExclusionReasonSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Refresh\State\Source as ProductRefreshStateSource;
-use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Catalog\Product\Collection as FeedProductCollection;
 
+/**
+ * @method CatalogProductCollection getCollection()
+ */
 class Grid extends ExtendedGrid
 {
     const FLAG_KEY_LIKELY_UNSYNCED_PRODUCT_LIST = 'likely_unsynced_product_list';
@@ -38,12 +47,7 @@ class Grid extends ExtendedGrid
     private $coreRegistry;
 
     /**
-     * @var TableDictionary
-     */
-    private $tableDictionary;
-
-    /**
-     * @var ProductCollectionFactory
+     * @var CatalogProductCollectionFactory
      */
     private $productCollectionFactory;
 
@@ -51,6 +55,16 @@ class Grid extends ExtendedGrid
      * @var ExportStateConfigInterface
      */
     private $exportStateConfig;
+
+    /**
+     * @var SectionTypePoolInterface
+     */
+    private $sectionTypePool;
+
+    /**
+     * @var CategorySelectorInterface
+     */
+    private $categorySelector;
 
     /**
      * @var ProductType
@@ -83,12 +97,18 @@ class Grid extends ExtendedGrid
     private $productRefreshStateSource;
 
     /**
+     * @var array[]
+     */
+    private $storeCategories = [];
+
+    /**
      * @param Context $context
      * @param BackendHelper $backendHelper
      * @param Registry $coreRegistry
-     * @param TableDictionary $tableDictionary
-     * @param ProductCollectionFactory $productCollectionFactory
+     * @param CatalogProductCollectionFactory $productCollectionFactory
      * @param ExportStateConfigInterface $exportStateConfig
+     * @param SectionTypePoolInterface $sectionTypePool
+     * @param CategorySelectorInterface $categorySelector
      * @param ProductType $productType
      * @param ProductVisibility $productVisibility
      * @param ProductStatusSource $productStatusSource
@@ -101,9 +121,10 @@ class Grid extends ExtendedGrid
         Context $context,
         BackendHelper $backendHelper,
         Registry $coreRegistry,
-        TableDictionary $tableDictionary,
-        ProductCollectionFactory $productCollectionFactory,
+        CatalogProductCollectionFactory $productCollectionFactory,
         ExportStateConfigInterface $exportStateConfig,
+        SectionTypePoolInterface $sectionTypePool,
+        CategorySelectorInterface $categorySelector,
         ProductType $productType,
         ProductVisibility $productVisibility,
         ProductStatusSource $productStatusSource,
@@ -113,9 +134,10 @@ class Grid extends ExtendedGrid
         array $data = []
     ) {
         $this->coreRegistry = $coreRegistry;
-        $this->tableDictionary = $tableDictionary;
         $this->productCollectionFactory = $productCollectionFactory;
         $this->exportStateConfig = $exportStateConfig;
+        $this->sectionTypePool = $sectionTypePool;
+        $this->categorySelector = $categorySelector;
         $this->productType = $productType;
         $this->productVisibility = $productVisibility;
         $this->productStatusSource = $productStatusSource;
@@ -142,42 +164,187 @@ class Grid extends ExtendedGrid
         return $this->coreRegistry->registry(RegistryConstants::CURRENT_ACCOUNT_STORE);
     }
 
+    /**
+     * @return CategoriesSectionConfigInterface
+     */
+    private function getCategoriesSectionConfig()
+    {
+        return $this->sectionTypePool
+            ->getTypeByCode(CategoriesSection::CODE)
+            ->getConfig();
+    }
+
+    /**
+     * @return int[]
+     */
+    private function getExportableForcedCategoryIds()
+    {
+        $store = $this->getAccountStore();
+        $categoriesSectionConfig = $this->getCategoriesSectionConfig();
+
+        return $this->categorySelector->getStoreSelectableCategoryIds(
+            $store,
+            $categoriesSectionConfig->getCategorySelectionIds($store),
+            $categoriesSectionConfig->shouldIncludeSubCategoriesInSelection($store),
+            $categoriesSectionConfig->getCategorySelectionMode($store),
+        );
+    }
+
+    /**
+     * @param array $tree
+     */
+    private function getFlattenedCategoryTree(array $tree)
+    {
+        $level = 1;
+        $newKeys = array_keys($tree);
+        $categories = [];
+
+        while (!empty($newKeys)) {
+            $subKeys = [];
+
+            foreach ($newKeys as $key) {
+                $category = (1 === $level) ? $tree[$key] : $categories[$key];
+                $categoryId = $category['value'];
+                $categories[$categoryId] = $category;
+                $categories[$categoryId]['level'] = $level;
+
+                if (is_array($category['optgroup'] ?? null)) {
+                    $childIds = [];
+
+                    foreach ($category['optgroup'] as $subNode) {
+                        $subId = $subNode['value'];
+                        $subKeys[] = $subId;
+                        $childIds[] = $subId;
+                        $categories[$subId] = $subNode;
+                        $categories[$subId]['label'] = $category['label'] . ' > ' . $subNode['label'];
+                    }
+
+                    $categories[$categoryId]['child_ids'] = $childIds;
+                }
+            }
+
+            ++$level;
+            $newKeys = $subKeys;
+        }
+
+        return $categories;
+    }
+
+    /**
+     * @param AccountStoreInterface $store
+     * @return array
+     */
+    private function getStoreCategories(AccountStoreInterface $store)
+    {
+        $storeId = $store->getId();
+
+        if (!isset($this->storeCategories[$storeId])) {
+            $this->storeCategories[$storeId] = $this->getFlattenedCategoryTree(
+                $this->categorySelector->getStoreCategoryTree($store)
+            );
+        }
+
+        return $this->storeCategories[$storeId];
+    }
+
+    /**
+     * @param array $category
+     * @param int $depth
+     * @param int $maximumLevel
+     * @return int[]
+     */
+    private function getCategoryChildIds(array $categories, $parentId, $depth)
+    {
+        if (
+            ($depth <= 0)
+            || !isset($categories[$parentId]['child_ids'])
+        ) {
+            return [];
+        }
+
+        $childIds = $categories[$parentId]['child_ids'];
+
+        foreach ($categories[$parentId]['child_ids'] as $childId) {
+            $childIds = array_merge(
+                $childIds,
+                $this->getCategoryChildIds($categories, $childId, $depth - 1)
+            );
+        }
+
+        return $childIds;
+    }
+
+    /**
+     * @return int[]
+     */
+    private function getExportableAssignedCategoryIds()
+    {
+        $store = $this->getAccountStore();
+        $categoriesSectionConfig = $this->getCategoriesSectionConfig();
+
+        $maximumCategoryLevel = $categoriesSectionConfig->getMaximumCategoryLevel($store);
+        $minimumParentLevel = $categoriesSectionConfig->getMinimumParentLevel($store);
+        $includableParentCount = $categoriesSectionConfig->getIncludableParentCount($store);
+
+        $exportableIds = $this->categorySelector->getStoreSelectableCategoryIds(
+            $store,
+            $categoriesSectionConfig->getCategorySelectionIds($store),
+            $categoriesSectionConfig->shouldIncludeSubCategoriesInSelection($store),
+            $categoriesSectionConfig->getCategorySelectionMode($store),
+            $maximumCategoryLevel
+        );
+
+        if ($categoriesSectionConfig->shouldUseParentCategories($store)) {
+            $allExportableIds = $exportableIds;
+            $storeCategories = $this->getStoreCategories($store);
+
+            foreach ($exportableIds as $exportableId) {
+                if (
+                    isset($storeCategories[$exportableId]['level'])
+                    && ($storeCategories[$exportableId]['level'] >= $minimumParentLevel)
+                ) {
+                    $allExportableIds = array_merge(
+                        $allExportableIds,
+                        $this->getCategoryChildIds(
+                            $storeCategories,
+                            $exportableId,
+                            $includableParentCount
+                        )
+                    );
+                }
+            }
+
+            $exportableIds = array_unique($allExportableIds);
+        }
+
+        return $exportableIds;
+    }
+
     protected function _prepareCollection()
     {
         $store = $this->getAccountStore();
 
-        /** @var ProductCollection $collection */
-        $collection = $store->getCatalogProductCollection();
-        $connection = $collection->getConnection();
-
-        $collection->addAttributeToSelect([ 'sku', 'name', 'price', 'status', 'visibility' ]);
+        $collection = $store
+            ->getCatalogProductCollection()
+            ->addIsVariationFlagToSelect('is_variation')
+            ->addAttributeToSelect([ 'sku', 'name', 'price', 'status', 'visibility' ]);
 
         if (
             $this->exportStateConfig->shouldRetainPreviouslyExported($store)
             && ($retentionDuration = $this->exportStateConfig->getPreviouslyExportedRetentionDuration($store))
             && ($retentionDuration > 0)
         ) {
-            $collection->getSelect()
-                ->columns(
-                    [
-                        'export_retention_ending_at' => $connection->getDateAddSql(
-                            'export_retention_started_at',
-                            $retentionDuration,
-                            DbAdapterInterface::INTERVAL_SECOND
-                        ),
-                    ]
-                );
+            $collection->addExportRetentionEndDateToSelect('export_retention_ending_at', $retentionDuration);
         }
 
-        $variationIdsSelect = $connection->select()
-            ->from($this->tableDictionary->getConfigurableProductLinkTableName(), [])
-            ->columns([ 'product_id']);
+        $categoriesSectionConfig = $this->getCategoriesSectionConfig();
 
-        $collection->addExpressionAttributeToSelect(
-            'is_variation',
-            '({{entity_id}} IN (' . $variationIdsSelect->assemble() . '))',
-            'entity_id'
-        );
+        if (
+            $categoriesSectionConfig->shouldUseAttributeValue($store)
+            && ($categoryAttribute = $categoriesSectionConfig->getCategoryAttribute($store))
+        ) {
+            $collection->addAttributeToSelect($categoryAttribute->getAttributeCode());
+        }
 
         $this->setCollection($collection);
 
@@ -211,11 +378,89 @@ class Grid extends ExtendedGrid
     }
 
     /**
+     * @param FeedProductCollection $collection
+     * @param DataObject $column
+     */
+    protected function addExportableCategoryFilterToCollection($collection, DataObject $column)
+    {
+        $store = $this->getAccountStore();
+        $isValidFilter = (bool) $column->getFilter()->getValue();
+        $categoriesSectionConfig = $this->getCategoriesSectionConfig();
+
+        if (
+            $categoriesSectionConfig->shouldUseAttributeValue($store)
+            && ($categoryAttribute = $categoriesSectionConfig->getCategoryAttribute($store))
+        ) {
+            $collection->addAttributeValueStateFilter(
+                $categoryAttribute->getAttributeCode(),
+                $isValidFilter
+            );
+        } else {
+            $collection->addHasExportableCategoryFilter(
+                $this->getExportableForcedCategoryIds(),
+                $this->getExportableAssignedCategoryIds(),
+                $isValidFilter
+            );
+        }
+    }
+
+    protected function _afterLoadCollection()
+    {
+        $this->getCollection()->addCategoryIds();
+
+        $store = $this->getAccountStore();
+        $categoriesSectionConfig = $this->getCategoriesSectionConfig();
+
+        if ($categoriesSectionConfig->shouldUseAttributeValue($store)) {
+            $categoryAttribute = $categoriesSectionConfig->getCategoryAttribute($store);
+        }
+
+        /** @var CatalogProduct $product */
+        foreach ($this->getCollection() as $product) {
+            foreach ([ 'status', 'visibility' ] as $attributeCode) {
+                $product->setData($attributeCode, (int) $product->getDataByKey($attributeCode));
+            }
+
+            if (empty($categoryAttribute)) {
+                $exportableCategoryPath = $this->categorySelector->getCatalogProductCategoryPath(
+                    $product,
+                    $store,
+                    $product->getDataByKey(FeedProductInterface::SELECTED_CATEGORY_ID),
+                    $categoriesSectionConfig->getCategorySelectionIds($store),
+                    $categoriesSectionConfig->shouldIncludeSubCategoriesInSelection($store),
+                    $categoriesSectionConfig->getCategorySelectionMode($store),
+                    $categoriesSectionConfig->getMaximumCategoryLevel($store),
+                    $categoriesSectionConfig->getLevelWeightMultiplier($store),
+                    $categoriesSectionConfig->shouldUseParentCategories($store),
+                    $categoriesSectionConfig->getIncludableParentCount($store),
+                    $categoriesSectionConfig->getMinimumParentLevel($store),
+                    $categoriesSectionConfig->getParentWeightMultiplier($store),
+                    $categoriesSectionConfig->getTieBreakingSelection($store)
+                );
+
+                if (!empty($exportableCategoryPath)) {
+                    $exportableCategory = array_shift($exportableCategoryPath);
+                    $product->setData('exportable_category_id', $exportableCategory->getId());
+                }
+            } else {
+                $product->setData(
+                    'exportable_category_id',
+                    (int) $product->getData($categoryAttribute->getAttributeCode())
+                );
+            }
+        }
+
+        return $this;
+    }
+
+    /**
      * @return $this
      * @throws \Exception
      */
     protected function _prepareColumns()
     {
+        $store = $this->getAccountStore();
+
         $this->addColumn(
             'is_selected',
             [
@@ -309,6 +554,54 @@ class Grid extends ExtendedGrid
                 'options' => [ __('No'), __('Yes') ],
             ]
         );
+
+        $categoriesSectionConfig = $this->getCategoriesSectionConfig();
+
+        if (
+            $categoriesSectionConfig->shouldUseAttributeValue($store)
+            && ($categoryAttribute = $categoriesSectionConfig->getCategoryAttribute($store))
+        ) {
+            $categoryOptions = [];
+
+            foreach ($categoryAttribute->getSource()->getAllOptions() as $option) {
+                if (!empty($option['value'])) {
+                    $categoryOptions[$option['value']] = $option['label'];
+                }
+            }
+        } else {
+            $categoryOptions = array_map(
+                function (array $category) {
+                    return (string) $category['label'];
+                },
+                $this->getStoreCategories($store)
+            );
+        }
+
+        $this->addColumn(
+            'exportable_category_id',
+            [
+                'index' => 'exportable_category_id',
+                'header' => __('Categorization Status'),
+                'type' => 'options',
+                'renderer' => CategorizationStatusRenderer::class,
+                'options' => [ 1 => __('Exportable'), 0 => __('Non Exportable') ],
+                'category_options' => $categoryOptions,
+                'filter_condition_callback' => [ $this, 'addExportableCategoryFilterToCollection' ],
+            ]
+        );
+
+        if (empty($categoryAttribute)) {
+            $this->addColumn(
+                'forced_category',
+                [
+                    'index' => FeedProductInterface::SELECTED_CATEGORY_ID,
+                    'header' => __('Forced Category'),
+                    'type' => 'options',
+                    'options' => $categoryOptions,
+                    'filter' => false,
+                ]
+            );
+        }
 
         $this->addColumn(
             FeedProductInterface::EXPORT_STATE,
@@ -425,12 +718,11 @@ class Grid extends ExtendedGrid
     public function hasLikelyUnsyncedProductList()
     {
         if (!$this->hasData(self::FLAG_KEY_LIKELY_UNSYNCED_PRODUCT_LIST)) {
-            /** @var ProductCollection $storeCollection */
             $storeCollection = $this->getAccountStore()->getCatalogProductCollection();
             $storeProductCount = $storeCollection->getSize();
 
             if ($storeProductCount > 0) {
-                /** @var ProductCollection $storeCollection */
+                /** @var CatalogProductCollection $storeCollection */
                 $baseCollection = $this->productCollectionFactory->create();
                 $hasLikelyUnsyncedProductList = $storeCollection->getSize() !== $baseCollection->getSize();
             } else {
