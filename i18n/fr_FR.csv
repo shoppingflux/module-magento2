@@ -537,6 +537,7 @@
 "The request is incomplete.","La requête est incomplète."
 "The value of the chosen attribute will be exported as the product category.","La valeur de l'attribut choisi sera exportée en tant que catégorie du produit."
 "There is no importable Shopping Feed store corresponding to the currently imported accounts.","Il n'y a aucun magasin Shopping Feed importable correspondant aux comptes actuellement importés."
+"These attributes are reserved, and exported as ""[code]_attribute"":","Ces attributs sont réservés et exportés sous la forme ""[code]_attribute"" :"
 "This account does no longer exist.","Ce compte n'existe plus."
 "This account store does no longer exist.","Ce magasin n'existe plus."
 "This cron task does no longer exist.","Cette tâche cron n'existe plus."

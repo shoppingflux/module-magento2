@@ -38,6 +38,8 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     const KEY_CONFIGURABLE_ATTRIBUTES = 'configurable_attributes';
     const KEY_ATTRIBUTE_SET = 'attribute_set';
 
+    const DEFAULT_RESERVED_ATTRIBUTE_CODE_SUFFIX = '_attribute';
+
     /**
      * @var EavEntityTypeFactory
      */
@@ -52,6 +54,11 @@ class Attributes extends AbstractAdapter implements AttributesInterface
      * @var AttributeSourceInterface
      */
     private $configurableAttributeSource;
+
+    /**
+     * @var string
+     */
+    private $reservedAttributeCodeSuffix;
 
     /**
      * @var EavEntityType|null
@@ -70,6 +77,7 @@ class Attributes extends AbstractAdapter implements AttributesInterface
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param UrlInterface $frontendUrlBuilder
      * @param AttributeSourceInterface $configurableAttributeSource
+     * @param string $reservedAttributeCodeSuffix
      */
     public function __construct(
         StoreManagerInterface $storeManager,
@@ -77,11 +85,13 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         LabelledValueFactory $labelledValueFactory,
         AttributeRendererPoolInterface $attributeRendererPool,
         UrlInterface $frontendUrlBuilder,
-        AttributeSourceInterface $configurableAttributeSource
+        AttributeSourceInterface $configurableAttributeSource,
+        string $reservedAttributeCodeSuffix = self::DEFAULT_RESERVED_ATTRIBUTE_CODE_SUFFIX
     ) {
         $this->eavEntityTypeFactory = $eavEntityTypeFactory;
         $this->frontendUrlBuilder = $frontendUrlBuilder;
         $this->configurableAttributeSource = $configurableAttributeSource;
+        $this->reservedAttributeCodeSuffix = $reservedAttributeCodeSuffix;
         parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
@@ -272,7 +282,11 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                             $exportedProduct->setAttribute($key . '-' . $subKey, $subValue);
                         }
                     } else {
-                        $exportedProduct->setAttribute($key, $productData[self::KEY_ATTRIBUTE_MAP][$key]);
+                        if (in_array($key, Type::RESERVED_ATTRIBUTE_CODES, true)) {
+                            $key .= $this->reservedAttributeCodeSuffix;
+                        }
+
+                        $exportedProduct->setAttribute($key, $value);
                     }
                 }
             }

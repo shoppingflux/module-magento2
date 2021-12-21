@@ -19,6 +19,17 @@ class Attributes extends AbstractType
     const ATTRIBUTE_DESCRIPTION = 'description';
     const ATTRIBUTE_GTIN = 'gtin';
 
+    const RESERVED_ATTRIBUTE_CODES = [
+        'category',
+        'description',
+        'image',
+        'link',
+        'name',
+        'old_price',
+        'price',
+        'short_description',
+    ];
+
     public function __construct(TypeResource $typeResource, AdapterInterface $adapter, ConfigInterface $config)
     {
         parent::__construct($typeResource, $adapter, $config);

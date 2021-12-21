@@ -10,6 +10,7 @@ use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Attributes as Type;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\SourceInterface as AttributeSourceInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
@@ -132,6 +133,24 @@ class Attributes extends AbstractConfig implements AttributesInterface
             $sortOrder += 10;
         }
 
+        $reservedAttributeCodes = array_intersect(
+            Type::RESERVED_ATTRIBUTE_CODES,
+            array_keys($this->renderableAttributeSource->getAttributesByCode())
+        );
+
+        $additionalAttributesComment = implode(
+            "\n",
+            array_merge(
+                [ 'These attributes are reserved, and exported as "[code]_attribute":' ],
+                array_map(
+                    function ($code) {
+                        return '- ' . $code;
+                    },
+                    $reservedAttributeCodes,
+                )
+            )
+        );
+
         $fields[] = $this->fieldFactory->create(
             MultiSelect::TYPE_CODE,
             [
@@ -139,6 +158,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
                 'valueHandler' => $attributeValueHandler,
                 'defaultUseValue' => [],
                 'label' => __('Additional Attributes'),
+                'notice' => $additionalAttributesComment,
                 'sortOrder' => $sortOrder += 10,
             ]
         );
