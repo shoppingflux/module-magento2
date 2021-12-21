@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.53.0] - 2021-12-21
+### Added
+- Add categorization status columns to the feed product listing
+- Add a suffix to the codes of additional attributes that are reserved
+- Add "Save and Continue Edit" button to the account form
+
+### Changed
+- Disambiguate comment for "Export Discount Prices in" config field
+- Update French translations 
+
+### Fixed
+- Improve detection of quantity changes when using MSI
+- Fix import of customers with invalid characters in their name on Magento 2.4.3
+- Fix account import error message
+
 ## [0.52.0] - 2021-11-23
 ### Added
 - Add an option to export an attribute value as the product category
