@@ -418,7 +418,7 @@ class Importer
         } catch (\Exception $e) {
             throw new LocalizedException(
                 __(
-                    'The account was successfully created on Shopping Feed, but could not be imported. You can try importing it again using the corresponding token: "%s".',
+                    'The account was successfully created on Shopping Feed, but could not be imported. You can try importing it again using the corresponding token: "%1".',
                     $accountData['token']
                 )
             );
