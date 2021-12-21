@@ -373,6 +373,14 @@
         <plugin name="sfm_msi_cancel_order_item_observer" type="ShoppingFeed\Manager\Plugin\InventorySales\Observer\CatalogInventory\CancelOrderItemObserverPlugin" sortOrder="0"/>
     </type>
 
+    <type name="Magento\InventoryApi\Api\SourceItemsSaveInterface">
+        <plugin name="sfm_msi_source_items_save_plugin" type="ShoppingFeed\Manager\Plugin\InventoryApi\Api\SourceItemsSavePlugin" sortOrder="1000000000"/>
+    </type>
+
+    <type name="Magento\Customer\Model\Validator\Name">
+        <plugin name="sfm_customer_name_validator_plugin" type="ShoppingFeed\Manager\Plugin\Customer\Validator\NamePlugin" sortOrder="0"/>
+    </type>
+
     <preference for="ShoppingFeed\Manager\Api\Data\Cron\TaskInterface" type="ShoppingFeed\Manager\Model\Cron\Task"/>
     <preference for="ShoppingFeed\Manager\Api\Cron\TaskRepositoryInterface" type="ShoppingFeed\Manager\Model\Cron\TaskRepository"/>
     <type name="ShoppingFeed\Manager\Model\Cron\Task\Runner" shared="true"/>

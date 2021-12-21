@@ -111,7 +111,9 @@ class Prices extends AbstractConfig implements PricesInterface
                         'isRequired' => true,
                         'defaultFormValue' => static::DISCOUNT_EXPORT_MODE_DISCOUNT_ATTRIBUTE,
                         'defaultUseValue' => static::DISCOUNT_EXPORT_MODE_DISCOUNT_ATTRIBUTE,
-                        'notice' => __('Do not change this value unless you know what you are doing.'),
+                        'notice' => __('Default value is: "%1".', __('Discount Attribute'))
+                            . "\n"
+                            . __('Do not change this value unless you know what you are doing.'),
                         'sortOrder' => 20,
                     ]
                 ),

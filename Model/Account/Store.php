@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\Account;
 
-use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
@@ -19,6 +18,7 @@ use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Catalog\Product\Collection as CatalogProductCollection;
 
 /**
  * @method StoreResource getResource()

@@ -2,11 +2,11 @@
 
 namespace ShoppingFeed\Manager\Api\Data\Account;
 
-use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Store\Model\Store as BaseStore;
 use Magento\Store\Model\Website as BaseWebsite;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\DataObject;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Catalog\Product\Collection as CatalogProductCollection;
 
 interface StoreInterface
 {

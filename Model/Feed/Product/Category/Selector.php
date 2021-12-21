@@ -233,11 +233,16 @@ class Selector implements SelectorInterface
      * @param FeedCategory $category
      * @param int[] $selectionIds
      * @param string $selectionMode
+     * @param int $maximumLevel
      * @return bool
      */
-    private function isSelectableCategory(FeedCategory $category, array $selectionIds, $selectionMode)
-    {
-        if (!$category->isActive()) {
+    private function isSelectableCategory(
+        FeedCategory $category,
+        array $selectionIds,
+        $selectionMode,
+        $maximumLevel = PHP_INT_MAX
+    ) {
+        if (!$category->isActive() || ($category->getLevel() > $maximumLevel)) {
             return false;
         }
 
@@ -246,26 +251,20 @@ class Selector implements SelectorInterface
         return ($selectionMode === self::SELECTION_MODE_INCLUDE) ? $isSelected : !$isSelected;
     }
 
-    public function getCatalogProductCategoryPath(
-        CatalogProduct $product,
+    /**
+     * @param StoreInterface $store
+     * @param int[] $selectionIds
+     * @param bool $includeSubCategoriesInSelection
+     * @return int[]
+     * @throws LocalizedException
+     */
+    private function getFullSelectionCategoryIds(
         StoreInterface $store,
-        $preselectedCategoryId,
         array $selectionIds,
-        $includeSubCategoriesInSelection,
-        $selectionMode,
-        $maximumLevel = PHP_INT_MAX,
-        $levelWeightMultiplier = 1,
-        $useParentCategories = false,
-        $includableParentCount = 1,
-        $minimumParentLevel = 1,
-        $parentWeightMultiplier = 1,
-        $tieBreakingSelection = self::TIE_BREAKING_SELECTION_UNDETERMINED
+        $includeSubCategoriesInSelection
     ) {
         $storeId = $store->getId();
-
         $categories = $this->getStoreCategoryList($store);
-        $categoryIds = $product->getCategoryIds();
-        $selectedCategoryId = null;
 
         if ($includeSubCategoriesInSelection) {
             if (!isset($this->storeFullSelectionIds[$storeId])) {
@@ -284,6 +283,60 @@ class Selector implements SelectorInterface
             $selectionIds = $this->storeFullSelectionIds[$storeId];
         }
 
+        return $selectionIds;
+    }
+
+    public function getStoreSelectableCategoryIds(
+        StoreInterface $store,
+        array $selectionIds,
+        $includeSubCategoriesInSelection,
+        $selectionMode,
+        $maximumLevel = PHP_INT_MAX
+    ) {
+        $storeCategories = $this->getStoreCategoryList($store);
+
+        $selectionIds = $this->getFullSelectionCategoryIds(
+            $store,
+            $selectionIds,
+            $includeSubCategoriesInSelection
+        );
+
+        $selectableCategoryIds = [];
+
+        foreach ($storeCategories as $category) {
+            if ($this->isSelectableCategory($category, $selectionIds, $selectionMode, $maximumLevel)) {
+                $selectableCategoryIds[] = $category->getId();
+            }
+        }
+
+        return $selectableCategoryIds;
+    }
+
+    public function getCatalogProductCategoryPath(
+        CatalogProduct $product,
+        StoreInterface $store,
+        $preselectedCategoryId,
+        array $selectionIds,
+        $includeSubCategoriesInSelection,
+        $selectionMode,
+        $maximumLevel = PHP_INT_MAX,
+        $levelWeightMultiplier = 1,
+        $useParentCategories = false,
+        $includableParentCount = 1,
+        $minimumParentLevel = 1,
+        $parentWeightMultiplier = 1,
+        $tieBreakingSelection = self::TIE_BREAKING_SELECTION_UNDETERMINED
+    ) {
+        $categories = $this->getStoreCategoryList($store);
+        $categoryIds = $product->getCategoryIds();
+        $selectedCategoryId = null;
+
+        $selectionIds = $this->getFullSelectionCategoryIds(
+            $store,
+            $selectionIds,
+            $includeSubCategoriesInSelection
+        );
+
         if (
             !empty($preselectedCategoryId)
             && isset($categories[$preselectedCategoryId])
@@ -296,8 +349,12 @@ class Selector implements SelectorInterface
             foreach ($categoryIds as $categoryId) {
                 if (
                     isset($categories[$categoryId])
-                    && ($categories[$categoryId]->getLevel() <= $maximumLevel)
-                    && $this->isSelectableCategory($categories[$categoryId], $selectionIds, $selectionMode)
+                    && $this->isSelectableCategory(
+                        $categories[$categoryId],
+                        $selectionIds,
+                        $selectionMode,
+                        $maximumLevel
+                    )
                 ) {
                     $categoryWeights[$categoryId] = $categories[$categoryId]->getLevel() * $levelWeightMultiplier;
                 }
@@ -317,7 +374,12 @@ class Selector implements SelectorInterface
                         ) {
                             if (
                                 !isset($categoryWeights[$parentId])
-                                && $this->isSelectableCategory($categories[$parentId], $selectionIds, $selectionMode)
+                                && $this->isSelectableCategory(
+                                    $categories[$parentId],
+                                    $selectionIds,
+                                    $selectionMode,
+                                    $maximumLevel
+                                )
                             ) {
                                 $categoryWeights[$parentId] = $parentLevel
                                     * $levelWeightMultiplier

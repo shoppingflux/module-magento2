@@ -3,8 +3,6 @@
 namespace ShoppingFeed\Manager\Model\ResourceModel\Account;
 
 use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
-use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
-use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -13,6 +11,8 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as Section
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFilterApplier;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Catalog\Product\Collection as CatalogProductCollection;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Catalog\Product\CollectionFactory as CatalogProductCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
 use ShoppingFeed\Manager\Model\TimeHelper;
 
@@ -86,23 +86,8 @@ class Store extends AbstractDb
         /** @var CatalogProductCollection $productCollection */
         $productCollection = $this->catalogProductCollectionFactory->create();
 
-        $feedProductFields = [
-            FeedProductInterface::EXPORT_STATE,
-            FeedProductInterface::CHILD_EXPORT_STATE,
-            FeedProductInterface::EXCLUSION_REASON,
-            FeedProductInterface::EXPORT_STATE_REFRESH_STATE,
-            FeedProductInterface::EXPORT_STATE_REFRESHED_AT,
-            FeedProductInterface::EXPORT_STATE_REFRESH_STATE_UPDATED_AT,
-        ];
+        $productCollection->joinFeedProductTable($store);
 
-        $productCollection->joinTable(
-            [ 'feed_product_table' => $this->tableDictionary->getFeedProductTableName() ],
-            'product_id = entity_id',
-            array_combine($feedProductFields, $feedProductFields),
-            [ FeedProductInterface::STORE_ID => $store->getId() ]
-        );
-
-        $productCollection->setStoreId($store->getBaseStoreId());
         return $productCollection;
     }
 

@@ -10,6 +10,7 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as Section
 use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock as StockSectionType;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\StockInterface as StockSectionConfigInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Stock\QtyResolverInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
@@ -65,6 +66,11 @@ class RealTimeUpdater
     private $storeCollectionFactory;
 
     /**
+     * @var QtyResolverInterface
+     */
+    private $qtyResolver;
+
+    /**
      * @var StoreCollection|null
      */
     private $storeCollection = null;
@@ -79,6 +85,7 @@ class RealTimeUpdater
      * @param Exporter $exporter
      * @param StoreResourceFactory $storeResourceFactory
      * @param StoreCollectionFactory $storeCollectionFactory
+     * @param QtyResolverInterface $qtyResolver
      */
     public function __construct(
         ApiSessionManager $apiSessionManager,
@@ -89,7 +96,8 @@ class RealTimeUpdater
         RefresherResource $refresherResource,
         Exporter $exporter,
         StoreResourceFactory $storeResourceFactory,
-        StoreCollectionFactory $storeCollectionFactory
+        StoreCollectionFactory $storeCollectionFactory,
+        QtyResolverInterface $qtyResolver
     ) {
         $this->apiSessionManager = $apiSessionManager;
         $this->sectionTypePool = $sectionTypePool;
@@ -100,6 +108,7 @@ class RealTimeUpdater
         $this->exporter = $exporter;
         $this->storeResourceFactory = $storeResourceFactory;
         $this->storeCollectionFactory = $storeCollectionFactory;
+        $this->qtyResolver = $qtyResolver;
     }
 
     /**
@@ -113,40 +122,6 @@ class RealTimeUpdater
         }
 
         return $this->storeCollection;
-    }
-
-    /**
-     * @param CatalogProduct $product
-     */
-    public function handleCatalogProductSave(CatalogProduct $product)
-    {
-        if (!$productId = (int) $product->getId()) {
-            return;
-        }
-
-        $storeResource = $this->storeResourceFactory->create();
-        $storeCollection = $this->getStoreCollection();
-
-        foreach ($storeCollection->getLoadedIds() as $storeId) {
-            $storeResource->synchronizeFeedProductList((int) $storeId, [ $productId ]);
-        }
-
-        $productFilter = $this->productFilterFactory->create();
-        $productFilter->setProductIds([ $productId ]);
-
-        $sectionFilter = $this->sectionFilterFactory->create();
-        $sectionFilter->setProductIds([ $productId ]);
-
-        $this->refresherResource->forceProductExportStateRefresh(
-            FeedProductInterface::REFRESH_STATE_REQUIRED,
-            $productFilter
-        );
-
-        $this->refresherResource->forceProductSectionRefresh(
-            FeedProductInterface::REFRESH_STATE_REQUIRED,
-            $sectionFilter,
-            $productFilter
-        );
     }
 
     /**
@@ -210,12 +185,49 @@ class RealTimeUpdater
     }
 
     /**
+     * @param CatalogProduct $product
+     */
+    public function handleCatalogProductSave(CatalogProduct $product)
+    {
+        if (!$productId = (int) $product->getId()) {
+            return;
+        }
+
+        $storeResource = $this->storeResourceFactory->create();
+        $storeCollection = $this->getStoreCollection();
+
+        foreach ($storeCollection->getLoadedIds() as $storeId) {
+            $storeResource->synchronizeFeedProductList((int) $storeId, [ $productId ]);
+        }
+
+        $productFilter = $this->productFilterFactory->create();
+        $productFilter->setProductIds([ $productId ]);
+
+        $sectionFilter = $this->sectionFilterFactory->create();
+        $sectionFilter->setProductIds([ $productId ]);
+
+        $this->refresherResource->forceProductExportStateRefresh(
+            FeedProductInterface::REFRESH_STATE_REQUIRED,
+            $productFilter
+        );
+
+        $this->refresherResource->forceProductSectionRefresh(
+            FeedProductInterface::REFRESH_STATE_REQUIRED,
+            $sectionFilter,
+            $productFilter
+        );
+    }
+
+    /**
      * @param StockItem $stockItem
      * @throws LocalizedException
      */
     public function handleStockItemSave(StockItem $stockItem)
     {
-        if (!$productId = (int) $stockItem->getProductId()) {
+        if (
+            (!$productId = (int) $stockItem->getProductId())
+            || $this->qtyResolver->isUsingMsi()
+        ) {
             return;
         }
 
