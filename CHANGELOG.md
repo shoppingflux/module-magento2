@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.53.1] - 2021-12-23
+### Fixed
+- Fix compatibility with Magento Performance Toolkit
+
 ## [0.53.0] - 2021-12-21
 ### Added
 - Add categorization status columns to the feed product listing
