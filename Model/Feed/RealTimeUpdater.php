@@ -6,6 +6,7 @@ use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\CatalogInventory\Model\Stock\Item as StockItem;
 use Magento\Framework\Exception\LocalizedException;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\MptDetector;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Type\Stock as StockSectionType;
@@ -71,6 +72,11 @@ class RealTimeUpdater
     private $qtyResolver;
 
     /**
+     * @var MptDetector
+     */
+    private $mptDetector;
+
+    /**
      * @var StoreCollection|null
      */
     private $storeCollection = null;
@@ -86,6 +92,7 @@ class RealTimeUpdater
      * @param StoreResourceFactory $storeResourceFactory
      * @param StoreCollectionFactory $storeCollectionFactory
      * @param QtyResolverInterface $qtyResolver
+     * @param MptDetector $mptDetector
      */
     public function __construct(
         ApiSessionManager $apiSessionManager,
@@ -97,7 +104,8 @@ class RealTimeUpdater
         Exporter $exporter,
         StoreResourceFactory $storeResourceFactory,
         StoreCollectionFactory $storeCollectionFactory,
-        QtyResolverInterface $qtyResolver
+        QtyResolverInterface $qtyResolver,
+        MptDetector $mptDetector
     ) {
         $this->apiSessionManager = $apiSessionManager;
         $this->sectionTypePool = $sectionTypePool;
@@ -109,6 +117,7 @@ class RealTimeUpdater
         $this->storeResourceFactory = $storeResourceFactory;
         $this->storeCollectionFactory = $storeCollectionFactory;
         $this->qtyResolver = $qtyResolver;
+        $this->mptDetector = $mptDetector;
     }
 
     /**
@@ -130,7 +139,24 @@ class RealTimeUpdater
      */
     public function handleProductsQuantityChange(array $productIds)
     {
-        $productIds = array_filter(array_unique($productIds));
+        /**
+         * When the Magento Performance Toolkit generates fake products, we do not want to fill the
+         * "sfm_feed_product_section_type" (or other independent tables) as a result of syncing the product list.
+         * Otherwise, the corresponding SQL request(s) will be collected, and the MPT will attempt to link the
+         * "sfm_feed_product_section_type" table to the "catalog_product_entity" table, which is impossible...
+         * (unfortunately, it does not seem to be possible to target the
+         * @see \Magento\Setup\Model\FixtureGenerator\ProductGenerator::$customTableMap
+         * property from the DI to prevent this in a cleaner manner).
+         */
+
+        $productIds = array_diff(
+            $productIds,
+            $this->mptDetector->getMagentoPerformanceToolkitFakeProductIds($productIds)
+        );
+
+        if (empty($productIds)) {
+            return;
+        }
 
         $stockSectionType = $this->sectionTypePool->getTypeByCode(StockSectionType::CODE);
         $stockSectionTypeId = $stockSectionType->getId();
@@ -189,7 +215,11 @@ class RealTimeUpdater
      */
     public function handleCatalogProductSave(CatalogProduct $product)
     {
-        if (!$productId = (int) $product->getId()) {
+        if (
+            (!$productId = (int) $product->getId())
+            /** @see handleProductsQuantityChange() */
+            || $this->mptDetector->isMagentoPerformanceToolkitFakeProduct($product)
+        ) {
             return;
         }
 
@@ -227,6 +257,8 @@ class RealTimeUpdater
         if (
             (!$productId = (int) $stockItem->getProductId())
             || $this->qtyResolver->isUsingMsi()
+            /** @see handleProductsQuantityChange() */
+            || $this->mptDetector->isMagentoPerformanceToolkitFakeProductId($productId)
         ) {
             return;
         }
