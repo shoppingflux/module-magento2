@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.53.2] - 2022-02-16
+### Fixed
+- Fix export of "stock" quantity when the "salable" quantity has already been used to detect a product state
+- Fix misleading success message when a manual order import fails
+- Fix misleading error message after running a cron task in some rare cases
+
 ## [0.53.1] - 2021-12-23
 ### Fixed
 - Fix compatibility with Magento Performance Toolkit
