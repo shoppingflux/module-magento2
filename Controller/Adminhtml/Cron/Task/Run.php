@@ -43,19 +43,27 @@ class Run extends TaskAction
 
     public function execute()
     {
+        $task = null;
+
         try {
             $task = $this->getTask();
-            $this->taskRunner->runTask($task);
-            $this->messageManager->addSuccessMessage(__('The cron task has been successfully ran.'));
         } catch (NoSuchEntityException $e) {
             $this->messageManager->addErrorMessage(__('This cron task does no longer exist.'));
-        } catch (LocalizedException $e) {
-            $this->messageManager->addExceptionMessage($e, $e->getMessage());
-        } catch (\Exception $e) {
-            $this->messageManager->addExceptionMessage($e, __('An error occurred while running the cron task.'));
+        }
+
+        if ($task) {
+            try {
+                $this->taskRunner->runTask($task);
+                $this->messageManager->addSuccessMessage(__('The cron task has been successfully ran.'));
+            } catch (LocalizedException $e) {
+                $this->messageManager->addExceptionMessage($e, $e->getMessage());
+            } catch (\Exception $e) {
+                $this->messageManager->addExceptionMessage($e, __('An error occurred while running the cron task.'));
+            }
         }
 
         $redirectResult = $this->resultRedirectFactory->create();
+
         return $redirectResult->setPath('*/*/');
     }
 }

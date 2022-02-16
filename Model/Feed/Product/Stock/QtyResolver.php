@@ -337,8 +337,14 @@ class QtyResolver implements QtyResolverInterface
      */
     private function getCatalogProductMsiStockData(CatalogProduct $product, StoreInterface $store, $msiQuantityType)
     {
-        if ($product->hasData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA)) {
-            return $product->getData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA);
+        $allStockData = $product->getData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA);
+
+        if (!is_array($allStockData)) {
+            $allStockData = [];
+        }
+
+        if (isset($allStockData[$msiQuantityType])) {
+            return $allStockData[$msiQuantityType];
         }
 
         $stockData = false;
@@ -398,7 +404,9 @@ class QtyResolver implements QtyResolverInterface
             }
         }
 
-        $product->setData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA, $stockData);
+        $allStockData[$msiQuantityType] = $stockData;
+
+        $product->setData(static::PRODUCT_DATA_KEY_MSI_STOCK_DATA, $allStockData);
 
         return $stockData;
     }

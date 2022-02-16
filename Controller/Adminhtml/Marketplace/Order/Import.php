@@ -58,7 +58,13 @@ class Import extends OrderAction
                 $this->storeRepository->getById($order->getStoreId())
             );
 
-            $this->messageManager->addSuccessMessage(__('The order has been successfully imported.'));
+            $importedOrder = $this->getOrder();
+
+            if ($importedOrder->getSalesOrderId()) {
+                $this->messageManager->addSuccessMessage(__('The order has been successfully imported.'));
+            } else {
+                throw new \Exception('The order could not be imported.');
+            }
         } catch (NoSuchEntityException $e) {
             $this->messageManager->addErrorMessage(__('This marketplace order does no longer exist.'));
         } catch (\Exception $e) {
