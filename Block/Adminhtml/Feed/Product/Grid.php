@@ -551,6 +551,7 @@ class Grid extends ExtendedGrid
                 'header' => __('Is Variation'),
                 'type' => 'options',
                 'filter' => false,
+                'sortable' => false,
                 'options' => [ __('No'), __('Yes') ],
             ]
         );
