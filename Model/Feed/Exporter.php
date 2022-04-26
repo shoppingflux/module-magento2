@@ -484,6 +484,6 @@ class Exporter
             . '.xml'
             . ($this->generalConfig->shouldUseGzipCompression($store) ? '.gz' : '');
 
-        return mediaDirectoryReader->isExist($feedPath);
+        return $mediaDirectoryReader->isExist($feedPath);
     }
 }
