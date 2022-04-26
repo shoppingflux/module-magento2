@@ -383,8 +383,8 @@ class Importer
                 ]
             );
         } catch (\Exception $e) {
-            if ($e instanceof HttpRequestException) {
-                $errorData = json_decode((string) $e->getResponse()->getBody(), true);
+            if (($e instanceof HttpRequestException) && ($response = $e->getResponse())) {
+                $errorData = json_decode((string) $response->getBody(), true);
                 $errorMessage = null;
 
                 if (is_array($errorData)) {
