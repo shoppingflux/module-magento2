@@ -147,7 +147,15 @@ class ConfigManager
      */
     public function upgradeStoreData(StoreInterface $store, $moduleVersion)
     {
-        $originalConfigData = $store->getConfiguration()->getData();
+        $oldVersion = $store->getConfiguration()
+            ->getDataByKey('version');
+
+        if (
+            !empty($oldVersion)
+            && (version_compare($oldVersion, $moduleVersion) >= 0)
+        ) {
+            return false;
+        }
 
         $this->feedGeneralConfig->upgradeStoreData($store, $this, $moduleVersion);
         $this->feedExportStateConfig->upgradeStoreData($store, $this, $moduleVersion);
@@ -158,6 +166,9 @@ class ConfigManager
 
         $this->orderGeneralConfig->upgradeStoreData($store, $this, $moduleVersion);
 
-        return $store->getConfiguration()->getData() !== $originalConfigData;
+        $store->getConfiguration()
+            ->setData('version', $moduleVersion);
+
+        return true;
     }
 }

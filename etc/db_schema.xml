@@ -1,0 +1,285 @@
+<?xml version="1.0"?>
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="sfm_account" resource="default" engine="innodb" comment="Shopping Feed Account">
+        <column xsi:type="int" name="account_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Account ID"/>
+        <column xsi:type="varchar" name="api_token" nullable="false" length="255" comment="API Token"/>
+        <column xsi:type="varchar" name="shopping_feed_login" nullable="false" length="255" comment="Shopping Feed Login"/>
+        <column xsi:type="varchar" name="shopping_feed_email" nullable="false" length="255" comment="Shopping Feed Email"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="account_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="SFM_ACCOUNT_API_TOKEN">
+            <column name="api_token"/>
+        </constraint>
+    </table>
+
+    <table name="sfm_account_store" resource="default" engine="innodb" comment="Shopping Feed Account Store">
+        <column xsi:type="int" name="store_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Account Store ID"/>
+        <column xsi:type="int" name="account_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Account ID"/>
+        <column xsi:type="smallint" name="base_store_id" padding="5" unsigned="true" nullable="false" identity="false" comment="Base Store ID"/>
+        <column xsi:type="int" name="shopping_feed_store_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Shopping Feed Store ID"/>
+        <column xsi:type="varchar" name="shopping_feed_name" nullable="false" length="255" comment="Shopping Feed Name"/>
+        <column xsi:type="mediumtext" name="configuration" nullable="false" default="" comment="Configuration"/>
+        <column xsi:type="varchar" name="feed_file_name_base" nullable="false" length="255" comment="Feed File Name Base"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="store_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="SFM_ACCOUNT_STORE_ACCOUNT_ID_SFM_ACCOUNT_ACCOUNT_ID" table="sfm_account_store" column="account_id" referenceTable="sfm_account" referenceColumn="account_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="SFM_ACCOUNT_STORE_BASE_STORE_ID_STORE_STORE_ID" table="sfm_account_store" column="base_store_id" referenceTable="store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="SFM_ACCOUNT_STORE_SHOPPING_FEED_STORE_ID">
+            <column name="shopping_feed_store_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="SFM_ACCOUNT_STORE_FEED_FILE_NAME_BASE">
+            <column name="feed_file_name_base"/>
+        </constraint>
+        <index referenceId="SFM_ACCOUNT_STORE_ACCOUNT_ID" indexType="btree">
+            <column name="account_id"/>
+        </index>
+        <index referenceId="SFM_ACCOUNT_STORE_BASE_STORE_ID" indexType="btree">
+            <column name="base_store_id"/>
+        </index>
+    </table>
+
+    <table name="sfm_feed_product" resource="default" engine="innodb" comment="Shopping Feed Feed Product">
+        <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
+        <column xsi:type="int" name="store_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Store ID"/>
+        <column xsi:type="boolean" name="is_selected" nullable="false" comment="Is Selected"/>
+        <column xsi:type="int" name="selected_category_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Selected Category ID"/>
+        <column xsi:type="smallint" name="export_state" padding="6" unsigned="false" nullable="false" identity="false" default="3" comment="Export State"/>
+        <column xsi:type="smallint" name="child_export_state" padding="6" unsigned="false" nullable="false" identity="false" default="3" comment="Export State (as a Child)"/>
+        <column xsi:type="smallint" name="exclusion_reason" padding="6" unsigned="false" nullable="true" identity="false" comment="Exclusion Reason"/>
+        <column xsi:type="timestamp" name="export_retention_started_at" on_update="false" nullable="true" comment="Export Retention Started At"/>
+        <column xsi:type="timestamp" name="export_state_refreshed_at" on_update="false" nullable="true" comment="Export State Refreshed At"/>
+        <column xsi:type="smallint" name="export_state_refresh_state" padding="6" unsigned="false" nullable="false" identity="false" default="3" comment="Export State Refresh State"/>
+        <column xsi:type="timestamp" name="export_state_refresh_state_updated_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Export State Refresh State Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="product_id"/>
+            <column name="store_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="SFM_FEED_PRODUCT_PRODUCT_ID_CATALOG_PRODUCT_ENTITY_ENTITY_ID" table="sfm_feed_product" column="product_id" referenceTable="catalog_product_entity" referenceColumn="entity_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="SFM_FEED_PRODUCT_STORE_ID_SFM_ACCOUNT_STORE_STORE_ID" table="sfm_feed_product" column="store_id" referenceTable="sfm_account_store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="SFM_FEED_PRD_SELECTED_CTGR_ID_CAT_CTGR_ENTT_ENTT_ID" table="sfm_feed_product" column="selected_category_id" referenceTable="catalog_category_entity" referenceColumn="entity_id" onDelete="SET NULL"/>
+        <index referenceId="SFM_FEED_PRODUCT_SELECTED_CATEGORY_ID" indexType="btree">
+            <column name="selected_category_id"/>
+        </index>
+        <index referenceId="SFM_FEED_PRODUCT_EXPORT_STATE" indexType="btree">
+            <column name="export_state"/>
+        </index>
+        <index referenceId="SFM_FEED_PRODUCT_CHILD_EXPORT_STATE" indexType="btree">
+            <column name="child_export_state"/>
+        </index>
+        <index referenceId="SFM_FEED_PRODUCT_EXPORT_STATE_REFRESH_STATE" indexType="btree">
+            <column name="export_state_refresh_state"/>
+        </index>
+    </table>
+
+    <table name="sfm_feed_product_section_type" resource="default" engine="innodb" comment="Shopping Feed Feed Product Section Type">
+        <column xsi:type="smallint" name="type_id" padding="5" unsigned="true" nullable="false" identity="true" comment="Type ID"/>
+        <column xsi:type="varchar" name="code" nullable="false" length="32" comment="Code"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="type_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="SFM_FEED_PRODUCT_SECTION_TYPE_CODE">
+            <column name="code"/>
+        </constraint>
+    </table>
+
+    <table name="sfm_feed_product_section" resource="default" engine="innodb" comment="Shopping Feed Feed Product Section">
+        <column xsi:type="smallint" name="type_id" padding="5" unsigned="true" nullable="false" identity="false" comment="Type ID"/>
+        <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
+        <column xsi:type="int" name="store_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Store ID"/>
+        <column xsi:type="text" name="data" nullable="false" default="" comment="Data"/>
+        <column xsi:type="timestamp" name="refreshed_at" on_update="false" nullable="true" comment="Refreshed At"/>
+        <column xsi:type="smallint" name="refresh_state" padding="6" unsigned="false" nullable="false" identity="false" default="3" comment="Refresh State"/>
+        <column xsi:type="timestamp" name="refresh_state_updated_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Refresh State Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="type_id"/>
+            <column name="product_id"/>
+            <column name="store_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="SFM_FEED_PRD_SECTION_TYPE_ID_SFM_FEED_PRD_SECTION_TYPE_TYPE_ID" table="sfm_feed_product_section" column="type_id" referenceTable="sfm_feed_product_section_type" referenceColumn="type_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="SFM_FEED_PRODUCT_SECTION_PRODUCT_ID_SFM_FEED_PRODUCT_PRODUCT_ID" table="sfm_feed_product_section" column="product_id" referenceTable="sfm_feed_product" referenceColumn="product_id" onDelete="CASCADE"/>
+        <constraint xsi:type="foreign" referenceId="SFM_FEED_PRODUCT_SECTION_STORE_ID_SFM_ACCOUNT_STORE_STORE_ID" table="sfm_feed_product_section" column="store_id" referenceTable="sfm_account_store" referenceColumn="store_id" onDelete="CASCADE"/>
+        <index referenceId="SFM_FEED_PRODUCT_SECTION_REFRESH_STATE" indexType="btree">
+            <column name="refresh_state"/>
+        </index>
+    </table>
+
+    <table name="sfm_marketplace_order" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order">
+        <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Order ID"/>
+        <column xsi:type="int" name="store_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Store ID"/>
+        <column xsi:type="int" name="sales_order_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Sales Order ID"/>
+        <column xsi:type="bigint" name="shopping_feed_order_id" padding="20" unsigned="true" nullable="false" identity="false" comment="Shopping Feed Order ID"/>
+        <column xsi:type="varchar" name="marketplace_order_number" nullable="false" length="255" comment="Marketplace Order Number"/>
+        <column xsi:type="int" name="shopping_feed_marketplace_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Shopping Feed Marketplace ID"/>
+        <column xsi:type="boolean" name="is_fulfilled" nullable="false" comment="Is Fulfilled"/>
+        <column xsi:type="varchar" name="marketplace_name" nullable="false" length="255" comment="Marketplace Name"/>
+        <column xsi:type="varchar" name="shopping_feed_status" nullable="false" length="64" comment="Shopping Feed Status"/>
+        <column xsi:type="varchar" name="currency_code" nullable="false" length="3" comment="Currency Code"/>
+        <column xsi:type="decimal" name="product_amount" scale="4" precision="12" unsigned="false" nullable="false" comment="Product Amount"/>
+        <column xsi:type="decimal" name="shipping_amount" scale="4" precision="12" unsigned="false" nullable="false" comment="Shipping Amount"/>
+        <column xsi:type="decimal" name="fees_amount" scale="4" precision="12" unsigned="false" nullable="false" default="0" comment="Fees Amount"/>
+        <column xsi:type="decimal" name="total_amount" scale="4" precision="12" unsigned="false" nullable="false" comment="Total Amount"/>
+        <column xsi:type="varchar" name="payment_method" nullable="false" length="255" comment="Payment Method"/>
+        <column xsi:type="varchar" name="shipment_carrier" nullable="false" length="255" comment="Shipment Carrier"/>
+        <column xsi:type="text" name="additional_fields" nullable="true" comment="Additional Fields"/>
+        <column xsi:type="int" name="import_remaining_try_count" padding="10" unsigned="true" nullable="false" identity="false" default="3" comment="Import Remaining Try Count"/>
+        <column xsi:type="boolean" name="has_non_notifiable_shipment" nullable="false" comment="Has Non-Notifiable Shipment"/>
+        <column xsi:type="datetime" name="created_at" on_update="false" nullable="false" comment="Created At"/>
+        <column xsi:type="datetime" name="updated_at" on_update="false" nullable="false" comment="Updated At"/>
+        <column xsi:type="datetime" name="fetched_at" on_update="false" nullable="false" comment="Fetched At"/>
+        <column xsi:type="datetime" name="imported_at" on_update="false" nullable="true" comment="Imported At"/>
+        <column xsi:type="datetime" name="acknowledged_at" on_update="false" nullable="true" comment="Acknowledged At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="order_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="SFM_MARKETPLACE_ORDER_STORE_ID_SFM_ACCOUNT_STORE_STORE_ID" table="sfm_marketplace_order" column="store_id" referenceTable="sfm_account_store" referenceColumn="store_id" onDelete="SET NULL"/>
+        <constraint xsi:type="foreign" referenceId="SFM_MARKETPLACE_ORDER_SALES_ORDER_ID_SALES_ORDER_ENTITY_ID" table="sfm_marketplace_order" column="sales_order_id" referenceTable="sales_order" referenceColumn="entity_id" onDelete="SET NULL"/>
+        <constraint xsi:type="unique" referenceId="SFM_MARKETPLACE_ORDER_SALES_ORDER_ID">
+            <column name="sales_order_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="SALES_ORDER_SHOPPING_FEED_ORDER_ID">
+            <column name="shopping_feed_order_id"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="UNQ_94A13E2D7533EBA5837F710E591DFE7E" disabled="true">
+            <column name="shopping_feed_marketplace_id"/>
+            <column name="marketplace_order_number"/>
+        </constraint>
+        <constraint xsi:type="unique" referenceId="UNQ_A42EC9756310BDDBBE5B29B4500DEC28">
+            <column name="store_id"/>
+            <column name="shopping_feed_marketplace_id"/>
+            <column name="marketplace_order_number"/>
+        </constraint>
+    </table>
+
+    <table name="sfm_marketplace_order_address" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Address">
+        <column xsi:type="int" name="address_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Address ID"/>
+        <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
+        <column xsi:type="varchar" name="type" nullable="false" length="255" comment="Type"/>
+        <column xsi:type="varchar" name="first_name" nullable="false" length="255" comment="First Name"/>
+        <column xsi:type="varchar" name="last_name" nullable="false" length="255" comment="Last Name"/>
+        <column xsi:type="varchar" name="company" nullable="false" length="255" comment="Company"/>
+        <column xsi:type="varchar" name="street" nullable="false" length="255" comment="Street"/>
+        <column xsi:type="varchar" name="postal_code" nullable="false" length="255" comment="Postal Code"/>
+        <column xsi:type="varchar" name="city" nullable="false" length="255" comment="City"/>
+        <column xsi:type="varchar" name="country_code" nullable="false" length="2" comment="Country Code"/>
+        <column xsi:type="varchar" name="phone" nullable="false" length="255" comment="Phone"/>
+        <column xsi:type="varchar" name="mobile_phone" nullable="false" length="255" comment="Mobile Phone"/>
+        <column xsi:type="varchar" name="email" nullable="false" length="255" comment="Email"/>
+        <column xsi:type="varchar" name="misc_data" nullable="false" length="255" comment="Misc Data"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="address_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="FK_B0F66071F86CE108BB3DCC1A7D668443" table="sfm_marketplace_order_address" column="order_id" referenceTable="sfm_marketplace_order" referenceColumn="order_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="SFM_MARKETPLACE_ORDER_ADDRESS_ORDER_ID_TYPE">
+            <column name="order_id"/>
+            <column name="type"/>
+        </constraint>
+    </table>
+
+    <table name="sfm_marketplace_order_item" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Item">
+        <column xsi:type="int" name="item_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Item ID"/>
+        <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
+        <column xsi:type="varchar" name="reference" nullable="false" length="255" comment="Reference"/>
+        <column xsi:type="decimal" name="quantity" scale="4" precision="12" unsigned="false" nullable="false" comment="Quantity"/>
+        <column xsi:type="decimal" name="price" scale="4" precision="12" unsigned="false" nullable="false" comment="Prices"/>
+        <column xsi:type="decimal" name="tax_amount" scale="4" precision="12" unsigned="false" nullable="true" comment="Tax Amount"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="item_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="FK_5C31401D4C784B3EB8B378C7DBAD2F35" table="sfm_marketplace_order_item" column="order_id" referenceTable="sfm_marketplace_order" referenceColumn="order_id" onDelete="CASCADE"/>
+    </table>
+
+    <table name="sfm_marketplace_order_ticket" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Ticket">
+        <column xsi:type="int" name="log_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Ticket ID"/>
+        <column xsi:type="varchar" name="shopping_feed_ticket_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Shopping Feed Ticket ID" length="255"/>
+        <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Marketplace Order ID"/>
+        <column xsi:type="int" name="sales_entity_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Sales Entity ID"/>
+        <column xsi:type="varchar" name="action" nullable="false" length="32" comment="Action"/>
+        <column xsi:type="int" name="status" padding="10" unsigned="true" nullable="false" identity="false" default="0" comment="Status"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="log_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="FK_4073E1B165F8E56F08D78ABA0ACF4122" table="sfm_marketplace_order_ticket" column="order_id" referenceTable="sfm_marketplace_order" referenceColumn="order_id" onDelete="CASCADE"/>
+        <constraint xsi:type="unique" referenceId="SFM_MARKETPLACE_ORDER_TICKET_SHOPPING_FEED_TICKET_ID">
+            <column name="shopping_feed_ticket_id"/>
+        </constraint>
+    </table>
+
+    <table name="sfm_marketplace_order_log" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Log">
+        <column xsi:type="int" name="log_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Log ID"/>
+        <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
+        <column xsi:type="varchar" name="type" nullable="false" length="32" comment="Type"/>
+        <column xsi:type="text" name="message" nullable="false" comment="Message"/>
+        <column xsi:type="text" name="details" nullable="true" comment="Details"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="log_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="FK_44BC9ACA211AFD30EF08DD587D0102A4" table="sfm_marketplace_order_log" column="order_id" referenceTable="sfm_marketplace_order" referenceColumn="order_id" onDelete="CASCADE"/>
+    </table>
+
+    <table name="sfm_shipping_method_rule" resource="default" engine="innodb" comment="Shopping Feed Shipping Method Rule">
+        <column xsi:type="int" name="rule_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Rule ID"/>
+        <column xsi:type="varchar" name="name" nullable="false" length="255" comment="Name"/>
+        <column xsi:type="text" name="description" nullable="false" comment="Description"/>
+        <column xsi:type="date" name="from_date" nullable="true" comment="From Date"/>
+        <column xsi:type="date" name="to_date" nullable="true" comment="To Date"/>
+        <column xsi:type="boolean" name="is_active" nullable="false" comment="Is Active"/>
+        <column xsi:type="mediumtext" name="conditions_serialized" nullable="true" comment="Serialized Conditions"/>
+        <column xsi:type="varchar" name="applier_code" nullable="false" length="255" comment="Applier Code"/>
+        <column xsi:type="text" name="applier_configuration" nullable="true" comment="Applier Configuration"/>
+        <column xsi:type="int" name="sort_order" padding="10" unsigned="true" nullable="false" identity="false" default="0" comment="Sort Order"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="rule_id"/>
+        </constraint>
+    </table>
+
+    <table name="sfm_cron_task" resource="default" engine="innodb" comment="Shopping Feed Cron Task">
+        <column xsi:type="int" name="task_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Task ID"/>
+        <column xsi:type="varchar" name="name" nullable="false" length="255" comment="Name"/>
+        <column xsi:type="text" name="description" nullable="false" comment="Description"/>
+        <column xsi:type="varchar" name="command_code" nullable="false" length="255" comment="Command Code"/>
+        <column xsi:type="text" name="command_configuration" nullable="true" comment="Command Configuration"/>
+        <column xsi:type="varchar" name="schedule_type" nullable="false" length="255" comment="Schedule Type"/>
+        <column xsi:type="varchar" name="cron_expression" nullable="true" length="255" comment="Cron Expression"/>
+        <column xsi:type="text" name="cron_group" nullable="true" comment="Cron Group"/>
+        <column xsi:type="boolean" name="is_active" nullable="false" default="true" comment="Is Active"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
+        <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="task_id"/>
+        </constraint>
+    </table>
+
+    <table name="sales_order" resource="default">
+        <column xsi:type="decimal" name="sfm_marketplace_fees_amount" scale="4" precision="12" unsigned="false" nullable="true" comment="Marketplace Fees Amount"/>
+        <column xsi:type="decimal" name="sfm_marketplace_fees_base_amount" scale="4" precision="12" unsigned="false" nullable="true" comment="Marketplace Fees Base Amount"/>
+        <column xsi:type="decimal" name="sfm_bundle_adjustment" scale="4" precision="12" unsigned="false" nullable="true" comment="Bundle Adjustment"/>
+        <column xsi:type="decimal" name="sfm_bundle_adjustment_incl_tax" scale="4" precision="12" unsigned="false" nullable="true" comment="Bundle Adjustment Incl Tax"/>
+        <column xsi:type="decimal" name="sfm_base_bundle_adjustment" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment"/>
+        <column xsi:type="decimal" name="sfm_base_bundle_adjustment_incl_tax" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment Incl Tax"/>
+    </table>
+
+    <table name="sales_invoice" resource="default">
+        <column xsi:type="decimal" name="sfm_marketplace_fees_amount" scale="4" precision="12" unsigned="false" nullable="true" comment="Marketplace Fees Amount"/>
+        <column xsi:type="decimal" name="sfm_marketplace_fees_base_amount" scale="4" precision="12" unsigned="false" nullable="true" comment="Marketplace Fees Base Amount"/>
+        <column xsi:type="decimal" name="sfm_bundle_adjustment" scale="4" precision="12" unsigned="false" nullable="true" comment="Bundle Adjustment"/>
+        <column xsi:type="decimal" name="sfm_bundle_adjustment_incl_tax" scale="4" precision="12" unsigned="false" nullable="true" comment="Bundle Adjustment Incl Tax"/>
+        <column xsi:type="decimal" name="sfm_base_bundle_adjustment" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment"/>
+        <column xsi:type="decimal" name="sfm_base_bundle_adjustment_incl_tax" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment Incl Tax"/>
+    </table>
+
+    <table name="sales_creditmemo" resource="default">
+        <column xsi:type="decimal" name="sfm_bundle_adjustment" scale="4" precision="12" unsigned="false" nullable="true" comment="Bundle Adjustment"/>
+        <column xsi:type="decimal" name="sfm_bundle_adjustment_incl_tax" scale="4" precision="12" unsigned="false" nullable="true" comment="Bundle Adjustment Incl Tax"/>
+        <column xsi:type="decimal" name="sfm_base_bundle_adjustment" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment"/>
+        <column xsi:type="decimal" name="sfm_base_bundle_adjustment_incl_tax" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment Incl Tax"/>
+    </table>
+</schema>
