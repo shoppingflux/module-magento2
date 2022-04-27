@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.0] - 2022-04-27
+### Changed
+- Switch from setup scripts to declarative schema
+
 ## [0.54.0] - 2022-04-27
 ### Added
 - Implement first-class `vat`, `ecotax` and `weight` feed attributes
