@@ -2,6 +2,8 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
+use Magento\Directory\Model\Config\Source\Country as CountrySource;
+use Magento\Tax\Model\Config as TaxConfig;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -11,13 +13,19 @@ use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
 use ShoppingFeed\Manager\Model\Customer\Group\Source as CustomerGroupSource;
+use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Fpt as FptAttributeSource;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractConfig;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Value\Handler\Attribute as AttributeHandler;
 
 class Prices extends AbstractConfig implements PricesInterface
 {
     const KEY_CUSTOMER_GROUP_ID = 'customer_group_id';
     const KEY_DISCOUNT_EXPORT_MODE = 'discount_export_mode';
     const KEY_CONFIGURABLE_PRODUCT_PRICE_TYPE = 'configurable_product_price_type';
+    const KEY_ECOTAX_ATTRIBUTE = 'ecotax_attribute';
+    const KEY_ECOTAX_COUNTRY = 'ecotax_country';
+
+    const DEFAULT_TAX_COUNTRY = '__default__';
 
     /**
      * @var CustomerGroupSource
@@ -25,16 +33,32 @@ class Prices extends AbstractConfig implements PricesInterface
     private $customerGroupSource;
 
     /**
+     * @var CountrySource
+     */
+    private $countrySource;
+
+    /**
+     * @var FptAttributeSource
+     */
+    private $fptAttributeSource;
+
+    /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param CustomerGroupSource $customerGroupSource
+     * @param CountrySource $countrySource
+     * @param FptAttributeSource $fptAttributeSource
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
         ValueHandlerFactoryInterface $valueHandlerFactory,
-        CustomerGroupSource $customerGroupSource
+        CustomerGroupSource $customerGroupSource,
+        CountrySource $countrySource,
+        FptAttributeSource $fptAttributeSource
     ) {
         $this->customerGroupSource = $customerGroupSource;
+        $this->countrySource = $countrySource;
+        $this->fptAttributeSource = $fptAttributeSource;
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
@@ -87,6 +111,31 @@ class Prices extends AbstractConfig implements PricesInterface
             ]
         );
 
+        $fptAttributeHandler = $this->valueHandlerFactory->create(
+            AttributeHandler::TYPE_CODE,
+            [ 'attributeSource' => $this->fptAttributeSource ],
+        );
+
+        $fptAttributeCodes = array_keys($this->fptAttributeSource->getAttributesByCode());
+
+        $ecotaxCountryOptions = $this->countrySource->toOptionArray(true);
+
+        array_unshift(
+            $ecotaxCountryOptions,
+            [
+                'value' => self::DEFAULT_TAX_COUNTRY,
+                'label' => __('Default Tax Country'),
+            ],
+        );
+
+        $ecotaxCountryHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => $ecotaxCountryOptions,
+            ]
+        );
+
         return array_merge(
             [
                 $this->fieldFactory->create(
@@ -130,6 +179,36 @@ class Prices extends AbstractConfig implements PricesInterface
                         'sortOrder' => 30,
                     ]
                 ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ECOTAX_ATTRIBUTE,
+                        'valueHandler' => $fptAttributeHandler,
+                        'label' => __('Eco-tax Attribute'),
+                        'isRequired' => false,
+                        'dependencies' => [
+                            [
+                                'values' => $fptAttributeCodes,
+                                'fieldNames' => [ self::KEY_ECOTAX_COUNTRY ],
+                            ],
+                        ],
+                        'sortOrder' => 40,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ECOTAX_COUNTRY,
+                        'valueHandler' => $ecotaxCountryHandler,
+                        'label' => __('Use Eco-tax Amount Configured For'),
+                        'isRequired' => true,
+                        'defaultFormValue' => self::DEFAULT_TAX_COUNTRY,
+                        'defaultUseValue' => self::DEFAULT_TAX_COUNTRY,
+                        'sortOrder' => 50,
+                    ]
+                ),
             ],
             parent::getBaseFields()
         );
@@ -153,6 +232,20 @@ class Prices extends AbstractConfig implements PricesInterface
     public function getConfigurableProductPriceType(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CONFIGURABLE_PRODUCT_PRICE_TYPE);
+    }
+
+    public function getEcotaxAttribute(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ECOTAX_ATTRIBUTE);
+    }
+
+    public function getEcotaxCountry(StoreInterface $store)
+    {
+        $country = $this->getFieldValue($store, self::KEY_ECOTAX_COUNTRY);
+
+        return (self::DEFAULT_TAX_COUNTRY !== $country)
+            ? $country
+            : $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_DEFAULT_COUNTRY);
     }
 
     public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)

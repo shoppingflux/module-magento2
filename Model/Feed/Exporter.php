@@ -481,8 +481,9 @@ class Exporter
         $feedPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory)
             . '/'
             . $store->getFeedFileNameBase()
-            . '.xml';
+            . '.xml'
+            . ($this->generalConfig->shouldUseGzipCompression($store) ? '.gz' : '');
 
-        return file_exists($feedPath);
+        return $mediaDirectoryReader->isExist($feedPath);
     }
 }

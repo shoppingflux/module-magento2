@@ -40,6 +40,12 @@ interface AttributesInterface extends ConfigInterface
 
     /**
      * @param StoreInterface $store
+     * @return AbstractAttribute|null
+     */
+    public function getWeightAttribute(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return AbstractAttribute[]
      */
     public function getAttributeMap(StoreInterface $store);

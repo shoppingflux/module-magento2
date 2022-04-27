@@ -22,12 +22,15 @@ class Attributes extends AbstractType
     const RESERVED_ATTRIBUTE_CODES = [
         'category',
         'description',
+        'ecotax',
         'image',
         'link',
         'name',
         'old_price',
         'price',
         'short_description',
+        'vat',
+        'weight',
     ];
 
     public function __construct(TypeResource $typeResource, AdapterInterface $adapter, ConfigInterface $config)

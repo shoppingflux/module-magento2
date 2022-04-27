@@ -21,6 +21,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
     const KEY_DESCRIPTION_ATTRIBUTE = 'description_attribute';
     const KEY_SHORT_DESCRIPTION_ATTRIBUTE = 'short_description_attribute';
     const KEY_GTIN_ATTRIBUTE = 'gtin_attribute';
+    const KEY_WEIGHT_ATTRIBUTE = 'weight_attribute';
     const KEY_BASE_MAPPED_ATTRIBUTE = 'attribute_for_%s';
     const KEY_ADDITIONAL_ATTRIBUTES = 'additional_attributes';
     const KEY_EXPORT_ATTRIBUTE_SET_NAME = 'export_attribute_set_name';
@@ -112,9 +113,20 @@ class Attributes extends AbstractConfig implements AttributesInterface
                     'sortOrder' => 50,
                 ]
             ),
+
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_WEIGHT_ATTRIBUTE,
+                    'valueHandler' => $attributeValueHandler,
+                    'isRequired' => false,
+                    'label' => __('Weight Attribute'),
+                    'sortOrder' => 60,
+                ]
+            ),
         ];
 
-        $sortOrder = 60;
+        $sortOrder = 70;
 
         foreach ($this->mappableAttributes as $attributeCode => $attributeLabel) {
             $fieldName = sprintf(self::KEY_BASE_MAPPED_ATTRIBUTE, $attributeCode);
@@ -141,7 +153,11 @@ class Attributes extends AbstractConfig implements AttributesInterface
         $additionalAttributesComment = implode(
             "\n",
             array_merge(
-                [ 'These attributes are reserved, and exported as "[code]_attribute":' ],
+                [
+                    __(
+                        'Some attribute codes are reserved. If one of the attributes below is chosen, it will be exported as "[code]_attribute":'
+                    ),
+                ],
                 array_map(
                     function ($code) {
                         return '- ' . $code;
@@ -205,6 +221,11 @@ class Attributes extends AbstractConfig implements AttributesInterface
         return $this->getFieldValue($store, self::KEY_GTIN_ATTRIBUTE);
     }
 
+    public function getWeightAttribute(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_WEIGHT_ATTRIBUTE);
+    }
+
     public function getAttributeMap(StoreInterface $store)
     {
         $attributeMap = [];
@@ -238,6 +259,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
                         $this->getDescriptionAttribute($store),
                         $this->getShortDescriptionAttribute($store),
                         $this->getGtinAttribute($store),
+                        $this->getWeightAttribute($store),
                     ],
                     $this->getAttributeMap($store)
                 )

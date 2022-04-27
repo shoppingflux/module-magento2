@@ -14,8 +14,10 @@ use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Tax\Api\TaxCalculationInterface as TaxCalculationInterface;
 use Magento\Tax\Model\Config as TaxConfig;
+use Magento\Weee\Model\Config as WeeeConfig;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\AbstractRenderer as AbstractAttributeRenderer;
 use ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\RendererPoolInterface as AttributeRendererPoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\AbstractAdapter;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\Config\PricesInterface as ConfigInterface;
@@ -34,6 +36,8 @@ class Prices extends AbstractAdapter implements PricesInterface
     const KEY_TIER_PRICE = 'tier_price';
     const KEY_SPECIAL_PRICE_FROM_DATE = 'special_price_from_date';
     const KEY_SPECIAL_PRICE_TO_DATE = 'special_price_to_date';
+    const KEY_VAT = 'vat';
+    const KEY_ECOTAX = 'ecotax';
 
     /**
      * @var CatalogProductResourceFactory
@@ -56,12 +60,18 @@ class Prices extends AbstractAdapter implements PricesInterface
     private $taxCalculator;
 
     /**
+     * @var AbstractAttributeRenderer
+     */
+    private $fptAttributeRenderer;
+
+    /**
      * @param StoreManagerInterface $storeManager
      * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
      * @param CatalogProductResourceFactory $catalogProductResourceFactory
      * @param TimezoneInterface $localeDate
      * @param TaxCalculationInterface $taxCalculator
+     * @param AbstractAttributeRenderer $fptAttributeRenderer
      */
     public function __construct(
         StoreManagerInterface $storeManager,
@@ -69,11 +79,13 @@ class Prices extends AbstractAdapter implements PricesInterface
         AttributeRendererPoolInterface $attributeRendererPool,
         CatalogProductResourceFactory $catalogProductResourceFactory,
         TimezoneInterface $localeDate,
-        TaxCalculationInterface $taxCalculator
+        TaxCalculationInterface $taxCalculator,
+        AbstractAttributeRenderer $fptAttributeRenderer
     ) {
         $this->catalogProductResourceFactory = $catalogProductResourceFactory;
         $this->localeDate = $localeDate;
         $this->taxCalculator = $taxCalculator;
+        $this->fptAttributeRenderer = $fptAttributeRenderer;
         parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
@@ -92,6 +104,10 @@ class Prices extends AbstractAdapter implements PricesInterface
                 'special_to_date',
             ]
         );
+
+        if ($ecotaxAttribute = $this->getConfig()->getEcotaxAttribute($store)) {
+            $productCollection->addAttributeToSelect($ecotaxAttribute->getAttributeCode());
+        }
 
         $productCollection->addPriceData(
             $this->getConfig()->getCustomerGroupId($store),
@@ -118,12 +134,22 @@ class Prices extends AbstractAdapter implements PricesInterface
 
     /**
      * @param float $price
-     * @param float|false $taxRate
+     * @param float $taxRate
+     * @return float
+     */
+    private function getPriceTaxAmount($price, $taxRate)
+    {
+        return ($taxRate > 0) ? ($price - $price / (1 + $taxRate / 100)) : 0.0;
+    }
+
+    /**
+     * @param float $price
+     * @param float $taxRate
      * @return float
      */
     private function applyTaxRateOnPrice($price, $taxRate)
     {
-        return (false !== $taxRate) ? ($price + $price * $taxRate / 100) : $price;
+        return ($taxRate > 0) ? ($price + $price * $taxRate / 100) : $price;
     }
 
     /**
@@ -195,38 +221,72 @@ class Prices extends AbstractAdapter implements PricesInterface
      */
     private function getBasicProductPriceData(CatalogProduct $product, StoreInterface $store)
     {
-        $taxRate = false;
-        $isPriceIncludingTax = (bool) $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_PRICE_INCLUDES_TAX);
+        $config = $this->getConfig();
 
-        if (!$isPriceIncludingTax) {
-            if ($taxClassId = (int) $product->getData('tax_class_id')) {
-                $taxRate = $this->taxCalculator->getCalculatedRate($taxClassId, null, $store->getBaseStoreId());
-            }
+        $taxRate = 0.0;
+        $isPriceIncludingTax = $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_PRICE_INCLUDES_TAX);
+
+        if ($taxClassId = (int) $product->getData('tax_class_id')) {
+            $taxRate = $this->taxCalculator->getCalculatedRate($taxClassId, null, $store->getBaseStoreId());
         }
 
-        $originalCustomerGroupId = $product->getCustomerGroupId();
         $originalWebsiteId = $product->getWebsiteId();
+        $originalCustomerGroupId = $product->getCustomerGroupId();
 
-        $product->setCustomerGroupId($this->getConfig()->getCustomerGroupId($store));
         $product->setWebsiteId($store->getBaseStore()->getWebsiteId());
+        $product->setCustomerGroupId($config->getCustomerGroupId($store));
 
         $product->unsetData('final_price');
         $product->unsetData('calculated_final_price');
 
-        $basePrice = $this->applyTaxRateOnPrice($this->getProductBasePrice($product), $taxRate);
-        $specialPrice = $this->applyTaxRateOnPrice($this->getProductSpecialPrice($product), $taxRate);
-        $finalPrice = $this->applyTaxRateOnPrice($this->getProductFinalPrice($product), $taxRate);
+        $basePrice = $this->getProductBasePrice($product);
+        $specialPrice = $this->getProductSpecialPrice($product);
+        $finalPrice = $this->getProductFinalPrice($product);
 
-        $product->setCustomerGroupId($originalCustomerGroupId);
-        $product->setWebsiteId($originalWebsiteId);
+        if ($isPriceIncludingTax) {
+            $taxAmount = $this->getPriceTaxAmount($finalPrice, $taxRate);
+        } else {
+            $basePrice = $this->applyTaxRateOnPrice($basePrice, $taxRate);
+            $specialPrice = $this->applyTaxRateOnPrice($specialPrice, $taxRate);
+            $finalPriceExclTax = $finalPrice;
+            $finalPrice = $this->applyTaxRateOnPrice($finalPrice, $taxRate);
+            $taxAmount = $finalPrice - $finalPriceExclTax;
+        }
 
-        return [
+        $data = [
             self::KEY_BASE_PRICE => round($basePrice, 2),
             self::KEY_SPECIAL_PRICE => ($specialPrice > 0) ? round($specialPrice, 2) : '',
             self::KEY_FINAL_PRICE => round($finalPrice, 2),
             self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($store, $product, 'special_from_date'),
             self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($store, $product, 'special_to_date'),
+            self::KEY_VAT => round($taxAmount, 2),
         ];
+
+        if (
+            ($ecotaxAttribute = $config->getEcotaxAttribute($store))
+            && $this->fptAttributeRenderer->isAppliableToAttribute($ecotaxAttribute)
+        ) {
+            $ecotaxAmounts = $this->fptAttributeRenderer->getProductAttributeValue(
+                $store,
+                $product,
+                $ecotaxAttribute
+            );
+
+            $ecotaxCountry = strtolower($config->getEcotaxCountry($store));
+
+            if (is_array($ecotaxAmounts) && isset($ecotaxAmounts[$ecotaxCountry])) {
+                $data[self::KEY_ECOTAX] = (float) $ecotaxAmounts[$ecotaxCountry];
+
+                if (!$isPriceIncludingTax && $store->getScopeConfigValue(WeeeConfig::XML_PATH_FPT_TAXABLE)) {
+                    $data[self::KEY_ECOTAX] = $this->applyTaxRateOnPrice($data[self::KEY_ECOTAX], $taxRate);
+                }
+            }
+        }
+
+        $product->setWebsiteId($originalWebsiteId);
+        $product->setCustomerGroupId($originalCustomerGroupId);
+
+        return $data;
     }
 
     /**
@@ -293,9 +353,6 @@ class Prices extends AbstractAdapter implements PricesInterface
         CatalogProduct $product,
         StoreInterface $store
     ) {
-        /** @var BundleProductPrice $bundlePrice */
-        $bundlePrice = $product->getPriceModel();
-
         // Prepare the product so that each default selection is taken into account using its default quantity.
         $allOptionIds = $productType->getOptionsIds($product);
         $defaultSelectionIds = [];
@@ -392,11 +449,15 @@ class Prices extends AbstractAdapter implements PricesInterface
 
         $basePrice = 0.0;
         $finalPrice = 0.0;
+        $taxAmount = 0.0;
+        $ecotaxAmount = 0.0;
 
         foreach ($childrenData as $key => $childData) {
             $bundledQuantity = max(1, $childrenQuantities[$key] ?? 0);
             $basePrice += ((float) ($childData[self::KEY_BASE_PRICE] ?? 0.0)) * $bundledQuantity;
             $finalPrice += ((float) ($childData[self::KEY_FINAL_PRICE] ?? 0.0)) * $bundledQuantity;
+            $taxAmount += ((float) ($childData[self::KEY_VAT] ?? 0.0)) * $bundledQuantity;
+            $ecotaxAmount += ((float) ($childData[self::KEY_ECOTAX] ?? 0.0)) * $bundledQuantity;
         }
 
         if (($bundleData[self::KEY_SPECIAL_PRICE] ?? 0.0) > 0.0) {
@@ -404,6 +465,7 @@ class Prices extends AbstractAdapter implements PricesInterface
 
             if ($specialPrice < $finalPrice) {
                 $finalPrice = $specialPrice;
+                $taxAmount = $taxAmount * ($bundleData[self::KEY_SPECIAL_PRICE] / 100);
             }
         }
 
@@ -412,11 +474,14 @@ class Prices extends AbstractAdapter implements PricesInterface
 
             if ($tierPrice < $finalPrice) {
                 $finalPrice = $tierPrice;
+                $taxAmount = $taxAmount - $taxAmount * ($bundleData[self::KEY_TIER_PRICE] / 100);
             }
         }
 
         $bundleData[self::KEY_BASE_PRICE] = $basePrice;
         $bundleData[self::KEY_FINAL_PRICE] = $finalPrice;
+        $bundleData[self::KEY_VAT] = $taxAmount;
+        $bundleData[self::KEY_ECOTAX] = $ecotaxAmount;
 
         return $bundleData;
     }
@@ -452,6 +517,22 @@ class Prices extends AbstractAdapter implements PricesInterface
             }
         }
 
+        if (isset($productData[self::KEY_VAT])) {
+            if (is_callable([ $exportedProduct, 'setVat' ])) {
+                $exportedProduct->setVat($productData[self::KEY_VAT]);
+            } else {
+                $exportedProduct->setAttribute('vat', $productData[self::KEY_VAT]);
+            }
+        }
+
+        if (isset($productData[self::KEY_ECOTAX])) {
+            if (is_callable([ $exportedProduct, 'setEcotax' ])) {
+                $exportedProduct->setEcotax($productData[self::KEY_ECOTAX]);
+            } else {
+                $exportedProduct->setAttribute('ecotax', $productData[self::KEY_ECOTAX]);
+            }
+        }
+
         if ($hasBasePrice) {
             $exportedProduct->setAttribute('price_before_discount', $productData[self::KEY_BASE_PRICE]);
         }
@@ -464,6 +545,8 @@ class Prices extends AbstractAdapter implements PricesInterface
                 self::KEY_BASE_PRICE => __('Base'),
                 self::KEY_SPECIAL_PRICE => __('Special'),
                 self::KEY_FINAL_PRICE => __('Final'),
+                self::KEY_VAT => __('Tax Amount'),
+                self::KEY_ECOTAX => __('Eco-tax Amount'),
             ],
             $productData
         );

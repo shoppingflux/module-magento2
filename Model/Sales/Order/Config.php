@@ -291,7 +291,7 @@ class Config extends AbstractConfig implements ConfigInterface
                     [
                         'name' => self::KEY_IMPORT_CUSTOMERS,
                         'isCheckedByDefault' => false,
-                        'label' => __('Import Customers'),
+                        'label' => __('Import Customer Accounts'),
                         'checkedNotice' => __(
                             'A customer account will be created for each order, using the billing email address.'
                         ),

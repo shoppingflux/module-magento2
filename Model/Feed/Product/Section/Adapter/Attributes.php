@@ -5,6 +5,7 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Adapter;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Type as ProductType;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
+use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use Magento\Eav\Model\Entity\Type as EavEntityType;
 use Magento\Eav\Model\Entity\TypeFactory as EavEntityTypeFactory;
 use Magento\Framework\DataObject;
@@ -34,6 +35,8 @@ class Attributes extends AbstractAdapter implements AttributesInterface
     const KEY_DESCRIPTION = 'description';
     const KEY_SHORT_DESCRIPTION = 'short_description';
     const KEY_URL = 'url';
+    const KEY_WEIGHT = 'weight';
+    const KEY_DYNAMIC_WEIGHT = 'dynamic_weight';
     const KEY_ATTRIBUTE_MAP = 'attribute_map';
     const KEY_CONFIGURABLE_ATTRIBUTES = 'configurable_attributes';
     const KEY_ATTRIBUTE_SET = 'attribute_set';
@@ -207,12 +210,32 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         return isset($this->attributeSetNames[$attributeSetId]) ? trim($this->attributeSetNames[$attributeSetId]) : '';
     }
 
+    /**
+     * @param CatalogProduct $product
+     * @param AbstractAttribute $weightAttribute
+     * @return bool
+     */
+    private function hasProductWeightValue(CatalogProduct $product, AbstractAttribute $weightAttribute)
+    {
+        if ($weightAttribute->getAttributeCode() === 'weight') {
+            return (
+                ($product->getTypeId() !== ProductType::TYPE_VIRTUAL)
+                && (($product->getTypeId() !== ProductType::TYPE_BUNDLE) || $product->getWeightType())
+            );
+        }
+
+        $weight = $product->getData($weightAttribute->getAttributeCode());
+
+        return !is_scalar($weight) || ('' !== trim((string) $weight));
+    }
+
     public function getProductData(StoreInterface $store, RefreshableProduct $product)
     {
         $config = $this->getConfig();
         $catalogProduct = $product->getCatalogProduct();
         $productId = (int) $catalogProduct->getId();
         $productSku = $catalogProduct->getSku();
+        $productTypeId = $catalogProduct->getTypeId();
 
         $data = [
             self::KEY_SKU => $config->shouldUseProductIdForSku($store) ? $productId : $productSku,
@@ -240,12 +263,24 @@ class Attributes extends AbstractAdapter implements AttributesInterface
             $data[self::KEY_GTIN] = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
         }
 
+        if ($attribute = $config->getWeightAttribute($store)) {
+            if ($this->hasProductWeightValue($catalogProduct, $attribute)) {
+                $data[self::KEY_WEIGHT] = (float) $this->getCatalogProductAttributeValue(
+                    $store,
+                    $catalogProduct,
+                    $attribute
+                );
+            } elseif (ProductType::TYPE_BUNDLE === $productTypeId) {
+                $data[self::KEY_DYNAMIC_WEIGHT] = true;
+            }
+        }
+
         foreach ($config->getAttributeMap($store) as $key => $attribute) {
             $value = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
             $data[self::KEY_ATTRIBUTE_MAP][$key] = $value;
         }
 
-        if (ProductType::TYPE_SIMPLE === $catalogProduct->getTypeId()) {
+        if (ProductType::TYPE_SIMPLE === $productTypeId) {
             foreach ($this->configurableAttributeSource->getAttributesByCode() as $code => $attribute) {
                 $value = $this->getCatalogProductAttributeValue($store, $catalogProduct, $attribute);
                 $data[self::KEY_CONFIGURABLE_ATTRIBUTES][$code] = $value;
@@ -259,11 +294,35 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         return $data;
     }
 
+    public function adaptBundleProductData(
+        StoreInterface $store,
+        array $bundleData,
+        array $childrenData,
+        array $childrenQuantities
+    ) {
+        if (empty($bundleData[self::KEY_DYNAMIC_WEIGHT])) {
+            return $bundleData;
+        }
+
+        $weight = 0.0;
+
+        foreach ($childrenData as $key => $childData) {
+            $bundledQuantity = max(1, $childrenQuantities[$key] ?? 0);
+            $weight += ((float) ($childData[self::KEY_WEIGHT] ?? 0.0)) * $bundledQuantity;
+        }
+
+        $bundleData[self::KEY_WEIGHT] = $weight;
+
+        return $bundleData;
+    }
+
     public function exportBaseProductData(
         StoreInterface $store,
         array $productData,
         AbstractExportedProduct $exportedProduct
     ) {
+        $config = $this->getConfig();
+
         if (isset($productData[self::KEY_SKU])) {
             $exportedProduct->setReference($productData[self::KEY_SKU]);
         }
@@ -272,8 +331,16 @@ class Attributes extends AbstractAdapter implements AttributesInterface
             $exportedProduct->setGtin($productData[self::KEY_GTIN]);
         }
 
+        if (isset($productData[self::KEY_WEIGHT])) {
+            if (is_callable([ $exportedProduct, 'setWeight' ])) {
+                $exportedProduct->setWeight($productData[self::KEY_WEIGHT]);
+            } else {
+                $exportedProduct->setAttribute('weight', $productData[self::KEY_WEIGHT]);
+            }
+        }
+
         if (isset($productData[self::KEY_ATTRIBUTE_MAP])) {
-            foreach ($this->getConfig()->getAttributeMap($store) as $key => $attribute) {
+            foreach ($config->getAttributeMap($store) as $key => $attribute) {
                 if (isset($productData[self::KEY_ATTRIBUTE_MAP][$key])) {
                     $value = $productData[self::KEY_ATTRIBUTE_MAP][$key];
 
@@ -282,6 +349,12 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                             $exportedProduct->setAttribute($key . '-' . $subKey, $subValue);
                         }
                     } else {
+                        // Backwards compatibility: keep exporting the non-first-class "weight" attribute as "weight",
+                        // as long as it seems necessary to prevent breaking the existing SF configuration.
+                        if (('weight' === $key) && !$config->getWeightAttribute($store)) {
+                            $exportedProduct->setAttribute('weight', $value);
+                        }
+
                         if (in_array($key, Type::RESERVED_ATTRIBUTE_CODES, true)) {
                             $key .= $this->reservedAttributeCodeSuffix;
                         }
@@ -353,6 +426,8 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                 self::KEY_URL => __('URL'),
                 self::KEY_DESCRIPTION => __('Description'),
                 self::KEY_SHORT_DESCRIPTION => __('Short Description'),
+                self::KEY_WEIGHT => __('Weight'),
+                self::KEY_DYNAMIC_WEIGHT => __('Dynamic Weight'),
             ],
             $productData
         );
