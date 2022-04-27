@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
+use Magento\Eav\Model\Entity\Attribute\AbstractAttribute;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface;
 
@@ -31,4 +32,16 @@ interface PricesInterface extends ConfigInterface
      * @return string
      */
     public function getConfigurableProductPriceType(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return AbstractAttribute|null
+     */
+    public function getEcotaxAttribute(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getEcotaxCountry(StoreInterface $store);
 }

@@ -95,6 +95,12 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Fpt" shared="true">
+        <arguments>
+            <argument name="fullAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Full</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Renderable" shared="true">
         <arguments>
             <argument name="fullAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Full</argument>
@@ -146,6 +152,7 @@
         <arguments>
             <argument name="localeDate" xsi:type="object">Magento\Framework\Stdlib\DateTime\TimezoneInterface\Proxy</argument>
             <argument name="taxCalculator" xsi:type="object">Magento\Tax\Api\TaxCalculationInterface\Proxy</argument>
+            <argument name="fptAttributeRenderer" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Value\Renderer\Fpt</argument>
         </arguments>
     </type>
 
@@ -168,6 +175,12 @@
     <type name="ShoppingFeed\Manager\Model\Feed\Product\Export\State\Config">
         <arguments>
             <argument name="booleanAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Boolean</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\Feed\Product\Section\Config\Prices">
+        <arguments>
+            <argument name="fptAttributeSource" xsi:type="object">ShoppingFeed\Manager\Model\Feed\Product\Attribute\Source\Fpt</argument>
         </arguments>
     </type>
 

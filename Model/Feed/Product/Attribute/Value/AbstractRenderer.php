@@ -43,8 +43,8 @@ abstract class AbstractRenderer implements RendererInterface
     /**
      * @param StoreInterface $store
      * @param AbstractAttribute $attribute
-     * @param $value
-     * @return string
+     * @param mixed $value
+     * @return string|array
      */
     protected function renderAttributeValue(StoreInterface $store, AbstractAttribute $attribute, $value)
     {

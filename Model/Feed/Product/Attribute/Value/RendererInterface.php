@@ -23,7 +23,7 @@ interface RendererInterface
      * @param StoreInterface $store
      * @param CatalogProduct $product
      * @param AbstractAttribute $attribute
-     * @return string|null
+     * @return string|array|null
      */
     public function getProductAttributeValue(
         StoreInterface $store,
