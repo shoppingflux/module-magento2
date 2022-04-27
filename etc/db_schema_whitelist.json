@@ -1,0 +1,265 @@
+{
+    "sfm_account": {
+        "column": {
+            "account_id": true,
+            "api_token": true,
+            "shopping_feed_login": true,
+            "shopping_feed_email": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SFM_ACCOUNT_API_TOKEN": true
+        }
+    },
+    "sfm_account_store": {
+        "column": {
+            "store_id": true,
+            "account_id": true,
+            "base_store_id": true,
+            "shopping_feed_store_id": true,
+            "shopping_feed_name": true,
+            "configuration": true,
+            "feed_file_name_base": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "index": {
+            "SFM_ACCOUNT_STORE_ACCOUNT_ID": true,
+            "SFM_ACCOUNT_STORE_BASE_STORE_ID": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SFM_ACCOUNT_STORE_ACCOUNT_ID_SFM_ACCOUNT_ACCOUNT_ID": true,
+            "SFM_ACCOUNT_STORE_BASE_STORE_ID_STORE_STORE_ID": true,
+            "SFM_ACCOUNT_STORE_SHOPPING_FEED_STORE_ID": true,
+            "SFM_ACCOUNT_STORE_FEED_FILE_NAME_BASE": true
+        }
+    },
+    "sfm_feed_product": {
+        "column": {
+            "product_id": true,
+            "store_id": true,
+            "is_selected": true,
+            "selected_category_id": true,
+            "export_state": true,
+            "child_export_state": true,
+            "exclusion_reason": true,
+            "export_retention_started_at": true,
+            "export_state_refreshed_at": true,
+            "export_state_refresh_state": true,
+            "export_state_refresh_state_updated_at": true
+        },
+        "index": {
+            "SFM_FEED_PRODUCT_SELECTED_CATEGORY_ID": true,
+            "SFM_FEED_PRODUCT_EXPORT_STATE": true,
+            "SFM_FEED_PRODUCT_CHILD_EXPORT_STATE": true,
+            "SFM_FEED_PRODUCT_EXPORT_STATE_REFRESH_STATE": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SFM_FEED_PRODUCT_PRODUCT_ID_CATALOG_PRODUCT_ENTITY_ENTITY_ID": true,
+            "SFM_FEED_PRODUCT_STORE_ID_SFM_ACCOUNT_STORE_STORE_ID": true,
+            "SFM_FEED_PRD_SELECTED_CTGR_ID_CAT_CTGR_ENTT_ENTT_ID": true
+        }
+    },
+    "sfm_feed_product_section_type": {
+        "column": {
+            "type_id": true,
+            "code": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SFM_FEED_PRODUCT_SECTION_TYPE_CODE": true
+        }
+    },
+    "sfm_feed_product_section": {
+        "column": {
+            "type_id": true,
+            "product_id": true,
+            "store_id": true,
+            "data": true,
+            "refreshed_at": true,
+            "refresh_state": true,
+            "refresh_state_updated_at": true
+        },
+        "index": {
+            "SFM_FEED_PRODUCT_SECTION_REFRESH_STATE": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SFM_FEED_PRD_SECTION_TYPE_ID_SFM_FEED_PRD_SECTION_TYPE_TYPE_ID": true,
+            "SFM_FEED_PRODUCT_SECTION_PRODUCT_ID_SFM_FEED_PRODUCT_PRODUCT_ID": true,
+            "SFM_FEED_PRODUCT_SECTION_STORE_ID_SFM_ACCOUNT_STORE_STORE_ID": true
+        }
+    },
+    "sfm_marketplace_order": {
+        "column": {
+            "order_id": true,
+            "store_id": true,
+            "sales_order_id": true,
+            "shopping_feed_order_id": true,
+            "marketplace_order_number": true,
+            "shopping_feed_marketplace_id": true,
+            "is_fulfilled": true,
+            "marketplace_name": true,
+            "shopping_feed_status": true,
+            "currency_code": true,
+            "product_amount": true,
+            "shipping_amount": true,
+            "fees_amount": true,
+            "total_amount": true,
+            "payment_method": true,
+            "shipment_carrier": true,
+            "additional_fields": true,
+            "import_remaining_try_count": true,
+            "has_non_notifiable_shipment": true,
+            "created_at": true,
+            "updated_at": true,
+            "fetched_at": true,
+            "imported_at": true,
+            "acknowledged_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "SFM_MARKETPLACE_ORDER_STORE_ID_SFM_ACCOUNT_STORE_STORE_ID": true,
+            "SFM_MARKETPLACE_ORDER_SALES_ORDER_ID_SALES_ORDER_ENTITY_ID": true,
+            "SFM_MARKETPLACE_ORDER_SALES_ORDER_ID": true,
+            "SFM_MARKETPLACE_ORDER_SHOPPING_FEED_ORDER_ID": true,
+            "UNQ_94A13E2D7533EBA5837F710E591DFE7E": true,
+            "UNQ_A42EC9756310BDDBBE5B29B4500DEC28": true
+        }
+    },
+    "sfm_marketplace_order_address": {
+        "column": {
+            "address_id": true,
+            "order_id": true,
+            "type": true,
+            "first_name": true,
+            "last_name": true,
+            "company": true,
+            "street": true,
+            "postal_code": true,
+            "city": true,
+            "country_code": true,
+            "phone": true,
+            "mobile_phone": true,
+            "email": true,
+            "misc_data": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_B0F66071F86CE108BB3DCC1A7D668443": true,
+            "SFM_MARKETPLACE_ORDER_ADDRESS_ORDER_ID_TYPE": true
+        }
+    },
+    "sfm_marketplace_order_item": {
+        "column": {
+            "item_id": true,
+            "order_id": true,
+            "reference": true,
+            "quantity": true,
+            "price": true,
+            "tax_amount": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_5C31401D4C784B3EB8B378C7DBAD2F35": true
+        }
+    },
+    "sfm_marketplace_order_ticket": {
+        "column": {
+            "log_id": true,
+            "shopping_feed_ticket_id": true,
+            "order_id": true,
+            "sales_entity_id": true,
+            "action": true,
+            "status": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_4073E1B165F8E56F08D78ABA0ACF4122": true,
+            "SFM_MARKETPLACE_ORDER_TICKET_SHOPPING_FEED_TICKET_ID": true
+        }
+    },
+    "sfm_marketplace_order_log": {
+        "column": {
+            "log_id": true,
+            "order_id": true,
+            "type": true,
+            "message": true,
+            "details": true,
+            "created_at": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "FK_44BC9ACA211AFD30EF08DD587D0102A4": true
+        }
+    },
+    "sfm_shipping_method_rule": {
+        "column": {
+            "rule_id": true,
+            "name": true,
+            "description": true,
+            "from_date": true,
+            "to_date": true,
+            "is_active": true,
+            "conditions_serialized": true,
+            "applier_code": true,
+            "applier_configuration": true,
+            "sort_order": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "sfm_cron_task": {
+        "column": {
+            "task_id": true,
+            "name": true,
+            "description": true,
+            "command_code": true,
+            "command_configuration": true,
+            "schedule_type": true,
+            "cron_expression": true,
+            "cron_group": true,
+            "is_active": true,
+            "created_at": true,
+            "updated_at": true
+        },
+        "constraint": {
+            "PRIMARY": true
+        }
+    },
+    "sales_order": {
+        "column": {
+            "sfm_marketplace_fees_amount": true,
+            "sfm_marketplace_fees_base_amount": true,
+            "sfm_bundle_adjustment": true,
+            "sfm_bundle_adjustment_incl_tax": true,
+            "sfm_base_bundle_adjustment": true,
+            "sfm_base_bundle_adjustment_incl_tax": true
+        }
+    },
+    "sales_invoice": {
+        "column": {
+            "sfm_marketplace_fees_amount": true,
+            "sfm_marketplace_fees_base_amount": true,
+            "sfm_bundle_adjustment": true,
+            "sfm_bundle_adjustment_incl_tax": true,
+            "sfm_base_bundle_adjustment": true,
+            "sfm_base_bundle_adjustment_incl_tax": true
+        }
+    },
+    "sales_creditmemo": {
+        "column": {
+            "sfm_bundle_adjustment": true,
+            "sfm_bundle_adjustment_incl_tax": true,
+            "sfm_base_bundle_adjustment": true,
+            "sfm_base_bundle_adjustment_incl_tax": true
+        }
+    }
+}
