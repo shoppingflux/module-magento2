@@ -20,7 +20,7 @@
         <column xsi:type="smallint" name="base_store_id" padding="5" unsigned="true" nullable="false" identity="false" comment="Base Store ID"/>
         <column xsi:type="int" name="shopping_feed_store_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Shopping Feed Store ID"/>
         <column xsi:type="varchar" name="shopping_feed_name" nullable="false" length="255" comment="Shopping Feed Name"/>
-        <column xsi:type="mediumtext" name="configuration" nullable="false" default="" comment="Configuration"/>
+        <column xsi:type="mediumtext" name="configuration" nullable="false" comment="Configuration"/>
         <column xsi:type="varchar" name="feed_file_name_base" nullable="false" length="255" comment="Feed File Name Base"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
@@ -91,7 +91,7 @@
         <column xsi:type="smallint" name="type_id" padding="5" unsigned="true" nullable="false" identity="false" comment="Type ID"/>
         <column xsi:type="int" name="product_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Product ID"/>
         <column xsi:type="int" name="store_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Store ID"/>
-        <column xsi:type="text" name="data" nullable="false" default="" comment="Data"/>
+        <column xsi:type="text" name="data" nullable="false" comment="Data"/>
         <column xsi:type="timestamp" name="refreshed_at" on_update="false" nullable="true" comment="Refreshed At"/>
         <column xsi:type="smallint" name="refresh_state" padding="6" unsigned="false" nullable="false" identity="false" default="3" comment="Refresh State"/>
         <column xsi:type="timestamp" name="refresh_state_updated_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Refresh State Updated At"/>
@@ -195,7 +195,7 @@
 
     <table name="sfm_marketplace_order_ticket" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Ticket">
         <column xsi:type="int" name="log_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Ticket ID"/>
-        <column xsi:type="varchar" name="shopping_feed_ticket_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Shopping Feed Ticket ID" length="255"/>
+        <column xsi:type="varchar" name="shopping_feed_ticket_id" nullable="true" comment="Shopping Feed Ticket ID" length="255"/>
         <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Marketplace Order ID"/>
         <column xsi:type="int" name="sales_entity_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Sales Entity ID"/>
         <column xsi:type="varchar" name="action" nullable="false" length="32" comment="Action"/>
