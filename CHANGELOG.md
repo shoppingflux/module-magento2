@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.54.0] - 2022-04-27
+### Added
+- Implement first-class `vat`, `ecotax` and `weight` feed attributes
+
+### Changed
+- Bump dependency ranges
+- Improve label for "Import Customers" option
+- Disable sorting on the "Is Variation" column in the feed product listing
+
+### Fixed
+- Fix compatibility issues with Magento 2.4.4
+- Fix detection of generated feed in some cases
+- Fix handling of errors in some rare cases when creating a SF account
+
 ## [0.53.2] - 2022-02-16
 ### Fixed
 - Fix export of "stock" quantity when the "salable" quantity has already been used to detect a product state
