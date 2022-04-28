@@ -150,7 +150,7 @@ class Manager
                 [
                     self::API_FILTER_ACKNOWLEDGEMENT => self::API_UNACKNOWLEDGED,
                     self::API_FILTER_CHANNEL_ID => (int) $channelId,
-                    self::API_FILTER_REFERENCE => trim($reference),
+                    self::API_FILTER_REFERENCE => trim((string) $reference),
                 ]
             );
 
@@ -291,7 +291,7 @@ class Manager
     private function registerOrderApiTicket(OrderInterface $order, ApiTicket $apiTicket, $action)
     {
         $ticket = $this->orderTicketFactory->create();
-        $ticket->setShoppingFeedTicketId(trim($apiTicket->getId()));
+        $ticket->setShoppingFeedTicketId(trim((string) $apiTicket->getId()));
         $ticket->setOrderId($order->getId());
         $ticket->setAction($action);
         $ticket->setStatus(TicketInterface::STATUS_HANDLED);
@@ -385,7 +385,7 @@ class Manager
         foreach ($importedCollection as $order) {
             $this->notifyStoreOrderImportSuccess(
                 $order,
-                trim($order->getDataByKey(OrderCollection::KEY_SALES_INCREMENT_ID)),
+                trim((string) $order->getDataByKey(OrderCollection::KEY_SALES_INCREMENT_ID)),
                 $store
             );
         }

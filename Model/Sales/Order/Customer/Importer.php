@@ -151,7 +151,7 @@ class Importer
      */
     public function getAddressRequiredFieldValue($marketplaceValue, StoreInterface $store)
     {
-        return ('' !== trim($marketplaceValue))
+        return ('' !== trim((string) $marketplaceValue))
             ? $marketplaceValue
             : $this->orderGeneralConfig->getAddressFieldPlaceholder($store);
     }

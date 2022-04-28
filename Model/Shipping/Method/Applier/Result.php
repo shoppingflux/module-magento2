@@ -128,7 +128,7 @@ class Result
      */
     public function setCarrierCode($carrierCode)
     {
-        $this->carrierCode = trim($carrierCode);
+        $this->carrierCode = trim((string) $carrierCode);
         return $this;
     }
 
@@ -138,7 +138,7 @@ class Result
      */
     public function setMethodCode($methodCode)
     {
-        $this->methodCode = trim($methodCode);
+        $this->methodCode = trim((string) $methodCode);
         return $this;
     }
 
@@ -148,7 +148,7 @@ class Result
      */
     public function setCarrierTitle($carrierTitle)
     {
-        $this->carrierTitle = trim($carrierTitle);
+        $this->carrierTitle = trim((string) $carrierTitle);
         return $this;
     }
 
@@ -158,7 +158,7 @@ class Result
      */
     public function setMethodTitle($methodTitle)
     {
-        $this->methodTitle = trim($methodTitle);
+        $this->methodTitle = trim((string) $methodTitle);
         return $this;
     }
 

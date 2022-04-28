@@ -23,8 +23,8 @@ class State extends OptionsRenderer
     public function render(DataObject $row)
     {
         $value = '<div><strong>' . parent::render($row) . '</strong></div>';
-        $untilDateIndex = trim($this->getColumn()->getDataByKey('until_date_index'));
-        $refreshDateIndex = trim($this->getColumn()->getDataByKey('refresh_date_index'));
+        $untilDateIndex = trim((string) $this->getColumn()->getDataByKey('until_date_index'));
+        $refreshDateIndex = trim((string) $this->getColumn()->getDataByKey('refresh_date_index'));
 
         if (!empty($untilDateIndex) && ($untilDate = $row->getDataByKey($untilDateIndex))) {
             $untilDate = $this->formatDateValue($untilDate);

@@ -28,62 +28,62 @@ class Address extends AbstractModel implements AddressInterface
 
     public function getType()
     {
-        return trim($this->getDataByKey(self::TYPE));
+        return trim((string) $this->getDataByKey(self::TYPE));
     }
 
     public function getFirstName()
     {
-        return trim($this->getDataByKey(self::FIRST_NAME));
+        return trim((string) $this->getDataByKey(self::FIRST_NAME));
     }
 
     public function getLastName()
     {
-        return trim($this->getDataByKey(self::LAST_NAME));
+        return trim((string) $this->getDataByKey(self::LAST_NAME));
     }
 
     public function getCompany()
     {
-        return trim($this->getDataByKey(self::COMPANY));
+        return trim((string) $this->getDataByKey(self::COMPANY));
     }
 
     public function getStreet()
     {
-        return trim($this->getDataByKey(self::STREET));
+        return trim((string) $this->getDataByKey(self::STREET));
     }
 
     public function getPostalCode()
     {
-        return trim($this->getDataByKey(self::POSTAL_CODE));
+        return trim((string) $this->getDataByKey(self::POSTAL_CODE));
     }
 
     public function getCity()
     {
-        return trim($this->getDataByKey(self::CITY));
+        return trim((string) $this->getDataByKey(self::CITY));
     }
 
     public function getCountryCode()
     {
-        return trim($this->getDataByKey(self::COUNTRY_CODE));
+        return trim((string) $this->getDataByKey(self::COUNTRY_CODE));
     }
 
     public function getPhone()
     {
-        return trim($this->getDataByKey(self::PHONE));
+        return trim((string) $this->getDataByKey(self::PHONE));
     }
 
     public function getMobilePhone()
     {
-        return trim($this->getDataByKey(self::MOBILE_PHONE));
+        return trim((string) $this->getDataByKey(self::MOBILE_PHONE));
     }
 
     public function getEmail()
     {
-        return trim($this->getDataByKey(self::EMAIL));
+        return trim((string) $this->getDataByKey(self::EMAIL));
     }
 
     public function getMiscData()
     {
-        return trim($this->getDataByKey(self::MISC_DATA));
+        return trim((string) $this->getDataByKey(self::MISC_DATA));
     }
 
     public function setOrderId($orderId)
@@ -93,61 +93,61 @@ class Address extends AbstractModel implements AddressInterface
 
     public function setType($type)
     {
-        return $this->setData(self::TYPE, trim($type));
+        return $this->setData(self::TYPE, trim((string) $type));
     }
 
     public function setFirstName($firstName)
     {
-        return $this->setData(self::FIRST_NAME, trim($firstName));
+        return $this->setData(self::FIRST_NAME, trim((string) $firstName));
     }
 
     public function setLastName($lastName)
     {
-        return $this->setData(self::LAST_NAME, trim($lastName));
+        return $this->setData(self::LAST_NAME, trim((string) $lastName));
     }
 
     public function setCompany($company)
     {
-        return $this->setData(self::COMPANY, trim($company));
+        return $this->setData(self::COMPANY, trim((string) $company));
     }
 
     public function setStreet($street)
     {
-        return $this->setData(self::STREET, trim($street));
+        return $this->setData(self::STREET, trim((string) $street));
     }
 
     public function setPostalCode($postalCode)
     {
-        return $this->setData(self::POSTAL_CODE, trim($postalCode));
+        return $this->setData(self::POSTAL_CODE, trim((string) $postalCode));
     }
 
     public function setCity($city)
     {
-        return $this->setData(self::CITY, trim($city));
+        return $this->setData(self::CITY, trim((string) $city));
     }
 
     public function setCountryCode($countryCode)
     {
-        return $this->setData(self::COUNTRY_CODE, trim($countryCode));
+        return $this->setData(self::COUNTRY_CODE, trim((string) $countryCode));
     }
 
     public function setPhone($phone)
     {
-        return $this->setData(self::PHONE, trim($phone));
+        return $this->setData(self::PHONE, trim((string) $phone));
     }
 
     public function setMobilePhone($phone)
     {
-        return $this->setData(self::MOBILE_PHONE, trim($phone));
+        return $this->setData(self::MOBILE_PHONE, trim((string) $phone));
     }
 
     public function setEmail($email)
     {
-        return $this->setData(self::EMAIL, trim($email));
+        return $this->setData(self::EMAIL, trim((string) $email));
     }
 
     public function setMiscData($miscData)
     {
-        return $this->setData(self::MISC_DATA, trim($miscData));
+        return $this->setData(self::MISC_DATA, trim((string) $miscData));
     }
 }

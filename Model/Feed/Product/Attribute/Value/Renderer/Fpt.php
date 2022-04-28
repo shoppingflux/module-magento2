@@ -39,7 +39,7 @@ class Fpt extends AbstractRenderer
             foreach ($value as $row) {
                 $row['website_id'] = (int) $row['website_id'];
                 $row['state'] = (int) $row['state'];
-                $countryId = strtolower(trim($row['country']));
+                $countryId = strtolower(trim($row['country'] ?? ''));
                 $chosenRow = $countryRows[$countryId] ?? null;
 
                 if (

@@ -27,7 +27,7 @@ interface ItemInterface
     public function getOrderId();
 
     /**
-     * @return int
+     * @return string
      */
     public function getReference();
 

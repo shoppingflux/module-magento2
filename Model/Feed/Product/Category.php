@@ -59,7 +59,7 @@ class Category
         $this->id = (int) $catalogCategory->getId();
         $this->parentId = (int) $catalogCategory->getParentId();
         $this->pathIds = array_map('intval', $catalogCategory->getPathIds());
-        $this->name = trim($catalogCategory->getName());
+        $this->name = trim((string) $catalogCategory->getName());
         $this->url = $catalogCategory->getUrl();
         $this->level = (int) $catalogCategory->getLevel();
         $this->position = (int) $catalogCategory->getPosition();

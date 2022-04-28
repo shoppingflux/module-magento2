@@ -66,6 +66,7 @@ class Iterator implements \Iterator
         $this->connection = $connection;
     }
 
+    #[\ReturnTypeWillChange]
     public function current()
     {
         return $this->currentItem;
@@ -74,6 +75,7 @@ class Iterator implements \Iterator
     /**
      * @throws \Zend_Db_Statement_Exception
      */
+    #[\ReturnTypeWillChange]
     public function next()
     {
         if ($row = $this->statement->fetch()) {
@@ -87,11 +89,13 @@ class Iterator implements \Iterator
         }
     }
 
+    #[\ReturnTypeWillChange]
     public function key()
     {
         return $this->hasValidItem ? $this->currentItemIndex : null;
     }
 
+    #[\ReturnTypeWillChange]
     public function valid()
     {
         return $this->hasValidItem;
@@ -101,6 +105,7 @@ class Iterator implements \Iterator
      * @throws LocalizedException
      * @throws \Zend_Db_Statement_Exception
      */
+    #[\ReturnTypeWillChange]
     public function rewind()
     {
         if ($this->query instanceof DbSelect) {

@@ -141,7 +141,8 @@ class Importer
     public function getApiTokenByLogin($login, $password)
     {
         $apiSession = $this->apiSessionManager->getSessionByLogin($login, $password);
-        return trim($apiSession->getToken());
+
+        return trim((string) $apiSession->getToken());
     }
 
     /**
@@ -175,7 +176,7 @@ class Importer
         $baseStoreId = null,
         $feedFileNameBase = null
     ) {
-        $apiToken = trim($apiToken);
+        $apiToken = trim((string) $apiToken);
 
         if (empty($apiToken)) {
             throw new LocalizedException(__('The API token can not be empty.'));

@@ -28,7 +28,7 @@ class Item extends AbstractModel implements ItemInterface
 
     public function getReference()
     {
-        return trim($this->getDataByKey(self::REFERENCE));
+        return trim((string) $this->getDataByKey(self::REFERENCE));
     }
 
     public function getQuantity()
@@ -54,7 +54,7 @@ class Item extends AbstractModel implements ItemInterface
 
     public function setReference($reference)
     {
-        return $this->setData(self::REFERENCE, trim($reference));
+        return $this->setData(self::REFERENCE, trim((string) $reference));
     }
 
     public function setQuantity($quantity)

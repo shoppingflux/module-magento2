@@ -28,17 +28,17 @@ class Log extends AbstractModel implements LogInterface
 
     public function getType()
     {
-        return trim($this->getDataByKey(self::TYPE));
+        return trim((string) $this->getDataByKey(self::TYPE));
     }
 
     public function getMessage()
     {
-        return trim($this->getDataByKey(self::MESSAGE));
+        return trim((string) $this->getDataByKey(self::MESSAGE));
     }
 
     public function getDetails()
     {
-        return trim($this->getDataByKey(self::DETAILS));
+        return trim((string) $this->getDataByKey(self::DETAILS));
     }
 
     public function getCreatedAt()
@@ -53,17 +53,17 @@ class Log extends AbstractModel implements LogInterface
 
     public function setType($type)
     {
-        return $this->setData(self::TYPE, trim($type));
+        return $this->setData(self::TYPE, trim((string) $type));
     }
 
     public function setMessage($message)
     {
-        return $this->setData(self::MESSAGE, trim($message));
+        return $this->setData(self::MESSAGE, trim((string) $message));
     }
 
     public function setDetails($details)
     {
-        return $this->setData(self::DETAILS, trim($details));
+        return $this->setData(self::DETAILS, trim((string) $details));
     }
 
     public function setCreatedAt($createdAt)

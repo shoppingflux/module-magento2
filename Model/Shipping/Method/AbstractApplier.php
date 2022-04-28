@@ -93,11 +93,11 @@ abstract class AbstractApplier implements ApplierInterface
 
         if (null !== $availableShippingRate) {
             if (!$this->getConfig()->shouldForceDefaultCarrierTitle($configData)) {
-                $carrierTitle = trim($availableShippingRate->getCarrierTitle());
+                $carrierTitle = trim((string) $availableShippingRate->getCarrierTitle());
             }
 
             if (!$this->getConfig()->shouldForceDefaultMethodTitle($configData)) {
-                $methodTitle = trim($availableShippingRate->getMethodTitle());
+                $methodTitle = trim((string) $availableShippingRate->getMethodTitle());
             }
         } elseif ($this->getConfig()->shouldOnlyApplyIfAvailable($configData)) {
             return null;

@@ -72,8 +72,8 @@ class Checkbox extends AbstractField
         $sortOrder = null
     ) {
         $this->isCheckedByDefault = (bool) $isCheckedByDefault;
-        $this->checkedLabel = (string) trim($checkedLabel) ?? __('Yes');
-        $this->uncheckedLabel = (string) trim($uncheckedLabel) ?? __('No');
+        $this->checkedLabel = (string) trim((string) $checkedLabel) ?? __('Yes');
+        $this->uncheckedLabel = (string) trim((string) $uncheckedLabel) ?? __('No');
         $this->checkedNotice = (string) $checkedNotice;
         $this->uncheckedNotice = (string) $uncheckedNotice;
         $this->dependencies = [];

@@ -94,7 +94,7 @@ class Source implements OptionSourceInterface
 
                 foreach ($channels as $channel) {
                     if ($channel->isInstalled()) {
-                        $name = trim($channel->getName());
+                        $name = trim((string) $channel->getName());
                         $code = $this->stringHelper->getNormalizedCode($name);
 
                         $this->storeMarketplaces[$storeId][$code] = [
@@ -123,7 +123,7 @@ class Source implements OptionSourceInterface
             foreach ($marketplaces as $channelId => $marketplaceName) {
                 $this->defaultMarketplaces[$channelId] = [
                     'value' => $this->stringHelper->getNormalizedCode($marketplaceName),
-                    'label' => trim($marketplaceName),
+                    'label' => trim((string) $marketplaceName),
                     'channel_id' => (int) $channelId,
                 ];
             }

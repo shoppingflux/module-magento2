@@ -82,7 +82,7 @@ class Basic extends AbstractConfig implements BasicInterface
      */
     private function getShippingMethodFullCode(DataObject $configData)
     {
-        return trim($this->getFieldValue(self::KEY_FULL_SHIPPING_METHOD_CODE, $configData));
+        return trim((string) $this->getFieldValue(self::KEY_FULL_SHIPPING_METHOD_CODE, $configData));
     }
 
     /**

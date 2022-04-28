@@ -963,7 +963,7 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getStoreDefaultPhoneNumber(StoreInterface $store)
     {
         return trim(
-            $this->scopeConfig->getValue(
+            (string) $this->scopeConfig->getValue(
                 StoreInformation::XML_PATH_STORE_INFO_PHONE,
                 ScopeInterface::SCOPE_STORE,
                 $store->getBaseStoreId()
@@ -973,7 +973,7 @@ class Config extends AbstractConfig implements ConfigInterface
 
     public function getDefaultPhoneNumber(StoreInterface $store)
     {
-        $defaultPhone = trim($this->getFieldValue($store, self::KEY_DEFAULT_PHONE_NUMBER));
+        $defaultPhone = trim((string) $this->getFieldValue($store, self::KEY_DEFAULT_PHONE_NUMBER));
 
         if ('' === $defaultPhone) {
             $defaultPhone = $this->getStoreDefaultPhoneNumber($store);
@@ -1011,13 +1011,13 @@ class Config extends AbstractConfig implements ConfigInterface
 
     public function getDefaultPaymentMethodTitle(StoreInterface $store)
     {
-        return trim($this->getFieldValue($store, self::KEY_DEFAULT_PAYMENT_METHOD_TITLE));
+        return trim((string) $this->getFieldValue($store, self::KEY_DEFAULT_PAYMENT_METHOD_TITLE));
     }
 
     public function getMarketplacePaymentMethodTitle(StoreInterface $store, $marketplace)
     {
         return trim(
-            $this->getMarketplaceBasedConfigValue(
+            (string) $this->getMarketplaceBasedConfigValue(
                 static::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES,
                 static::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__MARKETPLACE,
                 static::KEY_MARKETPLACE_PAYMENT_METHOD_TITLES__TITLE,

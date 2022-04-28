@@ -165,7 +165,7 @@ class Store extends AbstractModel implements StoreInterface
 
     public function getFeedFileNameBase()
     {
-        return trim($this->getData(self::FEED_FILE_NAME_BASE));
+        return trim((string) $this->getData(self::FEED_FILE_NAME_BASE));
     }
 
     public function getCreatedAt()
@@ -235,7 +235,7 @@ class Store extends AbstractModel implements StoreInterface
 
     public function setFeedFileNameBase($feedFileNameBase)
     {
-        return $this->setData(self::FEED_FILE_NAME_BASE, trim($feedFileNameBase));
+        return $this->setData(self::FEED_FILE_NAME_BASE, trim((string) $feedFileNameBase));
     }
 
     public function setCreatedAt($createdAt)

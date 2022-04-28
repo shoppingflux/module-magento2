@@ -32,7 +32,7 @@ class Info extends BaseInfo
     protected function _toHtml()
     {
         try {
-            $title = trim($this->getInfo()->getAdditionalInformation(static::INFO_KEY_TITLE));
+            $title = trim((string) $this->getInfo()->getAdditionalInformation(static::INFO_KEY_TITLE));
         } catch (\Exception $e) {
             $title = '';
         }

@@ -74,7 +74,7 @@ class Source implements OptionSourceInterface
 
             $options[] = [
                 'value' => $customerGroupId,
-                'label' => trim($customerGroup['label']),
+                'label' => trim($customerGroup['label'] ?? ''),
             ];
         }
 

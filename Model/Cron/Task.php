@@ -97,7 +97,7 @@ class Task extends AbstractModel implements TaskInterface
     {
         switch ($this->getScheduleType()) {
             case static::SCHEDULE_TYPE_CUSTOM:
-                return trim($this->getData(self::CRON_EXPRESSION));
+                return trim((string) $this->getData(self::CRON_EXPRESSION));
             case static::SCHEDULE_TYPE_EVERY_MINUTE:
                 return '* * * * *';
             case static::SCHEDULE_TYPE_EVERY_5_MINUTES:
@@ -127,7 +127,7 @@ class Task extends AbstractModel implements TaskInterface
 
     public function getCronGroup()
     {
-        $group = trim($this->getData(self::CRON_GROUP));
+        $group = trim((string) $this->getData(self::CRON_GROUP));
 
         return ('' !== $group) ? $group : static::DEFAULT_CRON_GROUP;
     }
@@ -154,7 +154,7 @@ class Task extends AbstractModel implements TaskInterface
 
     public function setName($name)
     {
-        return $this->setData(self::NAME, trim($name));
+        return $this->setData(self::NAME, trim((string) $name));
     }
 
     public function setDescription($description)
@@ -164,7 +164,7 @@ class Task extends AbstractModel implements TaskInterface
 
     public function setCommandCode($code)
     {
-        return $this->setData(self::COMMAND_CODE, trim($code));
+        return $this->setData(self::COMMAND_CODE, trim((string) $code));
     }
 
     public function setCommandConfiguration(DataObject $configuration)

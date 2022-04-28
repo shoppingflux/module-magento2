@@ -91,12 +91,12 @@ class Rule extends AbstractModel implements RuleInterface
 
     public function getName()
     {
-        return trim($this->getDataByKey(self::NAME));
+        return trim((string) $this->getDataByKey(self::NAME));
     }
 
     public function getDescription()
     {
-        return trim($this->getDataByKey(self::DESCRIPTION));
+        return trim((string) $this->getDataByKey(self::DESCRIPTION));
     }
 
     public function isActive()
@@ -169,12 +169,12 @@ class Rule extends AbstractModel implements RuleInterface
 
     public function setName($name)
     {
-        return $this->setData(self::NAME, trim($name));
+        return $this->setData(self::NAME, trim((string) $name));
     }
 
     public function setDescription($description)
     {
-        return $this->setData(self::DESCRIPTION, trim($description));
+        return $this->setData(self::DESCRIPTION, trim((string) $description));
     }
 
     public function setIsActive($isActive)
@@ -210,7 +210,7 @@ class Rule extends AbstractModel implements RuleInterface
 
     public function setApplierCode($code)
     {
-        return $this->setData(self::APPLIER_CODE, trim($code));
+        return $this->setData(self::APPLIER_CODE, trim((string) $code));
     }
 
     public function setApplierConfiguration(DataObject $configuration)

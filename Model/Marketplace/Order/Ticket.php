@@ -23,7 +23,7 @@ class Ticket extends AbstractModel implements TicketInterface
 
     public function getShoppingFeedTicketId()
     {
-        return trim($this->getDataByKey(self::SHOPPING_FEED_TICKET_ID));
+        return trim((string) $this->getDataByKey(self::SHOPPING_FEED_TICKET_ID));
     }
 
     public function getOrderId()
@@ -33,7 +33,7 @@ class Ticket extends AbstractModel implements TicketInterface
 
     public function getAction()
     {
-        return trim($this->getDataByKey(self::ACTION));
+        return trim((string) $this->getDataByKey(self::ACTION));
     }
 
     public function getStatus()
@@ -48,7 +48,7 @@ class Ticket extends AbstractModel implements TicketInterface
 
     public function setShoppingFeedTicketId($ticketId)
     {
-        return $this->setData(self::SHOPPING_FEED_TICKET_ID, trim($ticketId));
+        return $this->setData(self::SHOPPING_FEED_TICKET_ID, trim((string) $ticketId));
     }
 
     public function setOrderId($orderId)
@@ -58,7 +58,7 @@ class Ticket extends AbstractModel implements TicketInterface
 
     public function setAction($action)
     {
-        return $this->setData(self::ACTION, trim($action));
+        return $this->setData(self::ACTION, trim((string) $action));
     }
 
     public function setStatus($status)
