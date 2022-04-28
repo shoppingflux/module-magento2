@@ -182,7 +182,7 @@ class Prices extends AbstractAdapter implements PricesInterface
             return $product->getFinalPrice(1);
         }
 
-        return $product->getPrice();
+        return (float) $product->getPrice();
     }
 
     /**
@@ -200,7 +200,7 @@ class Prices extends AbstractAdapter implements PricesInterface
      */
     private function getProductFinalPrice(CatalogProduct $product)
     {
-        return $product->getFinalPrice(1);
+        return (float) $product->getFinalPrice(1);
     }
 
     /**

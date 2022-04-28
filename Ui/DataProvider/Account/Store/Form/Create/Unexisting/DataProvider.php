@@ -112,10 +112,11 @@ class DataProvider extends BaseDataProvider
      */
     public function getStoreDefaultCountryId(Store $store)
     {
-        $countryId = trim($store->getConfig(StoreInformation::XML_PATH_STORE_INFO_COUNTRY_CODE));
+        $countryId = trim((string) $store->getConfig(StoreInformation::XML_PATH_STORE_INFO_COUNTRY_CODE));
+
         return !empty($defaultCountryId)
             ? $countryId
-            : trim($store->getConfig(DirectoryHelper::XML_PATH_DEFAULT_COUNTRY));
+            : trim((string) $store->getConfig(DirectoryHelper::XML_PATH_DEFAULT_COUNTRY));
     }
 
     /**
@@ -124,8 +125,9 @@ class DataProvider extends BaseDataProvider
      */
     public function getStoreDefaultLogin(Store $store)
     {
-        $storeName = trim($store->getConfig(StoreInformation::XML_PATH_STORE_INFO_NAME));
-        $storeName = !empty($storeName) ? $storeName : trim($store->getFrontendName());
+        $storeName = trim((string) $store->getConfig(StoreInformation::XML_PATH_STORE_INFO_NAME));
+        $storeName = !empty($storeName) ? $storeName : trim((string) $store->getFrontendName());
+
         return strtolower(trim(preg_replace('/[^a-zA-Z0-9-]+/', '-', $this->filterManager->translit($storeName)), '-'));
     }
 
@@ -162,7 +164,8 @@ class DataProvider extends BaseDataProvider
             }
         }
 
-        return $this->metaCompatibilityFixer->fixMetaConfiguration(array_merge_recursive(
+        return $this->metaCompatibilityFixer->fixMetaConfiguration(
+            array_merge_recursive(
                 $this->meta,
                 [
                     self::FIELDSET_ACCOUNT => [

@@ -26,7 +26,7 @@ class Image extends AbstractRenderer
         CatalogProduct $product,
         AbstractAttribute $attribute
     ) {
-        $imageFile = trim($product->getData($attribute->getAttributeCode()));
+        $imageFile = trim((string) $product->getData($attribute->getAttributeCode()));
 
         if (!empty($imageFile) && (ProductConstants::EMPTY_IMAGE_VALUE !== $imageFile)) {
             $frontend = $attribute->getFrontend();

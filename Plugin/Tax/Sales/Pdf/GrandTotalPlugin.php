@@ -17,7 +17,7 @@ class GrandTotalPlugin
             ->getData(MarketplaceOrderInterface::SALES_ENTITY_FIELD_NAME_MARKETPLACE_FEES_AMOUNT);
 
         if ($feesAmount > 0) {
-            $amountPrefix = trim($subject->getAmountPrefix());
+            $amountPrefix = trim((string) $subject->getAmountPrefix());
             $fontSize = (int) $subject->getFontSize();
 
             array_unshift(

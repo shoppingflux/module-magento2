@@ -90,7 +90,7 @@ class Order extends AbstractModel implements OrderInterface
 
     public function getMarketplaceOrderNumber()
     {
-        return trim($this->getDataByKey(self::MARKETPLACE_ORDER_NUMBER));
+        return trim((string) $this->getDataByKey(self::MARKETPLACE_ORDER_NUMBER));
     }
 
     public function getShoppingFeedMarketplaceId()
@@ -105,7 +105,7 @@ class Order extends AbstractModel implements OrderInterface
 
     public function getMarketplaceName()
     {
-        return trim($this->getDataByKey(self::MARKETPLACE_NAME));
+        return trim((string) $this->getDataByKey(self::MARKETPLACE_NAME));
     }
 
     public function getShoppingFeedStatus()
@@ -135,17 +135,17 @@ class Order extends AbstractModel implements OrderInterface
 
     public function getCurrencyCode()
     {
-        return trim($this->getDataByKey(self::CURRENCY_CODE));
+        return trim((string) $this->getDataByKey(self::CURRENCY_CODE));
     }
 
     public function getPaymentMethod()
     {
-        return trim($this->getDataByKey(self::PAYMENT_METHOD));
+        return trim((string) $this->getDataByKey(self::PAYMENT_METHOD));
     }
 
     public function getShipmentCarrier()
     {
-        return trim($this->getDataByKey(self::SHIPMENT_CARRIER));
+        return trim((string) $this->getDataByKey(self::SHIPMENT_CARRIER));
     }
 
     public function getAdditionalFields()
@@ -251,7 +251,7 @@ class Order extends AbstractModel implements OrderInterface
 
     public function setMarketplaceOrderNumber($orderNumber)
     {
-        return $this->setData(self::MARKETPLACE_ORDER_NUMBER, trim($orderNumber));
+        return $this->setData(self::MARKETPLACE_ORDER_NUMBER, trim((string) $orderNumber));
     }
 
     public function setShoppingFeedMarketplaceId($marketplaceId)
@@ -266,12 +266,12 @@ class Order extends AbstractModel implements OrderInterface
 
     public function setMarketplaceName($marketplaceName)
     {
-        return $this->setData(self::MARKETPLACE_NAME, trim($marketplaceName));
+        return $this->setData(self::MARKETPLACE_NAME, trim((string) $marketplaceName));
     }
 
     public function setShoppingFeedStatus($status)
     {
-        return $this->setData(self::SHOPPING_FEED_STATUS, trim($status));
+        return $this->setData(self::SHOPPING_FEED_STATUS, trim((string) $status));
     }
 
     public function setProductAmount($amount)
@@ -296,17 +296,17 @@ class Order extends AbstractModel implements OrderInterface
 
     public function setCurrencyCode($currencyCode)
     {
-        return $this->setData(self::CURRENCY_CODE, trim($currencyCode));
+        return $this->setData(self::CURRENCY_CODE, trim((string) $currencyCode));
     }
 
     public function setPaymentMethod($paymentMethod)
     {
-        return $this->setData(self::PAYMENT_METHOD, trim($paymentMethod));
+        return $this->setData(self::PAYMENT_METHOD, trim((string) $paymentMethod));
     }
 
     public function setShipmentCarrier($shipmentCarrier)
     {
-        return $this->setData(self::SHIPMENT_CARRIER, trim($shipmentCarrier));
+        return $this->setData(self::SHIPMENT_CARRIER, trim((string) $shipmentCarrier));
     }
 
     public function setAdditionalFields(DataObject $additionalFields)

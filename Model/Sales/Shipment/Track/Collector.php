@@ -91,10 +91,10 @@ class Collector extends OriginalCollector
                 $trackingDetail = $salesOrderTrack->getNumberDetail();
 
                 if ($trackingDetail instanceof DataObject) {
-                    $carrierCode = trim($trackingDetail->getCarrier());
-                    $carrierTitle = trim($trackingDetail->getCarrierTitle());
-                    $trackingNumber = trim($trackingDetail->getTracking());
-                    $trackingUrl = trim($trackingDetail->getUrl());
+                    $carrierCode = trim((string) $trackingDetail->getCarrier());
+                    $carrierTitle = trim((string) $trackingDetail->getCarrierTitle());
+                    $trackingNumber = trim((string) $trackingDetail->getTracking());
+                    $trackingUrl = trim((string) $trackingDetail->getUrl());
                 } else {
                     throw new \Exception();
                 }
@@ -106,19 +106,21 @@ class Collector extends OriginalCollector
             }
 
             if (empty($carrierCode)) {
-                $carrierCode = trim($salesOrderTrack->getCarrierCode());
+                $carrierCode = trim((string) $salesOrderTrack->getCarrierCode());
             }
 
             if (empty($carrierTitle)) {
-                $carrierTitle = trim($salesOrderTrack->getTitle());
+                $carrierTitle = trim((string) $salesOrderTrack->getTitle());
             }
 
             if (empty($trackingNumber)) {
-                $trackingNumber = trim($salesOrderTrack->getTrackNumber());
+                $trackingNumber = trim((string) $salesOrderTrack->getTrackNumber());
             }
 
             if (empty($trackingUrl)) {
-                $trackingUrl = is_callable([ $salesOrderTrack, 'getUrl' ]) ? trim($salesOrderTrack->getUrl()) : '';
+                $trackingUrl = is_callable([ $salesOrderTrack, 'getUrl' ])
+                    ? trim((string) $salesOrderTrack->getUrl())
+                    : '';
             }
 
             $relevance = static::DEFAULT_BASE_TRACK_RELEVANCE;

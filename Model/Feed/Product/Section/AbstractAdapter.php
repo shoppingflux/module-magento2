@@ -139,7 +139,7 @@ abstract class AbstractAdapter implements AdapterInterface
     {
         return $this->labelledValueFactory->create(
             [
-                'label' => trim($label),
+                'label' => trim((string) $label),
                 'value' => is_array($value) ? json_encode($value) : (string) $value,
             ]
         );

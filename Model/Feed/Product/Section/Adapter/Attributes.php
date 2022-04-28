@@ -155,14 +155,14 @@ class Attributes extends AbstractAdapter implements AttributesInterface
         $urlDataObject = $product->getDataByKey('url_data_object');
 
         if ($urlDataObject instanceof DataObject) {
-            $requestPath = trim($urlDataObject->getData('url_rewrite'));
+            $requestPath = trim((string) $urlDataObject->getData('url_rewrite'));
         }
 
         if (empty($requestPath)) {
             // Force the initialization of the request path, if possible.
             /** @see \Magento\Catalog\Model\Product\Url::getUrl() */
             $product->getProductUrl(false);
-            $requestPath = trim($product->getRequestPath());
+            $requestPath = trim((string) $product->getRequestPath());
         }
 
         $routeParameters = [
@@ -207,7 +207,9 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                 ->toOptionHash();
         }
 
-        return isset($this->attributeSetNames[$attributeSetId]) ? trim($this->attributeSetNames[$attributeSetId]) : '';
+        return isset($this->attributeSetNames[$attributeSetId])
+            ? trim((string) $this->attributeSetNames[$attributeSetId])
+            : '';
     }
 
     /**

@@ -64,7 +64,7 @@ class Marketplace extends AbstractOrder
                 if (
                     !in_array($key, static::IGNORED_ADDITIONAL_DATA_KEYS, true)
                     && is_scalar($value)
-                    && ('' !== ($value = trim($value)))
+                    && ('' !== ($value = trim((string) $value)))
                 ) {
                     $data[$key] = $value;
                 }

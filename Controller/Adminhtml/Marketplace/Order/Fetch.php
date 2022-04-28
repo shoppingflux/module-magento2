@@ -72,7 +72,7 @@ class Fetch extends OrderAction
                 $apiOrder = $this->marketplaceOrderManager->getStoreImportableApiOrderByChannelAndReference(
                     $store,
                     (int) $orderData[DataProvider::FIELD_CHANNEL_ID],
-                    trim($orderData[DataProvider::FIELD_ORDER_REFERENCE])
+                    trim($orderData[DataProvider::FIELD_ORDER_REFERENCE] ?? '')
                 );
 
                 if (null === $apiOrder) {

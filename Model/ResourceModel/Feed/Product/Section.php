@@ -80,7 +80,7 @@ class Section extends AbstractDb
      */
     public function unserializeSectionData($data)
     {
-        return ('' !== trim($data)) ? (array) json_decode($data, true) : [];
+        return ('' !== trim((string) $data)) ? (array) json_decode($data, true) : [];
     }
 
     /**

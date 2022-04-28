@@ -53,7 +53,7 @@ class Images extends AbstractAdapter implements ImagesInterface
     {
         $data = [];
         $catalogProduct = $product->getCatalogProduct();
-        $mainImageFile = trim($catalogProduct->getImage());
+        $mainImageFile = trim((string) $catalogProduct->getImage());
         $totalImageCount = 1;
         $imageUrls = [];
         $imagePositions = [];
@@ -62,10 +62,10 @@ class Images extends AbstractAdapter implements ImagesInterface
         if ($galleryImages instanceof \Traversable) {
             /** @var DataObject $galleryImage */
             foreach ($galleryImages as $galleryImage) {
-                $imageFile = trim($galleryImage->getData('file'));
+                $imageFile = trim((string) $galleryImage->getData('file'));
 
                 if (!empty($imageFile) && (ProductConstants::EMPTY_IMAGE_VALUE !== $imageFile)) {
-                    $imageUrls[$imageFile] = trim($galleryImage->getData('url'));
+                    $imageUrls[$imageFile] = trim((string) $galleryImage->getData('url'));
                     $imagePositions[$imageFile] = (int) $galleryImage->getData('position');
                 }
             }

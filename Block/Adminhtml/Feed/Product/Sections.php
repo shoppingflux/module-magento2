@@ -178,7 +178,8 @@ class Sections extends Template
      */
     public function getFormattedDate($date)
     {
-        $date = trim($date);
+        $date = trim((string) $date);
+
         return empty($date) ? __('Never') : $this->formatDate($date, \IntlDateFormatter::SHORT, true, 'UTC');
     }
 }

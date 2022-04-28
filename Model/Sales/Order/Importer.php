@@ -1152,7 +1152,7 @@ class Importer implements ImporterInterface
                 $product = null;
 
                 try {
-                    if (!$shouldUseItemReferenceAsProductId || !ctype_digit(trim($reference))) {
+                    if (!$shouldUseItemReferenceAsProductId || !ctype_digit(trim((string) $reference))) {
                         $product = $this->catalogProductRepository->get($reference, false, $quoteStoreId, false);
                     }
                 } catch (NoSuchEntityException $e) {
@@ -1383,7 +1383,7 @@ class Importer implements ImporterInterface
             ]
         );
 
-        $paymentMethodTitle = trim($paymentMethodTitle);
+        $paymentMethodTitle = trim((string) $paymentMethodTitle);
 
         if ('' !== $paymentMethodTitle) {
             try {

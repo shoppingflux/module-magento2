@@ -67,10 +67,10 @@ class Collector
         $shipmentTracks = [];
 
         foreach ($shipment->getTracks() as $shipmentTrack) {
-            $carrierCode = trim($shipmentTrack->getCarrierCode());
-            $carrierTitle = trim($shipmentTrack->getTitle());
-            $trackingNumber = trim($shipmentTrack->getTrackNumber());
-            $trackingUrl = is_callable([ $shipmentTrack, 'getUrl' ]) ? trim($shipmentTrack->getUrl()) : '';
+            $carrierCode = trim((string) $shipmentTrack->getCarrierCode());
+            $carrierTitle = trim((string) $shipmentTrack->getTitle());
+            $trackingNumber = trim((string) $shipmentTrack->getTrackNumber());
+            $trackingUrl = is_callable([ $shipmentTrack, 'getUrl' ]) ? trim((string) $shipmentTrack->getUrl()) : '';
             $relevance = static::DEFAULT_BASE_TRACK_RELEVANCE;
 
             if (!empty($carrierCode)) {

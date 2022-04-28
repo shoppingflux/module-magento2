@@ -14,7 +14,7 @@ class NewCondition extends RuleAction
     public function execute()
     {
         $rawResult = $this->rawResultFactory->create();
-        $id = trim($this->getRequest()->getParam('id'));
+        $id = trim((string) $this->getRequest()->getParam('id'));
         $typeValues = array_filter(explode('|', str_replace('-', '/', $this->getRequest()->getParam('type'))));
 
         if (empty($id) || empty($typeValues)) {

@@ -173,7 +173,7 @@ abstract class AbstractColumn extends Column
         ) {
             return $this->isImportableOrderData(
                 (int) $item[OrderInterface::STORE_ID],
-                trim($item[OrderInterface::SHOPPING_FEED_STATUS]),
+                trim($item[OrderInterface::SHOPPING_FEED_STATUS] ?? ''),
                 (bool) $item[OrderInterface::IS_FULFILLED],
                 (int) $item[OrderInterface::SALES_ORDER_ID],
                 \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])
@@ -198,7 +198,7 @@ abstract class AbstractColumn extends Column
         ) {
             $isImportable = $this->isImportableOrderData(
                 (int) $item[OrderInterface::STORE_ID],
-                trim($item[OrderInterface::SHOPPING_FEED_STATUS]),
+                trim($item[OrderInterface::SHOPPING_FEED_STATUS] ?? ''),
                 (bool) $item[OrderInterface::IS_FULFILLED],
                 (int) $item[OrderInterface::SALES_ORDER_ID],
                 \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])
@@ -210,7 +210,7 @@ abstract class AbstractColumn extends Column
 
             $reason = $this->getNonImportableOrderDataReason(
                 (int) $item[OrderInterface::STORE_ID],
-                trim($item[OrderInterface::SHOPPING_FEED_STATUS]),
+                trim($item[OrderInterface::SHOPPING_FEED_STATUS] ?? ''),
                 (bool) $item[OrderInterface::IS_FULFILLED],
                 (int) $item[OrderInterface::SALES_ORDER_ID],
                 \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])

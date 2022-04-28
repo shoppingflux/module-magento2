@@ -49,8 +49,8 @@ class Rows extends AbstractHandler
         }
 
         $this->fields = $fields;
-        $this->rowIdPropertyName = trim($rowIdPropertyName);
-        $this->isDeletedRowPropertyName = trim($isDeletedPropertyName);
+        $this->rowIdPropertyName = trim((string) $rowIdPropertyName);
+        $this->isDeletedRowPropertyName = trim((string) $isDeletedPropertyName);
     }
 
     public function getFormDataType()

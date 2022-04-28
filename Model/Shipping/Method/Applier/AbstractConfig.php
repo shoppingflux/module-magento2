@@ -100,7 +100,7 @@ abstract class AbstractConfig extends BaseConfig implements ConfigInterface
 
     public function getDefaultCarrierTitle(DataObject $configData)
     {
-        return trim($this->getFieldValue(self::KEY_DEFAULT_CARRIER_TITLE, $configData));
+        return trim((string) $this->getFieldValue(self::KEY_DEFAULT_CARRIER_TITLE, $configData));
     }
 
     public function shouldForceDefaultCarrierTitle(DataObject $configData)
@@ -110,7 +110,7 @@ abstract class AbstractConfig extends BaseConfig implements ConfigInterface
 
     public function getDefaultMethodTitle(DataObject $configData)
     {
-        return trim($this->getFieldValue(self::KEY_DEFAULT_METHOD_TITLE, $configData));
+        return trim((string) $this->getFieldValue(self::KEY_DEFAULT_METHOD_TITLE, $configData));
     }
 
     public function shouldForceDefaultMethodTitle(DataObject $configData)
