@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.1] - 2022-04-28
+### Fixed
+- Fix compatibility issues with PHP 8.1
+
 ## [1.0.0] - 2022-04-27
 ### Changed
 - Switch from setup scripts to declarative schema
