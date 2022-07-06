@@ -146,6 +146,10 @@ abstract class AbstractRenderer implements RendererInterface
      */
     public function isTextAttribute(AbstractAttribute $attribute)
     {
+        if ($attribute->getAttributeCode() === 'sku') {
+            return true;
+        }
+
         return in_array($attribute->getBackendType(), [ 'text', 'varchar' ], true)
             && in_array($attribute->getFrontendInput(), [ 'text', 'textarea' ], true);
     }
