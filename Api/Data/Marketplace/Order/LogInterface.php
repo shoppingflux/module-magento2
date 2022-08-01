@@ -17,6 +17,7 @@ interface LogInterface
     const TYPE = 'type';
     const MESSAGE = 'message';
     const DETAILS = 'details';
+    const IS_READ = 'is_read';
     const CREATED_AT = 'created_at';
     /**#@+*/
 
@@ -46,6 +47,11 @@ interface LogInterface
     public function getDetails();
 
     /**
+     * @return bool
+     */
+    public function isRead();
+
+    /**
      * @return string
      */
     public function getCreatedAt();
@@ -73,6 +79,12 @@ interface LogInterface
      * @return LogInterface
      */
     public function setDetails($details);
+
+    /**
+     * @param bool $isRead
+     * @return LogInterface
+     */
+    public function setIsRead($isRead);
 
     /**
      * @param string $createdAt

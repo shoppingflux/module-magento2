@@ -13,6 +13,7 @@ use ShoppingFeed\Manager\Api\Marketplace\Order\LogRepositoryInterface;
 abstract class LogAction extends Action
 {
     const ADMIN_RESOURCE = 'ShoppingFeed_Manager::marketplace_order_logs';
+
     const REQUEST_KEY_LOG_ID = 'log_id';
 
     /**

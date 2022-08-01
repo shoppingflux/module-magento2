@@ -41,6 +41,11 @@ class Log extends AbstractModel implements LogInterface
         return trim((string) $this->getDataByKey(self::DETAILS));
     }
 
+    public function isRead()
+    {
+        return (bool) $this->getDataByKey(self::IS_READ);
+    }
+
     public function getCreatedAt()
     {
         return $this->getDataByKey(self::CREATED_AT);
@@ -64,6 +69,11 @@ class Log extends AbstractModel implements LogInterface
     public function setDetails($details)
     {
         return $this->setData(self::DETAILS, trim((string) $details));
+    }
+
+    public function setIsRead($isRead)
+    {
+        return $this->setData(self::IS_READ, (bool) $isRead);
     }
 
     public function setCreatedAt($createdAt)
