@@ -126,6 +126,12 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldImportVatId(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return string|null
      */
     public function getDefaultPaymentMethodTitle(StoreInterface $store);

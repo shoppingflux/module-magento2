@@ -56,6 +56,7 @@ interface OrderInterface
     const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
 
     const ADDITIONAL_FIELD_IS_BUSINESS_ORDER = 'is_business_order';
+    const ADDITIONAL_FIELD_VAT_ID = 'tax_registration_id';
 
     const DEFAULT_IMPORT_TRY_COUNT = 3;
 

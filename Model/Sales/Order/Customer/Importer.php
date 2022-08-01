@@ -507,6 +507,29 @@ class Importer
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $address
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getAddressVatId(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
+        $vatId = null;
+
+        if ($address->getType() === MarketplaceAddressInterface::TYPE_BILLING) {
+            $vatId = trim(
+                (string) $order->getAdditionalFields()
+                    ->getDataByKey(MarketplaceOrderInterface::ADDITIONAL_FIELD_VAT_ID)
+            );
+        }
+
+        return !empty($vatId) ? $vatId : null;
+    }
+
+    /**
      * @param Quote $quote
      * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $billingAddress
@@ -641,6 +664,10 @@ class Importer
             $customerAddress->setRegionId($this->getAddressRegionId($order, $address, $store));
         }
 
+        if ($this->orderGeneralConfig->shouldImportVatId($store)) {
+            $customerAddress->setVatId($this->getAddressVatId($order, $address, $store));
+        }
+
         $customerAddress->setCustomerId($customer->getId());
         $this->customerAddressResource->save($customerAddress);
 
@@ -690,6 +717,10 @@ class Importer
         }
 
         $quoteAddress->setCountryId($countryId);
+
+        if ($this->orderGeneralConfig->shouldImportVatId($store)) {
+            $quoteAddress->setVatId($this->getAddressVatId($order, $address, $store));
+        }
 
         return $quoteAddress;
     }
