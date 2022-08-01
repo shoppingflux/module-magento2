@@ -3,6 +3,8 @@
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Model\Account\Store\ConfigManager;
+use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
@@ -22,6 +24,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
     const KEY_DEFAULT_CARRIER_NAME = 'default_carrier_name';
     const KEY_DEFAULT_FEES = 'default_fees';
     const KEY_DEFAULT_DELAY = 'default_delay';
+    const KEY_USE_OLD_EXPORT_BEHAVIOR = 'use_old_export_behavior';
 
     /**
      * @var AttributeSourceInterface
@@ -52,12 +55,28 @@ class Shipping extends AbstractConfig implements ShippingInterface
         return array_merge(
             [
                 $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_USE_OLD_EXPORT_BEHAVIOR,
+                        'label' => __('Use Old Export Behavior'),
+                        'isCheckedByDefault' => false,
+                        'checkedNotice' => __('This should only be used for backwards compatibility reasons.'),
+                        'uncheckedNotice' => '',
+                        'checkedDependentFieldNames' => [
+                            self::KEY_CARRIER_NAME_ATTRIBUTE,
+                            self::KEY_DEFAULT_CARRIER_NAME,
+                        ],
+                        'sortOrder' => 10,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     Select::TYPE_CODE,
                     [
                         'name' => self::KEY_CARRIER_NAME_ATTRIBUTE,
                         'valueHandler' => $attributeHandler,
                         'label' => __('Carrier Name Attribute'),
-                        'sortOrder' => 10,
+                        'sortOrder' => 20,
                     ]
                 ),
 
@@ -67,7 +86,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
                         'name' => self::KEY_FEES_ATTRIBUTE,
                         'valueHandler' => $attributeHandler,
                         'label' => __('Fees Attribute'),
-                        'sortOrder' => 20,
+                        'sortOrder' => 30,
                     ]
                 ),
 
@@ -77,7 +96,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
                         'name' => self::KEY_DELAY_ATTRIBUTE,
                         'valueHandler' => $attributeHandler,
                         'label' => __('Delay Attribute'),
-                        'sortOrder' => 30,
+                        'sortOrder' => 40,
                     ]
                 ),
 
@@ -87,7 +106,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
                         'name' => self::KEY_DEFAULT_CARRIER_NAME,
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Carrier Name'),
-                        'sortOrder' => 40,
+                        'sortOrder' => 50,
                     ]
                 ),
 
@@ -97,7 +116,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
                         'name' => self::KEY_DEFAULT_FEES,
                         'valueHandler' => $this->valueHandlerFactory->create(NonNegativeNumberHandler::TYPE_CODE),
                         'label' => __('Default Fees'),
-                        'sortOrder' => 50,
+                        'sortOrder' => 60,
                     ]
                 ),
 
@@ -107,7 +126,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
                         'name' => self::KEY_DEFAULT_DELAY,
                         'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
                         'label' => __('Default Delay'),
-                        'sortOrder' => 60,
+                        'sortOrder' => 70,
                     ]
                 ),
             ],
@@ -159,5 +178,20 @@ class Shipping extends AbstractConfig implements ShippingInterface
                 $this->getDelayAttribute($store),
             ]
         );
+    }
+
+    public function shouldUseOldExportBehavior(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_USE_OLD_EXPORT_BEHAVIOR);
+    }
+
+    public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)
+    {
+        if (
+            version_compare($moduleVersion, '1.1.0', '<=')
+            && !$this->hasFieldValue($store, self::KEY_USE_OLD_EXPORT_BEHAVIOR)
+        ) {
+            $this->setFieldValue($store, self::KEY_USE_OLD_EXPORT_BEHAVIOR, true);
+        }
     }
 }

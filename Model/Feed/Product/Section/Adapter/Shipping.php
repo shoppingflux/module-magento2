@@ -92,7 +92,9 @@ class Shipping extends AbstractAdapter implements ShippingInterface
         if (isset($productData[self::KEY_FEES])) {
             $exportedProduct->addShipping(
                 $productData[self::KEY_FEES],
-                $productData[self::KEY_CARRIER_NAME] ?? ''
+                !$this->getConfig()->shouldUseOldExportBehavior($store)
+                    ? ($productData[self::KEY_DELAY] ?? '')
+                    : ($productData[self::KEY_CARRIER_NAME] ?? '')
             );
         }
 
