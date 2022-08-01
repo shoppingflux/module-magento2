@@ -18,6 +18,9 @@
                         <item name="indexField" xsi:type="string">log_id</item>
                     </item>
                     <item name="update_url" xsi:type="url" path="mui/index/render"/>
+                    <item name="filter_url_params" xsi:type="array">
+                        <item name="is_read" xsi:type="string">*</item>
+                    </item>
                 </item>
             </argument>
             <argument name="name" xsi:type="string">sfm_marketplace_order_log_listing_data_source</argument>

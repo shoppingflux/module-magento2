@@ -6,12 +6,15 @@ use Magento\Framework\Api\Search\AggregationInterface as SearchAggregationInterf
 use Magento\Framework\Api\Search\SearchResultInterface;
 use Magento\Framework\Api\SearchCriteriaInterface;
 use Magento\Framework\View\Element\UiComponent\DataProvider\Document as UiDocument;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log as LogResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Log\Collection as LogCollection;
 
 class Collection extends LogCollection implements SearchResultInterface
 {
     const FIELD_SHOPPING_FEED_ACCOUNT_NAME = 'shopping_feed_account_name';
+
+    const IS_READ_FILTER_VALUE_UNREAD = '_unread_';
 
     /**
      * @var SearchAggregationInterface
@@ -44,6 +47,19 @@ class Collection extends LogCollection implements SearchResultInterface
         $this->addFilterToMap('created_at', 'main_table.created_at');
 
         return $this;
+    }
+
+    public function addFieldToFilter($field, $condition = null)
+    {
+        if (
+            (LogInterface::IS_READ === $field)
+            && is_array($condition)
+            && (($condition['eq'] ?? null) === static::IS_READ_FILTER_VALUE_UNREAD)
+        ) {
+            $condition['eq'] = 0;
+        }
+
+        return parent::addFieldToFilter($field, $condition);
     }
 
     public function setItems(array $items = null)

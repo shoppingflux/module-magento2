@@ -2,15 +2,23 @@
 
 namespace ShoppingFeed\Manager\Model\Command\Orders;
 
+use Magento\Framework\App\CacheInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use ShoppingFeed\Manager\Model\AbstractCommand;
 use ShoppingFeed\Manager\Model\Command\ConfigInterface;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
+use ShoppingFeed\Manager\Model\Marketplace\Order\Notification\UnimportedOrders;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
 
 class ImportSalesOrders extends AbstractCommand
 {
+    /**
+     * @var CacheInterface
+     */
+    private $cache;
+
     /**
      * @var MarketplaceOrderManager
      */
@@ -36,8 +44,10 @@ class ImportSalesOrders extends AbstractCommand
         ConfigInterface $config,
         MarketplaceOrderManager $marketplaceOrderManager,
         SalesOrderImporterInterface $salesOrderImporter,
-        SalesOrderSyncerInterface $salesOrderSyncer
+        SalesOrderSyncerInterface $salesOrderSyncer,
+        CacheInterface $cache = null
     ) {
+        $this->cache = $cache ?? ObjectManager::getInstance()->get(CacheInterface::class);
         $this->marketplaceOrderManager = $marketplaceOrderManager;
         $this->salesOrderImporter = $salesOrderImporter;
         $this->salesOrderSyncer = $salesOrderSyncer;
@@ -62,5 +72,7 @@ class ImportSalesOrders extends AbstractCommand
             $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableOrders($store);
             $this->salesOrderSyncer->synchronizeStoreOrders($syncableOrders, $store);
         }
+
+        $this->cache->remove(UnimportedOrders::CACHE_KEY);
     }
 }
