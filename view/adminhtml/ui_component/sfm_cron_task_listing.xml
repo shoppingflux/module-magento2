@@ -83,6 +83,14 @@
                 <item name="options" xsi:type="object">ShoppingFeed\Manager\Model\Cron\Schedule\Type\Source</item>
             </argument>
         </column>
+        <column name="stores" class="ShoppingFeed\Manager\Ui\Component\Listing\Column\Cron\Task\Stores">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="bodyTmpl" xsi:type="string">ui/grid/cells/html</item>
+                    <item name="label" xsi:type="string" translate="true">Accounts</item>
+                </item>
+            </argument>
+        </column>
         <column name="is_active">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
