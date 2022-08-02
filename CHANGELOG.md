@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.1.1] - 2022-08-02
+### Fixed
+- Improve upgrade process for account configuration data
+- Fix nested condition combinations in shipping method rules
+- Refresh unread logs notification after importing marketplace orders
+
 ## [1.1.0] - 2022-08-02
 ### Added
 - Allow choosing the "sku" attribute in relevant attribute-based options
