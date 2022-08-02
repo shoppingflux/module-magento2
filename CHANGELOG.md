@@ -1,5 +1,125 @@
 # Changelog
 
+## [1.0.1] - 2022-04-28
+### Fixed
+- Fix compatibility issues with PHP 8.1
+
+## [1.0.0] - 2022-04-27
+### Changed
+- Switch from setup scripts to declarative schema
+
+## [0.54.0] - 2022-04-27
+### Added
+- Implement first-class `vat`, `ecotax` and `weight` feed attributes
+
+### Changed
+- Bump dependency ranges
+- Improve label for "Import Customers" option
+- Disable sorting on the "Is Variation" column in the feed product listing
+
+### Fixed
+- Fix compatibility issues with Magento 2.4.4
+- Fix detection of generated feed in some cases
+- Fix handling of errors in some rare cases when creating a SF account
+
+## [0.53.2] - 2022-02-16
+### Fixed
+- Fix export of "stock" quantity when the "salable" quantity has already been used to detect a product state
+- Fix misleading success message when a manual order import fails
+- Fix misleading error message after running a cron task in some rare cases
+
+## [0.53.1] - 2021-12-23
+### Fixed
+- Fix compatibility with Magento Performance Toolkit
+
+## [0.53.0] - 2021-12-21
+### Added
+- Add categorization status columns to the feed product listing
+- Add a suffix to the codes of additional attributes that are reserved
+- Add "Save and Continue Edit" button to the account form
+
+### Changed
+- Disambiguate comment for "Export Discount Prices in" config field
+- Update French translations 
+
+### Fixed
+- Improve detection of quantity changes when using MSI
+- Fix import of customers with invalid characters in their name on Magento 2.4.3
+- Fix account import error message
+
+## [0.52.0] - 2021-11-23
+### Added
+- Add an option to export an attribute value as the product category
+- Allow to export the `created_at` and `updated_at` product attributes
+
+### Changed
+- Export by default the first category in the tree in case of a tie
+- Allow default shipping fees to be set to zero
+
+### Fixed
+- Fix detection of out-of-stock products when filtering
+- Improve export of options-based attributes in multi-store contexts
+- Account for marketplace orders that can be split over multiple accounts
+- Fix bundle adjustments not reset between two consecutive order imports
+
+## [0.51.0] - 2021-09-09
+### Added
+- Add a "Fulfilled by marketplace" note on the order view page when relevant
+
+### Fixed
+- Do not decrement stock when importing fulfilled orders
+
+## [0.50.0] - 2021-08-31
+### Added
+- Add options to send order and/or invoice emails for marketplace orders
+
+### Fixed
+- Fix detection of disabled products due to an invalid status value
+
+## [0.49.0] - 2021-08-11
+### Added
+- Add an option to (not) export disabled products
+
+## [0.48.0] - 2021-06-16
+### Added
+- Add mass-actions to the marketplace order listing
+
+### Fixed
+- Fix import of orders with bundle products in some specific cases
+- Fix signature of `checkQuoteItemQty` plugin (thanks to [Viper9x](https://github.com/Viper9x))
+
+## [0.47.0] - 2021-06-09
+### Added
+- Add an option to disable the automatic import of marketplace orders
+- Add `billing_email` and `shipping_email` variables to default email address templates
+- Add a listing for order synchronization tickets
+- Add ability to choose which cron group to associate each cron task with
+- Add a better error message for registration using an unsupported country
+
+### Changed
+- Use proxies for objects injected to order-related CLI commands
+
+### Fixed
+- Fix shipping of fulfilled orders when MSI stock has multiple sources
+
+## [0.46.2] - 2021-04-29
+### Fixed
+- Fix calculation of shipment delays on Magento 2.3.4 to 2.3.6
+- Fix detection of changes in configuration values on some edge cases
+- Fix French translation
+
+## [0.46.1] - 2021-03-31
+### Fixed
+- Fix syncing of marketplace orders in some (rare) edge cases
+
+## [0.46.0] - 2021-03-26
+### Added
+- Add an option to limit the length of street lines in addresses
+- Add an option to specify the maximum time to wait before syncing a shipment
+
+### Changed
+- Improve detection of shipment tracking data
+
 ## [0.45.0] - 2021-03-19
 ### Added
 - Indicate if a feed has not been generated yet in the account listing
@@ -125,7 +245,7 @@
 - Add a "Shopping Feed status" column to the marketplace order listing
 
 ### Fixed
-- Fix links to section details in the feed product grid on 2.3.5
+- Fix links to section details in the feed product grid on Magento 2.3.5
 
 ## [0.37.1] - 2020-07-16
 ### Fixed

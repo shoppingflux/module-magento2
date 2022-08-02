@@ -38,3 +38,10 @@ php bin/magento maintenance:enable
 # Other setup commands
 php bin/magento maintenance:disable
 ```
+
+## Compatibility
+
+| Branch  | Magento versions  |
+| ------- | ----------------- |
+| `1.x`   | **>=** `2.3.x`    |
+| `0.x`   | **>=** `2.1.x`    |
