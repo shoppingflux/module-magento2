@@ -33,6 +33,7 @@ class Combine extends CombineBase
     ) {
         $this->marketplaceOrderCondition = $marketplaceOrderCondition;
         parent::__construct($context, $eventManager, $conditionAddress, $data);
+        $this->setType(self::class);
     }
 
     public function getNewChildSelectOptions()
