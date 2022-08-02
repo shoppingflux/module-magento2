@@ -8,6 +8,7 @@ use Magento\Framework\DataObject;
 use ShoppingFeed\Manager\Model\AbstractCommand;
 use ShoppingFeed\Manager\Model\Command\ConfigInterface;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
+use ShoppingFeed\Manager\Model\Marketplace\Order\Notification\UnreadLogs;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Notification\UnimportedOrders;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
@@ -73,6 +74,7 @@ class ImportSalesOrders extends AbstractCommand
             $this->salesOrderSyncer->synchronizeStoreOrders($syncableOrders, $store);
         }
 
+        $this->cache->remove(UnreadLogs::CACHE_KEY);
         $this->cache->remove(UnimportedOrders::CACHE_KEY);
     }
 }
