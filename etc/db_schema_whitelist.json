@@ -190,7 +190,8 @@
             "type": true,
             "message": true,
             "details": true,
-            "created_at": true
+            "created_at": true,
+            "is_read": true
         },
         "constraint": {
             "PRIMARY": true,
