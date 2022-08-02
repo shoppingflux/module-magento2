@@ -60,8 +60,15 @@ class ImportSalesOrdersCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('shoppingfeed:orders:import-sales-orders');
-        $this->setDescription('Imports the pending marketplace orders of one or more stores');
-        $this->setDefinition([ $this->getStoresOption('Only import orders for those store IDs') ]);
+        $this->setDescription('Imports the pending marketplace orders for one or more accounts');
+
+        $this->setDefinition(
+            [
+                $this->getAccountsOption('Only import orders for these account IDs'),
+                $this->getStoresOption('Only import orders for these account IDs'),
+            ]
+        );
+
         parent::configure();
     }
 
@@ -73,9 +80,8 @@ class ImportSalesOrdersCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
-            $io->progressStart(2 * count($storeIds));
-
-            $io->title('Importing marketplace orders for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Importing marketplace orders for account IDs: ' . implode(', ', $storeIds));
+            $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
                 $importableOrders = $this->marketplaceOrderManager->getStoreImportableOrders($store);
@@ -83,13 +89,22 @@ class ImportSalesOrdersCommand extends AbstractCommand
                 $io->progressAdvance(1);
             }
 
-            $io->title('Synchronizing imported orders for store IDs: ' . implode(', ', $storeIds));
+            $io->newLine(2);
+            $io->success('Successfully imported marketplace orders.');
+            $io->progressFinish();
+
+            $io->title('Synchronizing imported orders for account IDs: ' . implode(', ', $storeIds));
+            $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
                 $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableOrders($store);
                 $this->salesOrderSyncer->synchronizeStoreOrders($syncableOrders, $store);
                 $io->progressAdvance(1);
             }
+
+            $io->newLine(2);
+            $io->success('Successfully synchronized imported orders.');
+            $io->progressFinish();
 
             $this->cache->remove(UnimportedOrders::CACHE_KEY);
         } catch (\Exception $e) {

@@ -60,12 +60,13 @@ class ForceSectionsRefreshCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('shoppingfeed:feed:force-sections-refresh');
-        $this->setDescription('Marks some feed product sections as refreshable');
+        $this->setDescription('Marks a subset of the feed data as refreshable for one or more accounts');
 
         $this->setDefinition(
             [
                 $this->getRefreshStateArgument('The refresh state to force (%s)'),
-                $this->getStoresOption('Only force refresh for those store IDs'),
+                $this->getAccountsOption('Only force refresh for these account IDs'),
+                $this->getStoresOption('Only force refresh for these account IDs'),
                 $this->getSectionTypesOption('Only force refresh for those section types (%s)'),
                 $this->getExportStatesOption('Only force refresh for products with those export states (%s)'),
                 $this->getSelectedOnlyOption('Only force refresh for selected products'),
@@ -91,7 +92,7 @@ class ForceSectionsRefreshCommand extends AbstractCommand
             $overridableRefreshStates = $refresherResource->getOverridableRefreshStates($refreshState);
             $updatedInCatalogOnly = $this->getFlagOptionValue($input, self::OPTION_KEY_UPDATED_IN_CATALOG_ONLY);
 
-            $io->title('Forcing product sections refresh for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Forcing refresh of feed data for account IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             $productFilter = $this->createFeedProductFilter();
@@ -116,7 +117,8 @@ class ForceSectionsRefreshCommand extends AbstractCommand
             }
 
             $io->newLine(2);
-            $io->success('Successfully forced product sections refresh.');
+            $io->success('Successfully forced refresh of feed data.');
+            $io->progressFinish();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;

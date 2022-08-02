@@ -73,11 +73,12 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('shoppingfeed:feed:force-automatic-refresh');
-        $this->setDescription('Force automatic refresh of feed product data based on the store configurations');
+        $this->setDescription('Force automatic refresh of feed data based on account configurations');
 
         $this->setDefinition(
             [
-                $this->getStoresOption('Force automatic refresh for those store IDs'),
+                $this->getAccountsOption('Force automatic refresh for these account IDs'),
+                $this->getStoresOption('Force automatic refresh for these account IDs'),
 
                 $this->getFlagOption(
                     self::OPTION_KEY_FORCE_EXPORT_STATE_REFRESH,
@@ -168,7 +169,7 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
-            $io->title('Forcing automatic refresh for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Forcing automatic refresh of feed data for account IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             $refreshExportState = $this->getFlagOptionValue($input, self::OPTION_KEY_FORCE_EXPORT_STATE_REFRESH);
@@ -180,7 +181,8 @@ class ForceAutomaticRefreshCommand extends AbstractCommand
             }
 
             $io->newLine(2);
-            $io->success('Successfully forced automatic refresh.');
+            $io->success('Successfully forced automatic refresh of feed data.');
+            $io->progressFinish();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;

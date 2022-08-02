@@ -59,7 +59,14 @@ class SyncProductListCommand extends AbstractCommand
     {
         $this->setName('shoppingfeed:feed:sync-product-list');
         $this->setDescription('Synchronizes the product list of one or more feeds with the catalog product list');
-        $this->setDefinition([ $this->getStoresOption('Only synchronize the product list for those store IDs') ]);
+
+        $this->setDefinition(
+            [
+                $this->getAccountsOption('Only synchronize the product list for these account IDs'),
+                $this->getStoresOption('Only synchronize the product list for these account IDs'),
+            ]
+        );
+
         parent::configure();
     }
 
@@ -72,7 +79,7 @@ class SyncProductListCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
-            $io->title('Synchronizing feed product list for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Synchronizing feed product list for account IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
@@ -81,7 +88,8 @@ class SyncProductListCommand extends AbstractCommand
             }
 
             $io->newLine(2);
-            $io->success('Successfully synchronized feed product list(s).');
+            $io->success('Successfully synchronized feed product lists.');
+            $io->progressFinish();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;

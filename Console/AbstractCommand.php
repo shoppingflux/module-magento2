@@ -16,6 +16,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 abstract class AbstractCommand extends Command
 {
+    const OPTION_KEY_ACCOUNT_IDS = 'account_id';
     const OPTION_KEY_STORE_IDS = 'store_id';
     const OPTION_VALUE_ALL = 'all';
 
@@ -228,11 +229,27 @@ abstract class AbstractCommand extends Command
      * @param string|null $name
      * @return InputOption
      */
+    protected function getAccountsOption($description, $defaultsToAll = true, $name = null)
+    {
+        return $this->getChoiceOption(
+            $name ?? self::OPTION_KEY_ACCOUNT_IDS,
+            $description,
+            true,
+            $defaultsToAll
+        );
+    }
+
+    /**
+     * @param string $description
+     * @param bool $defaultsToAll
+     * @param string|null $name
+     * @return InputOption
+     */
     protected function getStoresOption($description, $defaultsToAll = true, $name = null)
     {
         return $this->getChoiceOption(
             $name ?? self::OPTION_KEY_STORE_IDS,
-            $description,
+            '[obsolete] ' . $description . ' (please use "' . self::OPTION_KEY_ACCOUNT_IDS . '" instead)',
             true,
             $defaultsToAll
         );
@@ -246,7 +263,26 @@ abstract class AbstractCommand extends Command
      */
     protected function getStoresOptionCollection(InputInterface $input, $name = null)
     {
-        $storeIds = (array) $input->getOption($name ?? self::OPTION_KEY_STORE_IDS);
+        if (null !== $name) {
+            $storeIds = (array) $input->getOption($name);
+        } else {
+            if ($input->hasParameterOption('--' . self::OPTION_KEY_ACCOUNT_IDS)) {
+               if ($input->hasParameterOption('--' . self::OPTION_KEY_STORE_IDS)) {
+                    throw new CommandException(
+                        'Options "'
+                        . self::OPTION_KEY_ACCOUNT_IDS
+                        . '" and "'
+                        . self::OPTION_KEY_STORE_IDS
+                        . '" should not be used together.'
+                    );
+                }
+
+                $storeIds = (array) $input->getOption(self::OPTION_KEY_ACCOUNT_IDS);
+            } else {
+                $storeIds = (array) $input->getOption(self::OPTION_KEY_STORE_IDS);
+            }
+        }
+
         $storeCollection = $this->storeCollectionFactory->create();
 
         if (!in_array(self::OPTION_VALUE_ALL, $storeIds, true)) {

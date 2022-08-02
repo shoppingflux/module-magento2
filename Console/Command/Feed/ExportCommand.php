@@ -70,8 +70,15 @@ class ExportCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('shoppingfeed:feed:export');
-        $this->setDescription('Exports the feed of one or more stores');
-        $this->setDefinition([ $this->getStoresOption('Only export the feed for those store IDs') ]);
+        $this->setDescription('Generates a new feed for one or more accounts');
+
+        $this->setDefinition(
+            [
+                $this->getAccountsOption('Only generate the feed for these account IDs'),
+                $this->getStoresOption('Only generate the feed for these account IDs'),
+            ]
+        );
+
         parent::configure();
     }
 
@@ -111,13 +118,17 @@ class ExportCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
-            $io->title('Exporting feed for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Generating the feed for account IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
                 $this->exportStoreFeed($store);
                 $io->progressAdvance(1);
             }
+
+            $io->newLine(2);
+            $io->success('Successfully generated the feeds.');
+            $io->progressFinish();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;
