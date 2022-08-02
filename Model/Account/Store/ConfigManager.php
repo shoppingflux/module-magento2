@@ -157,14 +157,17 @@ class ConfigManager
             return false;
         }
 
-        $this->feedGeneralConfig->upgradeStoreData($store, $this, $moduleVersion);
-        $this->feedExportStateConfig->upgradeStoreData($store, $this, $moduleVersion);
+        $referenceVersion = $oldVersion ?? $moduleVersion;
+
+        $this->feedGeneralConfig->upgradeStoreData($store, $this, $referenceVersion);
+        $this->feedExportStateConfig->upgradeStoreData($store, $this, $referenceVersion);
 
         foreach ($this->sectionTypePool->getTypes() as $sectionType) {
-            $sectionType->getConfig()->upgradeStoreData($store, $this, $moduleVersion);
+            $sectionType->getConfig()
+                ->upgradeStoreData($store, $this, $referenceVersion);
         }
 
-        $this->orderGeneralConfig->upgradeStoreData($store, $this, $moduleVersion);
+        $this->orderGeneralConfig->upgradeStoreData($store, $this, $referenceVersion);
 
         $store->getConfiguration()
             ->setData('version', $moduleVersion);
