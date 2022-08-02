@@ -10,6 +10,7 @@ use Magento\Framework\Console\Cli;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Importer as MarketplaceOrderImporter;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Notification\UnimportedOrders;
+use ShoppingFeed\Manager\Model\Marketplace\Order\Notification\UnreadLogs;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
@@ -106,6 +107,7 @@ class ImportSalesOrdersCommand extends AbstractCommand
             $io->success('Successfully synchronized imported orders.');
             $io->progressFinish();
 
+            $this->cache->remove(UnreadLogs::CACHE_KEY);
             $this->cache->remove(UnimportedOrders::CACHE_KEY);
         } catch (\Exception $e) {
             $io->error($e->getMessage());

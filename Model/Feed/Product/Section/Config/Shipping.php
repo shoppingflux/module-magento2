@@ -188,7 +188,7 @@ class Shipping extends AbstractConfig implements ShippingInterface
     public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)
     {
         if (
-            version_compare($moduleVersion, '1.1.0', '<=')
+            version_compare($moduleVersion, '1.1.0', '<')
             && !$this->hasFieldValue($store, self::KEY_USE_OLD_EXPORT_BEHAVIOR)
         ) {
             $this->setFieldValue($store, self::KEY_USE_OLD_EXPORT_BEHAVIOR, true);
