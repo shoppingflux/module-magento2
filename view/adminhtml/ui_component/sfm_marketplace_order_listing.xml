@@ -21,6 +21,10 @@
                         <item name="indexField" xsi:type="string">order_id</item>
                     </item>
                     <item name="update_url" xsi:type="url" path="mui/index/render"/>
+                    <item name="filter_url_params" xsi:type="array">
+                        <item name="order_id" xsi:type="string">*</item>
+                        <item name="imported" xsi:type="string">*</item>
+                    </item>
                 </item>
             </argument>
             <argument name="name" xsi:type="string">sfm_marketplace_order_listing_data_source</argument>
@@ -80,6 +84,7 @@
                     <item name="indexField" xsi:type="string">order_id</item>
                     <item name="resizeEnabled" xsi:type="boolean">false</item>
                     <item name="resizeDefaultWidth" xsi:type="number">55</item>
+                    <item name="draggable" xsi:type="boolean">true</item>
                 </item>
             </argument>
         </selectionsColumn>
@@ -185,7 +190,7 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Shopping Feed Status</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Status (before import)</item>
                 </item>
             </argument>
         </column>
@@ -193,9 +198,20 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="dataType" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Importable</item>
+                    <item name="label" xsi:type="string" translate="true">Is Importable</item>
                     <item name="sortable" xsi:type="boolean">false</item>
                 </item>
+            </argument>
+        </column>
+        <column name="imported">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Is Imported</item>
+                </item>
+                <item name="options" xsi:type="object">Magento\Config\Model\Config\Source\Yesno</item>
             </argument>
         </column>
         <column name="import_remaining_try_count">
@@ -241,6 +257,7 @@
                 <item name="config" xsi:type="array">
                     <item name="indexField" xsi:type="string">order_id</item>
                     <item name="label" xsi:type="string" translate="true">Actions</item>
+                    <item name="draggable" xsi:type="boolean">true</item>
                 </item>
             </argument>
         </actionsColumn>

@@ -49,4 +49,10 @@ interface ShippingInterface extends ConfigInterface
      * @return AbstractAttribute[]
      */
     public function getAllAttributes(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldUseOldExportBehavior(StoreInterface $store);
 }

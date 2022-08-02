@@ -137,6 +137,23 @@ abstract class AbstractConfig implements ConfigInterface
     /**
      * @param StoreInterface $store
      * @param string $fieldName
+     * @return bool
+     */
+    protected function hasFieldValue(StoreInterface $store, $fieldName)
+    {
+        $field = $this->getField($store, $fieldName);
+
+        if (null === $field) {
+            return false;
+        }
+
+        return $store->getConfiguration()
+            ->hasDataForPath($this->getFieldValuePath($fieldName));
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param string $fieldName
      * @return mixed|null
      */
     protected function getFieldValue(StoreInterface $store, $fieldName)

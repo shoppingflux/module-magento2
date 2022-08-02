@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order;
 
+use Magento\Framework\DB\Select;
 use Magento\Sales\Model\Order as SalesOrder;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
@@ -132,6 +133,42 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param \DateTime[] $storeDates
+     * @return $this
+     */
+    public function addStoreCreatedFromDatesFilter(array $storeDates)
+    {
+        $conditions = [];
+        $connection = $this->getConnection();
+
+        foreach ($storeDates as $storeId => $date) {
+            if ($date instanceof \DateTime) {
+                $conditions[] = '('
+                    . $connection->quoteInto(
+                        '(main_table.store_id = ?)',
+                        $storeId,
+                        Select::TYPE_CONDITION
+                    )
+                    . ' AND '
+                    . $connection->quoteInto(
+                        '(main_table.created_at >= ?)',
+                        $date->format('Y-m-d'),
+                        Select::TYPE_CONDITION
+                    )
+                    . ')';
+            }
+        }
+
+        if (empty($storeDates)) {
+            return $this->addFieldToFilter(OrderInterface::ORDER_ID, -1);
+        }
+
+        $this->getSelect()->where(implode(' OR ', $conditions));
+
+        return $this;
+    }
+
+    /**
      * @return $this
      */
     public function addImportableFilter()
@@ -152,7 +189,7 @@ class Collection extends AbstractCollection
                     ],
                 ],
                 // .. OR is fulfilled ..
-                [ 'eq' => true ]
+                [ 'eq' => true ],
             ]
         );
 

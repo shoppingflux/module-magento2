@@ -12,8 +12,15 @@ class SendStateUpdatesCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('shoppingfeed:orders:send-state-updates');
-        $this->setDescription('Send order state updates to Shopping Feed for one or more stores');
-        $this->setDefinition([ $this->getStoresOption('Only send state updates for those store IDs') ]);
+        $this->setDescription('Sends order state updates to Shopping Feed for one or more accounts');
+
+        $this->setDefinition(
+            [
+                $this->getAccountsOption('Only send state updates for these account IDs'),
+                $this->getStoresOption('Only send state updates for these account IDs'),
+            ]
+        );
+
         parent::configure();
     }
 
@@ -25,13 +32,17 @@ class SendStateUpdatesCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
-            $io->title('Synchronizing the order state updates for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Sending order state updates for account IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
                 $this->marketplaceOrderManager->notifyStoreOrderUpdates($store);
                 $io->progressAdvance(1);
             }
+
+            $io->newLine(2);
+            $io->success('Successfully sent order state updates.');
+            $io->progressFinish();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;

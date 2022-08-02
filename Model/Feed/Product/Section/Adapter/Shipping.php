@@ -80,7 +80,7 @@ class Shipping extends AbstractAdapter implements ShippingInterface
                 $config->getDefaultCarrierName($store)
             ),
             self::KEY_FEES => is_numeric($fees) ? (float) $fees : null,
-            self::KEY_DELAY => is_int($delay) || ctype_digit($delay) ? (int) $delay : null,
+            self::KEY_DELAY => is_int($delay) || ctype_digit((string) $delay) ? (int) $delay : null,
         ];
     }
 
@@ -92,7 +92,9 @@ class Shipping extends AbstractAdapter implements ShippingInterface
         if (isset($productData[self::KEY_FEES])) {
             $exportedProduct->addShipping(
                 $productData[self::KEY_FEES],
-                $productData[self::KEY_CARRIER_NAME] ?? ''
+                !$this->getConfig()->shouldUseOldExportBehavior($store)
+                    ? ($productData[self::KEY_DELAY] ?? '')
+                    : ($productData[self::KEY_CARRIER_NAME] ?? '')
             );
         }
 

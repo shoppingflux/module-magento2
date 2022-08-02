@@ -67,7 +67,7 @@ class RefreshCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('shoppingfeed:feed:refresh');
-        $this->setDescription('Refreshes feed product data for one or more stores');
+        $this->setDescription('Refreshes feed data for one or more accounts');
 
         $exportStateOptions = [
             $this->getFlagOption(
@@ -121,7 +121,8 @@ class RefreshCommand extends AbstractCommand
         }
 
         $baseOptions = [
-            $this->getStoresOption('Only refresh feed product data for those store IDs'),
+            $this->getAccountsOption('Only refresh feed data for these account IDs'),
+            $this->getStoresOption('Only refresh feed data for these account IDs'),
             $this->getExportStatesOption('Only refresh data for products with those export states (%s) (overridable)'),
             $this->getSelectedOnlyOption('Only refresh data for selected products (overridable)'),
             $this->getRefreshStatesOption('Only refresh data with those refresh states (%s) (overridable)'),
@@ -190,7 +191,7 @@ class RefreshCommand extends AbstractCommand
                     ->setRefreshStates(empty($refreshStates) ? $defaultRefreshStates : $refreshStates);
             }
 
-            $io->title('Refreshing feed for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Refreshing feed data for account IDs: ' . implode(', ', $storeIds));
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
@@ -203,6 +204,10 @@ class RefreshCommand extends AbstractCommand
 
                 $io->progressAdvance(1);
             }
+
+            $io->newLine(2);
+            $io->success('Successfully refreshed feed data.');
+            $io->progressFinish();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;

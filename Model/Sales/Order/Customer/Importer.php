@@ -34,6 +34,62 @@ class Importer
 {
     const CUSTOMER_FROM_SHOPPING_ATTRIBUTE_CODE = 'from_shopping_feed';
 
+    /** @see \Magento\Directory\Setup\Patch\Data\InitializeDirectoryData */
+    const SPAIN_REGION_PREFIX_TO_CODE_MAPPING = [
+        '01' => 'Alava',
+        '02' => 'Albacete',
+        '03' => 'Alicante',
+        '04' => 'Almeria',
+        '05' => 'Avila',
+        '06' => 'Badajoz',
+        '07' => 'Baleares',
+        '08' => 'Barcelona',
+        '09' => 'Burgos',
+        '10' => 'Caceres',
+        '11' => 'Cadiz',
+        '12' => 'Castellon',
+        '13' => 'Ciudad Real',
+        '14' => 'Cordoba',
+        '15' => 'A Coruсa',
+        '16' => 'Cuenca',
+        '17' => 'Girona',
+        '18' => 'Granada',
+        '19' => 'Guadalajara',
+        '20' => 'Guipuzcoa',
+        '21' => 'Huelva',
+        '22' => 'Huesca',
+        '23' => 'Jaen',
+        '24' => 'Leon',
+        '25' => 'Lleida',
+        '26' => 'La Rioja',
+        '27' => 'Lugo',
+        '28' => 'Madrid',
+        '29' => 'Malaga',
+        '30' => 'Murcia',
+        '31' => 'Navarra',
+        '32' => 'Ourense',
+        '33' => 'Asturias',
+        '34' => 'Palencia',
+        '35' => 'Las Palmas',
+        '36' => 'Pontevedra',
+        '37' => 'Salamanca',
+        '38' => 'Santa Cruz de Tenerife',
+        '39' => 'Cantabria',
+        '40' => 'Segovia',
+        '41' => 'Sevilla',
+        '42' => 'Soria',
+        '43' => 'Tarragona',
+        '44' => 'Teruel',
+        '45' => 'Toledo',
+        '46' => 'Valencia',
+        '47' => 'Valladolid',
+        '48' => 'Vizcaya',
+        '49' => 'Zamora',
+        '50' => 'Zaragoza',
+        '51' => 'Ceuta',
+        '52' => 'Melilla',
+    ];
+
     /**
      * @var DataObjectFactory
      */
@@ -295,6 +351,10 @@ class Importer
         if ('FR' === $countryId) {
             $postalCode = $this->getAddressPostalCode($order, $address, $store);
             $regionCode = $this->stringHelper->substr($postalCode, 0, 2);
+        } elseif ('ES' === $countryId) {
+            $postalCode = $this->getAddressPostalCode($order, $address, $store);
+            $regionCode = $this->stringHelper->substr($postalCode, 0, 2);
+            $regionCode = static::SPAIN_REGION_PREFIX_TO_CODE_MAPPING[$regionCode] ?? null;
         } elseif (in_array($countryId, [ 'CA', 'US' ], true)) {
             $streetParts = explode("\n", $this->getAddressStreet($order, $address, $store));
             $regionCode = trim($streetParts[1] ?? '');
@@ -447,6 +507,29 @@ class Importer
     }
 
     /**
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $address
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getAddressVatId(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
+        $vatId = null;
+
+        if ($address->getType() === MarketplaceAddressInterface::TYPE_BILLING) {
+            $vatId = trim(
+                (string) $order->getAdditionalFields()
+                    ->getDataByKey(MarketplaceOrderInterface::ADDITIONAL_FIELD_VAT_ID)
+            );
+        }
+
+        return !empty($vatId) ? $vatId : null;
+    }
+
+    /**
      * @param Quote $quote
      * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $billingAddress
@@ -581,6 +664,10 @@ class Importer
             $customerAddress->setRegionId($this->getAddressRegionId($order, $address, $store));
         }
 
+        if ($this->orderGeneralConfig->shouldImportVatId($store)) {
+            $customerAddress->setVatId($this->getAddressVatId($order, $address, $store));
+        }
+
         $customerAddress->setCustomerId($customer->getId());
         $this->customerAddressResource->save($customerAddress);
 
@@ -630,6 +717,10 @@ class Importer
         }
 
         $quoteAddress->setCountryId($countryId);
+
+        if ($this->orderGeneralConfig->shouldImportVatId($store)) {
+            $quoteAddress->setVatId($this->getAddressVatId($order, $address, $store));
+        }
 
         return $quoteAddress;
     }

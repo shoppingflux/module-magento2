@@ -216,6 +216,7 @@
         <column xsi:type="varchar" name="type" nullable="false" length="32" comment="Type"/>
         <column xsi:type="text" name="message" nullable="false" comment="Message"/>
         <column xsi:type="text" name="details" nullable="true" comment="Details"/>
+        <column xsi:type="boolean" name="is_read" nullable="false" default="0" comment="Is Read"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="log_id"/>

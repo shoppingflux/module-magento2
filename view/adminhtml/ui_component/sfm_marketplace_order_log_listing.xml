@@ -18,6 +18,9 @@
                         <item name="indexField" xsi:type="string">log_id</item>
                     </item>
                     <item name="update_url" xsi:type="url" path="mui/index/render"/>
+                    <item name="filter_url_params" xsi:type="array">
+                        <item name="is_read" xsi:type="string">*</item>
+                    </item>
                 </item>
             </argument>
             <argument name="name" xsi:type="string">sfm_marketplace_order_log_listing_data_source</argument>
@@ -40,9 +43,30 @@
                 </item>
             </argument>
         </filters>
+        <massaction name="listing_massaction">
+            <action name="markAsRead">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="type" xsi:type="string">mark_as_read</item>
+                        <item name="label" xsi:type="string" translate="true">Mark as Read</item>
+                        <item name="url" xsi:type="url" path="shoppingfeed_manager/marketplace_order_log/massMarkAsRead"/>
+                    </item>
+                </argument>
+            </action>
+        </massaction>
         <paging name="listing_paging"/>
     </listingToolbar>
     <columns name="sfm_marketplace_order_log_columns">
+        <selectionsColumn name="ids">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="indexField" xsi:type="string">log_id</item>
+                    <item name="resizeEnabled" xsi:type="boolean">false</item>
+                    <item name="resizeDefaultWidth" xsi:type="number">55</item>
+                    <item name="draggable" xsi:type="boolean">true</item>
+                </item>
+            </argument>
+        </selectionsColumn>
         <column name="log_id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
@@ -93,6 +117,17 @@
                     <item name="filter" xsi:type="string">text</item>
                     <item name="label" xsi:type="string" translate="true">Message</item>
                 </item>
+            </argument>
+        </column>
+        <column name="is_read">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/select</item>
+                    <item name="dataType" xsi:type="string">select</item>
+                    <item name="filter" xsi:type="string">select</item>
+                    <item name="label" xsi:type="string" translate="true">Is Read</item>
+                </item>
+                <item name="options" xsi:type="object">Magento\Config\Model\Config\Source\Yesno</item>
             </argument>
         </column>
         <column name="details">

@@ -12,8 +12,15 @@ class FetchMarketplaceOrdersCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('shoppingfeed:orders:fetch-marketplace-orders');
-        $this->setDescription('Fetches the new marketplace orders of one or more stores');
-        $this->setDefinition([ $this->getStoresOption('Only fetch orders for those store IDs') ]);
+        $this->setDescription('Fetches the new marketplace orders for one or more accounts');
+
+        $this->setDefinition(
+            [
+                $this->getAccountsOption('Only fetch orders for these account IDs'),
+                $this->getStoresOption('Only fetch orders for these account IDs'),
+            ]
+        );
+
         parent::configure();
     }
 
@@ -25,9 +32,8 @@ class FetchMarketplaceOrdersCommand extends AbstractCommand
             $storeCollection = $this->getStoresOptionCollection($input);
             $storeIds = $storeCollection->getLoadedIds();
 
-            $io->progressStart(2 * count($storeIds));
-
-            $io->title('Fetching new marketplace orders for store IDs: ' . implode(', ', $storeIds));
+            $io->title('Fetching new marketplace orders for account IDs: ' . implode(', ', $storeIds));
+            $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
                 $importableOrders = $this->marketplaceOrderManager->getStoreImportableApiOrders($store);
@@ -35,13 +41,22 @@ class FetchMarketplaceOrdersCommand extends AbstractCommand
                 $io->progressAdvance(1);
             }
 
-            $io->title('Fetching synchronizable marketplace orders for store IDs: ' . implode(', ', $storeIds));
+            $io->newLine(2);
+            $io->success('Successfully fetched new marketplace orders.');
+            $io->progressFinish();
+
+            $io->title('Fetching synchronizable marketplace orders for account IDs: ' . implode(', ', $storeIds));
+            $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
                 $syncableOrders = $this->marketplaceOrderManager->getStoreSyncableApiOrders($store);
                 $this->marketplaceOrderImporter->importStoreOrders($syncableOrders, $store, true);
                 $io->progressAdvance(1);
             }
+
+            $io->newLine(2);
+            $io->success('Successfully fetched synchronizable marketplace orders.');
+            $io->progressFinish();
         } catch (\Exception $e) {
             $io->error($e->getMessage());
             return Cli::RETURN_FAILURE;

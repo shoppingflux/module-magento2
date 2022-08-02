@@ -39,6 +39,12 @@ class Combine extends CombineBase
     {
         $conditions = parent::getNewChildSelectOptions();
 
+        foreach ($conditions as $key => $condition) {
+            if ($condition['value'] === \Magento\SalesRule\Model\Rule\Condition\Combine::class) {
+                $conditions[$key]['value'] = self::class;
+            }
+        }
+
         $marketplaceOrderAttributes = $this->marketplaceOrderCondition->loadAttributeOptions()->getAttributeOption();
         $marketplaceOrderAttributeOptions = [];
 
