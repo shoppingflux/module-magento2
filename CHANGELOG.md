@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0] - 2022-08-10
+### Added
+- Add a "View Logs" action to the marketplace order listing
+
+### Fixed
+- Update DB schema whitelist
+- Prevent new order emails from being sent in all contexts
+
 ## [1.1.1] - 2022-08-02
 ### Fixed
 - Improve upgrade process for account configuration data
