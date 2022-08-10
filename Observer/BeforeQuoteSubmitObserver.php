@@ -9,6 +9,7 @@ use Magento\Framework\Registry;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
 use ShoppingFeed\Manager\Model\Sales\Quote\Address\Total\MarketplaceFees as QuoteFeesTotal;
 
 class BeforeQuoteSubmitObserver implements ObserverInterface
@@ -29,13 +30,23 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
     private $quoteFeesTotal;
 
     /**
+     * @var OrderImporterInterface
+     */
+    private $orderImporter;
+
+    /**
      * @param QuoteFeesTotal $quoteFeesTotal
      * @param Registry|null $coreRegistry
+     * @param OrderImporterInterface $orderImporter
      */
-    public function __construct(QuoteFeesTotal $quoteFeesTotal, Registry $coreRegistry = null)
-    {
+    public function __construct(
+        QuoteFeesTotal $quoteFeesTotal,
+        Registry $coreRegistry = null,
+        OrderImporterInterface $orderImporter = null
+    ) {
         $this->coreRegistry = $coreRegistry ?? ObjectManager::getInstance()->get(Registry::class);
         $this->quoteFeesTotal = $quoteFeesTotal;
+        $this->orderImporter = $orderImporter ?? ObjectManager::getInstance()->get(OrderImporterInterface::class);
     }
 
     public function execute(Observer $observer)
@@ -46,6 +57,10 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
             && ($order = $observer->getEvent()->getData(self::EVENT_KEY_ORDER))
             && ($order instanceof Order)
         ) {
+            if ($this->orderImporter->isCurrentlyImportedQuote($quote)) {
+                $order->setCanSendNewEmailFlag(false);
+            }
+
             if ($salesOrderIncrementId = $order->getIncrementId()) {
                 if ($this->coreRegistry->registry(self::REGISTRY_KEY_IMPORTED_SALES_ORDER_INCREMENT_ID)) {
                     $this->coreRegistry->unregister(self::REGISTRY_KEY_IMPORTED_SALES_ORDER_INCREMENT_ID);

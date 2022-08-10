@@ -17,11 +17,13 @@ class Actions extends AbstractColumn
     const ACL_IMPORT = 'ShoppingFeed_Manager::marketplace_order_import';
     const ACL_CANCEL_IMPORT = 'ShoppingFeed_Manager::marketplace_order_cancel_import';
     const ACL_RESET_IMPORT_TRY_COUNT = 'ShoppingFeed_Manager::marketplace_order_reset_import_try_count';
+    const ACL_VIEW_LOG_LISTING = 'ShoppingFeed_Manager::marketplace_order_logs';
 
     const URL_PATH_VIEW_SALES_ORDER = 'sales/order/view';
     const URL_PATH_IMPORT = 'shoppingfeed_manager/marketplace_order/import';
     const URL_PATH_CANCEL_IMPORT = 'shoppingfeed_manager/marketplace_order/cancelImport';
     const URL_PATH_RESET_IMPORT_TRY_COUNT = 'shoppingfeed_manager/marketplace_order/resetImportTryCount';
+    const URL_PATH_VIEW_LOG_LISTING = 'shoppingfeed_manager/marketplace_order_log/index';
 
     /**
      * @var AuthorizationInterface
@@ -72,11 +74,13 @@ class Actions extends AbstractColumn
         $isImportAllowed = $this->authorizationModel->isAllowed(static::ACL_IMPORT);
         $isCancelImportAllowed = $this->authorizationModel->isAllowed(static::ACL_CANCEL_IMPORT);
         $isResetImportAllowed = $this->authorizationModel->isAllowed(static::ACL_RESET_IMPORT_TRY_COUNT);
+        $isLogListingAllowed = $this->authorizationModel->isAllowed(static::ACL_VIEW_LOG_LISTING);
 
         if (isset($dataSource['data']['items'])) {
             foreach ($dataSource['data']['items'] as & $item) {
                 if (isset($item[OrderInterface::ORDER_ID])) {
-                    $item[$this->getData('name')] = [];
+                    $itemName = $this->getData('name');
+                    $item[$itemName] = [];
                     $salesOrderId = null;
 
                     if (isset($item[OrderInterface::SALES_ORDER_ID]) && $item[OrderInterface::SALES_ORDER_ID]) {
@@ -84,7 +88,7 @@ class Actions extends AbstractColumn
                     }
 
                     if ($salesOrderId && $isSalesOrderViewAllowed) {
-                        $item[$this->getData('name')]['view_sales_order'] = [
+                        $item[$itemName]['view_sales_order'] = [
                             'href' => $this->urlBuilder->getUrl(
                                 static::URL_PATH_VIEW_SALES_ORDER,
                                 [ 'order_id' => $salesOrderId ]
@@ -95,7 +99,7 @@ class Actions extends AbstractColumn
 
                     if (!$salesOrderId) {
                         if ($isImportAllowed && $this->isImportableOrderItem($item)) {
-                            $item[$this->getData('name')]['import'] = [
+                            $item[$itemName]['import'] = [
                                 'href' => $this->urlBuilder->getUrl(
                                     static::URL_PATH_IMPORT,
                                     [ OrderAction::REQUEST_KEY_ORDER_ID => $item[OrderInterface::ORDER_ID] ]
@@ -109,7 +113,7 @@ class Actions extends AbstractColumn
                         }
 
                         if ($isCancelImportAllowed) {
-                            $item[$this->getData('name')]['cancel_import'] = [
+                            $item[$itemName]['cancel_import'] = [
                                 'href' => $this->urlBuilder->getUrl(
                                     static::URL_PATH_CANCEL_IMPORT,
                                     [ OrderAction::REQUEST_KEY_ORDER_ID => $item[OrderInterface::ORDER_ID] ]
@@ -123,7 +127,7 @@ class Actions extends AbstractColumn
                         }
 
                         if ($isResetImportAllowed) {
-                            $item[$this->getData('name')]['reset_import_try_count'] = [
+                            $item[$itemName]['reset_import_try_count'] = [
                                 'href' => $this->urlBuilder->getUrl(
                                     static::URL_PATH_RESET_IMPORT_TRY_COUNT,
                                     [ OrderAction::REQUEST_KEY_ORDER_ID => $item[OrderInterface::ORDER_ID] ]
@@ -135,6 +139,16 @@ class Actions extends AbstractColumn
                                 ],
                             ];
                         }
+                    }
+
+                    if ($isLogListingAllowed) {
+                        $item[$itemName]['view_log_listing'] = [
+                            'href' => $this->urlBuilder->getUrl(
+                                static::URL_PATH_VIEW_LOG_LISTING,
+                                [ OrderInterface::ORDER_ID => $item[OrderInterface::ORDER_ID] ]
+                            ),
+                            'label' => __('View Logs'),
+                        ];
                     }
                 }
             }
