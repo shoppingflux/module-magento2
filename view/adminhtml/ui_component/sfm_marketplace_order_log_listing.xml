@@ -19,6 +19,7 @@
                     </item>
                     <item name="update_url" xsi:type="url" path="mui/index/render"/>
                     <item name="filter_url_params" xsi:type="array">
+                        <item name="order_id" xsi:type="string">*</item>
                         <item name="is_read" xsi:type="string">*</item>
                     </item>
                 </item>
