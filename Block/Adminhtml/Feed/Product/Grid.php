@@ -21,6 +21,7 @@ use Magento\Store\Model\ScopeInterface;
 use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface as AccountStoreInterface;
 use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer\Categorization\Status as CategorizationStatusRenderer;
+use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer\Options as OptionsRenderer;
 use ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer\State as StateRenderer;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\Store\FeedProductSections as ProductSectionsAction;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants;
@@ -507,6 +508,7 @@ class Grid extends ExtendedGrid
                 'index' => 'type_id',
                 'header' => __('Type'),
                 'type' => 'options',
+                'renderer' => OptionsRenderer::class,
                 'options' => $this->productType->getOptionArray(),
             ]
         );
@@ -517,6 +519,7 @@ class Grid extends ExtendedGrid
                 'index' => 'status',
                 'header' => __('Status'),
                 'type' => 'options',
+                'renderer' => OptionsRenderer::class,
                 'options' => $this->productStatusSource->getOptionArray(),
             ]
         );
@@ -527,6 +530,7 @@ class Grid extends ExtendedGrid
                 'index' => 'visibility',
                 'header' => __('Visibility'),
                 'type' => 'options',
+                'renderer' => OptionsRenderer::class,
                 'options' => $this->productVisibility->getOptionArray(),
             ]
         );
@@ -550,6 +554,7 @@ class Grid extends ExtendedGrid
                 'index' => 'is_variation',
                 'header' => __('Is Variation'),
                 'type' => 'options',
+                'renderer' => OptionsRenderer::class,
                 'filter' => false,
                 'sortable' => false,
                 'options' => [ __('No'), __('Yes') ],
@@ -598,6 +603,7 @@ class Grid extends ExtendedGrid
                     'index' => FeedProductInterface::SELECTED_CATEGORY_ID,
                     'header' => __('Forced Category'),
                     'type' => 'options',
+                    'renderer' => OptionsRenderer::class,
                     'options' => $categoryOptions,
                     'filter' => false,
                 ]
@@ -611,7 +617,7 @@ class Grid extends ExtendedGrid
                 'header' => __('Feed State - Main'),
                 'filter' => SelectFilter::class,
                 'renderer' => StateRenderer::class,
-                'options' => $this->productExportStateSource->toOptionArray(),
+                'options' => $this->productExportStateSource->toOptionHash(),
                 'until_date_index' => 'export_retention_ending_at',
             ]
         );
@@ -622,6 +628,7 @@ class Grid extends ExtendedGrid
                 'index' => FeedProductInterface::EXCLUSION_REASON,
                 'header' => __('Feed State - Exclusion Reason'),
                 'type' => 'options',
+                'renderer' => OptionsRenderer::class,
                 'options' => $this->productExclusionReasonSource->toOptionHash(),
             ]
         );
@@ -633,7 +640,7 @@ class Grid extends ExtendedGrid
                 'header' => __('Feed State - Variation'),
                 'filter' => SelectFilter::class,
                 'renderer' => StateRenderer::class,
-                'options' => $this->productExportStateSource->toOptionArray(),
+                'options' => $this->productExportStateSource->toOptionHash(),
             ]
         );
 
@@ -644,7 +651,7 @@ class Grid extends ExtendedGrid
                 'header' => __('Feed State - Status'),
                 'filter' => SelectFilter::class,
                 'renderer' => StateRenderer::class,
-                'options' => $this->productRefreshStateSource->toOptionArray(),
+                'options' => $this->productRefreshStateSource->toOptionHash(),
                 'refresh_date_index' => FeedProductInterface::EXPORT_STATE_REFRESHED_AT,
             ]
         );

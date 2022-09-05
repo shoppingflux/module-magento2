@@ -2,10 +2,9 @@
 
 namespace ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Column\Renderer;
 
-use Magento\Backend\Block\Widget\Grid\Column\Renderer\Options as OptionsRenderer;
 use Magento\Framework\DataObject;
 
-class State extends OptionsRenderer
+class State extends Options
 {
     /**
      * @param string $date
