@@ -75,7 +75,7 @@ class UnreadLogs implements MessageInterface
 
     public function getIdentity()
     {
-        return md5('sfm_unread_marketplace_order_logs');
+        return hash('sha256', 'sfm_unread_marketplace_order_logs');
     }
 
     private function loadCounts()

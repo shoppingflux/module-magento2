@@ -89,7 +89,7 @@ class UnimportedOrders implements MessageInterface
 
     public function getIdentity()
     {
-        return md5('sfm_unimported_marketplace_orders');
+        return hash('sha256', 'sfm_unimported_marketplace_orders');
     }
 
     /**
