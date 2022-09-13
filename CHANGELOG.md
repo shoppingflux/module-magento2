@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1] - 2022-09-09
+### Fixed
+- Fix compatibility issue with PHP 8.1 when using the price permissions module
+
 ## [1.2.0] - 2022-08-10
 ### Added
 - Add a "View Logs" action to the marketplace order listing
