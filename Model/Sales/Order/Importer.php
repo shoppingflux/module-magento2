@@ -472,6 +472,9 @@ class Importer implements ImporterInterface
                 );
 
                 try {
+                    // Some modules may override the current store between two order imports.
+                    $this->baseStoreManager->setCurrentStore($baseStore);
+
                     $this->currentlyImportedMarketplaceOrder = $marketplaceOrder;
 
                     $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
