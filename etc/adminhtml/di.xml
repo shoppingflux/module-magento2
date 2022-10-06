@@ -112,6 +112,10 @@
         <plugin name="sfm_sales_order_grid_collection_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\Grid\CollectionPlugin" sortOrder="0"/>
     </type>
 
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\FilterPool">
+        <plugin name="sfm_ui_component_data_provider_filter_pool_plugin" type="ShoppingFeed\Manager\Plugin\UiComponent\DataProvider\FilterPoolPlugin" sortOrder="0"/>
+    </type>
+
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter">
         <plugin name="sfm_sales_order_grid_fulltext_filter_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\Grid\FulltextFilterPlugin" sortOrder="0"/>
     </type>
