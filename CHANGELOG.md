@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.2] - 2022-10-06
+### Fixed
+- Fix generation of notification IDs
+- Fix compatibility with modules that may change the current store between two order imports
+- Prevent rare problems with options-based columns in the feed product listing
+- Fix filtering on the `created_at` field of the order listing on M2.4.5
+- Fix compatibility issue with PHP 8.1 (unnamed block in rule form)
+
 ## [1.2.1] - 2022-09-09
 ### Fixed
 - Fix compatibility issue with PHP 8.1 when using the price permissions module
