@@ -1,5 +1,42 @@
 # Changelog
 
+## [1.2.1] - 2022-09-09
+### Fixed
+- Fix compatibility issue with PHP 8.1 when using the price permissions module
+
+## [1.2.0] - 2022-08-10
+### Added
+- Add a "View Logs" action to the marketplace order listing
+
+### Fixed
+- Update DB schema whitelist
+- Prevent new order emails from being sent in all contexts
+
+## [1.1.1] - 2022-08-02
+### Fixed
+- Improve upgrade process for account configuration data
+- Fix nested condition combinations in shipping method rules
+- Refresh unread logs notification after importing marketplace orders
+
+## [1.1.0] - 2022-08-02
+### Added
+- Allow choosing the "sku" attribute in relevant attribute-based options
+- Add missing "Disabled Product" option to the "Exclusion Reason" column of the feed product listing
+- Automatically detect and import regions for Spain addresses
+- Add an option to import VAT IDs in billing addresses when available
+- Add marketplace-related conditions to the nested conditions of shipping method rules
+- Add a "read" status to marketplace order logs
+- Add notifications for unread order logs and unimported orders
+- Add an "Accounts" column to the cron task listing
+
+### Changed
+- Improve CLI commands (clean up output and disambiguate parameters)
+
+### Fixed
+- Fix export behavior for the shipping section
+- Fix the "Categorization Status" column of the feed product listing when the values of a text attribute are exported
+- Fix call to `ctype_digit` on a possibly `null` value
+
 ## [1.0.1] - 2022-04-28
 ### Fixed
 - Fix compatibility issues with PHP 8.1

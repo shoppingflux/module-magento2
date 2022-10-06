@@ -131,7 +131,7 @@
                 </item>
             </argument>
             <htmlContent name="html_content">
-                <argument name="block" xsi:type="object">ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\ConditionsForm</argument>
+                <block name="sfm.shipping_method_rule.form.conditions" class="ShoppingFeed\Manager\Block\Adminhtml\Shipping\Method\Rule\Edit\ConditionsForm"/>
             </htmlContent>
         </container>
     </fieldset>

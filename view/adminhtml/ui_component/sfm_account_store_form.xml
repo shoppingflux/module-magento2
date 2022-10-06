@@ -50,7 +50,7 @@
                 </item>
             </argument>
             <htmlContent name="html_content">
-                <argument name="block" xsi:type="object">ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Wrapper</argument>
+                <block name="sfm.feed_product_list.grid.wrapper" class="ShoppingFeed\Manager\Block\Adminhtml\Feed\Product\Grid\Wrapper"/>
             </htmlContent>
         </container>
     </fieldset>
