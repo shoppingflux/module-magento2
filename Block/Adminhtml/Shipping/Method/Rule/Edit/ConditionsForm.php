@@ -69,6 +69,7 @@ class ConditionsForm extends GenericForm
         $this->fieldsetRenderer->setTemplate('Magento_CatalogRule::promo/fieldset.phtml');
         $this->fieldsetRenderer->setData('field_set_id', self::FIELDSET_ID);
         $this->fieldsetRenderer->setData('new_child_url', $newConditionUrl);
+        $this->fieldsetRenderer->setNameInLayout('sfm.shipping_method_rules.conditions');
 
         $conditionsFieldset = $form->addFieldset(
             self::FIELDSET_ID,
