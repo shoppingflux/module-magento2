@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.3] - 2022-10-10
+### Fixed
+- Fix compatibility issue with PHP 8.1 (unnamed fieldset in rule form) (thanks to [@benjamin-volle](https://github.com/benjamin-volle))
+
 ## [1.2.2] - 2022-10-06
 ### Fixed
 - Fix generation of notification IDs
@@ -10,7 +14,7 @@
 
 ## [1.2.1] - 2022-09-09
 ### Fixed
-- Fix compatibility issue with PHP 8.1 when using the price permissions module
+- Fix compatibility issue with PHP 8.1 when using the price permissions module (thanks to [@benjamin-volle](https://github.com/benjamin-volle))
 
 ## [1.2.0] - 2022-08-10
 ### Added
