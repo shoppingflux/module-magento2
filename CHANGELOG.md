@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.54.1] - 2022-10-14
+### Fixed
+- Fix compatibility with PHP 7.1
+
 ## [1.2.3] - 2022-10-10
 ### Fixed
 - Fix compatibility issue with PHP 8.1 (unnamed fieldset in rule form) (thanks to [@benjamin-volle](https://github.com/benjamin-volle))
