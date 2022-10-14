@@ -162,7 +162,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
                     function ($code) {
                         return '- ' . $code;
                     },
-                    $reservedAttributeCodes,
+                    $reservedAttributeCodes
                 )
             )
         );
