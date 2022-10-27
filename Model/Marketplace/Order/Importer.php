@@ -179,13 +179,17 @@ class Importer
     public function isFulfilledApiOrder(ApiOrder $apiOrder)
     {
         $orderData = $apiOrder->toArray();
+
         $marketplace = strtolower(trim($apiOrder->getChannel()->getName()));
         $paymentMethod = strtolower(trim($apiOrder->getPaymentInformation()['method'] ?? ''));
+        $fulfilmentType = ($orderData['fulfilledBy'] ?? MarketplaceOrderInterface::FULFILMENT_TYPE_UNDEFINED);
         $additionalFields = !is_array($orderData['additionalFields']) ? [] : $orderData['additionalFields'];
 
         return
+            // Any marketplace
+            (MarketplaceOrderInterface::FULFILMENT_TYPE_MARKETPLACE === $fulfilmentType)
             // Amazon
-            (('amazon' === $marketplace)
+            || (('amazon' === $marketplace)
                 && ('afn' === $paymentMethod))
             // Cdiscount
             || (('cdiscount' === $marketplace)
