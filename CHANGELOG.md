@@ -1,24 +1,35 @@
 # Changelog
+## [1.3.0] - 2022-11-29
+### Added
+- Handle new `fulfilledBy` field on marketplace orders
+- Add marketplace order information to the invoice view
+- Add the tax identification number to the marketplace order information
+
+### Changed
+- Improve the metadata of generated feeds
+
+### Fixed
+- Fix compatibility with PHP versions < **7.3**
 
 ## [0.54.1] - 2022-10-14
 ### Fixed
-- Fix compatibility with PHP 7.1
+- Fix compatibility with PHP **7.1**
 
 ## [1.2.3] - 2022-10-10
 ### Fixed
-- Fix compatibility issue with PHP 8.1 (unnamed fieldset in rule form) (thanks to [@benjamin-volle](https://github.com/benjamin-volle))
+- Fix compatibility issue with PHP **8.1** (unnamed fieldset in rule form) (thanks to [@benjamin-volle](https://github.com/benjamin-volle))
 
 ## [1.2.2] - 2022-10-06
 ### Fixed
 - Fix generation of notification IDs
 - Fix compatibility with modules that may change the current store between two order imports
 - Prevent rare problems with options-based columns in the feed product listing
-- Fix filtering on the `created_at` field of the order listing on M2.4.5
-- Fix compatibility issue with PHP 8.1 (unnamed block in rule form)
+- Fix filtering on the `created_at` field of the order listing on Magento **2.4.5**
+- Fix compatibility issue with PHP **8.1** (unnamed block in rule form)
 
 ## [1.2.1] - 2022-09-09
 ### Fixed
-- Fix compatibility issue with PHP 8.1 when using the price permissions module (thanks to [@benjamin-volle](https://github.com/benjamin-volle))
+- Fix compatibility issue with PHP **8.1** when using the price permissions module (thanks to [@benjamin-volle](https://github.com/benjamin-volle))
 
 ## [1.2.0] - 2022-08-10
 ### Added
@@ -55,7 +66,7 @@
 
 ## [1.0.1] - 2022-04-28
 ### Fixed
-- Fix compatibility issues with PHP 8.1
+- Fix compatibility issues with PHP **8.1**
 
 ## [1.0.0] - 2022-04-27
 ### Changed
@@ -71,7 +82,7 @@
 - Disable sorting on the "Is Variation" column in the feed product listing
 
 ### Fixed
-- Fix compatibility issues with Magento 2.4.4
+- Fix compatibility issues with Magento **2.4.4**
 - Fix detection of generated feed in some cases
 - Fix handling of errors in some rare cases when creating a SF account
 
@@ -97,7 +108,7 @@
 
 ### Fixed
 - Improve detection of quantity changes when using MSI
-- Fix import of customers with invalid characters in their name on Magento 2.4.3
+- Fix import of customers with invalid characters in their name on Magento **2.4.3**
 - Fix account import error message
 
 ## [0.52.0] - 2021-11-23
@@ -157,7 +168,7 @@
 
 ## [0.46.2] - 2021-04-29
 ### Fixed
-- Fix calculation of shipment delays on Magento 2.3.4 to 2.3.6
+- Fix calculation of shipment delays on Magento **2.3.4** to **2.3.6**
 - Fix detection of changes in configuration values on some edge cases
 - Fix French translation
 
@@ -213,7 +224,7 @@
 
 ## [0.42.2] - 2020-11-24
 ### Fixed
-- Fix order import when an account has not been saved after upgrading to version 0.42.x
+- Fix order import when an account has not been saved after upgrading to version **0.42.x**
 
 ## [0.42.1] - 2020-11-19
 ### Changed
@@ -259,7 +270,7 @@
 - Do not fetch new orders when syncing existing orders
 
 ### Fixed
-- Fix compatibility with Magento 2.1.18 and 2.2.9
+- Fix compatibility with Magento **2.1.18** and **2.2.9**
 - Show empty options in the filters of the feed product listing
 
 ## [0.39.4] - 2020-09-17
@@ -268,7 +279,7 @@
 
 ## [0.39.3] - 2020-09-09
 ### Fixed
-- Fix compatibility with Magento 2.3.2
+- Fix compatibility with Magento **2.3.2**
 
 ## [0.39.2] - 2020-09-02
 ### Changed
@@ -283,7 +294,7 @@
 - Add options to synchronize imported orders that have been refused/canceled/refunded on the marketplaces
 
 ### Fixed
-- Fix dependencies in UI components with Magento 2.4.0
+- Fix dependencies in UI components with Magento **2.4.0**
 - Fix fetching of stock data for products without stock management (MSI)
 
 ## [0.38.1] - 2020-07-23
@@ -298,7 +309,7 @@
 - Add a "Shopping Feed status" column to the marketplace order listing
 
 ### Fixed
-- Fix links to section details in the feed product grid on Magento 2.3.5
+- Fix links to section details in the feed product grid on Magento **2.3.5**
 
 ## [0.37.1] - 2020-07-16
 ### Fixed
@@ -512,7 +523,7 @@
 
 ## [0.19.0] - 2019-04-24
 ### Fixed
-- Fix compatibility problems with Magento 2.1.x
+- Fix compatibility problems with Magento **2.1.x**
 
 ## [0.18.0] - 2019-03-27
 ### Added
