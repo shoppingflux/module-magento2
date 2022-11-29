@@ -119,4 +119,8 @@
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter">
         <plugin name="sfm_sales_order_grid_fulltext_filter_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\Grid\FulltextFilterPlugin" sortOrder="0"/>
     </type>
+
+    <type name="Magento\Sales\Block\Adminhtml\Order\View\Info">
+        <plugin name="sfm_sales_order_view_info_block_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\View\InfoBlockPlugin" sortOrder="0"/>
+    </type>
 </config>

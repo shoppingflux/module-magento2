@@ -10,7 +10,7 @@ use ShoppingFeed\Manager\Api\Data\Cron\TaskInterface;
 use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\Command\ConfigInterface as CommandConfigInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use \Magento\Framework\Serialize\SerializerInterface;
+use Magento\Framework\Serialize\SerializerInterface;
 
 class Stores extends Column
 {

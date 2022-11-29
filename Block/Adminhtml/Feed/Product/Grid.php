@@ -187,7 +187,7 @@ class Grid extends ExtendedGrid
             $store,
             $categoriesSectionConfig->getCategorySelectionIds($store),
             $categoriesSectionConfig->shouldIncludeSubCategoriesInSelection($store),
-            $categoriesSectionConfig->getCategorySelectionMode($store),
+            $categoriesSectionConfig->getCategorySelectionMode($store)
         );
     }
 

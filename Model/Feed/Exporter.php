@@ -25,6 +25,8 @@ use ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter as ExporterResource;
 
 class Exporter
 {
+    const MODULE_VERSION = '1.3.0';
+
     const CHILDREN_EXPORT_MODE_NONE = 'none';
     const CHILDREN_EXPORT_MODE_SEPARATELY = 'separately';
     const CHILDREN_EXPORT_MODE_WITHIN_PARENTS = 'within_parents';
@@ -427,14 +429,18 @@ class Exporter
         );
 
         $baseStore = $store->getBaseStore();
-        $feedGenerator->setAttribute('storeName', $baseStore->getName());
         $feedGenerator->setAttribute('storeUrl', $baseStore->getUrl());
+        $feedGenerator->setAttribute('storeName', $baseStore->getName());
+        $feedGenerator->setAttribute('generatedAt', (new \DateTimeImmutable())->format('c'));
 
-        if ($this->moduleList->has('ShoppingFeed_Manager')) {
-            $feedGenerator->setAttribute(
-                'moduleVersion',
-                $this->moduleList->getOne('ShoppingFeed_Manager')['setup_version'] ?? '?'
-            );
+        if (
+            is_callable([ $feedGenerator, 'getMetaData' ])
+            && is_callable([ $feedGenerator->getMetaData(), 'setModule' ])
+        ) {
+            $feedGenerator->getMetaData()
+                ->setModule('ShoppingFeed_Manager', self::MODULE_VERSION);
+        } else {
+            $feedGenerator->setAttribute('moduleVersion', self::MODULE_VERSION);
         }
 
         if ($this->generalConfig->shouldUseGzipCompression($store)) {

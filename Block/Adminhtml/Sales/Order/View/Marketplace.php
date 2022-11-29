@@ -19,15 +19,41 @@ class Marketplace extends AbstractOrder
      */
     private $marketplaceOrderRepository;
 
+    /**
+     * @var string[]
+     */
+    private $ignoredAdditionalDataKeys;
+
     public function __construct(
         Context $context,
         Registry $registry,
         AdminHelper $adminHelper,
         MarketplaceOrderRepositoryInterface $marketplaceOrderRepository,
+        array $ignoredAdditionalDataKeys = self::IGNORED_ADDITIONAL_DATA_KEYS,
         array $data = []
     ) {
         $this->marketplaceOrderRepository = $marketplaceOrderRepository;
+        $this->ignoredAdditionalDataKeys = $ignoredAdditionalDataKeys;
         parent::__construct($context, $registry, $adminHelper, $data);
+    }
+
+    public function getOrder()
+    {
+        try {
+            $order = parent::getOrder();
+        } catch (\Exception $e) {
+            if (
+                ($invoice = $this->_coreRegistry->registry('invoice'))
+                || ($invoice = $this->_coreRegistry->registry('current_invoice'))
+            ) {
+                $order = $invoice->getOrder();
+                $this->setOrder($order);
+            } else {
+                throw $e;
+            }
+        }
+
+        return $order;
     }
 
     /**
@@ -62,7 +88,7 @@ class Marketplace extends AbstractOrder
         if ($marketplaceOrder = $this->getMarketplaceOrder()) {
             foreach ($marketplaceOrder->getAdditionalFields()->getData() as $key => $value) {
                 if (
-                    !in_array($key, static::IGNORED_ADDITIONAL_DATA_KEYS, true)
+                    !in_array($key, $this->ignoredAdditionalDataKeys, true)
                     && is_scalar($value)
                     && ('' !== ($value = trim((string) $value)))
                 ) {
