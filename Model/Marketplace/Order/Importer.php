@@ -4,7 +4,7 @@ namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
-use \Psr\Log\LoggerInterface;
+use Psr\Log\LoggerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;

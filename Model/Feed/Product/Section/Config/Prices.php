@@ -113,7 +113,7 @@ class Prices extends AbstractConfig implements PricesInterface
 
         $fptAttributeHandler = $this->valueHandlerFactory->create(
             AttributeHandler::TYPE_CODE,
-            [ 'attributeSource' => $this->fptAttributeSource ],
+            [ 'attributeSource' => $this->fptAttributeSource ]
         );
 
         $fptAttributeCodes = array_keys($this->fptAttributeSource->getAttributesByCode());
@@ -125,7 +125,7 @@ class Prices extends AbstractConfig implements PricesInterface
             [
                 'value' => self::DEFAULT_TAX_COUNTRY,
                 'label' => __('Default Tax Country'),
-            ],
+            ]
         );
 
         $ecotaxCountryHandler = $this->valueHandlerFactory->create(

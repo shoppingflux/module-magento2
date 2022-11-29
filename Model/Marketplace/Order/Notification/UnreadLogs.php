@@ -144,7 +144,7 @@ class UnreadLogs implements MessageInterface
                 __(
                     '<strong>%1</strong> marketplace orders have <strong>%2</strong> unread logs.',
                     $this->getOrderWithUnreadLogsCount(),
-                    $this->getUnreadLogCount(),
+                    $this->getUnreadLogCount()
                 ),
                 __(
                     '<a href="%1">Click here to view the logs</a>.',

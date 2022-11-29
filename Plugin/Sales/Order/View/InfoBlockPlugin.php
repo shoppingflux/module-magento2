@@ -12,6 +12,6 @@ class InfoBlockPlugin
             $result .= $marketplaceBlock->toHtml();
         }
 
-        return $result;;
+        return $result;
     }
 }
