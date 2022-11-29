@@ -356,6 +356,15 @@
         <plugin name="sfm_order_totals_block_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\TotalsBlockPlugin" sortOrder="1000000000"/>
     </type>
 
+    <type name="ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Marketplace">
+        <arguments>
+            <argument name="ignoredAdditionalDataKeys" xsi:type="array">
+                <item name="administrative-tax-code" xsi:type="string">administrative-tax-code</item>
+                <item name="buyer_identification_number" xsi:type="string">buyer_identification_number</item>
+            </argument>
+        </arguments>
+    </type>
+
     <type name="Magento\Tax\Model\Sales\Pdf\Grandtotal">
         <plugin name="sfm_tax_sales_pdf_grand_total_plugin" type="ShoppingFeed\Manager\Plugin\Tax\Sales\Pdf\GrandTotalPlugin" sortOrder="1000000000"/>
     </type>

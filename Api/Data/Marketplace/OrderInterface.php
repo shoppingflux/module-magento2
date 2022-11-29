@@ -56,6 +56,7 @@ interface OrderInterface
     const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
 
     const ADDITIONAL_FIELD_IS_BUSINESS_ORDER = 'is_business_order';
+    const ADDITIONAL_FIELD_TAX_IDENTIFICATION_NUMBER = 'buyer_identification_number';
     const ADDITIONAL_FIELD_VAT_ID = 'tax_registration_id';
 
     const FULFILMENT_TYPE_MARKETPLACE = 'channel';
@@ -153,6 +154,11 @@ interface OrderInterface
      * @return bool
      */
     public function isBusinessOrder();
+
+    /**
+     * @return string|null
+     */
+    public function getTaxIdentificationNumber();
 
     /**
      * @return int

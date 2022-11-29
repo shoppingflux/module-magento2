@@ -28,6 +28,12 @@
                             <th><?= $block->escapeHtml(__('Shipping Method')) ?></th>
                             <td><?= $block->escapeHtml($marketplaceOrder->getShipmentCarrier()) ?></td>
                         </tr>
+                        <?php if ($taxIdentifierNumber = $marketplaceOrder->getTaxIdentificationNumber()): ?>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('Tax Identifier Number')) ?></th>
+                                <td><?= $block->escapeHtml($taxIdentifierNumber) ?></td>
+                            </tr>
+                        <?php endif ?>
                         <?php if ($marketplaceOrder->isFulfilled()): ?>
                             <tr>
                                 <th colspan="2">

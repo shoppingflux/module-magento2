@@ -166,6 +166,16 @@ class Order extends AbstractModel implements OrderInterface
         return (bool) $this->getAdditionalFields()->getData(self::ADDITIONAL_FIELD_IS_BUSINESS_ORDER);
     }
 
+    public function getTaxIdentificationNumber()
+    {
+        $number = trim(
+            (string) $this->getAdditionalFields()
+                ->getData(self::ADDITIONAL_FIELD_TAX_IDENTIFICATION_NUMBER)
+        );
+
+        return ('' !== $number) ? $number : null;
+    }
+
     public function getImportRemainingTryCount()
     {
         return (int) $this->getDataByKey(self::IMPORT_REMAINING_TRY_COUNT);
