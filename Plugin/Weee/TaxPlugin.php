@@ -13,7 +13,7 @@ class TaxPlugin
     /**
      * @var array
      */
-    private $lockedProductAttributes = array();
+    private $lockedProductAttributes = [];
 
     /**
      * @param WeeeTax $subject
@@ -30,11 +30,11 @@ class TaxPlugin
         WeeeTax $subject,
         callable $proceed,
         $product,
-        $shipping,
-        $billing,
-        $website,
-        $calculateTax,
-        $round
+        $shipping = null,
+        $billing = null,
+        $website = null,
+        $calculateTax = null,
+        $round = true
     ) {
         $productAttributes = $proceed($product, $shipping, $billing, $website, $calculateTax, $round);
 
