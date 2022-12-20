@@ -49,12 +49,10 @@ class Configurable extends AbstractSource
 
             /** @var EavAttributeResource $configurableAttribute */
             foreach ($configurableAttributeCollection->getItems() as $configurableAttribute) {
-                if ($this->configurableAttributeHandler->isAttributeApplicable($configurableAttribute)) {
-                    $attributeCode = $configurableAttribute->getAttributeCode();
+                $attributeCode = $configurableAttribute->getAttributeCode();
 
-                    if (isset($attributes[$attributeCode])) {
-                        $this->configurableAttributes[$attributeCode] = $attributes[$attributeCode];
-                    }
+                if (isset($attributes[$attributeCode])) {
+                    $this->configurableAttributes[$attributeCode] = $attributes[$attributeCode];
                 }
             }
         }
