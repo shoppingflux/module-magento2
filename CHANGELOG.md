@@ -1,4 +1,9 @@
 # Changelog
+## [1.3.1] - 2022-12-20
+### Fixed
+- Fix missing default parameter values in weee tax plugin
+- Fix detection of attributes usable to create configurable products
+
 ## [1.3.0] - 2022-11-29
 ### Added
 - Handle new `fulfilledBy` field on marketplace orders
