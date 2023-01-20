@@ -1,4 +1,8 @@
 # Changelog
+## [1.3.2] - 2023-01-20
+### Fixed
+- Fix compatibility issue with PHP 8 (export of multiselect values)
+
 ## [1.3.1] - 2022-12-20
 ### Fixed
 - Fix missing default parameter values in weee tax plugin
