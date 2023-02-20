@@ -320,6 +320,17 @@ class Importer
         MarketplaceOrderInterface $marketplaceOrder,
         StoreInterface $store
     ) {
+        $orderData = $apiOrder->toArray();
+
+        if (
+            !empty($orderData['latestShipDate'])
+            && preg_match('/^(\d{4}-\d{2}-\d{2})([^\d]|$)/', $orderData['latestShipDate'], $matches)
+        ) {
+            $marketplaceOrder->setLatestShipDate(new \DateTimeImmutable($matches[0], new \DateTimeZone('UTC')));
+        } else {
+            $marketplaceOrder->setLatestShipDate(null);
+        }
+
         $paymentData = $apiOrder->getPaymentInformation();
         $productAmount = (float) $paymentData['productAmount'] ?? 0.0;
         $shippingAmount = (float) $paymentData['shippingAmount'] ?? 0.0;

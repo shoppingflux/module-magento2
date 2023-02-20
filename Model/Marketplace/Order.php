@@ -148,6 +148,13 @@ class Order extends AbstractModel implements OrderInterface
         return trim((string) $this->getDataByKey(self::SHIPMENT_CARRIER));
     }
 
+    public function getLatestShipDate()
+    {
+        $date = trim((string) $this->getDataByKey(self::LATEST_SHIP_DATE));
+
+        return empty($date) ? null : new \DateTimeImmutable($date, new \DateTimeZone('UTC'));
+    }
+
     public function getAdditionalFields()
     {
         $data = $this->getData(self::ADDITIONAL_FIELDS);
@@ -317,6 +324,14 @@ class Order extends AbstractModel implements OrderInterface
     public function setShipmentCarrier($shipmentCarrier)
     {
         return $this->setData(self::SHIPMENT_CARRIER, trim((string) $shipmentCarrier));
+    }
+
+    public function setLatestShipDate(\DateTimeInterface $latestShipDate = null)
+    {
+        return $this->setData(
+            self::LATEST_SHIP_DATE,
+            (null === $latestShipDate) ? null : $latestShipDate->format('Y-m-d')
+        );
     }
 
     public function setAdditionalFields(DataObject $additionalFields)

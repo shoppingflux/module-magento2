@@ -312,6 +312,7 @@
 "It seems that the store product list is not in sync with the catalog product list.","Il semble que la liste de produits du magasin n'est pas synchronisée avec la liste de produits du catalogue."
 "Last in the Tree","Dernière dans l'arborescence"
 "Last Update:","Dernière mise à jour :"
+"Latest Shipping Date","Date limite d'expédition"
 "Leave empty if all the categories of a given product should be considered.","Laisser vide si toutes les catégories d'un produit donné doivent être considérées."
 "Leave empty to keep the original street lines.","Laisser vide pour conserver les lignes de rue d'origine."
 "Leave empty to use the ""%1"" store email address (""%2"").","Laisser vide pour utiliser l'adresse email du magasin ""%1"" (""%2"")."

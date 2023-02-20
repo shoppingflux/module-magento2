@@ -125,6 +125,7 @@
         <column xsi:type="decimal" name="total_amount" scale="4" precision="12" unsigned="false" nullable="false" comment="Total Amount"/>
         <column xsi:type="varchar" name="payment_method" nullable="false" length="255" comment="Payment Method"/>
         <column xsi:type="varchar" name="shipment_carrier" nullable="false" length="255" comment="Shipment Carrier"/>
+        <column xsi:type="date" name="latest_ship_date" nullable="true" comment="Latest Ship Date"/>
         <column xsi:type="text" name="additional_fields" nullable="true" comment="Additional Fields"/>
         <column xsi:type="int" name="import_remaining_try_count" padding="10" unsigned="true" nullable="false" identity="false" default="3" comment="Import Remaining Try Count"/>
         <column xsi:type="boolean" name="has_non_notifiable_shipment" nullable="false" comment="Has Non-Notifiable Shipment"/>

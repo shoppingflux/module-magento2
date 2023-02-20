@@ -27,6 +27,7 @@ interface OrderInterface
     const TOTAL_AMOUNT = 'total_amount';
     const PAYMENT_METHOD = 'payment_method';
     const SHIPMENT_CARRIER = 'shipment_carrier';
+    const LATEST_SHIP_DATE = 'latest_ship_date';
     const ADDITIONAL_FIELDS = 'additional_fields';
     const IMPORT_REMAINING_TRY_COUNT = 'import_remaining_try_count';
     const HAS_NON_NOTIFIABLE_SHIPMENT = 'has_non_notifiable_shipment';
@@ -144,6 +145,11 @@ interface OrderInterface
      * @return string
      */
     public function getShipmentCarrier();
+
+    /**
+     * @return \DateTimeInterface|null
+     */
+    public function getLatestShipDate();
 
     /**
      * @return DataObject
@@ -299,6 +305,12 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setShipmentCarrier($shipmentCarrier);
+
+    /**
+     * @param \DateTimeInterface|null $latestShipDate
+     * @return OrderInterface
+     */
+    public function setLatestShipDate(\DateTimeInterface $latestShipDate = null);
 
     /**
      * @param DataObject $additionalFields

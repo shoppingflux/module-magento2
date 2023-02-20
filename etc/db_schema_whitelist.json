@@ -118,7 +118,8 @@
             "updated_at": true,
             "fetched_at": true,
             "imported_at": true,
-            "acknowledged_at": true
+            "acknowledged_at": true,
+            "latest_ship_date": true
         },
         "constraint": {
             "PRIMARY": true,
