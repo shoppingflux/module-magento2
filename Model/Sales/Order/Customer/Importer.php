@@ -668,6 +668,29 @@ class Importer
             $customerAddress->setVatId($this->getAddressVatId($order, $address, $store));
         }
 
+        $addressType = $address->getType();
+
+        $hasDefaultAddress = (
+            ((MarketplaceAddressInterface::TYPE_BILLING === $addressType) && $customer->getDefaultBilling())
+            || ((MarketplaceAddressInterface::TYPE_SHIPPING === $addressType) && $customer->getDefaultShipping())
+        );
+
+        $defaultAddressImportMode = $this->orderGeneralConfig->getCustomerDefaultAddressImportMode($store);
+
+        if (
+            (OrderConfigInterface::CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_ALWAYS === $defaultAddressImportMode)
+            || (
+                !$hasDefaultAddress
+                && (OrderConfigInterface::CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_IF_NONE === $defaultAddressImportMode)
+            )
+        ) {
+            if (MarketplaceAddressInterface::TYPE_BILLING === $addressType) {
+                $customerAddress->setIsDefaultBilling(true);
+            } elseif (MarketplaceAddressInterface::TYPE_SHIPPING === $addressType) {
+                $customerAddress->setIsDefaultShipping(true);
+            }
+        }
+
         $customerAddress->setCustomerId($customer->getId());
         $this->customerAddressResource->save($customerAddress);
 

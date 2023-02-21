@@ -7,6 +7,10 @@ use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as BaseConfig;
 
 interface ConfigInterface extends BaseConfig
 {
+    const CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_NEVER = 'never';
+    const CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_ALWAYS = 'always';
+    const CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_IF_NONE = 'if_none';
+
     /**
      * @param StoreInterface $store
      * @return bool
@@ -73,6 +77,12 @@ interface ConfigInterface extends BaseConfig
      * @return int|null
      */
     public function getMarketplaceCustomerGroup(StoreInterface $store, $marketplace);
+
+    /**
+     * @param StoreInterface $store
+     * @return string
+     */
+    public function getCustomerDefaultAddressImportMode(StoreInterface $store);
 
     /**
      * @param StoreInterface $store

@@ -41,6 +41,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_MARKETPLACE_CUSTOMER_GROUPS = 'marketplace_customer_groups';
     const KEY_MARKETPLACE_CUSTOMER_GROUPS__MARKETPLACE = 'marketplace';
     const KEY_MARKETPLACE_CUSTOMER_GROUPS__CUSTOMER_GROUP = 'customer_group';
+    const KEY_CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE = 'customer_default_address_import_mode';
     const KEY_DEFAULT_EMAIL_ADDRESS = 'default_email_address';
     const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES = 'marketplace_default_email_addresses';
     const KEY_MARKETPLACE_DEFAULT_EMAIL_ADDRESSES__MARKETPLACE = 'marketplace';
@@ -597,6 +598,27 @@ class Config extends AbstractConfig implements ConfigInterface
             ]
         );
 
+        $defaultAddressImportModeHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => [
+                    [
+                        'value' => static::CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_NEVER,
+                        'label' => __('Never'),
+                    ],
+                    [
+                        'value' => static::CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_ALWAYS,
+                        'label' => __('Always'),
+                    ],
+                    [
+                        'value' => static::CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_IF_NONE,
+                        'label' => __('If none is set'),
+                    ],
+                ],
+            ]
+        );
+
         $textHandler = $this->valueHandlerFactory->create(TextHandler::TYPE_CODE);
 
         $emailTemplateVariableNotices = [
@@ -686,13 +708,26 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE,
+                        'valueHandler' => $defaultAddressImportModeHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => static::CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_NEVER,
+                        'defaultUseValue' => static::CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_NEVER,
+                        'label' => __('Set Imported Addresses as Customer Default Addresses'),
+                        'sortOrder' => 100,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_DEFAULT_EMAIL_ADDRESS,
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Email Address'),
                         'notice' => $defaultEmailNotice,
-                        'sortOrder' => 100,
+                        'sortOrder' => 110,
                     ]
                 ),
 
@@ -723,7 +758,7 @@ class Config extends AbstractConfig implements ConfigInterface
                                 ]
                             ),
                         ],
-                        'sortOrder' => 110,
+                        'sortOrder' => 120,
                     ]
                 ),
 
@@ -735,7 +770,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'allowAll' => true,
                         'defaultUseValue' => [],
                         'label' => __('Force Default Email Address For'),
-                        'sortOrder' => 120,
+                        'sortOrder' => 130,
                     ]
                 ),
 
@@ -746,7 +781,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $this->valueHandlerFactory->create(TextHandler::TYPE_CODE),
                         'label' => __('Default Phone Number'),
                         'notice' => $defaultPhoneNotice,
-                        'sortOrder' => 150,
+                        'sortOrder' => 160,
                     ]
                 ),
 
@@ -777,7 +812,7 @@ class Config extends AbstractConfig implements ConfigInterface
                                 ]
                             ),
                         ],
-                        'sortOrder' => 200,
+                        'sortOrder' => 210,
                     ]
                 ),
 
@@ -790,7 +825,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Order Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
-                        'sortOrder' => 270,
+                        'sortOrder' => 280,
                     ]
                 ),
 
@@ -803,7 +838,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Invoice Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
-                        'sortOrder' => 280,
+                        'sortOrder' => 290,
                     ]
                 ),
             ],
@@ -911,6 +946,11 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->getFieldValue($store, self::KEY_DEFAULT_CUSTOMER_GROUP)
             )
         );
+    }
+
+    public function getCustomerDefaultAddressImportMode(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE);
     }
 
     /**
