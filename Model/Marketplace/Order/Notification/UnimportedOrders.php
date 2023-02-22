@@ -109,6 +109,14 @@ class UnimportedOrders implements MessageInterface
             return false;
         }
 
+        if ($order->isTest()) {
+            if (!$this->orderGeneralConfig->shouldImportTestOrders($store)) {
+                return false;
+            }
+        } elseif (!$this->orderGeneralConfig->shouldImportLiveOrders($store)) {
+            return false;
+        }
+
         $isShipped = ($order->getShoppingFeedStatus() === OrderInterface::STATUS_SHIPPED);
 
         if ($order->isFulfilled()) {

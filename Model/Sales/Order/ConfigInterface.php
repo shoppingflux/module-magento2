@@ -7,6 +7,11 @@ use ShoppingFeed\Manager\Model\Account\Store\ConfigInterface as BaseConfig;
 
 interface ConfigInterface extends BaseConfig
 {
+    const ORDER_IMPORT_MODE_NONE = 'none';
+    const ORDER_IMPORT_MODE_ALL = 'all';
+    const ORDER_IMPORT_MODE_ONLY_TEST = 'only_test';
+    const ORDER_IMPORT_MODE_ONLY_LIVE = 'only_live';
+
     const CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_NEVER = 'never';
     const CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_ALWAYS = 'always';
     const CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE_IF_NONE = 'if_none';
@@ -16,6 +21,18 @@ interface ConfigInterface extends BaseConfig
      * @return bool
      */
     public function shouldImportOrders(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldImportTestOrders(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldImportLiveOrders(StoreInterface $store);
 
     /**
      * @param StoreInterface $store

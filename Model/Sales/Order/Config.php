@@ -10,6 +10,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Model\Account\Store\ConfigManager;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants as StoreRegistryConstants;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\DynamicRows;
@@ -30,6 +31,7 @@ use ShoppingFeed\Manager\Model\StringHelper;
 class Config extends AbstractConfig implements ConfigInterface
 {
     const KEY_IMPORT_ORDERS = 'import_orders';
+    const KEY_ORDER_IMPORT_MODE = 'order_import_mode';
     const KEY_ORDER_IMPORT_DELAY = 'order_import_delay';
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS = 'check_product_availability_and_options';
@@ -146,6 +148,31 @@ class Config extends AbstractConfig implements ConfigInterface
 
     protected function getBaseFields()
     {
+        $orderImportModeHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => [
+                    [
+                        'value' => self::ORDER_IMPORT_MODE_ALL,
+                        'label' => __('All'),
+                    ],
+                    [
+                        'value' => self::ORDER_IMPORT_MODE_ONLY_TEST,
+                        'label' => __('Test only'),
+                    ],
+                    [
+                        'value' => self::ORDER_IMPORT_MODE_ONLY_LIVE,
+                        'label' => __('Live only'),
+                    ],
+                    [
+                        'value' => self::ORDER_IMPORT_MODE_NONE,
+                        'label' => __('None'),
+                    ],
+                ],
+            ]
+        );
+
         $customerGroupHandler = $this->valueHandlerFactory->create(
             OptionHandler::TYPE_CODE,
             [
@@ -197,13 +224,14 @@ class Config extends AbstractConfig implements ConfigInterface
         return array_merge(
             [
                 $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
+                    Select::TYPE_CODE,
                     [
-                        'name' => self::KEY_IMPORT_ORDERS,
-                        'isCheckedByDefault' => true,
+                        'name' => self::KEY_ORDER_IMPORT_MODE,
+                        'valueHandler' => $orderImportModeHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => self::ORDER_IMPORT_MODE_ALL,
+                        'defaultUseValue' => self::ORDER_IMPORT_MODE_NONE,
                         'label' => __('Import Orders'),
-                        'checkedNotice' => __('Orders will automatically be imported.'),
-                        'uncheckedNotice' => __('Orders will not be imported automatically.'),
                         'sortOrder' => 0,
                     ]
                 ),
@@ -884,7 +912,34 @@ class Config extends AbstractConfig implements ConfigInterface
 
     public function shouldImportOrders(StoreInterface $store)
     {
-        return $this->getFieldValue($store, self::KEY_IMPORT_ORDERS);
+        return $this->shouldImportTestOrders($store) || $this->shouldImportLiveOrders($store);
+    }
+
+    public function getOrderImportMode(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_ORDER_IMPORT_MODE);
+    }
+
+    public function shouldImportTestOrders(StoreInterface $store)
+    {
+        return in_array(
+            $this->getOrderImportMode($store),
+            [
+                static::ORDER_IMPORT_MODE_ALL,
+                static::ORDER_IMPORT_MODE_ONLY_TEST,
+            ]
+        );
+    }
+
+    public function shouldImportLiveOrders(StoreInterface $store)
+    {
+        return in_array(
+            $this->getOrderImportMode($store),
+            [
+                static::ORDER_IMPORT_MODE_ALL,
+                static::ORDER_IMPORT_MODE_ONLY_LIVE,
+            ]
+        );
     }
 
     public function getOrderImportDelay(StoreInterface $store)
@@ -1172,5 +1227,18 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getFieldsetLabel()
     {
         return __('Orders - General');
+    }
+
+    public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)
+    {
+        if (!$this->hasFieldValue($store, self::KEY_ORDER_IMPORT_MODE)) {
+            $this->setFieldValue(
+                $store,
+                self::KEY_ORDER_IMPORT_MODE,
+                $this->getRawFieldValue($store, self::KEY_IMPORT_ORDERS)
+                    ? static::ORDER_IMPORT_MODE_ALL
+                    : static::ORDER_IMPORT_MODE_NONE
+            );
+        }
     }
 }

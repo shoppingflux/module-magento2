@@ -17,6 +17,7 @@ interface OrderInterface
     const SHOPPING_FEED_ORDER_ID = 'shopping_feed_order_id';
     const MARKETPLACE_ORDER_NUMBER = 'marketplace_order_number';
     const SHOPPING_FEED_MARKETPLACE_ID = 'shopping_feed_marketplace_id';
+    const IS_TEST = 'is_test';
     const IS_FULFILLED = 'is_fulfilled';
     const MARKETPLACE_NAME = 'marketplace_name';
     const SHOPPING_FEED_STATUS = 'shopping_feed_status';
@@ -95,6 +96,11 @@ interface OrderInterface
      * @return int
      */
     public function getShoppingFeedMarketplaceId();
+
+    /**
+     * @return bool
+     */
+    public function isTest();
 
     /**
      * @return bool
@@ -245,6 +251,12 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setShoppingFeedMarketplaceId($marketplaceId);
+
+    /**
+     * @param $isTest
+     * @return OrderInterface
+     */
+    public function setIsTest($isTest);
 
     /**
      * @param bool $isFulfilled

@@ -115,6 +115,7 @@
         <column xsi:type="bigint" name="shopping_feed_order_id" padding="20" unsigned="true" nullable="false" identity="false" comment="Shopping Feed Order ID"/>
         <column xsi:type="varchar" name="marketplace_order_number" nullable="false" length="255" comment="Marketplace Order Number"/>
         <column xsi:type="int" name="shopping_feed_marketplace_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Shopping Feed Marketplace ID"/>
+        <column xsi:type="boolean" name="is_test" nullable="false" comment="Is Test"/>
         <column xsi:type="boolean" name="is_fulfilled" nullable="false" comment="Is Fulfilled"/>
         <column xsi:type="varchar" name="marketplace_name" nullable="false" length="255" comment="Marketplace Name"/>
         <column xsi:type="varchar" name="shopping_feed_status" nullable="false" length="64" comment="Shopping Feed Status"/>

@@ -63,8 +63,19 @@ abstract class AbstractColumn extends Column
     }
 
     /**
+     * @param array $data
+     * @return bool
+     */
+    private function isTestOrderData(array $data)
+    {
+        return !empty($data[OrderInterface::IS_TEST])
+            || preg_match('/^TEST-/i', $data[OrderInterface::MARKETPLACE_ORDER_NUMBER] ?? '');
+    }
+
+    /**
      * @param int $storeId
      * @param string $shoppingFeedStatus
+     * @param bool $isTest
      * @param bool $isFulfilled
      * @param int $salesOrderId
      * @param \DateTime $createdAt
@@ -73,6 +84,7 @@ abstract class AbstractColumn extends Column
     private function isImportableOrderData(
         $storeId,
         $shoppingFeedStatus,
+        $isTest,
         $isFulfilled,
         $salesOrderId,
         \DateTime $createdAt
@@ -89,6 +101,14 @@ abstract class AbstractColumn extends Column
         }
 
         if ($createdAt < $this->orderGeneralConfig->getOrderImportFromDate($store)) {
+            return false;
+        }
+
+        if ($isTest) {
+            if (!$this->orderGeneralConfig->shouldImportTestOrders($store)) {
+                return false;
+            }
+        } elseif (!$this->orderGeneralConfig->shouldImportLiveOrders($store)) {
             return false;
         }
 
@@ -108,6 +128,7 @@ abstract class AbstractColumn extends Column
     /**
      * @param int $storeId
      * @param string $shoppingFeedStatus
+     * @param bool $isTest
      * @param bool $isFulfilled
      * @param int $salesOrderId
      * @param \DateTime $createdAt
@@ -116,6 +137,7 @@ abstract class AbstractColumn extends Column
     private function getNonImportableOrderDataReason(
         $storeId,
         $shoppingFeedStatus,
+        $isTest,
         $isFulfilled,
         $salesOrderId,
         \DateTime $createdAt
@@ -133,6 +155,14 @@ abstract class AbstractColumn extends Column
 
         if ($createdAt < $this->orderGeneralConfig->getOrderImportFromDate($store)) {
             return __('too old');
+        }
+
+        if ($isTest) {
+            if (!$this->orderGeneralConfig->shouldImportTestOrders($store)) {
+                return __('import of test orders is disabled');
+            }
+        } elseif (!$this->orderGeneralConfig->shouldImportLiveOrders($store)) {
+            return __('import of live orders is disabled');
         }
 
         $isShipped = ($shoppingFeedStatus === OrderInterface::STATUS_SHIPPED);
@@ -174,6 +204,7 @@ abstract class AbstractColumn extends Column
             return $this->isImportableOrderData(
                 (int) $item[OrderInterface::STORE_ID],
                 trim($item[OrderInterface::SHOPPING_FEED_STATUS] ?? ''),
+                $this->isTestOrderData($item),
                 (bool) $item[OrderInterface::IS_FULFILLED],
                 (int) $item[OrderInterface::SALES_ORDER_ID],
                 \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])
@@ -199,6 +230,7 @@ abstract class AbstractColumn extends Column
             $isImportable = $this->isImportableOrderData(
                 (int) $item[OrderInterface::STORE_ID],
                 trim($item[OrderInterface::SHOPPING_FEED_STATUS] ?? ''),
+                $this->isTestOrderData($item),
                 (bool) $item[OrderInterface::IS_FULFILLED],
                 (int) $item[OrderInterface::SALES_ORDER_ID],
                 \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])
@@ -211,6 +243,7 @@ abstract class AbstractColumn extends Column
             $reason = $this->getNonImportableOrderDataReason(
                 (int) $item[OrderInterface::STORE_ID],
                 trim($item[OrderInterface::SHOPPING_FEED_STATUS] ?? ''),
+                $this->isTestOrderData($item),
                 (bool) $item[OrderInterface::IS_FULFILLED],
                 (int) $item[OrderInterface::SALES_ORDER_ID],
                 \DateTime::createFromFormat('Y-m-d H:i:s', $item[OrderInterface::CREATED_AT])
