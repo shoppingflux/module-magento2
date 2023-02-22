@@ -1,4 +1,15 @@
 # Changelog
+## [1.4.0] - 2023-02-22
+### Added
+- Add an option to export category names or breadcrumbs
+- Add an option to skip the data refresh when generating feeds from the CLI
+- Differentiate between test and live orders
+- Add an option to set imported customer addresses as default addresses
+- Display the latest shipping date on the sales order view
+
+### Fixed
+- Fix compatibility with the `Wyomind_EstimatedDeliveryDate` module
+
 ## [1.3.2] - 2023-01-20
 ### Fixed
 - Fix compatibility issue with PHP 8 (export of multiselect values)
