@@ -29,7 +29,7 @@ class Options extends AbstractRenderer
     public function renderAttributeValue(StoreInterface $store, AbstractAttribute $attribute, $value)
     {
         if (!is_array($value)) {
-            $value = array_filter(explode(',', $value), [ $this, 'isDefinedValue' ]);
+            $value = array_filter(explode(',', (string) $value), [ $this, 'isDefinedValue' ]);
         }
 
         $source = $attribute->getSource();
