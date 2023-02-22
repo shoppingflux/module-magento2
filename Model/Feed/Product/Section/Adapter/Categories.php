@@ -22,6 +22,7 @@ class Categories extends AbstractAdapter implements CategoriesInterface
     const CATEGORY_NAME_SEPARATOR = ' > ';
 
     const KEY_CATEGORY_NAME = 'category_name';
+    const KEY_CATEGORY_BREADCRUMBS = 'category_breadcrumbs';
     const KEY_CATEGORY_URL = 'category_url';
 
     /**
@@ -95,6 +96,7 @@ class Categories extends AbstractAdapter implements CategoriesInterface
 
             if (is_array($categoryPath) && !empty($categoryPath)) {
                 $mainCategory = reset($categoryPath);
+                $data[self::KEY_CATEGORY_NAME] = $mainCategory->getName();
                 $data[self::KEY_CATEGORY_URL] = $mainCategory->getUrl();
                 $pathNames = [];
 
@@ -102,7 +104,10 @@ class Categories extends AbstractAdapter implements CategoriesInterface
                     $pathNames[] = $category->getName();
                 }
 
-                $data[self::KEY_CATEGORY_NAME] = implode(self::CATEGORY_NAME_SEPARATOR, array_reverse($pathNames));
+                $data[self::KEY_CATEGORY_BREADCRUMBS] = implode(
+                    self::CATEGORY_NAME_SEPARATOR,
+                    array_reverse($pathNames)
+                );
             }
         }
 
@@ -114,9 +119,18 @@ class Categories extends AbstractAdapter implements CategoriesInterface
         array $productData,
         ExportedProduct $exportedProduct
     ) {
-        if (isset($productData[self::KEY_CATEGORY_NAME])) {
+        $categoryName = $productData[self::KEY_CATEGORY_NAME] ?? '';
+
+        if (
+            ($this->getConfig()->getCategoryNameType($store) === ConfigInterface::CATEGORY_NAME_TYPE_BREADCRUMBS)
+            && !empty($productData[self::KEY_CATEGORY_BREADCRUMBS])
+        ) {
+            $categoryName = $productData[self::KEY_CATEGORY_BREADCRUMBS];
+        }
+
+        if ('' !== $categoryName) {
             $exportedProduct->setCategory(
-                $productData[self::KEY_CATEGORY_NAME],
+                $categoryName,
                 $productData[self::KEY_CATEGORY_URL] ?? ''
             );
         }
@@ -127,6 +141,7 @@ class Categories extends AbstractAdapter implements CategoriesInterface
         return $this->describeRawProductData(
             [
                 self::KEY_CATEGORY_NAME => __('Name'),
+                self::KEY_CATEGORY_BREADCRUMBS => __('Breadcrumbs'),
                 self::KEY_CATEGORY_URL => __('URL'),
             ],
             $productData
