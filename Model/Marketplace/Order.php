@@ -103,6 +103,12 @@ class Order extends AbstractModel implements OrderInterface
         return (bool) $this->getDataByKey(self::IS_FULFILLED);
     }
 
+    public function isTest()
+    {
+        return $this->getDataByKey(self::IS_TEST)
+            || preg_match('/^TEST-/i', $this->getMarketplaceOrderNumber());
+    }
+
     public function getMarketplaceName()
     {
         return trim((string) $this->getDataByKey(self::MARKETPLACE_NAME));
@@ -146,6 +152,13 @@ class Order extends AbstractModel implements OrderInterface
     public function getShipmentCarrier()
     {
         return trim((string) $this->getDataByKey(self::SHIPMENT_CARRIER));
+    }
+
+    public function getLatestShipDate()
+    {
+        $date = trim((string) $this->getDataByKey(self::LATEST_SHIP_DATE));
+
+        return empty($date) ? null : new \DateTimeImmutable($date, new \DateTimeZone('UTC'));
     }
 
     public function getAdditionalFields()
@@ -269,6 +282,11 @@ class Order extends AbstractModel implements OrderInterface
         return $this->setData(self::SHOPPING_FEED_MARKETPLACE_ID, (int) $marketplaceId);
     }
 
+    public function setIsTest($isTest)
+    {
+        return $this->setData(self::IS_TEST, (bool) $isTest);
+    }
+
     public function setIsFulfilled($isFulfilled)
     {
         return $this->setData(self::IS_FULFILLED, (bool) $isFulfilled);
@@ -317,6 +335,14 @@ class Order extends AbstractModel implements OrderInterface
     public function setShipmentCarrier($shipmentCarrier)
     {
         return $this->setData(self::SHIPMENT_CARRIER, trim((string) $shipmentCarrier));
+    }
+
+    public function setLatestShipDate(\DateTimeInterface $latestShipDate = null)
+    {
+        return $this->setData(
+            self::LATEST_SHIP_DATE,
+            (null === $latestShipDate) ? null : $latestShipDate->format('Y-m-d')
+        );
     }
 
     public function setAdditionalFields(DataObject $additionalFields)

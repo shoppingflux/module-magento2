@@ -181,6 +181,17 @@ abstract class AbstractConfig implements ConfigInterface
     /**
      * @param StoreInterface $store
      * @param string $fieldName
+     * @return mixed|null
+     */
+    protected function getRawFieldValue(StoreInterface $store, $fieldName)
+    {
+        return $store->getConfiguration()
+            ->getDataByPath($this->getFieldValuePath($fieldName));
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param string $fieldName
      * @param mixed $value
      */
     protected function setFieldValue(StoreInterface $store, $fieldName, $value)

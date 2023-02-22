@@ -17,6 +17,7 @@ interface OrderInterface
     const SHOPPING_FEED_ORDER_ID = 'shopping_feed_order_id';
     const MARKETPLACE_ORDER_NUMBER = 'marketplace_order_number';
     const SHOPPING_FEED_MARKETPLACE_ID = 'shopping_feed_marketplace_id';
+    const IS_TEST = 'is_test';
     const IS_FULFILLED = 'is_fulfilled';
     const MARKETPLACE_NAME = 'marketplace_name';
     const SHOPPING_FEED_STATUS = 'shopping_feed_status';
@@ -27,6 +28,7 @@ interface OrderInterface
     const TOTAL_AMOUNT = 'total_amount';
     const PAYMENT_METHOD = 'payment_method';
     const SHIPMENT_CARRIER = 'shipment_carrier';
+    const LATEST_SHIP_DATE = 'latest_ship_date';
     const ADDITIONAL_FIELDS = 'additional_fields';
     const IMPORT_REMAINING_TRY_COUNT = 'import_remaining_try_count';
     const HAS_NON_NOTIFIABLE_SHIPMENT = 'has_non_notifiable_shipment';
@@ -98,6 +100,11 @@ interface OrderInterface
     /**
      * @return bool
      */
+    public function isTest();
+
+    /**
+     * @return bool
+     */
     public function isFulfilled();
 
     /**
@@ -144,6 +151,11 @@ interface OrderInterface
      * @return string
      */
     public function getShipmentCarrier();
+
+    /**
+     * @return \DateTimeInterface|null
+     */
+    public function getLatestShipDate();
 
     /**
      * @return DataObject
@@ -241,6 +253,12 @@ interface OrderInterface
     public function setShoppingFeedMarketplaceId($marketplaceId);
 
     /**
+     * @param $isTest
+     * @return OrderInterface
+     */
+    public function setIsTest($isTest);
+
+    /**
      * @param bool $isFulfilled
      * @return OrderInterface
      */
@@ -299,6 +317,12 @@ interface OrderInterface
      * @return OrderInterface
      */
     public function setShipmentCarrier($shipmentCarrier);
+
+    /**
+     * @param \DateTimeInterface|null $latestShipDate
+     * @return OrderInterface
+     */
+    public function setLatestShipDate(\DateTimeInterface $latestShipDate = null);
 
     /**
      * @param DataObject $additionalFields

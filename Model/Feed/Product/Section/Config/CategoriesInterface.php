@@ -8,6 +8,9 @@ use ShoppingFeed\Manager\Model\Feed\Product\Section\ConfigInterface;
 
 interface CategoriesInterface extends ConfigInterface
 {
+    const CATEGORY_NAME_TYPE_NAME = 'name';
+    const CATEGORY_NAME_TYPE_BREADCRUMBS = 'breadcrumbs';
+
     /**
      * @param StoreInterface $store
      * @return bool
@@ -19,6 +22,12 @@ interface CategoriesInterface extends ConfigInterface
      * @return AbstractAttribute|null
      */
     public function getCategoryAttribute(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getCategoryNameType(StoreInterface $store);
 
     /**
      * @param StoreInterface $store

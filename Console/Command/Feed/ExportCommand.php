@@ -21,6 +21,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class ExportCommand extends AbstractCommand
 {
+    const OPTION_KEY_SKIP_REFRESH = 'skip_refresh';
+
     /**
      * @var FeedRefresher
      */
@@ -76,6 +78,10 @@ class ExportCommand extends AbstractCommand
             [
                 $this->getAccountsOption('Only generate the feed for these account IDs'),
                 $this->getStoresOption('Only generate the feed for these account IDs'),
+                $this->getFlagOption(
+                    self::OPTION_KEY_SKIP_REFRESH,
+                    'Do not refresh product export states and data before generating the feed'
+                ),
             ]
         );
 
@@ -84,10 +90,9 @@ class ExportCommand extends AbstractCommand
 
     /**
      * @param StoreInterface $store
-     * @throws \Exception
      * @throws LocalizedException
      */
-    private function exportStoreFeed(StoreInterface $store)
+    private function refreshStoreFeedData(StoreInterface $store)
     {
         $exportStateProductFilter = $this->createFeedProductFilter();
 
@@ -106,7 +111,15 @@ class ExportCommand extends AbstractCommand
             array_fill_keys($sectionTypeIds, $sectionTypeProductFilter),
             array_fill_keys($sectionTypeIds, $sectionTypeSectionFilter)
         );
+    }
 
+    /**
+     * @param StoreInterface $store
+     * @throws \Exception
+     * @throws LocalizedException
+     */
+    private function exportStoreFeed(StoreInterface $store)
+    {
         $this->feedExporter->exportStoreFeed($store);
     }
 
@@ -122,6 +135,10 @@ class ExportCommand extends AbstractCommand
             $io->progressStart(count($storeIds));
 
             foreach ($storeCollection as $store) {
+                if (!$this->getFlagOptionValue($input, self::OPTION_KEY_SKIP_REFRESH)) {
+                    $this->refreshStoreFeedData($store);
+                }
+
                 $this->exportStoreFeed($store);
                 $io->progressAdvance(1);
             }

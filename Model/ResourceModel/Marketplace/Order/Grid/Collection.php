@@ -32,6 +32,13 @@ class Collection extends OrderCollection implements SearchResultInterface
         parent::_initSelect();
 
         $this->getSelect()
+            ->columns(
+                [
+                    OrderInterface::IS_TEST => new \Zend_Db_Expr(
+                        '(main_table.is_test OR main_table.marketplace_order_number LIKE "TEST-%")'
+                    ),
+                ]
+            )
             ->joinInner(
                 [ 'store_table' => $this->tableDictionary->getAccountStoreTableName() ],
                 'main_table.store_id = store_table.store_id',
@@ -46,28 +53,43 @@ class Collection extends OrderCollection implements SearchResultInterface
 
     public function addFieldToFilter($field, $condition = null)
     {
-        if (
-            (static::FIELD_IS_IMPORTED === $field)
-            && is_array($condition)
-            && isset($condition['eq'])
-        ) {
-            if ($condition['eq'] === static::IS_IMPORTED_FILTER_VALUE_UNIMPORTED) {
-                $condition['eq'] = 0;
-            }
+        if (is_array($condition) && isset($condition['eq'])) {
+            if (OrderInterface::IS_TEST === $field) {
+                if ($condition['eq']) {
+                    return parent::addFieldToFilter(
+                        [
+                            OrderInterface::IS_TEST,
+                            OrderInterface::MARKETPLACE_ORDER_NUMBER,
+                        ],
+                        [
+                            [ 'eq' => 1 ],
+                            [ 'like' => 'TEST-%' ],
+                        ]
+                    );
+                } else {
+                    return parent::addFieldToFilter(
+                        OrderInterface::IS_TEST,
+                        [ [ 'null' => true ], [ 'eq' => 0 ] ]
+                    )->addFieldToFilter(
+                        OrderInterface::MARKETPLACE_ORDER_NUMBER,
+                        [ 'nlike' => 'TEST-%' ]
+                    );
+                }
+            } elseif (static::FIELD_IS_IMPORTED === $field) {
+                if ($condition['eq'] === static::IS_IMPORTED_FILTER_VALUE_UNIMPORTED) {
+                    $condition['eq'] = 0;
+                }
 
-            return parent::addFieldToFilter(
-                OrderInterface::SALES_ORDER_ID,
-                $condition['eq'] ? [ 'gt' => 0 ] : [ 'null' => true ]
-            );
-        } elseif (
-            (OrderInterface::ORDER_ID === $field)
-            && is_array($condition)
-            && (strpos($condition['eq'] ?? '', '_') !== false)
-        ) {
-            return parent::addFieldToFilter(
-                OrderInterface::ORDER_ID,
-                [ 'in' => array_map('intval', explode('_', $condition['eq'])) ]
-            );
+                return parent::addFieldToFilter(
+                    OrderInterface::SALES_ORDER_ID,
+                    $condition['eq'] ? [ 'gt' => 0 ] : [ 'null' => true ]
+                );
+            } elseif ((OrderInterface::ORDER_ID === $field) && (strpos($condition['eq'] ?? '', '_') !== false)) {
+                return parent::addFieldToFilter(
+                    OrderInterface::ORDER_ID,
+                    [ 'in' => array_map('intval', explode('_', $condition['eq'])) ]
+                );
+            }
         }
 
         return parent::addFieldToFilter($field, $condition);

@@ -25,6 +25,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
 {
     const KEY_USE_ATTRIBUTE_VALUE = 'use_attribute_value';
     const KEY_CATEGORY_ATTRIBUTE = 'category_attribute';
+    const KEY_CATEGORY_NAME_TYPE = 'category_name_type';
     const KEY_CATEGORY_SELECTION_IDS = 'category_selection_ids';
     const KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION = 'include_sub_categories_in_selection';
     const KEY_CATEGORY_SELECTION_MODE = 'category_selection_mode';
@@ -90,6 +91,23 @@ class Categories extends AbstractConfig implements CategoriesInterface
             [ 'attributeSource' => $this->renderableAttributeSource ]
         );
 
+        $categoryNameTypeHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => [
+                    [
+                        'label' => __('Name'),
+                        'value' => static::CATEGORY_NAME_TYPE_NAME,
+                    ],
+                    [
+                        'label' => __('Breadcrumbs'),
+                        'value' => static::CATEGORY_NAME_TYPE_BREADCRUMBS,
+                    ],
+                ],
+            ]
+        );
+
         $tieBreakingSelectionHandler = $this->valueHandlerFactory->create(
             OptionHandler::TYPE_CODE,
             [
@@ -127,6 +145,9 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'checkedDependentFieldNames' => [
                             self::KEY_CATEGORY_ATTRIBUTE,
                         ],
+                        'uncheckedDependentFieldNames' => [
+                            self::KEY_CATEGORY_NAME_TYPE,
+                        ],
                         'sortOrder' => 10,
                     ]
                 ),
@@ -142,6 +163,19 @@ class Categories extends AbstractConfig implements CategoriesInterface
                     ]
                 ),
 
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_CATEGORY_NAME_TYPE,
+                        'valueHandler' => $categoryNameTypeHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => static::CATEGORY_NAME_TYPE_BREADCRUMBS,
+                        'defaultUseValue' => static::CATEGORY_NAME_TYPE_BREADCRUMBS,
+                        'label' => __('Exported Category Name'),
+                        'sortOrder' => 30,
+                    ]
+                ),
+
                 // Category selection IDs
 
                 $this->fieldFactory->create(
@@ -149,7 +183,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                     [
                         'name' => self::KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION,
                         'label' => __('Include Sub-Categories in Selection'),
-                        'sortOrder' => 40,
+                        'sortOrder' => 50,
                     ]
                 ),
 
@@ -162,7 +196,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'uncheckedLabel' => __('Exclude'),
                         'checkedNotice' => __('Only the selected categories will be considered.'),
                         'uncheckedNotice' => __('The selected categories will not be considered.'),
-                        'sortOrder' => 50,
+                        'sortOrder' => 60,
                     ]
                 ),
 
@@ -181,7 +215,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 __('The root category has a level of 1.'),
                             ]
                         ),
-                        'sortOrder' => 60,
+                        'sortOrder' => 70,
                     ]
                 ),
 
@@ -205,7 +239,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 ),
                             ]
                         ),
-                        'sortOrder' => 70,
+                        'sortOrder' => 80,
                     ]
                 ),
 
@@ -221,7 +255,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                             self::KEY_MINIMUM_PARENT_LEVEL,
                             self::KEY_PARENT_WEIGHT_MULTIPLIER,
                         ],
-                        'sortOrder' => 80,
+                        'sortOrder' => 100,
                     ]
                 ),
 
@@ -237,7 +271,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'notice' => __(
                             'For each category of a given product, the number of its most immediate parents that will also be considered.'
                         ),
-                        'sortOrder' => 90,
+                        'sortOrder' => 110,
                     ]
                 ),
 
@@ -257,7 +291,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 __('The root category has a level of 1.'),
                             ]
                         ),
-                        'sortOrder' => 100,
+                        'sortOrder' => 120,
                     ]
                 ),
 
@@ -273,7 +307,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'notice' => __(
                             'The multiplier that will additionally be used to determine the weights of parent categories.'
                         ),
-                        'sortOrder' => 110,
+                        'sortOrder' => 130,
                     ]
                 ),
 
@@ -296,7 +330,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                                 __('- defining the "Forced Category" on the product pages.'),
                             ]
                         ),
-                        'sortOrder' => 120,
+                        'sortOrder' => 140,
                     ]
                 ),
             ],
@@ -318,7 +352,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         'name' => self::KEY_CATEGORY_SELECTION_IDS,
                         'categoryTree' => $this->categorySelector->getStoreCategoryTree($store),
                         'label' => __('Category Selection'),
-                        'sortOrder' => 30,
+                        'sortOrder' => 40,
                     ]
                 ),
             ],
@@ -339,6 +373,11 @@ class Categories extends AbstractConfig implements CategoriesInterface
     public function getCategoryAttribute(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CATEGORY_ATTRIBUTE);
+    }
+
+    public function getCategoryNameType(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_CATEGORY_NAME_TYPE);
     }
 
     public function getCategorySelectionIds(StoreInterface $store)

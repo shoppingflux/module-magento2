@@ -41,6 +41,12 @@
                                 </th>
                             </tr>
                         <?php endif ?>
+                        <?php if ($latestShipDate = $marketplaceOrder->getLatestShipDate()): ?>
+                            <tr>
+                                <th><?= $block->escapeHtml(__('Latest Shipping Date')) ?></th>
+                                <td><?= $block->escapeHtml($block->formatDate($latestShipDate, \IntlDateFormatter::SHORT, false, 'UTC')) ?></td>
+                            </tr>
+                        <?php endif ?>
                         </tbody>
                     </table>
                 </div>

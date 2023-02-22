@@ -305,6 +305,21 @@ class Importer
         $marketplaceOrder->setMarketplaceName($channel->getName());
         $marketplaceOrder->setShoppingFeedStatus($apiOrder->getStatus());
 
+        $orderData = $apiOrder->toArray();
+
+        if (!empty($orderData['isTest'])) {
+            $marketplaceOrder->setIsTest(true);
+        }
+
+        if (
+            !empty($orderData['latestShipDate'])
+            && preg_match('/^(\d{4}-\d{2}-\d{2})([^\d]|$)/', $orderData['latestShipDate'], $matches)
+        ) {
+            $marketplaceOrder->setLatestShipDate(new \DateTimeImmutable($matches[0], new \DateTimeZone('UTC')));
+        } else {
+            $marketplaceOrder->setLatestShipDate(null);
+        }
+
         $marketplaceOrder->setCreatedAt($apiOrder->getCreatedAt()->format('Y-m-d H:i:s'));
         $marketplaceOrder->setUpdatedAt($apiOrder->getUpdatedAt()->format('Y-m-d H:i:s'));
         $marketplaceOrder->setFetchedAt($this->localeDate->date(null, null, false)->format('Y-m-d H:i:s'));

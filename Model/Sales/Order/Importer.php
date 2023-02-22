@@ -399,6 +399,14 @@ class Importer implements ImporterInterface
             return false;
         }
 
+        if ($order->isTest()) {
+            if (!$this->orderGeneralConfig->shouldImportTestOrders($store)) {
+                return false;
+            }
+        } elseif (!$this->orderGeneralConfig->shouldImportLiveOrders($store)) {
+            return false;
+        }
+
         $isShipped = ($order->getShoppingFeedStatus() === MarketplaceOrderInterface::STATUS_SHIPPED);
 
         if ($order->isFulfilled()) {
