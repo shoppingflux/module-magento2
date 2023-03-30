@@ -26,7 +26,7 @@ class ForceRefreshButton extends AbstractButton
      * @param string|null $urlRoute
      * @param array|null $urlParams
      * @param string|null $class
-     * @param string|null $sortOrder
+     * @param int|null $sortOrder
      */
     public function __construct(
         Context $context,
