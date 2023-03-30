@@ -1,4 +1,12 @@
 # Changelog
+## [1.5.0] - 2023-03-30
+### Added
+- Add ability to force a feed refresh from the account configuration
+
+### Fixed
+- Fix sending of order emails
+- Hide new order configuration field when not relevant
+
 ## [1.4.0] - 2023-02-22
 ### Added
 - Add an option to export category names or breadcrumbs
