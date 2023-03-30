@@ -9,6 +9,7 @@ use Magento\Framework\Registry;
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Model\Order;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
 use ShoppingFeed\Manager\Model\Sales\Quote\Address\Total\MarketplaceFees as QuoteFeesTotal;
 
@@ -35,18 +36,32 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
     private $orderImporter;
 
     /**
+     * @var OrderConfigInterface
+     */
+    private $orderGeneralConfig;
+
+    /**
      * @param QuoteFeesTotal $quoteFeesTotal
      * @param Registry|null $coreRegistry
      * @param OrderImporterInterface $orderImporter
+     * @param OrderConfigInterface|null $orderGeneralConfig
      */
     public function __construct(
         QuoteFeesTotal $quoteFeesTotal,
         Registry $coreRegistry = null,
-        OrderImporterInterface $orderImporter = null
+        OrderImporterInterface $orderImporter = null,
+        OrderConfigInterface $orderGeneralConfig = null
     ) {
-        $this->coreRegistry = $coreRegistry ?? ObjectManager::getInstance()->get(Registry::class);
         $this->quoteFeesTotal = $quoteFeesTotal;
-        $this->orderImporter = $orderImporter ?? ObjectManager::getInstance()->get(OrderImporterInterface::class);
+
+        $this->coreRegistry = $coreRegistry
+            ?? ObjectManager::getInstance()->get(Registry::class);
+
+        $this->orderImporter = $orderImporter
+            ?? ObjectManager::getInstance()->get(OrderImporterInterface::class);
+
+        $this->orderGeneralConfig = $orderGeneralConfig
+            ?? ObjectManager::getInstance()->get(OrderConfigInterface::class);
     }
 
     public function execute(Observer $observer)
@@ -58,7 +73,20 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
             && ($order instanceof Order)
         ) {
             if ($this->orderImporter->isCurrentlyImportedQuote($quote)) {
-                $order->setCanSendNewEmailFlag(false);
+                $store = $this->orderImporter->getImportRunningForStore();
+                $marketplaceName = null;
+
+                if ($marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder()) {
+                    $marketplaceName = $marketplaceOrder->getMarketplaceName();
+                }
+
+                if (
+                    $marketplaceName
+                    && !$this->orderGeneralConfig->shouldSendOrderEmailForMarketplace($store, $marketplaceName)
+                    && !$this->orderGeneralConfig->shouldSendInvoiceEmailForMarketplace($store, $marketplaceName)
+                ) {
+                    $order->setCanSendNewEmailFlag(false);
+                }
             }
 
             if ($salesOrderIncrementId = $order->getIncrementId()) {
