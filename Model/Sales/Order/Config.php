@@ -331,6 +331,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'checkedDependentFieldNames' => [
                             self::KEY_DEFAULT_CUSTOMER_GROUP,
                             self::KEY_MARKETPLACE_CUSTOMER_GROUPS,
+                            self::KEY_CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE,
                         ],
                         'sortOrder' => 70,
                     ]
