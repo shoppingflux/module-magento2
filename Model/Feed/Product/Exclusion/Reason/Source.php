@@ -41,6 +41,10 @@ class Source implements OptionSourceInterface
                 'value' => ProductInterface::EXCLUSION_REASON_UNSELECTED_PRODUCT,
                 'label' => __('Unselected Product'),
             ],
+            [
+                'value' => ProductInterface::EXCLUSION_REASON_DISABLED,
+                'label' => __('Disabled Product'),
+            ],
         ];
     }
 }
