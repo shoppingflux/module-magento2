@@ -1,4 +1,11 @@
 # Changelog
+## [0.54.2] - 2023-05-17
+### Fixed
+- Fix missing default parameter values in weee tax plugin
+- Fix detection of attributes usable to create configurable products
+- Fix "Categorization Status" column when a text attribute is exported
+- Add missing "Disabled Product" option to the "Exclusion Reason" column of the feed product listing
+
 ## [1.5.1] - 2023-03-30
 ### Fixed
 - Fix DI compilation
