@@ -19,10 +19,10 @@ class TaxPlugin
      * @param WeeeTax $subject
      * @param callable $proceed
      * @param CatalogProduct $product
-     * @param DataObject $shipping
-     * @param DataObject $billing
-     * @param Website $website
-     * @param bool $calculateTax
+     * @param DataObject|null $shipping
+     * @param DataObject|null $billing
+     * @param Website|null $website
+     * @param bool|null $calculateTax
      * @param bool $round
      * @return array
      */
@@ -30,11 +30,11 @@ class TaxPlugin
         WeeeTax $subject,
         callable $proceed,
         $product,
-        $shipping,
-        $billing,
-        $website,
-        $calculateTax,
-        $round
+        $shipping = null,
+        $billing = null,
+        $website = null,
+        $calculateTax = null,
+        $round = true
     ) {
         $productAttributes = $proceed($product, $shipping, $billing, $website, $calculateTax, $round);
 
