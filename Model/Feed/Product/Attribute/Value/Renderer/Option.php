@@ -30,7 +30,7 @@ class Option extends AbstractRenderer
     {
         $label = null;
 
-        if (!$this->isUndefinedValue($value)) {
+        if (!$this->isUndefinedValue($value) && is_scalar($value)) {
             $oldStoreId = $attribute->getData('store_id');
             $attribute->setData('store_id', $store->getBaseStoreId());
 
