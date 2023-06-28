@@ -2,7 +2,6 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Feed\Catalog\Product;
 
-use Magento\Catalog\Model\ResourceModel\Frontend;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as BaseCollection;
 use Magento\Framework\DB\Adapter\AdapterInterface as DbAdapterInterface;
 use Magento\Framework\Exception\LocalizedException;

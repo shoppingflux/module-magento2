@@ -15,6 +15,7 @@ use Magento\Customer\Model\ResourceModel\CustomerFactory as CustomerResourceFact
 use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Directory\Model\Region;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filter\Template as TemplateFilter;
@@ -111,6 +112,11 @@ class Importer
     private $templateFilter;
 
     /**
+     * @var EmailAddressValidator
+     */
+    private $emailAddressValidator;
+
+    /**
      * @var RegionCollectionFactory
      */
     private $regionCollectionFactory;
@@ -169,6 +175,7 @@ class Importer
      * @param CustomerAddressFactory $customerAddressFactory
      * @param CustomerAddressResourceFactory $customerAddresssResourceFactory
      * @param OrderConfigInterface $orderGeneralConfig
+     * @param EmailAddressValidator|null $emailAddressValidator
      */
     public function __construct(
         DataObjectFactory $dataObjectFactory,
@@ -183,7 +190,8 @@ class Importer
         CustomerRegistry $customerRegistry,
         CustomerAddressFactory $customerAddressFactory,
         CustomerAddressResourceFactory $customerAddresssResourceFactory,
-        OrderConfigInterface $orderGeneralConfig
+        OrderConfigInterface $orderGeneralConfig,
+        EmailAddressValidator $emailAddressValidator = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
         $this->randomGenerator = $randomGenerator;
@@ -198,6 +206,8 @@ class Importer
         $this->customerAddressFactory = $customerAddressFactory;
         $this->customerAddressResource = $customerAddresssResourceFactory->create();
         $this->orderGeneralConfig = $orderGeneralConfig;
+        $this->emailAddressValidator = $emailAddressValidator 
+            ?? ObjectManager::getInstance()->get(EmailAddressValidator::class);
     }
 
     /**
@@ -425,7 +435,7 @@ class Importer
             if (
                 $this->orderGeneralConfig->shouldForceDefaultEmailAddressForMarketplace($store, $marketplace)
                 || ('' === $email)
-                || !\Zend_Validate::is($email, EmailAddressValidator::class)
+                || !$this->emailAddressValidator->isValid($email)
             ) {
                 $this->templateFilter->setVariables(
                     array_merge(
@@ -436,7 +446,7 @@ class Importer
                             ],
                             function ($email) {
                                 return ('' !== $email)
-                                    && \Zend_Validate::is($email, EmailAddressValidator::class);
+                                    && $this->emailAddressValidator->isValid($email);
                             }
                         ),
                         array_map(

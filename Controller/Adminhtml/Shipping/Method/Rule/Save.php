@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\Rule;
 
 use Magento\Backend\App\Action\Context;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Controller\Result\RawFactory as RawResultFactory;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
@@ -12,6 +13,7 @@ use Magento\Framework\Stdlib\DateTime\Filter\DateFactory as DateFilterFactory;
 use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\Shipping\Method\RuleRepositoryInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\Shipping\Method\RuleAction;
+use ShoppingFeed\Manager\Model\InputFilterFactory;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface;
 use ShoppingFeed\Manager\Model\Shipping\Method\RuleFactory;
 use ShoppingFeed\Manager\Ui\DataProvider\Shipping\Method\Rule\Form\DataProvider as RuleFormDataProvider;
@@ -31,6 +33,11 @@ class Save extends RuleAction
     private $dateFilterFactory;
 
     /**
+     * @var InputFilterFactory
+     */
+    private $inputFilterFactory;
+
+    /**
      * @var ApplierPoolInterface
      */
     private $applierPool;
@@ -45,6 +52,7 @@ class Save extends RuleAction
      * @param DataObjectFactory $dataObjectFactory
      * @param DateFilterFactory $dateFilterFactory
      * @param ApplierPoolInterface $applierPool
+     * @param InputFilterFactory|null $inputFilterFactory
      */
     public function __construct(
         Context $context,
@@ -55,11 +63,13 @@ class Save extends RuleAction
         RuleRepositoryInterface $ruleRepository,
         DataObjectFactory $dataObjectFactory,
         DateFilterFactory $dateFilterFactory,
-        ApplierPoolInterface $applierPool
+        ApplierPoolInterface $applierPool,
+        InputFilterFactory $inputFilterFactory = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
         $this->dateFilterFactory = $dateFilterFactory;
         $this->applierPool = $applierPool;
+        $this->inputFilterFactory = $inputFilterFactory ?? ObjectManager::getInstance()->get(InputFilterFactory::class);
 
         parent::__construct(
             $context,
@@ -111,7 +121,7 @@ class Save extends RuleAction
 
             $dateFilter = $this->dateFilterFactory->create();
 
-            $inputFilter = new \Zend_Filter_Input(
+            $inputFilter = $this->inputFilterFactory->getInputFilter(
                 array_intersect_key(
                     [
                         RuleFormDataProvider::FIELD_FROM_DATE => $dateFilter,
@@ -120,20 +130,20 @@ class Save extends RuleAction
                     array_filter($ruleData)
                 ),
                 [
-                    RuleFormDataProvider::FIELD_NAME => 'NotEmpty',
+                    RuleFormDataProvider::FIELD_NAME => $this->inputFilterFactory->getNotEmptyRuleValue(),
                     RuleFormDataProvider::FIELD_DESCRIPTION => [],
                     RuleFormDataProvider::FIELD_IS_ACTIVE => [],
                     RuleFormDataProvider::FIELD_FROM_DATE => [],
                     RuleFormDataProvider::FIELD_TO_DATE => [],
-                    RuleFormDataProvider::FIELD_SORT_ORDER => 'NotEmpty',
+                    RuleFormDataProvider::FIELD_SORT_ORDER => $this->inputFilterFactory->getNotEmptyRuleValue(),
                     RuleFormDataProvider::FIELD_CONDITIONS => [
-                        \Zend_Filter_Input::PRESENCE => \Zend_Filter_Input::PRESENCE_OPTIONAL,
+                        InputFilterFactory::PRESENCE => InputFilterFactory::PRESENCE_OPTIONAL,
                     ],
                 ],
                 $ruleData,
                 [
-                    \Zend_Filter_Input::ALLOW_EMPTY => true,
-                    \Zend_Filter_Input::PRESENCE => \Zend_Filter_Input::PRESENCE_REQUIRED,
+                    InputFilterFactory::ALLOW_EMPTY => true,
+                    InputFilterFactory::PRESENCE => InputFilterFactory::PRESENCE_REQUIRED,
                 ]
             );
 
@@ -155,13 +165,15 @@ class Save extends RuleAction
             $this->messageManager->addSuccessMessage(__('The shipping method rule has been successfully saved.'));
         } catch (LocalizedException $e) {
             $this->messageManager->addExceptionMessage($e, $e->getMessage());
-        } catch (\Zend_Filter_Exception $e) {
-            $this->messageManager->addExceptionMessage($e, __($e->getMessage()));
         } catch (\Exception $e) {
-            $this->messageManager->addExceptionMessage(
-                $e,
-                __('An error occurred while saving the shipping method rule.')
-            );
+            if ($this->inputFilterFactory->isFilterException($e)) {
+                $this->messageManager->addExceptionMessage($e, __($e->getMessage()));
+            } else {
+                $this->messageManager->addExceptionMessage(
+                    $e,
+                    __('An error occurred while saving the shipping method rule.')
+                );
+            }
         }
 
         if (!$isSaveSuccessful || $this->getRequest()->getParam('back')) {
