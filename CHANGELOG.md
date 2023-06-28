@@ -1,4 +1,9 @@
 # Changelog
+## [1.5.2] - 2023-06-28
+### Fixed
+- Fix compatibility with Magento **2.4.6**
+- Do not attempt to render invalid option values
+
 ## [0.54.2] - 2023-05-17
 ### Fixed
 - Fix missing default parameter values in weee tax plugin
