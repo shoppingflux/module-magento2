@@ -322,7 +322,7 @@ class Exporter extends AbstractDb
                     [ $sectionDataKey => 'data' ]
                 );
             } else {
-                throw new Exception(sprintf('Unsupported join type: "%s".', $joinType));
+                throw new \Exception(sprintf('Unsupported join type: "%s".', $joinType));
             }
         }
     }
