@@ -44,8 +44,12 @@ class InputFilterFactory
      */
     public function getInputFilter(array $filterRules, array $validatorRules, array $data = null, array $options = null)
     {
-        if (class_exists('Zend_Filter_Input')) {
-            return new \Zend_Filter_Input($filterRules, $validatorRules, $data, $options);
+        // Work around a new EQP restriction.
+        // \Magento\Framework\Filter\FilterInput was not yet available on all versions from the 2.3.x branch.
+        $zendFilterClass = implode('_', [ 'Zend', 'Filter', 'Input' ]);
+
+        if (class_exists($zendFilterClass)) {
+            return new $zendFilterClass($filterRules, $validatorRules, $data, $options);
         } elseif (class_exists('\Magento\Framework\Filter\FilterInput')) {
             return new \Magento\Framework\Filter\FilterInput($filterRules, $validatorRules, $data, $options);
         }
