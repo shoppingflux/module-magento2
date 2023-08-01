@@ -16,8 +16,20 @@ interface TicketInterface
     const STATUS_HANDLED = 1;
     const STATUS_FAILED = 2;
 
+    const API_STATUS_SCHEDULED = 'scheduled';
+    const API_STATUS_RUNNING = 'running';
+    const API_STATUS_CANCELED = 'canceled';
+    const API_STATUS_SUCCEED = 'succeed';
+    const API_STATUS_FAILED = 'failed';
+
+    const API_PENDING_STATUSES = [
+        self::API_STATUS_SCHEDULED,
+        self::API_STATUS_RUNNING,
+    ];
+
     /**#@+*/
     const TICKET_ID = 'log_id';
+    const SHOPPING_FEED_BATCH_ID = 'shopping_feed_batch_id';
     const SHOPPING_FEED_TICKET_ID = 'shopping_feed_ticket_id';
     const ORDER_ID = 'order_id';
     const SALES_ENTITY_ID = 'sales_entity_id';
@@ -32,7 +44,12 @@ interface TicketInterface
     public function getId();
 
     /**
-     * @return string
+     * @return string|null
+     */
+    public function getShoppingFeedBatchId();
+
+    /**
+     * @return string|null
      */
     public function getShoppingFeedTicketId();
 
@@ -55,6 +72,12 @@ interface TicketInterface
      * @return string
      */
     public function getCreatedAt();
+
+    /**
+     * @param string $batchId
+     * @return TicketInterface
+     */
+    public function setShoppingFeedBatchId($batchId);
 
     /**
      * @param string $ticketId
