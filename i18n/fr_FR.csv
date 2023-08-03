@@ -630,7 +630,7 @@
 "Use Parent Categories","Utiliser les catégories parents"
 "Use Prices from Customer Group","Utiliser les prix du groupe clients"
 "Use Product ID for SKU","Utiliser l'ID produit à la place du SKU"
-"Value handler factory ""%1"" must create instances of type: %2.",La factory de handler de valeurs ""%1"" doit créer des instances du type : %2."
+"Value handler factory ""%1"" must create instances of type: %2.","La factory de handler de valeurs ""%1"" doit créer des instances du type : %2."
 "Value handler factory ""%1"" must implement a callable create() method.","La factory de handler de valeurs ""%1"" doit implémenter une méthode create() appelable."
 "Value handler type ""%1"" is not supported.","Le type de handler de valeurs ""%1"" n'est pas supporté."
 "Variations will use their own URLs.","Les variations utiliseront leurs propres URLs."
