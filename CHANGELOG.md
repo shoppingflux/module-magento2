@@ -1,4 +1,17 @@
 # Changelog
+## [1.6.0] - 2023-08-03
+### Added
+- Add an option to export the URLs of variations
+- Add a description for the "Export Attribute Set Name" configuration field
+
+### Changed
+- Improve synchronisation of order states with Shoppingfeed
+- Improve French translations
+
+### Fixed
+- Fix export of eco-tax amounts in some cases
+- Work around the EQP restriction regarding `Zend_Filter_Input`
+
 ## [1.5.2] - 2023-06-28
 ### Fixed
 - Fix compatibility with Magento **2.4.6**
