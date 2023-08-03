@@ -119,7 +119,8 @@
             "fetched_at": true,
             "imported_at": true,
             "acknowledged_at": true,
-            "latest_ship_date": true
+            "latest_ship_date": true,
+            "is_test": true
         },
         "constraint": {
             "PRIMARY": true,
@@ -176,12 +177,17 @@
             "sales_entity_id": true,
             "action": true,
             "status": true,
-            "created_at": true
+            "created_at": true,
+            "shopping_feed_batch_id": true
         },
         "constraint": {
             "PRIMARY": true,
             "FK_4073E1B165F8E56F08D78ABA0ACF4122": true,
             "SFM_MARKETPLACE_ORDER_TICKET_SHOPPING_FEED_TICKET_ID": true
+        },
+        "index": {
+            "SFM_MARKETPLACE_ORDER_TICKET_STATUS": true,
+            "SFM_MARKETPLACE_ORDER_TICKET_ORDER_ID_ACTION_STATUS_CREATED_AT": true
         }
     },
     "sfm_marketplace_order_log": {

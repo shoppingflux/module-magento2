@@ -196,9 +196,13 @@ class Collection extends AbstractCollection
         return $this;
     }
 
+    /**
+     * @param string $action
+     */
     private function addHandledTicketAbsenceFilter($action)
     {
-        $ticketSelect = $this->getConnection()->select()
+        $ticketSelect = $this->getConnection()
+            ->select()
             ->from(
                 [ '_ticket_table' => $this->tableDictionary->getMarketplaceOrderTicketTableName() ],
                 [ TicketInterface::ORDER_ID ]
@@ -211,12 +215,38 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param string $action
+     */
+    private function addNoTicketBlockingNotificationsFilter($action)
+    {
+        $connection = $this->getConnection();
+
+        $ticketSelect = $connection
+            ->select()
+            ->from([ '_ticket_table' => $this->tableDictionary->getMarketplaceOrderTicketTableName() ])
+            ->where('main_table.order_id = _ticket_table.order_id')
+            ->where('_ticket_table.action = ?', $action)
+            ->where(
+                '('
+                . $connection->quoteInto(
+                    '_ticket_table.status IN (?)',
+                    [ TicketInterface::STATUS_PENDING, TicketInterface::STATUS_HANDLED ]
+                )
+                . ') OR (_ticket_table.created_at <= DATE_SUB(NOW(), INTERVAL 7 DAY))'
+            );
+
+        $this->getSelect()
+            ->where('NOT EXISTS(' . $ticketSelect->assemble() . ')');
+    }
+
+    /**
      * @return $this
      */
     public function addNotifiableImportFilter()
     {
         $this->addImportedFilter();
-        $this->addHandledTicketAbsenceFilter(TicketInterface::ACTION_ACKNOWLEDGE_SUCCESS);
+        $this->addNoTicketBlockingNotificationsFilter(TicketInterface::ACTION_ACKNOWLEDGE_SUCCESS);
+
         return $this;
     }
 
@@ -226,7 +256,8 @@ class Collection extends AbstractCollection
     public function addNotifiableCancellationFilter()
     {
         $this->getSelect()->where('_sales_order_table.state = ?', SalesOrder::STATE_CANCELED);
-        $this->addHandledTicketAbsenceFilter(TicketInterface::ACTION_CANCEL);
+        $this->addNoTicketBlockingNotificationsFilter(TicketInterface::ACTION_CANCEL);
+
         return $this;
     }
 
@@ -244,12 +275,13 @@ class Collection extends AbstractCollection
                 [ 'order_id' ]
             );
 
-        $this->getSelect()->where(
-            '_sales_order_table.entity_id IN (?)',
-            new \Zend_Db_Expr($shipmentSelect->assemble())
-        );
+        $this->getSelect()
+            ->where(
+                '_sales_order_table.entity_id IN (?)',
+                new \Zend_Db_Expr($shipmentSelect->assemble())
+            );
 
-        $this->addHandledTicketAbsenceFilter(TicketInterface::ACTION_SHIP);
+        $this->addNoTicketBlockingNotificationsFilter(TicketInterface::ACTION_SHIP);
 
         return $this;
     }

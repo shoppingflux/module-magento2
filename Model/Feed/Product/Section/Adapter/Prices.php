@@ -118,6 +118,17 @@ class Prices extends AbstractAdapter implements PricesInterface
     public function prepareLoadedProductCollection(StoreInterface $store, ProductCollection $productCollection)
     {
         $productCollection->addTierPriceData();
+
+        if ($ecoTaxAttribute = $this->getConfig()->getEcotaxAttribute($store)) {
+            /** @var CatalogProduct $product */
+            foreach ($productCollection as $product) {
+                try {
+                    $ecoTaxAttribute->getBackend()->afterLoad($product);
+                } catch (\Exception $e) {
+                    // The attribute backend is invalid, not exporting anything is fine then.
+                }
+            }
+        }
     }
 
     /**

@@ -20,12 +20,50 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param int|int[] $ids
+     * @return $this
+     */
+    public function addIdFilter($ids)
+    {
+        $this->addFieldToFilter(TicketInterface::TICKET_ID, [ 'in' => $this->prepareIdFilterValue($ids) ]);
+
+        return $this;
+    }
+
+    /**
+     * @param int|int[] $ids
+     * @return $this
+     */
+    public function addExcludedIdFilter($ids)
+    {
+        if (is_array($ids) && empty($ids)) {
+            return $this;
+        }
+
+        $this->addFieldToFilter(TicketInterface::TICKET_ID, [ 'nin' => $this->prepareIdFilterValue($ids) ]);
+
+        return $this;
+    }
+
+    /**
      * @param int|int[] $orderIds
      * @return $this
      */
     public function addOrderIdFilter($orderIds)
     {
         $this->addFieldToFilter(TicketInterface::ORDER_ID, [ 'in' => $this->prepareIdFilterValue($orderIds) ]);
+
+        return $this;
+    }
+
+    /**
+     * @param int $status
+     * @return $this
+     */
+    public function addStatusFilter($status)
+    {
+        $this->addFieldToFilter(TicketInterface::STATUS, (int) $status);
+
         return $this;
     }
 

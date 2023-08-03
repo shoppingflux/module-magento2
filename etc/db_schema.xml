@@ -197,6 +197,7 @@
 
     <table name="sfm_marketplace_order_ticket" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Ticket">
         <column xsi:type="int" name="log_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Ticket ID"/>
+        <column xsi:type="varchar" name="shopping_feed_batch_id" nullable="true" comment="Shopping Feed Batch ID" length="255"/>
         <column xsi:type="varchar" name="shopping_feed_ticket_id" nullable="true" comment="Shopping Feed Ticket ID" length="255"/>
         <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Marketplace Order ID"/>
         <column xsi:type="int" name="sales_entity_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Sales Entity ID"/>
@@ -210,6 +211,15 @@
         <constraint xsi:type="unique" referenceId="SFM_MARKETPLACE_ORDER_TICKET_SHOPPING_FEED_TICKET_ID">
             <column name="shopping_feed_ticket_id"/>
         </constraint>
+        <index referenceId="SFM_MARKETPLACE_ORDER_TICKET_STATUS" indexType="btree">
+            <column name="status"/>
+        </index>
+        <index referenceId="SFM_MARKETPLACE_ORDER_TICKET_ORDER_ID_ACTION_STATUS_CREATED_AT" indexType="btree">
+            <column name="order_id"/>
+            <column name="action"/>
+            <column name="status"/>
+            <column name="created_at"/>
+        </index>
     </table>
 
     <table name="sfm_marketplace_order_log" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Log">

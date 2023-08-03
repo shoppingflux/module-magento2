@@ -21,6 +21,11 @@ class Ticket extends AbstractModel implements TicketInterface
         $this->_init(TicketResource::class);
     }
 
+    public function getShoppingFeedBatchId()
+    {
+        return trim((string) $this->getDataByKey(self::SHOPPING_FEED_BATCH_ID));
+    }
+
     public function getShoppingFeedTicketId()
     {
         return trim((string) $this->getDataByKey(self::SHOPPING_FEED_TICKET_ID));
@@ -44,6 +49,11 @@ class Ticket extends AbstractModel implements TicketInterface
     public function getCreatedAt()
     {
         return $this->getDataByKey(self::CREATED_AT);
+    }
+
+    public function setShoppingFeedBatchId($batchId)
+    {
+        return $this->setData(self::SHOPPING_FEED_BATCH_ID, trim((string) $batchId));
     }
 
     public function setShoppingFeedTicketId($ticketId)

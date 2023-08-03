@@ -61,4 +61,10 @@ interface AttributesInterface extends ConfigInterface
      * @return bool
      */
     public function shouldExportAttributeSetName(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldExportVariationUrls(StoreInterface $store);
 }
