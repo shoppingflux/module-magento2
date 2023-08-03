@@ -561,6 +561,8 @@
 "The marketplace order has no item.","La commande place de marché ne contient pas d'articles."
 "The marketplace order has no shipping address.","La commande place de marché n'a pas d'adresse de livraison."
 "The multiplier that will additionally be used to determine the weights of parent categories.","Le multiplicateur qui sera utilisé en plus pour déterminer les poids des catégories parents."
+"The name of the attribute sets will be exported as ""attribute_set"".","Le nom des jeux d'attributs sera exporté en tant que ""attribute_set""."
+"The name of the attribute sets will not be exported.","Le nom des jeux d'attributs ne sera pas exporté."
 "The name of the marketplace.","Le nom de la place de marché."
 "The number that will be multiplied with the level of a category to determine its weight.","Le nombre qui sera multiplié avec le niveau d'une catégorie pour déterminer son poids."
 "The order has been successfully fetched.","La commande a bien été récupérée."
