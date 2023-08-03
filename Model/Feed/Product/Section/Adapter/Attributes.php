@@ -414,6 +414,14 @@ class Attributes extends AbstractAdapter implements AttributesInterface
                 }
             }
         }
+
+        if (
+            $this->getConfig()->shouldExportVariationUrls($store)
+            && isset($productData[self::KEY_URL])
+        ) {
+            $exportedVariation->setLink($productData[self::KEY_URL]);
+            $exportedVariation->setAttribute('url', $productData[self::KEY_URL]);
+        }
     }
 
     public function describeProductData(StoreInterface $store, array $productData)

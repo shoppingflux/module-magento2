@@ -25,6 +25,7 @@ class Attributes extends AbstractConfig implements AttributesInterface
     const KEY_BASE_MAPPED_ATTRIBUTE = 'attribute_for_%s';
     const KEY_ADDITIONAL_ATTRIBUTES = 'additional_attributes';
     const KEY_EXPORT_ATTRIBUTE_SET_NAME = 'export_attribute_set_name';
+    const KEY_EXPORT_VARIATION_URLS = 'export_variation_urls';
 
     /**
      * @var AttributeSourceInterface
@@ -188,6 +189,17 @@ class Attributes extends AbstractConfig implements AttributesInterface
             ]
         );
 
+        $fields[] = $this->fieldFactory->create(
+            Checkbox::TYPE_CODE,
+            [
+                'name' => self::KEY_EXPORT_VARIATION_URLS,
+                'label' => __('Export Variation URLs'),
+                'sortOrder' => $sortOrder += 10,
+                'checkedNotice' => __('Variations will use their own URLs.'),
+                'uncheckedNotice' => __('Variations will use the URLs of their parent products.'),
+            ]
+        );
+
         return array_merge($fields, parent::getBaseFields());
     }
 
@@ -270,5 +282,10 @@ class Attributes extends AbstractConfig implements AttributesInterface
     public function shouldExportAttributeSetName(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_EXPORT_ATTRIBUTE_SET_NAME);
+    }
+
+    public function shouldExportVariationUrls(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_EXPORT_VARIATION_URLS);
     }
 }
