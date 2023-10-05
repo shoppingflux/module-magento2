@@ -35,6 +35,10 @@ class Importer
 {
     const CUSTOMER_FROM_SHOPPING_ATTRIBUTE_CODE = 'from_shopping_feed';
 
+    const COUNTRY_CODE_MAPPING = [
+        'UK' => 'GB',
+    ];
+
     /** @see \Magento\Directory\Setup\Patch\Data\InitializeDirectoryData */
     const SPAIN_REGION_PREFIX_TO_CODE_MAPPING = [
         '01' => 'Alava',
@@ -404,7 +408,9 @@ class Importer
         MarketplaceAddressInterface $address,
         StoreInterface $store
     ) {
-        return $address->getCountryCode();
+        $code = $address->getCountryCode();
+
+        return static::COUNTRY_CODE_MAPPING[$code] ?? $code;
     }
 
     /**
@@ -467,7 +473,7 @@ class Importer
                                             'first_name' => $address->getFirstName(),
                                             'last_name' => $address->getLastName(),
                                             'company' => $address->getCompany(),
-                                            'country' => $address->getCountryCode(),
+                                            'country' => $this->getAddressCountryCode($order, $address, $store),
                                         ]
                                     ),
                                 ]
