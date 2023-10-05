@@ -1,4 +1,8 @@
 # Changelog
+## [1.6.1] - 2023-10-05
+### Fixed
+- Map `UK` country code to `GB` when importing order addresses
+
 ## [1.6.0] - 2023-08-03
 ### Added
 - Add an option to export the URLs of variations
