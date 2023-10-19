@@ -582,6 +582,7 @@
 "The shipping method will only be applied if it is available for the imported order.","Le mode de livraison ne sera appliqué que s'il est disponible pour la commande importée."
 "The Shopping Feed account API token could not be determined.","Le token API du compte Shopping Feed n'a pas pu être déterminé."
 "The Shopping Feed account does not have a main store which to import.","Le compte Shopping Feed n'a pas de magasin principal à importer."
+"The Shopping Feed product attributes have been saved.","Les attributs Shopping Feed des produits ont été sauvegardés."
 "The request is incomplete.","La requête est incomplète."
 "The value of the chosen attribute will be exported as the product category.","La valeur de l'attribut choisi sera exportée en tant que catégorie du produit."
 "There is no importable Shopping Feed store corresponding to the currently imported accounts.","Il n'y a aucun magasin Shopping Feed importable correspondant aux comptes actuellement importés."

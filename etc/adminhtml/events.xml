@@ -8,4 +8,8 @@
     <event name="catalog_product_attribute_update_before">
         <observer name="sfm_save_products_attributes" instance="ShoppingFeed\Manager\Observer\SaveProductsAttributesObserver"/>
     </event>
+
+    <event name="controller_action_postdispatch_catalog_product_action_attribute_save">
+        <observer name="sfm_save_products_attributes_update" instance="ShoppingFeed\Manager\Observer\SaveProductsAttributesObserver"/>
+    </event>
 </config>
