@@ -1,4 +1,8 @@
 # Changelog
+## [1.6.2] - 2023-10-19
+### Fixed
+- Fix mass-update of Shopping Feed product attributes
+
 ## [1.6.1] - 2023-10-05
 ### Fixed
 - Map `UK` country code to `GB` when importing order addresses
