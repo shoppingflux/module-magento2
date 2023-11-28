@@ -166,6 +166,11 @@ class Importer
     private $orderGeneralConfig;
 
     /**
+     * @var string[]|null
+     */
+    private $existingCountryCodes = null;
+
+    /**
      * @param DataObjectFactory $dataObjectFactory
      * @param RandomGenerator $randomGenerator
      * @param StringHelper $stringHelper
@@ -398,6 +403,20 @@ class Importer
     }
 
     /**
+     * @return string[]
+     */
+    public function getExistingCountryCodes()
+    {
+        if (null === $this->existingCountryCodes) {
+            $this->existingCountryCodes = $this->directoryHelper
+                ->getCountryCollection()
+                ->getAllIds();
+        }
+
+        return $this->existingCountryCodes;
+    }
+
+    /**
      * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
@@ -410,7 +429,14 @@ class Importer
     ) {
         $code = $address->getCountryCode();
 
-        return static::COUNTRY_CODE_MAPPING[$code] ?? $code;
+        if (
+            isset(static::COUNTRY_CODE_MAPPING[$code])
+            && !in_array($code, $this->getExistingCountryCodes(), true)
+        ) {
+            $code = static::COUNTRY_CODE_MAPPING[$code];
+        }
+
+        return $code;
     }
 
     /**
