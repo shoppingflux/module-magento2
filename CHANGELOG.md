@@ -1,4 +1,8 @@
 # Changelog
+## [1.6.3] - 2023-11-28
+### Fixed
+- Apply country code mapping only when necessary
+
 ## [1.6.2] - 2023-10-19
 ### Fixed
 - Fix mass-update of Shopping Feed product attributes
