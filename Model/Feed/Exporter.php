@@ -25,7 +25,7 @@ use ShoppingFeed\Manager\Model\ResourceModel\Feed\Exporter as ExporterResource;
 
 class Exporter
 {
-    const MODULE_VERSION = '1.6.3';
+    const MODULE_VERSION = '1.6.4';
 
     const CHILDREN_EXPORT_MODE_NONE = 'none';
     const CHILDREN_EXPORT_MODE_SEPARATELY = 'separately';
