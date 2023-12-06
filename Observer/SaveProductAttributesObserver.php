@@ -39,7 +39,7 @@ class SaveProductAttributesObserver implements ObserverInterface
                     (int) $catalogProduct->getId(),
                     (int) $storeId,
                     $storeFeedAttributes['is_selected'] ?? false,
-                    $storeFeedAttributes['selected_category_id'] ?? null
+                    $storeFeedAttributes['selected_category_id'] ?? false
                 );
             }
         }
