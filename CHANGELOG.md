@@ -1,4 +1,8 @@
 # Changelog
+## [1.6.4] - 2023-12-06
+### Fixed
+- Fix saving of empty forced category from the product page
+
 ## [1.6.3] - 2023-11-28
 ### Fixed
 - Apply country code mapping only when necessary
