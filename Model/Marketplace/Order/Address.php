@@ -81,6 +81,11 @@ class Address extends AbstractModel implements AddressInterface
         return trim((string) $this->getDataByKey(self::EMAIL));
     }
 
+    public function getRelayPointId()
+    {
+        return trim((string) $this->getDataByKey(self::RELAY_POINT_ID));
+    }
+
     public function getMiscData()
     {
         return trim((string) $this->getDataByKey(self::MISC_DATA));
@@ -144,6 +149,11 @@ class Address extends AbstractModel implements AddressInterface
     public function setEmail($email)
     {
         return $this->setData(self::EMAIL, trim((string) $email));
+    }
+
+    public function setRelayPointId($relayPointId)
+    {
+        return $this->setData(self::RELAY_POINT_ID, trim((string) $relayPointId));
     }
 
     public function setMiscData($miscData)

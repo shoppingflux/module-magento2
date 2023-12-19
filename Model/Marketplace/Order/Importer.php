@@ -421,6 +421,7 @@ class Importer
         $address->setPhone($apiAddressData['phone'] ?? '');
         $address->setMobilePhone($apiAddressData['mobilePhone'] ?? '');
         $address->setEmail($apiAddressData['email'] ?? '');
+        $address->setRelayPointId($apiAddressData['relayId'] ?? '');
         $address->setMiscData($apiAddressData['other'] ?? '');
 
         return $address;

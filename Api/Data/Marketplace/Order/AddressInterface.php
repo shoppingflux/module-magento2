@@ -24,6 +24,7 @@ interface AddressInterface
     const PHONE = 'phone';
     const MOBILE_PHONE = 'mobile_phone';
     const EMAIL = 'email';
+    const RELAY_POINT_ID = 'relay_point_id';
     const MISC_DATA = 'misc_data';
     /**#@+*/
 
@@ -91,6 +92,11 @@ interface AddressInterface
      * @return string
      */
     public function getEmail();
+
+    /**
+     * @return string
+     */
+    public function getRelayPointId();
 
     /**
      * @return string
@@ -168,6 +174,12 @@ interface AddressInterface
      * @return AddressInterface
      */
     public function setEmail($email);
+
+    /**
+     * @param string $relayPointId
+     * @return AddressInterface
+     */
+    public function setRelayPointId($relayPointId);
 
     /**
      * @param string $miscData

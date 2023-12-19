@@ -171,6 +171,7 @@
         <column xsi:type="varchar" name="phone" nullable="false" length="255" comment="Phone"/>
         <column xsi:type="varchar" name="mobile_phone" nullable="false" length="255" comment="Mobile Phone"/>
         <column xsi:type="varchar" name="email" nullable="false" length="255" comment="Email"/>
+        <column xsi:type="varchar" name="relay_point_id" nullable="false" length="255" comment="Relay Point ID"/>
         <column xsi:type="varchar" name="misc_data" nullable="false" length="255" comment="Misc Data"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="address_id"/>
