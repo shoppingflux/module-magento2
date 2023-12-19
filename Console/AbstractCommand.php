@@ -58,8 +58,10 @@ abstract class AbstractCommand extends Command
             function () use ($input, $output) {
                 $originalScope = $this->configScope->getCurrentScope();
                 $this->configScope->setCurrentScope(AppArea::AREA_FRONTEND);
-                $this->executeActions($input, $output);
+                $result = $this->executeActions($input, $output);
                 $this->configScope->setCurrentScope($originalScope);
+
+                return $result;
             }
         );
     }
@@ -67,6 +69,7 @@ abstract class AbstractCommand extends Command
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
+     * @return int
      */
     abstract protected function executeActions(InputInterface $input, OutputInterface $output);
 
@@ -267,7 +270,7 @@ abstract class AbstractCommand extends Command
             $storeIds = (array) $input->getOption($name);
         } else {
             if ($input->hasParameterOption('--' . self::OPTION_KEY_ACCOUNT_IDS)) {
-               if ($input->hasParameterOption('--' . self::OPTION_KEY_STORE_IDS)) {
+                if ($input->hasParameterOption('--' . self::OPTION_KEY_STORE_IDS)) {
                     throw new CommandException(
                         'Options "'
                         . self::OPTION_KEY_ACCOUNT_IDS
