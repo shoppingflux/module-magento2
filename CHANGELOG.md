@@ -1,4 +1,11 @@
 # Changelog
+## [1.7.0] - 2023-12-19
+### Added
+- Import relay point IDs from the new API field
+
+### Fixed
+- Fix result of CLI commands with Magento **2.4.6** 
+
 ## [1.6.4] - 2023-12-06
 ### Fixed
 - Fix saving of empty forced category from the product page
