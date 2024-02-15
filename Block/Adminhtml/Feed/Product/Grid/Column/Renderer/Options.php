@@ -12,8 +12,14 @@ class Options extends BaseRenderer
         $options = parent::_getOptions();
 
         foreach ($options as $key => $option) {
-            if (is_array($option) && (($option['value'] ?? null) instanceof Phrase)) {
-                $options[$key]['value'] = (string) $option['value'];
+            if (is_array($option)) {
+                if (($option['value'] ?? null) instanceof Phrase) {
+                    $options[$key]['value'] = (string) $option['value'];
+                }
+
+                if (($option['label'] ?? null) instanceof Phrase) {
+                    $options[$key]['label'] = (string) $option['label'];
+                }
             } elseif ($option instanceof Phrase) {
                 $options[$key] = (string) $option;
             }
