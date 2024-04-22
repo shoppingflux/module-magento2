@@ -1,4 +1,10 @@
 # Changelog
+## [1.7.1] - 2024-04-22
+### Fixed
+- Prevent old customer addresses from being validated
+- Fill the "Company" field with a default value if required but missing
+- Fix action drop-down overflow in listings
+
 ## [1.7.0] - 2023-12-19
 ### Added
 - Import relay point IDs from the new API field
