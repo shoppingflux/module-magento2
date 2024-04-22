@@ -1,3 +1,7 @@
+.shoppingfeed-manager-listing-action .data-grid .data-grid-actions-cell {
+    position: static !important;
+}
+
 .action-menu-item._off-selection {
     text-decoration: line-through;
 }
