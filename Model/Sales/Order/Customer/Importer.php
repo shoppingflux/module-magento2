@@ -647,6 +647,13 @@ class Importer
             $customer->setAttributeSetId(CustomerMetadataInterface::ATTRIBUTE_SET_ID_CUSTOMER);
         }
 
+        // Prevent old addresses from being validated.
+        foreach ($customer->getAddressesCollection() as $address) {
+            if ($address->getId()) {
+                $address->setData('should_ignore_validation', true);
+            }
+        }
+
         $this->customerResource->save($customer);
 
         $customer = $customer->getDataModel();
