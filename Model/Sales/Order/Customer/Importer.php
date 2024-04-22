@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Order\Customer;
 
+use Magento\Config\Model\Config\Source\Nooptreq as NooptreqSource;
 use Magento\Customer\Api\CustomerMetadataInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Helper\Address as CustomerAddressHelper;
@@ -270,7 +271,11 @@ class Importer
         MarketplaceAddressInterface $address,
         StoreInterface $store
     ) {
-        return $address->getCompany();
+        $companyFieldState = $this->customerAddressHelper->getConfig('company_show', $store->getBaseStore());
+
+        return ($companyFieldState !== NooptreqSource::VALUE_REQUIRED)
+            ? $address->getCompany()
+            : $this->getAddressRequiredFieldValue($address->getCompany(), $store);
     }
 
     /**
