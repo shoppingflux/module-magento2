@@ -1,4 +1,11 @@
 # Changelog
+## [1.7.2] - 2024-05-13
+### Added
+- Allow exporting the `url_key` attribute in the feeds
+
+### Changed
+- Change the format of the `platform` metadata in the feeds
+
 ## [1.7.1] - 2024-04-22
 ### Fixed
 - Prevent old customer addresses from being validated
