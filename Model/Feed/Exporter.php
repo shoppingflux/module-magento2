@@ -423,9 +423,15 @@ class Exporter
 
         $feedGenerator = $this->feedGeneratorFactory->create();
 
+        // Currently applied platform format: '[name]:[version]'.
         $feedGenerator->setPlatform(
-            $this->appMetadata->getName() . ' ' . $this->appMetadata->getEdition(),
-            $this->appMetadata->getVersion()
+            // [name]
+            $this->appMetadata->getName()
+            . ' ' . $this->appMetadata->getEdition()
+            . ':' . $this->appMetadata->getVersion()
+            . '-module',
+            // [version]
+            self::MODULE_VERSION
         );
 
         $baseStore = $store->getBaseStore();
