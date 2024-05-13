@@ -133,7 +133,6 @@
                 <item name="sku_type" xsi:type="string">sku_type</item>
                 <item name="tier_price" xsi:type="string">tier_price</item>
                 <item name="type_id" xsi:type="string">type_id</item>
-                <item name="url_key" xsi:type="string">url_key</item>
                 <item name="url_path" xsi:type="string">url_path</item>
                 <item name="weight_type" xsi:type="string">weight_type</item>
             </argument>
