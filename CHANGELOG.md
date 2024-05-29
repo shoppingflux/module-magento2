@@ -8,9 +8,10 @@
 
 ## [1.7.1] - 2024-04-22
 ### Fixed
-- Prevent old customer addresses from being validated
-- Fill the "Company" field with a default value if required but missing
+- Prevent rare problems with options-based columns in the feed product listing
 - Fix action drop-down overflow in listings
+- Fill the "Company" field with a default value if required but missing
+- Prevent old customer addresses from being validated
 
 ## [1.7.0] - 2023-12-19
 ### Added
