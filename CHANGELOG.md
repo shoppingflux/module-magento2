@@ -1,4 +1,13 @@
 # Changelog
+## [1.8.0] - 2024-07-03
+### Added
+- Implement new command to export feeds without refresh using cron tasks
+- Implement support for marketplace cart discounts
+
+### Changed
+- Rework account and store management
+- Optimize refreshable feed data prioritization
+
 ## [1.7.2] - 2024-05-13
 ### Added
 - Allow exporting the `url_key` attribute in the feeds
