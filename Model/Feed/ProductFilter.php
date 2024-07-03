@@ -109,12 +109,30 @@ class ProductFilter extends AbstractFilter
     }
 
     /**
+     * @return $this
+     */
+    public function unsetProductIds()
+    {
+        $this->productIds = null;
+        return $this;
+    }
+
+    /**
      * @param int[] $storeIds
      * @return $this
      */
     public function setStoreIds(array $storeIds)
     {
         $this->storeIds = $storeIds;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function unsetStoreIds()
+    {
+        $this->storeIds = null;
         return $this;
     }
 
@@ -139,12 +157,30 @@ class ProductFilter extends AbstractFilter
     }
 
     /**
+     * @return $this
+     */
+    public function unsetExportStates()
+    {
+        $this->exportStates = null;
+        return $this;
+    }
+
+    /**
      * @param int[] $exportStateRefreshStates
      * @return $this
      */
     public function setExportStateRefreshStates(array $exportStateRefreshStates)
     {
         $this->exportStateRefreshStates = $exportStateRefreshStates;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function unsetExportStateRefreshStates()
+    {
+        $this->exportStateRefreshStates = null;
         return $this;
     }
 
@@ -158,21 +194,45 @@ class ProductFilter extends AbstractFilter
         return $this;
     }
 
+    /**
+     * @return $this
+     */
+    public function unsetLastExportStateRefreshTimeFilter()
+    {
+        $this->lastExportStateRefreshTimeFilter = null;
+        return $this;
+    }
+
+    /**
+     * @param TimeFilter $exportRetentionStartTimeFilter
+     * @return $this
+     */
     public function setExportRetentionStartTimeFilter(TimeFilter $exportRetentionStartTimeFilter)
     {
         $this->exportRetentionStartTimeFilter = $exportRetentionStartTimeFilter;
         return $this;
     }
 
+    /**
+     * @return $this
+     */
+    public function unsetExportRetentionStartTimeFilter()
+    {
+        $this->exportRetentionStartTimeFilter = null;
+        return $this;
+    }
+
     public function isEmpty()
     {
-        return (null === $this->productIds)
+        return (
+            (null === $this->productIds)
             && (null === $this->storeIds)
             && (false === $this->selectedOnly)
             && (null === $this->exportStates)
             && (null === $this->exportStateRefreshStates)
             && (null === $this->lastExportStateRefreshTimeFilter)
-            && (null === $this->exportRetentionStartTimeFilter);
+            && (null === $this->exportRetentionStartTimeFilter)
+        );
     }
 
     // @todo also have lastExportStateRefreshStateUpdateTimeFilter

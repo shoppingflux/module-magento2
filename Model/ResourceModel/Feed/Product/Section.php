@@ -133,7 +133,13 @@ class Section extends AbstractDb
             $this->getConnection()
                 ->insertOnDuplicate(
                     $this->tableDictionary->getFeedProductSectionTableName(),
-                    $this->sectionDataBatchedUpdates
+                    $this->sectionDataBatchedUpdates,
+                    [
+                        'data',
+                        'refreshed_at',
+                        'refresh_state',
+                        'refresh_state_updated_at',
+                    ]
                 );
 
             $this->sectionDataBatchedUpdates = [];

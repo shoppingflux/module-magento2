@@ -15,15 +15,15 @@ use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as ProductAdapterInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface as ExportStateAdapterInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\ConfigInterface as ExportStateConfigInterface;
-use ShoppingFeed\Manager\Model\Feed\ProductFilter as FeedProductFilter;
-use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\SectionFilter as FeedSectionFilter;
 use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
+use ShoppingFeed\Manager\Model\Feed\ProductFilter as FeedProductFilter;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product as FeedProductResource;
-use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFactory as FeedProductResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\Section as FeedSectionResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFactory as FeedSectionResourceFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\ProductFactory as FeedProductResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Refresher as RefresherResource;
 
 class Refresher

@@ -2,12 +2,12 @@
 
 namespace ShoppingFeed\Manager\Model\Account;
 
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
-use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Store\Model\ScopeInterface as StoreScopeInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
@@ -16,8 +16,8 @@ use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store as StoreResource;
-use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\Collection as StoreCollection;
+use ShoppingFeed\Manager\Model\ResourceModel\Account\StoreFactory as StoreResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\Catalog\Product\Collection as CatalogProductCollection;
 
 /**
@@ -178,6 +178,11 @@ class Store extends AbstractModel implements StoreInterface
         return $this->getData(self::UPDATED_AT);
     }
 
+    public function getLastCronFeedRefreshAt()
+    {
+        return $this->getData(self::LAST_CRON_FEED_REFRESH_AT);
+    }
+
     public function getScopeConfigValue($path)
     {
         return $this->scopeConfig->getValue(
@@ -246,6 +251,11 @@ class Store extends AbstractModel implements StoreInterface
     public function setUpdatedAt($updatedAt)
     {
         return $this->setData(self::UPDATED_AT, $updatedAt);
+    }
+
+    public function setLastCronFeedRefreshAt($lastCronFeedRefreshAt)
+    {
+        return $this->setData(self::LAST_CRON_FEED_REFRESH_AT, $lastCronFeedRefreshAt);
     }
 
     public function importConfigurationData(array $data)

@@ -25,6 +25,7 @@
         <column xsi:type="varchar" name="feed_file_name_base" nullable="false" length="255" comment="Feed File Name Base"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
         <column xsi:type="timestamp" name="updated_at" on_update="true" nullable="false" default="CURRENT_TIMESTAMP" comment="Updated At"/>
+        <column xsi:type="timestamp" name="last_cron_feed_refresh_at" on_update="false" nullable="true" comment="Last Cron Feed Refresh At"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="store_id"/>
         </constraint>

@@ -24,7 +24,8 @@
             "configuration": true,
             "feed_file_name_base": true,
             "created_at": true,
-            "updated_at": true
+            "updated_at": true,
+            "last_cron_feed_refresh_at": true
         },
         "index": {
             "SFM_ACCOUNT_STORE_ACCOUNT_ID": true,
