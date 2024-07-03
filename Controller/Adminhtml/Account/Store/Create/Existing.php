@@ -8,8 +8,8 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
 use Magento\Framework\View\Result\PageFactory as PageResultFactory;
 use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
-use ShoppingFeed\Manager\Controller\Adminhtml\AccountAction;
 use ShoppingFeed\Manager\Controller\Adminhtml\Account\StoreAction;
+use ShoppingFeed\Manager\Controller\Adminhtml\AccountAction;
 use ShoppingFeed\Manager\Model\Account\Importer as AccountImporter;
 use ShoppingFeed\Manager\Ui\DataProvider\Account\Store\Form\Create\Existing\DataProvider;
 
@@ -46,6 +46,7 @@ class Existing extends AccountAction
 
         if (is_array($storeData = $this->getRequest()->getParam(DataProvider::DATA_SCOPE_STORE))) {
             try {
+                $store = null;
                 $sessionData = $storeData;
 
                 if (isset($sessionData[DataProvider::FIELD_SHOPPING_FEED_PASSWORD])) {
@@ -64,26 +65,59 @@ class Existing extends AccountAction
                         $apiToken = trim($storeData[DataProvider::FIELD_API_TOKEN] ?? '');
                     }
 
-                    list(, $store) = $this->accountImporter->importAccountByApiToken(
+                    list($account) = $this->accountImporter->importAccountByApiToken(
                         $apiToken,
-                        true,
+                        false,
                         (int) ($storeData[DataProvider::FIELD_BASE_STORE_ID] ?? 0)
                     );
+
+                    $allStores = $this->accountImporter->getAccountStoresOptionHash($account);
+                    $importableStores = $this->accountImporter->getAccountImportableStoresOptionHash($account);
+
+                    if (empty($allStores) || empty($importableStores)) {
+                        throw new LocalizedException(
+                            __('The Shopping Feed account does not have any importable store.')
+                        );
+                    } elseif (count($allStores) === 1) {
+                        reset($allStores);
+                        $shouldImportStore = true;
+
+                        $storeData[DataProvider::FIELD_IS_NEW_ACCOUNT] = false;
+                        $storeData[DataProvider::FIELD_ACCOUNT_ID] = $account->getId();
+                        $storeData[DataProvider::FIELD_SHOPPING_FEED_STORE_ID] = key($allStores);
+                    } else {
+                        $shouldImportStore = false;
+                    }
                 } else {
+                    $shouldImportStore = true;
+                    $account = $this->getAccount((int) ($storeData[DataProvider::FIELD_ACCOUNT_ID] ?? 0));
+                }
+
+                if ($shouldImportStore) {
                     $store = $this->accountImporter->importAccountStoreByShoppingFeedId(
-                        $this->getAccount((int) ($storeData[DataProvider::FIELD_ACCOUNT_ID] ?? 0)),
+                        $account,
                         (int) ($storeData[DataProvider::FIELD_SHOPPING_FEED_STORE_ID] ?? 0),
                         (int) ($storeData[DataProvider::FIELD_BASE_STORE_ID] ?? 0)
                     );
                 }
 
-                $this->messageManager->addSuccessMessage(__('The account has been successfully imported.'));
-                $this->_session->getData(DataProvider::SESSION_DATA_KEY, true);
+                if ($account) {
+                    if ($store) {
+                        $this->messageManager->addSuccessMessage(__('The account has been successfully imported.'));
+                        $this->_session->getData(DataProvider::SESSION_DATA_KEY, true);
 
-                return $redirectResult->setPath(
-                    '*/*/edit',
-                    [ StoreAction::REQUEST_KEY_STORE_ID => $store->getId() ]
-                );
+                        return $redirectResult->setPath(
+                            '*/*/edit',
+                            [ StoreAction::REQUEST_KEY_STORE_ID => $store->getId() ]
+                        );
+                    } else {
+                        $storeData[DataProvider::FIELD_IS_NEW_ACCOUNT] = false;
+                        $storeData[DataProvider::FIELD_ACCOUNT_ID] = $account->getId();
+                        unset($storeData[DataProvider::FIELD_API_TOKEN]);
+                        unset($storeData[DataProvider::FIELD_SHOPPING_FEED_LOGIN]);
+                        $this->_session->setData(DataProvider::SESSION_DATA_KEY, $storeData);
+                    }
+                }
             } catch (NoSuchEntityException $e) {
                 $this->messageManager->addErrorMessage(__('This account does no longer exist.'));
             } catch (LocalizedException $e) {

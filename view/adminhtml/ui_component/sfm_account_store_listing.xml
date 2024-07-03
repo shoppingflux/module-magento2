@@ -60,23 +60,15 @@
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Shopping Feed Name</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Account</item>
                 </item>
             </argument>
         </column>
-        <column name="api_token">
+        <column name="shopping_feed_store_id">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
                     <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">API Token</item>
-                </item>
-            </argument>
-        </column>
-        <column name="shopping_feed_login">
-            <argument name="data" xsi:type="array">
-                <item name="config" xsi:type="array">
-                    <item name="filter" xsi:type="string">text</item>
-                    <item name="label" xsi:type="string" translate="true">Shopping Feed Username</item>
+                    <item name="label" xsi:type="string" translate="true">Shopping Feed Store</item>
                 </item>
             </argument>
         </column>
