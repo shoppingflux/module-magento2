@@ -337,6 +337,34 @@
         <plugin name="sfm_inventory_sales_check_items_quantity_plugin" type="ShoppingFeed\Manager\Plugin\InventorySales\CheckItemsQuantityPlugin" sortOrder="0"/>
     </type>
 
+    <type name="Magento\SalesRule\Model\Rule\Action\Discount\CalculatorFactory">
+        <arguments>
+            <argument name="discountRules" xsi:type="array">
+                <item name="sfm_marketplace_cart_fixed" xsi:type="string">ShoppingFeed\Manager\Model\SalesRule\Rule\Action\Discount\Marketplace\CartFixed</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\SalesRule\Model\Rule\Action\SimpleActionOptionsProvider">
+        <plugin name="sfm_salesrule_action_simple_action_options_provider_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\Rule\Action\SimpleActionOptionsProviderPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\SalesRule\Model\Utility">
+        <plugin name="sfm_salesrule_utility_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\UtilityPlugin" sortOrder="1000000000"/>
+    </type>
+
+    <type name="Magento\SalesRule\Model\Validator">
+        <plugin name="sfm_salesrule_validator_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\ValidatorPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Model\SalesRule\Rule\Action\Discount\Marketplace\CartFixed">
+        <arguments>
+            <argument name="salesOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\SalesRule\ValidatorPlugin" shared="true"/>
+
     <type name="Magento\Weee\Model\Tax">
         <plugin name="sfm_weee_tax_plugin" type="ShoppingFeed\Manager\Plugin\Weee\TaxPlugin"/>
     </type>
@@ -451,10 +479,6 @@
             <argument name="withNotLoggedIn" xsi:type="boolean">false</argument>
         </arguments>
     </virtualType>
-
-    <type name="Magento\SalesRule\Model\Utility">
-        <plugin name="sfm_salesrule_utility_plugin" type="ShoppingFeed\Manager\Plugin\SalesRule\UtilityPlugin" sortOrder="1000000000"/>
-    </type>
 
     <virtualType name="ShoppingFeedManagerPaymentFacade" type="Magento\Payment\Model\Method\Adapter">
         <arguments>

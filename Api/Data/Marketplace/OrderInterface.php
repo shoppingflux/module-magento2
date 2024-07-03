@@ -57,6 +57,7 @@ interface OrderInterface
     const STATUS_PARTIALLY_SHIPPED = 'partially_shipped';
     const STATUS_PARTIALLY_REFUNDED = 'partially_refunded';
 
+    const ADDITIONAL_FIELD_CART_DISCOUNT_AMOUNT = 'seller_voucher';
     const ADDITIONAL_FIELD_IS_BUSINESS_ORDER = 'is_business_order';
     const ADDITIONAL_FIELD_TAX_IDENTIFICATION_NUMBER = 'buyer_identification_number';
     const ADDITIONAL_FIELD_VAT_ID = 'tax_registration_id';
@@ -136,6 +137,11 @@ interface OrderInterface
      * @return float
      */
     public function getTotalAmount();
+
+    /**
+     * @return float
+     */
+    public function getCartDiscountAmount();
 
     /**
      * @return string
