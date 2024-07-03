@@ -4,12 +4,12 @@ namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
 use Magento\Framework\DB\Adapter\AdapterInterface as DbAdapterInterface;
 use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
-use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Api\Data\Feed\Product\SectionInterface as FeedSectionInterface;
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface as FeedProductInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilter;
 use ShoppingFeed\Manager\Model\Feed\ProductFactory as FeedProductFactory;
 use ShoppingFeed\Manager\Model\Feed\ProductFilter;
-use ShoppingFeed\Manager\Model\Feed\Product\SectionFilter;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProduct;
 use ShoppingFeed\Manager\Model\Feed\RefreshableProductFactory as RefreshableProductFactory;
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
@@ -21,6 +21,8 @@ use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Refresher extends AbstractDb
 {
+    const DEFAULT_ADVISED_REFRESH_PRIORITIZATION_DELAY = 24 * 30 * 12; // ~ 1 year
+
     /**
      * @var StoreCollectionFactory
      */
@@ -42,6 +44,11 @@ class Refresher extends AbstractDb
     private $refreshableProductFactory;
 
     /**
+     * @var int
+     */
+    private $advisedRefreshPrioritizationDelay;
+
+    /**
      * @param DbContext $context
      * @param TimeHelper $timeHelper
      * @param TableDictionary $tableDictionary
@@ -51,6 +58,7 @@ class Refresher extends AbstractDb
      * @param FeedProductFactory $feedProductFactory
      * @param RefreshableProductFactory $refreshableProductFactory
      * @param string|null $connectionName
+     * @param int $advisedRefreshPrioritizationDelay
      */
     public function __construct(
         DbContext $context,
@@ -61,11 +69,13 @@ class Refresher extends AbstractDb
         SectionFilterApplier $sectionFilterApplier,
         FeedProductFactory $feedProductFactory,
         RefreshableProductFactory $refreshableProductFactory,
-        string $connectionName = null
+        string $connectionName = null,
+        $advisedRefreshPrioritizationDelay = self::DEFAULT_ADVISED_REFRESH_PRIORITIZATION_DELAY
     ) {
         $this->storeCollectionFactory = $storeCollectionFactory;
         $this->feedProductFactory = $feedProductFactory;
         $this->refreshableProductFactory = $refreshableProductFactory;
+        $this->advisedRefreshPrioritizationDelay = max(0, (int) $advisedRefreshPrioritizationDelay);
 
         parent::__construct(
             $context,
@@ -258,33 +268,35 @@ class Refresher extends AbstractDb
     }
 
     /**
-     * @param bool $isExportStateRefreshed
-     * @param int[] $sortedRefreshedSectionTypeIds
-     * @return array
+     * @param string $refreshStateExpression
+     * @param string $refreshedAtExpression
+     * @return \Zend_Db_Expr
      */
-    private function getRefreshPriorityWeights($isExportStateRefreshed, $sortedRefreshedSectionTypeIds)
+    private function getLastRefreshAtExpression($refreshStateExpression, $refreshedAtExpression)
     {
-        // Use descending powers of 2 to get weights that can be uniquely associated to a section type or
-        // to the export state and have each weight be strictly greater than the sum of the lesser weights.
-        // Given that only 2 refresh states are being used here, we can handle up to 14 different section types.
-        $priorityWeight = pow(2, 31);
-        $exportStateWeights = [];
-        $sectionTypeWeights = [];
-        $refreshStates = [ FeedProduct::REFRESH_STATE_REQUIRED, FeedProduct::REFRESH_STATE_ADVISED ];
+        $connection = $this->getConnection();
 
-        foreach ($refreshStates as $refreshState) {
-            if ($isExportStateRefreshed) {
-                $exportStateWeights[$refreshState] = $priorityWeight;
-                $priorityWeight /= 2;
-            }
+        $minRefreshDate = new \Zend_Db_Expr(
+            $connection->quote(
+                $this->timeHelper->utcPastDate(86400 * 365 * 30)
+            )
+        );
 
-            foreach ($sortedRefreshedSectionTypeIds as $typeId) {
-                $sectionTypeWeights[$typeId][$refreshState] = $priorityWeight;
-                $priorityWeight /= 2;
-            }
-        }
-
-        return [ $exportStateWeights, $sectionTypeWeights ];
+        return $connection->getIfNullSql(
+            $connection->getCheckSql(
+                $connection->quoteInto(
+                    $refreshStateExpression . ' = ?',
+                    FeedProduct::REFRESH_STATE_REQUIRED
+                ),
+                $refreshedAtExpression,
+                $connection->getDateAddSql(
+                    $refreshedAtExpression,
+                    $this->advisedRefreshPrioritizationDelay,
+                    DbAdapterInterface::INTERVAL_HOUR
+                )
+            ),
+            $minRefreshDate
+        );
     }
 
     /**
@@ -309,101 +321,138 @@ class Refresher extends AbstractDb
         }
 
         $connection = $this->getConnection();
-        $productTableAlias = 'product_table';
-        $isExportStateRefreshed = ($exportStateRefreshProductFilter !== null);
+        $refreshableProductExportStates = [];
+        $refreshableProductSectionTypes = [];
+        $refreshableProductOldestRefresh = [];
+
+
+        if ($exportStateRefreshProductFilter !== null) {
+            $lastRefreshAtExpression = $this->getLastRefreshAtExpression(
+                'export_state_refresh_state',
+                'export_state_refreshed_at'
+            );
+
+            $select = $connection->select()
+                ->from(
+                    $this->tableDictionary->getFeedProductTableName(),
+                    [
+                        'product_id',
+                        'last_refresh_at' => $lastRefreshAtExpression,
+                    ]
+                )
+                ->where('store_id = ?', $storeId)
+                ->where(
+                    implode(
+                        ' AND ',
+                        $this->productFilterApplier->getFilterConditions($exportStateRefreshProductFilter)
+                    )
+                )
+                ->order('last_refresh_at', 'asc')
+                ->limit($maximumCount, 0);
+
+            foreach ($connection->fetchAll($select) as $row) {
+                $refreshableProductExportStates[$row['product_id']] = true;
+                $refreshableProductOldestRefresh[$row['product_id']] = $row['last_refresh_at'];
+            }
+        }
+
+        if (!empty($sortedRefreshedSectionTypeIds)) {
+            $productTableAlias = 'product_table';
+            $sectionTableAlias = 'section_table';
+
+            $lastRefreshAtExpression = $this->getLastRefreshAtExpression(
+                $sectionTableAlias . '.refresh_state',
+                $sectionTableAlias . '.refreshed_at'
+            );
+
+            $select = $connection->select()
+                ->from(
+                    [ $productTableAlias => $this->tableDictionary->getFeedProductTableName() ],
+                    [ 'product_id' ]
+                )
+                ->joinInner(
+                    [ $sectionTableAlias => $this->tableDictionary->getFeedProductSectionTableName() ],
+                    $productTableAlias . '.product_id = ' . $sectionTableAlias . '.product_id'
+                    . ' AND '
+                    . $connection->quoteInto($sectionTableAlias . '.store_id = ?', $storeId),
+                    [
+                        'type_ids' => new \Zend_Db_Expr(
+                            'GROUP_CONCAT(' . $sectionTableAlias . '.type_id)'
+                        ),
+                        'last_refresh_at' => new \Zend_Db_Expr('MIN(' . $lastRefreshAtExpression . ')'),
+                    ]
+                )
+                ->where($productTableAlias . '.store_id = ?', $storeId);
+
+            foreach ($sortedRefreshedSectionTypeIds as $typeId) {
+                $productFilter = $refreshedSectionTypeProductFilters[$typeId];
+                $sectionFilter = $refreshedSectionTypeSectionFilters[$typeId];
+                $sectionFilter->unsetStoreIds();
+                $sectionFilter->setTypeIds([ $typeId ]);
+
+                $conditionSets[] = '('
+                    . implode(
+                        ' AND ',
+                        array_merge(
+                            $this->productFilterApplier->getFilterConditions($productFilter, $productTableAlias),
+                            $this->sectionFilterApplier->getFilterConditions($sectionFilter, $sectionTableAlias)
+                        )
+                    )
+                    . ')';
+            }
+
+            $select->where(implode(' OR ', $conditionSets));
+            $select->group($productTableAlias . '.product_id');
+            $select->order('last_refresh_at', 'asc');
+            $select->limit($maximumCount, 0);
+
+            foreach ($connection->fetchAll($select) as $row) {
+                if (!isset($refreshableProductOldestRefresh[$row['product_id']])) {
+                    $refreshableProductOldestRefresh[$row['product_id']] = $row['last_refresh_at'];
+                } else {
+                    $refreshableProductOldestRefresh[$row['product_id']] = min(
+                        $row['last_refresh_at'],
+                        $refreshableProductOldestRefresh[$row['product_id']]
+                    );
+                }
+
+                $refreshableProductSectionTypes[$row['product_id']] = array_map(
+                    'intval',
+                    explode(',', $row['type_ids'])
+                );
+            }
+        }
+
+        ksort($refreshableProductOldestRefresh);
+        $refreshableProductIds = array_slice(array_keys($refreshableProductOldestRefresh), 0, $maximumCount);
+
+        if (empty($refreshableProductIds)) {
+            return [];
+        }
+
+        $feedProductData = [];
+        $refreshableProducts = [];
 
         $select = $connection->select()
-            ->from([ $productTableAlias => $this->tableDictionary->getFeedProductTableName() ])
-            ->where($productTableAlias . '.store_id = ?', $storeId);
+            ->from($this->tableDictionary->getFeedProductTableName())
+            ->where('product_id IN (?)', $refreshableProductIds);
 
-        list ($exportStateWeights, $sectionTypeWeights) = $this->getRefreshPriorityWeights(
-            $isExportStateRefreshed,
-            $sortedRefreshedSectionTypeIds
-        );
-
-        $weightExpressions = [];
-
-        if ($isExportStateRefreshed) {
-            $exportStateConditions = $this->productFilterApplier->getFilterConditions(
-                $exportStateRefreshProductFilter,
-                $productTableAlias
-            );
-
-            $weightExpressions[] = $connection->getCheckSql(
-                implode(' AND ', $exportStateConditions),
-                $connection->getCaseSql($productTableAlias . '.export_state_refresh_state', $exportStateWeights, 0),
-                0
-            );
+        foreach ($connection->fetchAll($select) as $row) {
+            $feedProductData[$row['product_id']] = $row;
         }
 
-        foreach ($sortedRefreshedSectionTypeIds as $typeId) {
-            $sectionTableAlias = sprintf('section_%d_table', $typeId);
-            $productFilter = $refreshedSectionTypeProductFilters[$typeId];
-            $sectionFilter = $refreshedSectionTypeSectionFilters[$typeId];
-            $sectionFilter->setTypeIds([ $typeId ])->setStoreIds([ $storeId ]);
+        foreach ($refreshableProductIds as $productId) {
+            if (isset($feedProductData[$productId])) {
+                $feedProduct = $this->feedProductFactory->create();
+                $feedProduct->setData($feedProductData[$productId]);
 
-            $select->joinLeft(
-                [ $sectionTableAlias => $this->tableDictionary->getFeedProductSectionTableName() ],
-                implode(
-                    ' AND ',
-                    array_merge(
-                        [ $productTableAlias . '.product_id = ' . $sectionTableAlias . '.product_id' ],
-                        $this->productFilterApplier->getFilterConditions($productFilter, $productTableAlias),
-                        $this->sectionFilterApplier->getFilterConditions($sectionFilter, $sectionTableAlias)
-                    )
-                ),
-                []
-            );
+                $refreshableProduct = $this->refreshableProductFactory->create();
+                $refreshableProduct->setFeedProduct($feedProduct);
+                $refreshableProduct->setHasRefreshableExportState(isset($refreshableProductExportStates[$productId]));
+                $refreshableProduct->setRefreshableSectionTypeIds($refreshableProductSectionTypes[$productId] ?? []);
 
-            $weightExpressions[] = $connection->getCaseSql(
-                $sectionTableAlias . '.refresh_state',
-                $sectionTypeWeights[$typeId],
-                0
-            );
-        }
-
-        $select->columns([ 'total_weight' => new \Zend_Db_Expr(implode(' + ', $weightExpressions)) ]);
-        $select->order('total_weight DESC');
-        $select->having('total_weight > 0');
-        $select->limit($maximumCount, 0);
-
-        $refreshableProducts = [];
-        $rawProducts = $connection->fetchAll($select);
-
-        foreach ($rawProducts as $rawProductData) {
-            $productTotalWeight = (int) $rawProductData['total_weight'];
-            unset($rawProductData['total_weight']);
-
-            $feedProduct = $this->feedProductFactory->create();
-            $feedProduct->setData($rawProductData);
-
-            $hasRefreshableExportState = false;
-            $refreshableSectionTypeIds = [];
-
-            foreach ($exportStateWeights as $weight) {
-                if ($productTotalWeight & $weight) {
-                    $hasRefreshableExportState = true;
-                    $productTotalWeight -= $weight;
-                    break;
-                }
+                $refreshableProducts[] = $refreshableProduct;
             }
-
-            if ($productTotalWeight > 0) {
-                foreach ($sectionTypeWeights as $typeId => $typeWeights) {
-                    foreach ($typeWeights as $weight) {
-                        if ($productTotalWeight & $weight) {
-                            $refreshableSectionTypeIds[] = $typeId;
-                            break;
-                        }
-                    }
-                }
-            }
-
-            $refreshableProduct = $this->refreshableProductFactory->create();
-            $refreshableProduct->setFeedProduct($feedProduct);
-            $refreshableProduct->setHasRefreshableExportState($hasRefreshableExportState);
-            $refreshableProduct->setRefreshableSectionTypeIds($refreshableSectionTypeIds);
-            $refreshableProducts[] = $refreshableProduct;
         }
 
         return $refreshableProducts;

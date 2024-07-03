@@ -158,11 +158,22 @@ class Product extends AbstractDb
     private function flushExportStateBatchedUpdates()
     {
         if (is_array($this->exportStateBatchedUpdates)) {
+            $updatedColumns = [
+                'export_state',
+                'child_export_state',
+                'exclusion_reason',
+                'export_state_refreshed_at',
+                'export_state_refresh_state',
+                'export_state_refresh_state_updated_at',
+                'export_retention_started_at',
+            ];
+
             if (!empty($this->exportStateBatchedUpdates['with_retention'])) {
                 $this->getConnection()
                     ->insertOnDuplicate(
                         $this->tableDictionary->getFeedProductTableName(),
-                        $this->exportStateBatchedUpdates['with_retention']
+                        $this->exportStateBatchedUpdates['with_retention'],
+                        $updatedColumns
                     );
             }
 
@@ -170,7 +181,8 @@ class Product extends AbstractDb
                 $this->getConnection()
                     ->insertOnDuplicate(
                         $this->tableDictionary->getFeedProductTableName(),
-                        $this->exportStateBatchedUpdates['without_retention']
+                        $this->exportStateBatchedUpdates['without_retention'],
+                        $updatedColumns
                     );
             }
 

@@ -12,6 +12,11 @@ interface ProductInterface
     const STATE_NOT_EXPORTED = 3;
     const STATE_NEVER_EXPORTED = 4;
 
+    const EXPORTED_STATES = [
+        self::STATE_EXPORTED,
+        self::STATE_RETAINED,
+    ];
+
     const REFRESH_STATE_UP_TO_DATE = 1;
     const REFRESH_STATE_ADVISED = 2;
     const REFRESH_STATE_REQUIRED = 3;

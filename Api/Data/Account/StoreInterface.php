@@ -20,6 +20,7 @@ interface StoreInterface
     const FEED_FILE_NAME_BASE = 'feed_file_name_base';
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
+    const LAST_CRON_FEED_REFRESH_AT = 'last_cron_feed_refresh_at';
     /**#@-*/
 
     /**
@@ -86,6 +87,11 @@ interface StoreInterface
      * @return string
      */
     public function getUpdatedAt();
+
+    /**
+     * @return string|null
+     */
+    public function getLastCronFeedRefreshAt();
 
     /**
      * @param string $path
@@ -156,6 +162,12 @@ interface StoreInterface
      * @return StoreInterface
      */
     public function setUpdatedAt($updatedAt);
+
+    /**
+     * @param string $lastCronFeedRefreshAt
+     * @return StoreInterface
+     */
+    public function setLastCronFeedRefreshAt($lastCronFeedRefreshAt);
 
     /**
      * @param array $data

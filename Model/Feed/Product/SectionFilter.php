@@ -83,12 +83,30 @@ class SectionFilter extends AbstractFilter
     }
 
     /**
+     * @return $this
+     */
+    public function unsetTypeIds()
+    {
+        $this->typeIds = null;
+        return $this;
+    }
+
+    /**
      * @param int[] $productIds
      * @return $this
      */
     public function setProductIds(array $productIds)
     {
         $this->productIds = $productIds;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function unsetProductIds()
+    {
+        $this->productIds = null;
         return $this;
     }
 
@@ -103,12 +121,30 @@ class SectionFilter extends AbstractFilter
     }
 
     /**
+     * @return $this
+     */
+    public function unsetStoreIds()
+    {
+        $this->storeIds = null;
+        return $this;
+    }
+
+    /**
      * @param int[] $refreshStates
      * @return $this
      */
     public function setRefreshStates(array $refreshStates)
     {
         $this->refreshStates = $refreshStates;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function unsetRefreshStates()
+    {
+        $this->refreshStates = null;
         return $this;
     }
 
@@ -122,12 +158,23 @@ class SectionFilter extends AbstractFilter
         return $this;
     }
 
+    /**
+     * @return $this
+     */
+    public function unsetLastRefreshTimeFilter()
+    {
+        $this->lastRefreshTimeFilter = null;
+        return $this;
+    }
+
     public function isEmpty()
     {
-        return (null === $this->typeIds)
+        return (
+            (null === $this->typeIds)
             && (null === $this->productIds)
             && (null === $this->storeIds)
             && (null === $this->refreshStates)
-            && (null === $this->lastRefreshTimeFilter);
+            && (null === $this->lastRefreshTimeFilter)
+        );
     }
 }
