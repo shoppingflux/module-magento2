@@ -218,6 +218,8 @@
 "Export Disabled Products","Exporter les produits désactivés"
 "Export Discount Prices in","Exporter les prix remisés dans"
 "Export Feed","Exporter le flux"
+"Export Feed (With Refresh)","Exporter le flux (avec rafraîchissement)"
+"Export Feed (Without Refresh)","Exporter le flux (sans rafraîchissement)"
 "Export Not Salable Products","Exporter les produits non vendables"
 "Export Only Selected Products","Seulement exporter les produits sélectionnés"
 "Export Out of Stock Products","Exporter les produits épuisés"

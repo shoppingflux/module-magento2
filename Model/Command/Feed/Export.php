@@ -66,7 +66,7 @@ class Export extends AbstractCommand
 
     public function getLabel()
     {
-        return __('Export Feed');
+        return __('Export Feed (With Refresh)');
     }
 
     /**
