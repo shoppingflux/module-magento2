@@ -6,8 +6,8 @@ use Magento\Bundle\Model\Product\Price as BundleProductPrice;
 use Magento\Bundle\Model\Product\Type as BundleProductType;
 use Magento\Bundle\Model\Selection as BundleProductSelection;
 use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
-use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Helper\Product as CatalogProductHelper;
+use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as CatalogProductStatus;
 use Magento\Catalog\Model\Product\Type\AbstractType as ProductType;
 use Magento\Checkout\Model\Session as CheckoutSession;
@@ -19,11 +19,11 @@ use Magento\Framework\Filter\Template as TemplateFilter;
 use Magento\Framework\Registry;
 use Magento\Quote\Api\CartManagementInterface as QuoteManager;
 use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
+use Magento\Quote\Api\Data\AddressExtensionFactory as QuoteAddressExtensionFactory;
 use Magento\Quote\Api\Data\AddressExtensionInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Quote\Model\Quote;
-use Magento\Quote\Api\Data\AddressExtensionFactory as QuoteAddressExtensionFactory;
 use Magento\Quote\Model\Quote\Address\RateFactory as ShippingAddressRateFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory as ShippingRateMethodFactory;
 use Magento\Sales\Api\Data\OrderInterface as SalesOrderInterface;
@@ -36,21 +36,22 @@ use Magento\Tax\Model\Config as TaxConfig;
 use Magento\Weee\Helper\Data as WeeeHelper;
 use Psr\Log\LoggerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as MarketplaceItemInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Shipping\Method\RuleInterface as ShippingMethodRuleInterface;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface as MarketplaceOrderRepositoryInterface;
 use ShoppingFeed\Manager\DB\TransactionFactory;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Manager as MarketplaceOrderManager;
-use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\OrderFactory as MarketplaceOrderResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as MarketplaceAddressCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item\CollectionFactory as MarketplaceItemCollectionFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\OrderFactory as MarketplaceOrderResourceFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\Collection as ShippingMethodRuleCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Shipping\Method\Rule\CollectionFactory as ShippingMethodRuleCollectionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\Business\TaxManager as BusinessTaxManager;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\Customer\Importer as CustomerImporter;
+use ShoppingFeed\Manager\Model\Sales\Order\SalesRule\Applier as SalesRuleApplier;
 use ShoppingFeed\Manager\Model\Shipping\Method\ApplierPoolInterface as ShippingMethodApplierPoolInterface;
 use ShoppingFeed\Manager\Model\TimeHelper;
 use ShoppingFeed\Manager\Model\Ui\Payment\ConfigProvider as PaymentConfigProvider;
@@ -192,6 +193,11 @@ class Importer implements ImporterInterface
     private $salesShipmentFactory;
 
     /**
+     * @var SalesRuleApplier
+     */
+    private $salesRuleApplier;
+
+    /**
      * @var MarketplacePaymentConfig
      */
     private $marketplacePaymentConfig;
@@ -310,7 +316,8 @@ class Importer implements ImporterInterface
         MarketplaceOrderResourceFactory $marketplaceOrderResourceFactory,
         MarketplaceAddressCollectionFactory $marketplaceAddressCollectionFactory,
         MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory,
-        SalesShipmentFactory $salesShipmentFactory = null
+        SalesShipmentFactory $salesShipmentFactory = null,
+        SalesRuleApplier $salesRuleApplier = null
     ) {
         $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;
@@ -344,6 +351,8 @@ class Importer implements ImporterInterface
         $this->marketplaceItemCollectionFactory = $marketplaceItemCollectionFactory;
         $this->salesShipmentFactory = $salesShipmentFactory
             ?? ObjectManager::getInstance()->get(SalesShipmentFactory::class);
+        $this->salesRuleApplier = $salesRuleApplier
+            ?? ObjectManager::getInstance()->get(SalesRuleApplier::class);
     }
 
     /**
@@ -462,6 +471,19 @@ class Importer implements ImporterInterface
         $originalBaseStoreCurrencyCode = $baseStore->getCurrentCurrencyCode();
 
         $marketplaceOrderResource = $this->marketplaceOrderResourceFactory->create();
+
+        $isAnyOrderDiscounted = false;
+
+        foreach ($marketplaceOrders as $marketplaceOrder) {
+            if ($marketplaceOrder->getCartDiscountAmount() > 0) {
+                $isAnyOrderDiscounted = true;
+                break;
+            }
+        }
+
+        if ($isAnyOrderDiscounted) {
+            $this->salesRuleApplier->setupMarketplaceDiscountRules();
+        }
 
         try {
             foreach ($marketplaceOrders as $marketplaceOrder) {

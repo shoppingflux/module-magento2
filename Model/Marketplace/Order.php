@@ -6,13 +6,13 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Model\AbstractModel;
 use Magento\Framework\Model\Context;
 use Magento\Framework\Registry;
-use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order as OrderResource;
-use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as AddressCollectionFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 
 /**
  * @method OrderResource getResource()
@@ -137,6 +137,14 @@ class Order extends AbstractModel implements OrderInterface
     public function getTotalAmount()
     {
         return (float) $this->getDataByKey(self::TOTAL_AMOUNT);
+    }
+
+    public function getCartDiscountAmount()
+    {
+        $amount = (float) $this->getAdditionalFields()
+            ->getDataByKey(self::ADDITIONAL_FIELD_CART_DISCOUNT_AMOUNT);
+
+        return ($amount > 0) ? $amount : 0.0;
     }
 
     public function getCurrencyCode()
