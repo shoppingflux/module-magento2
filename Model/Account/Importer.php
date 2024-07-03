@@ -10,13 +10,13 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Math\Random as Randomizer;
 use Magento\Store\Model\StoreManagerInterface;
-use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 use ShoppingFeed\Manager\Api\Account\StoreRepositoryInterface as AccountStoreRepositoryInterface;
+use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\Model\Account;
-use ShoppingFeed\Manager\Model\AccountFactory;
 use ShoppingFeed\Manager\Model\Account\Store as AccountStore;
 use ShoppingFeed\Manager\Model\Account\StoreFactory as AccountStoreFactory;
+use ShoppingFeed\Manager\Model\AccountFactory;
 use ShoppingFeed\Manager\Model\Feed\Exporter as FeedExporter;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\CollectionFactory as AccountCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as AccountStoreCollectionFactory;
@@ -163,8 +163,23 @@ class Importer
 
     /**
      * @param string $apiToken
+     * @return int|null
+     */
+    public function getShoppingFeedAccountIdByToken($apiToken)
+    {
+        try {
+            $apiSession = $this->apiSessionManager->getSessionByToken($apiToken);
+        } catch (\Exception $e) {
+            return null;
+        }
+
+        return $apiSession->getId();
+    }
+
+    /**
+     * @param string $apiToken
      * @param bool $shouldImportMainStore
-     * @param int $baseStoreId
+     * @param int|null $baseStoreId
      * @param string|null $feedFileNameBase
      * @return array Imported Account and AccountStore|null
      * @throws LocalizedException
@@ -183,20 +198,22 @@ class Importer
         }
 
         try {
-            $this->accountRepository->getByApiToken($apiToken);
-            throw new LocalizedException(__('An account already exists for API token "%1".', $apiToken));
+            $account = $this->accountRepository->getByApiToken($apiToken);
         } catch (NoSuchEntityException $e) {
-            // Everything is fine if the API token is not yet used by another account.
+            $account = null;
         }
 
         $apiSession = $this->getApiSessionByToken($apiToken);
         $transaction = $this->transactionFactory->create();
 
-        $account = $this->accountFactory->create();
-        $account->setApiToken($apiToken);
-        $account->setShoppingFeedLogin($apiSession->getLogin());
-        $account->setShoppingFeedEmail($apiSession->getEmail());
-        $transaction->addObject($account);
+        if (null === $account) {
+            $account = $this->accountFactory->create();
+            $account->setApiToken($apiToken);
+            $account->setShoppingFeedAccountId($apiSession->getId());
+            $account->setShoppingFeedLogin($apiSession->getLogin());
+            $account->setShoppingFeedEmail($apiSession->getEmail());
+            $transaction->addObject($account);
+        }
 
         if ($shouldImportMainStore) {
             $mainStore = $apiSession->getMainStore();
@@ -247,48 +264,49 @@ class Importer
 
     /**
      * @param AccountInterface $account
-     * @param bool $appendMainSuffix
      * @return array
      * @throws LocalizedException
      */
-    public function getAccountImportableStoresOptionHash(AccountInterface $account, $appendMainSuffix = false)
+    public function getAccountStoresOptionHash(AccountInterface $account)
     {
         $importableStores = [];
         $apiSession = $this->getApiSessionByToken($account->getApiToken());
-        $mainStore = $apiSession->getMainStore();
 
         /** @var ApiStore $store */
         foreach ($apiSession->getStores() as $store) {
-            $isMainStore = $appendMainSuffix && ($store->getId() === $mainStore->getId());
-            $importableStores[$store->getId()] = $store->getName() . ($isMainStore ? ' ' . __('(main)') : '');
+            $importableStores[$store->getId()] = $store->getName();
         }
+
+        uasort($importableStores, 'strcasecmp');
 
         return $importableStores;
     }
 
     /**
+     * @param AccountInterface[] $accounts
      * @return array
-     * @throws LocalizedException
      */
-    public function getAllImportableStoresOptionHashes()
+    private function getAccountsImportableStoresOptionHashes(array $accounts)
     {
-        $accountStoreCollection = $this->accountStoreCollectionFactory->create();
-        $importedShoppingFeedStores = [];
+        $importedStoreCollection = $this->accountStoreCollectionFactory->create();
+        $importedStores = [];
 
         /** @var AccountStore $accountStore */
-        foreach ($accountStoreCollection as $accountStore) {
-            $importedShoppingFeedStores[$accountStore->getShoppingFeedStoreId()] = true;
+        foreach ($importedStoreCollection as $store) {
+            $importedStores[$store->getShoppingFeedStoreId()] = true;
         }
 
-        $accountCollection = $this->accountCollectionFactory->create();
         $importableStores = [];
 
-        /** @var Account $account */
-        foreach ($accountCollection as $account) {
-            $accountImportableStores = array_diff_key(
-                $this->getAccountImportableStoresOptionHash($account, true),
-                $importedShoppingFeedStores
-            );
+        foreach ($accounts as $account) {
+            try {
+                $accountImportableStores = array_diff_key(
+                    $this->getAccountStoresOptionHash($account),
+                    $importedStores
+                );
+            } catch (\Exception $e) {
+                $accountImportableStores = [];
+            }
 
             if (!empty($accountImportableStores)) {
                 $importableStores[$account->getId()] = $accountImportableStores;
@@ -300,6 +318,29 @@ class Importer
 
     /**
      * @param AccountInterface $account
+     * @return array
+     * @throws LocalizedException
+     */
+    public function getAccountImportableStoresOptionHash(AccountInterface $account)
+    {
+        return $this->getAccountsImportableStoresOptionHashes([ $account ])[$account->getId()] ?? [];
+    }
+
+    /**
+     * @return array
+     * @throws LocalizedException
+     */
+    public function getAllImportableStoresOptionHashes()
+    {
+        return $this->getAccountsImportableStoresOptionHashes(
+            $this->accountCollectionFactory
+                ->create()
+                ->getItems()
+        );
+    }
+
+    /**
+     * @param AccountInterface $account
      * @param int $shoppingFeedStoreId
      * @param int $baseStoreId
      * @return AccountStore
@@ -307,14 +348,6 @@ class Importer
      */
     public function importAccountStoreByShoppingFeedId(AccountInterface $account, $shoppingFeedStoreId, $baseStoreId)
     {
-        $importableStores = $this->getAccountImportableStoresOptionHash($account);
-
-        if (!isset($importableStores[$shoppingFeedStoreId])) {
-            throw new LocalizedException(
-                __('Shopping Feed store for ID "%1" does not exist.', $shoppingFeedStoreId)
-            );
-        }
-
         try {
             $this->accountStoreRepository->getByShoppingFeedStoreId($shoppingFeedStoreId);
 
@@ -325,6 +358,13 @@ class Importer
             // Everything is fine if the Shopping Feed store ID is not yet used by another store.
         }
 
+        $importableStores = $this->getAccountImportableStoresOptionHash($account);
+
+        if (!isset($importableStores[$shoppingFeedStoreId])) {
+            throw new LocalizedException(
+                __('Shopping Feed store for ID "%1" does not exist.', $shoppingFeedStoreId)
+            );
+        }
         $baseStore = $this->storeManager->getStore($baseStoreId);
 
         if (empty($baseStoreId) || !$baseStore->getId()) {

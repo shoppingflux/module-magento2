@@ -5,11 +5,13 @@
             "api_token": true,
             "shopping_feed_login": true,
             "shopping_feed_email": true,
-            "created_at": true
+            "created_at": true,
+            "shopping_feed_account_id": true
         },
         "constraint": {
             "PRIMARY": true,
-            "SFM_ACCOUNT_API_TOKEN": true
+            "SFM_ACCOUNT_API_TOKEN": true,
+            "SFM_ACCOUNT_SHOPPING_FEED_ACCOUNT_ID": true
         }
     },
     "sfm_account_store": {
@@ -147,7 +149,8 @@
             "phone": true,
             "mobile_phone": true,
             "email": true,
-            "misc_data": true
+            "misc_data": true,
+            "relay_point_id": true
         },
         "constraint": {
             "PRIMARY": true,

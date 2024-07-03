@@ -2,12 +2,14 @@
 
 namespace ShoppingFeed\Manager\Model;
 
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Api\AccountRepositoryInterface;
 use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Account as AccountResource;
+use ShoppingFeed\Manager\Model\ResourceModel\Account\CollectionFactory as AccountCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\AccountFactory as AccountResourceFactory;
 
 class AccountRepository implements AccountRepositoryInterface
@@ -23,13 +25,24 @@ class AccountRepository implements AccountRepositoryInterface
     private $accountFactory;
 
     /**
+     * @var
+     */
+    private $accountCollectionFactory;
+
+    /**
      * @param AccountResourceFactory $accountResourceFactory
      * @param AccountFactory $accountFactory
+     * @param AccountCollectionFactory|null $accountCollectionFactory
      */
-    public function __construct(AccountResourceFactory $accountResourceFactory, AccountFactory $accountFactory)
-    {
+    public function __construct(
+        AccountResourceFactory $accountResourceFactory,
+        AccountFactory $accountFactory,
+        AccountCollectionFactory $accountCollectionFactory = null
+    ) {
         $this->accountResource = $accountResourceFactory->create();
         $this->accountFactory = $accountFactory;
+        $this->accountCollectionFactory = $accountCollectionFactory
+            ?? ObjectManager::getInstance()->get(AccountCollectionFactory::class);
     }
 
     public function save(AccountInterface $account)
@@ -57,14 +70,15 @@ class AccountRepository implements AccountRepositoryInterface
 
     public function getByApiToken($apiToken)
     {
-        $account = $this->accountFactory->create();
-        $this->accountResource->load($account, $apiToken, AccountInterface::API_TOKEN);
+        $accounts = $this->accountCollectionFactory->create();
 
-        if (!$account->getId()) {
-            throw new NoSuchEntityException(__('Account for API token "%1" does not exist.', $apiToken));
+        foreach ($accounts as $account) {
+            if ($account->getApiToken() === $apiToken) {
+                return $account;
+            }
         }
 
-        return $account;
+        throw new NoSuchEntityException(__('Account for API token "%1" does not exist.', $apiToken));
     }
 
     public function delete(AccountInterface $account)

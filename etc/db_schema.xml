@@ -3,14 +3,15 @@
     <table name="sfm_account" resource="default" engine="innodb" comment="Shopping Feed Account">
         <column xsi:type="int" name="account_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Account ID"/>
         <column xsi:type="varchar" name="api_token" nullable="false" length="255" comment="API Token"/>
+        <column xsi:type="int" name="shopping_feed_account_id" padding="10" unsigned="true" nullable="true" identity="false" comment="Shopping Feed Account ID"/>
         <column xsi:type="varchar" name="shopping_feed_login" nullable="false" length="255" comment="Shopping Feed Login"/>
         <column xsi:type="varchar" name="shopping_feed_email" nullable="false" length="255" comment="Shopping Feed Email"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP" comment="Created At"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="account_id"/>
         </constraint>
-        <constraint xsi:type="unique" referenceId="SFM_ACCOUNT_API_TOKEN">
-            <column name="api_token"/>
+        <constraint xsi:type="unique" referenceId="SFM_ACCOUNT_SHOPPING_FEED_ACCOUNT_ID">
+            <column name="shopping_feed_account_id"/>
         </constraint>
     </table>
 

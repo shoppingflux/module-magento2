@@ -120,7 +120,7 @@ class DataProvider extends BaseDataProvider
 
             $accountOptions[] = [
                 'value' => (string) $accountId,
-                'label' => $account->getShoppingFeedLogin() . ' (' . $account->getApiToken() . ')',
+                'label' => $account->getShoppingFeedLogin(),
             ];
 
             $accountIdSwitcherRules[$accountIdSwitcherRuleIndex++] = [
@@ -138,13 +138,27 @@ class DataProvider extends BaseDataProvider
             foreach ($importableStores[$accountId] as $value => $label) {
                 $storeOptions[] = [
                     'value' => (string) $value,
-                    'label' => $label,
+                    'label' => $label . ' (' . $value . ')',
                     'account_id' => (string) $accountId,
                 ];
             }
         }
 
         $hasAnyAccount = !empty($accountOptions);
+
+        uasort(
+            $accountOptions,
+            function ($a, $b) {
+                return strcasecmp($a['label'], $b['label']);
+            }
+        );
+
+        uasort(
+            $storeOptions,
+            function ($a, $b) {
+                return strcasecmp($a['label'], $b['label']);
+            }
+        );
 
         $accountOptions[] = [
             'value' => self::NEW_ACCOUNT_ID_VALUE,

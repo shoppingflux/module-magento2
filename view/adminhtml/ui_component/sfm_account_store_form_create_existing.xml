@@ -38,7 +38,7 @@
         <argument name="data" xsi:type="array">
             <item name="config" xsi:type="array">
                 <item name="dataScope" xsi:type="string">store</item>
-                <item name="label" xsi:type="string" translate="true">Account Identification</item>
+                <item name="label" xsi:type="string" translate="true">Account Selection</item>
             </item>
         </argument>
         <field name="account_id">
@@ -74,7 +74,7 @@
         <field name="is_new_account">
             <argument name="data" xsi:type="array">
                 <item name="config" xsi:type="array">
-                    <item name="dataType" xsi:type="string">number</item>
+                    <item name="dataType" xsi:type="string">boolean</item>
                     <item name="formElement" xsi:type="string">hidden</item>
                     <item name="switcherConfig" xsi:type="array">
                         <item name="component" xsi:type="string">ShoppingFeed_Manager/js/form/switcher</item>
@@ -93,6 +93,10 @@
                                     <item name="2" xsi:type="array">
                                         <item name="callback" xsi:type="string">notify:value</item>
                                         <item name="target" xsi:type="string">${$.parentName}.use_api_token</item>
+                                    </item>
+                                    <item name="3" xsi:type="array">
+                                        <item name="callback" xsi:type="string">show</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_store_choice_notice</item>
                                     </item>
                                 </item>
                                 <item name="value" xsi:type="string">1</item>
@@ -118,6 +122,10 @@
                                     <item name="4" xsi:type="array">
                                         <item name="callback" xsi:type="string">hide</item>
                                         <item name="target" xsi:type="string">${$.parentName}.shopping_feed_password</item>
+                                    </item>
+                                    <item name="5" xsi:type="array">
+                                        <item name="callback" xsi:type="string">hide</item>
+                                        <item name="target" xsi:type="string">${$.parentName}.shopping_feed_store_choice_notice</item>
                                     </item>
                                 </item>
                                 <item name="value" xsi:type="string">0</item>
@@ -245,6 +253,17 @@
                     </item>
                 </item>
                 <item name="options" xsi:type="object">Magento\Store\Ui\Component\Listing\Column\Store\Options</item>
+            </argument>
+        </field>
+        <field name="shopping_feed_store_choice_notice">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string"></item>
+                    <item name="elementTmpl" xsi:type="string">ui/form/element/text</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="value" xsi:type="string" translate="true">If more than one store is associated to the Shoppingfeed account, you can choose which one to import on the next screen.</item>
+                </item>
             </argument>
         </field>
     </fieldset>
