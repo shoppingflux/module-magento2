@@ -39,12 +39,22 @@ class ValidatorPlugin
             return $subject;
         }
 
-        /** @var Rule $rule */
-        foreach ($subject->getRules($address) as $rule) {
-            if ($rule->getSimpleAction() === MarketplaceCartFixed::ACTION_CODE) {
-                $this->sfmCartFixedRules[] = $rule;
-                // Make sure that item totals are initialized (necessary to reuse the "cart_fixed" behavior later).
-                $rule->setSimpleAction(Rule::CART_FIXED_ACTION);
+        try {
+            $getRulesMethod = new \ReflectionMethod(Validator::class, '_getRules');
+            $getRulesMethod->setAccessible(true);
+            $rules = $getRulesMethod->invoke($subject, $address);
+        } catch (\ReflectionException $e) {
+            $rules = $subject->getRules($address);
+        }
+
+        if (is_array($rules)) {
+            /** @var Rule $rule */
+            foreach ($subject->getRules($address) as $rule) {
+                if ($rule->getSimpleAction() === MarketplaceCartFixed::ACTION_CODE) {
+                    $this->sfmCartFixedRules[] = $rule;
+                    // Make sure that item totals are initialized (necessary to reuse the "cart_fixed" behavior later).
+                    $rule->setSimpleAction(Rule::CART_FIXED_ACTION);
+                }
             }
         }
 
