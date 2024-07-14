@@ -1,4 +1,8 @@
 # Changelog
+## [1.8.1] - 2024-07-14
+### Fixed
+- Fix validation of sales rules on older Magento versions
+
 ## [1.8.0] - 2024-07-03
 ### Added
 - Implement new command to export feeds without refresh using cron tasks
