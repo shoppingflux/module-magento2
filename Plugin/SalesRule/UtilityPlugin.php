@@ -16,11 +16,22 @@ class UtilityPlugin
     private $validatorPlugin;
 
     /**
-     * @param ValidatorPlugin|null $validatorPlugin
+     * @var OrderImporterInterface
      */
-    public function __construct(ValidatorPlugin $validatorPlugin = null)
-    {
-        $this->validatorPlugin = $validatorPlugin ?? ObjectManager::getInstance()->get(ValidatorPlugin::class);
+    private $salesOrderImporter;
+
+    /**
+     * @param ValidatorPlugin|null $validatorPlugin
+     * @param OrderImporterInterface|null $salesOrderImporter
+     */
+    public function __construct(
+        ValidatorPlugin $validatorPlugin = null,
+        OrderImporterInterface $salesOrderImporter = null
+    ) {
+        $this->validatorPlugin = $validatorPlugin
+            ?? ObjectManager::getInstance()->get(ValidatorPlugin::class);
+        $this->salesOrderImporter =
+            $salesOrderImporter ?? ObjectManager::getInstance()->get(OrderImporterInterface::class);
     }
 
     /**
@@ -44,6 +55,13 @@ class UtilityPlugin
             );
 
             $result = ($isMarketplaceRule === $isMarketplaceQuote);
+
+            if ($result && $isMarketplaceQuote) {
+                $result = (
+                    ($order = $this->salesOrderImporter->getCurrentlyImportedMarketplaceOrder())
+                    && ($order->getCartDiscountAmount() > 0)
+                );
+            }
         }
 
         return $result;
