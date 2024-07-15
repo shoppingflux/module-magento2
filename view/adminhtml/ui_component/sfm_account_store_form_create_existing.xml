@@ -262,7 +262,10 @@
                     <item name="label" xsi:type="string"></item>
                     <item name="elementTmpl" xsi:type="string">ui/form/element/text</item>
                     <item name="formElement" xsi:type="string">input</item>
-                    <item name="value" xsi:type="string" translate="true">If more than one store is associated to the Shoppingfeed account, you can choose which one to import on the next screen.</item>
+                    <item name="value" xsi:type="string" translate="true">If more than one store is associated to the Shopping Feed account, you can choose which one to import on the next screen.</item>
+                    <item name="additionalClasses" xsi:type="array">
+                        <item name="admin__sfm-multiple-store-notice" xsi:type="boolean">true</item>
+                    </item>
                 </item>
             </argument>
         </field>
