@@ -363,6 +363,12 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Plugin\SalesRule\UtilityPlugin">
+        <arguments>
+            <argument name="salesOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Plugin\SalesRule\ValidatorPlugin" shared="true"/>
 
     <type name="Magento\Weee\Model\Tax">
