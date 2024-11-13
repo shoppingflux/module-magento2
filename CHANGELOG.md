@@ -1,4 +1,10 @@
 # Changelog
+
+## [1.9.0] - 2024-11-13
+### Changed
+- Allow customizing the mapping of Spain regions using DI
+- Allow 3rd party plugins to choose which store view to import orders into
+
 ## [1.8.2] - 2024-07-15
 ### Changed
 - Improve multi-store notification on the account import form
