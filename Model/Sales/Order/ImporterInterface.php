@@ -4,16 +4,37 @@ namespace ShoppingFeed\Manager\Model\Sales\Order;
 
 use Magento\Quote\Model\Quote;
 use Magento\Sales\Api\Data\OrderInterface as SalesOrderInterface;
+use Magento\Store\Model\Store as BaseStore;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface as MarketplaceItemInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 
 interface ImporterInterface
 {
     const QUOTE_KEY_IS_SHOPPING_FEED_ORDER = 'sfm_is_shopping_feed_order';
     const QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER = 'sfm_is_shopping_feed_business_order';
     const QUOTE_KEY_STORE = 'sfm_store';
+
+    /**
+     * @param StoreInterface $store
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $billingAddress
+     * @param MarketplaceAddressInterface $shippingAddress
+     * @return BaseStore
+     */
+    public function getOrderTargetBaseStore(
+        StoreInterface $store,
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $billingAddress,
+        MarketplaceAddressInterface $shippingAddress
+    );
+
+    /**
+     * @param StoreInterface $store
+     * @return BaseStore
+     */
+    public function getCurrentTargetBaseStore(StoreInterface $store);
 
     /**
      * @param MarketplaceOrderInterface[] $marketplaceOrders
