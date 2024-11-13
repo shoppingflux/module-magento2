@@ -197,6 +197,7 @@ class Importer
      * @param CustomerAddressResourceFactory $customerAddresssResourceFactory
      * @param OrderConfigInterface $orderGeneralConfig
      * @param EmailAddressValidator|null $emailAddressValidator
+     * @param BaseStoreManagerInterface|null $baseStoreManager
      * @param array|null $spainRegionPrefixToCodeMapping
      */
     public function __construct(
