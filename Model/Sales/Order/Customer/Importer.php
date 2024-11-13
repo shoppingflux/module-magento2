@@ -27,8 +27,8 @@ use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
-use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\StringHelper;
 
@@ -167,6 +167,11 @@ class Importer
     private $orderGeneralConfig;
 
     /**
+     * @var array
+     */
+    private $spainRegionPrefixToCodeMapping;
+
+    /**
      * @var string[]|null
      */
     private $existingCountryCodes = null;
@@ -186,6 +191,7 @@ class Importer
      * @param CustomerAddressResourceFactory $customerAddresssResourceFactory
      * @param OrderConfigInterface $orderGeneralConfig
      * @param EmailAddressValidator|null $emailAddressValidator
+     * @param array|null $spainRegionPrefixToCodeMapping
      */
     public function __construct(
         DataObjectFactory $dataObjectFactory,
@@ -201,7 +207,8 @@ class Importer
         CustomerAddressFactory $customerAddressFactory,
         CustomerAddressResourceFactory $customerAddresssResourceFactory,
         OrderConfigInterface $orderGeneralConfig,
-        EmailAddressValidator $emailAddressValidator = null
+        EmailAddressValidator $emailAddressValidator = null,
+        $spainRegionPrefixToCodeMapping = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
         $this->randomGenerator = $randomGenerator;
@@ -216,8 +223,15 @@ class Importer
         $this->customerAddressFactory = $customerAddressFactory;
         $this->customerAddressResource = $customerAddresssResourceFactory->create();
         $this->orderGeneralConfig = $orderGeneralConfig;
-        $this->emailAddressValidator = $emailAddressValidator 
+
+        $this->emailAddressValidator = $emailAddressValidator
             ?? ObjectManager::getInstance()->get(EmailAddressValidator::class);
+
+        $this->spainRegionPrefixToCodeMapping = self::SPAIN_REGION_PREFIX_TO_CODE_MAPPING;
+
+        foreach ($spainRegionPrefixToCodeMapping as $prefix => $code) {
+            $this->spainRegionPrefixToCodeMapping[$prefix] = $code;
+        }
     }
 
     /**
@@ -378,7 +392,7 @@ class Importer
         } elseif ('ES' === $countryId) {
             $postalCode = $this->getAddressPostalCode($order, $address, $store);
             $regionCode = $this->stringHelper->substr($postalCode, 0, 2);
-            $regionCode = static::SPAIN_REGION_PREFIX_TO_CODE_MAPPING[$regionCode] ?? null;
+            $regionCode = $this->spainRegionPrefixToCodeMapping[$regionCode] ?? null;
         } elseif (in_array($countryId, [ 'CA', 'US' ], true)) {
             $streetParts = explode("\n", $this->getAddressStreet($order, $address, $store));
             $regionCode = trim($streetParts[1] ?? '');
