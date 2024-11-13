@@ -26,6 +26,7 @@ use Magento\Quote\Api\CartManagementInterface as QuoteManagerInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address as QuoteAddress;
+use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\AddressInterface as MarketplaceAddressInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
@@ -132,6 +133,11 @@ class Importer
     private $directoryHelper;
 
     /**
+     * @var BaseStoreManagerInterface
+     */
+    private $baseStoreManager;
+
+    /**
      * @var CustomerAddressHelper
      */
     private $customerAddressHelper;
@@ -208,6 +214,7 @@ class Importer
         CustomerAddressResourceFactory $customerAddresssResourceFactory,
         OrderConfigInterface $orderGeneralConfig,
         EmailAddressValidator $emailAddressValidator = null,
+        BaseStoreManagerInterface $baseStoreManager = null,
         $spainRegionPrefixToCodeMapping = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
@@ -226,6 +233,9 @@ class Importer
 
         $this->emailAddressValidator = $emailAddressValidator
             ?? ObjectManager::getInstance()->get(EmailAddressValidator::class);
+
+        $this->baseStoreManager = $baseStoreManager
+            ?? ObjectManager::getInstance()->get(BaseStoreManagerInterface::class);
 
         $this->spainRegionPrefixToCodeMapping = self::SPAIN_REGION_PREFIX_TO_CODE_MAPPING;
 
@@ -285,7 +295,7 @@ class Importer
         MarketplaceAddressInterface $address,
         StoreInterface $store
     ) {
-        $companyFieldState = $this->customerAddressHelper->getConfig('company_show', $store->getBaseStore());
+        $companyFieldState = $this->customerAddressHelper->getConfig('company_show');
 
         return ($companyFieldState !== NooptreqSource::VALUE_REQUIRED)
             ? $address->getCompany()
@@ -305,7 +315,7 @@ class Importer
     ) {
         $street = $this->getAddressRequiredFieldValue($address->getStreet(), $store);
 
-        $maximumLineCount = $this->customerAddressHelper->getStreetLines($store->getBaseStore());
+        $maximumLineCount = $this->customerAddressHelper->getStreetLines();
         $maximumLineLength = $this->orderGeneralConfig->getAddressMaximumStreetLineLength($store);
 
         if ($maximumLineLength > 0) {
@@ -617,7 +627,7 @@ class Importer
         $customerEmail = $this->getAddressEmail($order, $billingAddress, $store);
 
         $customer = $this->customerFactory->create();
-        $customer->setWebsiteId($store->getBaseWebsiteId());
+        $customer->setWebsiteId($this->baseStoreManager->getWebsite()->getId());
         $customer->loadByEmail($customerEmail);
 
         if (!$customer->getId()) {
@@ -627,8 +637,8 @@ class Importer
                     'confirmation' => null,
                     'force_confirmed' => true,
                     'email' => $customerEmail,
-                    'store_id' => $store->getBaseStoreId(),
-                    'website_id' => $store->getBaseWebsiteId(),
+                    'store_id' => $this->baseStoreManager->getStore()->getId(),
+                    'website_id' => $this->baseStoreManager->getWebsite()->getId(),
                     static::CUSTOMER_FROM_SHOPPING_ATTRIBUTE_CODE => true,
                 ]
             );

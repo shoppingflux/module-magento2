@@ -233,6 +233,11 @@ class Importer implements ImporterInterface
     private $currentImportStore = null;
 
     /**
+     * @var BaseStore|null
+     */
+    private $currentTargetBaseStore = null;
+
+    /**
      * @var MarketplaceOrderInterface|null
      */
     private $currentlyImportedMarketplaceOrder = null;
@@ -429,6 +434,20 @@ class Importer implements ImporterInterface
         return ($order->getShoppingFeedStatus() === MarketplaceOrderInterface::STATUS_WAITING_SHIPMENT);
     }
 
+    public function getOrderTargetBaseStore(
+        StoreInterface $store,
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $billingAddress,
+        MarketplaceAddressInterface $shippingAddress
+    ) {
+        return $store->getBaseStore();
+    }
+
+    public function getCurrentTargetBaseStore(StoreInterface $store)
+    {
+        return $this->currentTargetBaseStore ?? $store->getBaseStore();
+    }
+
     /**
      * @param MarketplaceOrderInterface[] $marketplaceOrders
      * @param StoreInterface $store
@@ -450,8 +469,6 @@ class Importer implements ImporterInterface
             $this->taxConfigPlugin->enableForcedCrossBorderTrade();
         }
 
-        /** @var BaseStore $baseStore */
-        $baseStore = $store->getBaseStore();
         $orderIds = [];
 
         foreach ($marketplaceOrders as $marketplaceOrder) {
@@ -467,8 +484,6 @@ class Importer implements ImporterInterface
         $orderItems = $orderItemCollection->getItemsByOrder();
 
         $originalCurrentBaseStore = $this->baseStoreManager->getStore();
-        $this->baseStoreManager->setCurrentStore($baseStore);
-        $originalBaseStoreCurrencyCode = $baseStore->getCurrentCurrencyCode();
 
         $marketplaceOrderResource = $this->marketplaceOrderResourceFactory->create();
 
@@ -502,8 +517,24 @@ class Importer implements ImporterInterface
                 );
 
                 try {
-                    // Some modules may override the current store between two order imports.
-                    $this->baseStoreManager->setCurrentStore($baseStore);
+                    if (!isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING])) {
+                        throw new LocalizedException(__('The marketplace order has no billing address.'));
+                    }
+
+                    if (!isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING])) {
+                        throw new LocalizedException(__('The marketplace order has no shipping address.'));
+                    }
+
+                    $targetStore = $this->currentTargetBaseStore = $this->getOrderTargetBaseStore(
+                        $store,
+                        $marketplaceOrder,
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING],
+                        $orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING]
+                    );
+
+                    $originalTargetStoreCurrencyCode = $targetStore->getCurrentCurrencyCode();
+
+                    $this->baseStoreManager->setCurrentStore($targetStore);
 
                     $this->currentlyImportedMarketplaceOrder = $marketplaceOrder;
 
@@ -511,15 +542,15 @@ class Importer implements ImporterInterface
                     $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
 
                     $currencyCode = strtoupper($marketplaceOrder->getCurrencyCode());
-                    $baseStore->unsetData('current_currency');
-                    $baseStore->setCurrentCurrencyCode($currencyCode);
+                    $targetStore->unsetData('current_currency');
+                    $targetStore->setCurrentCurrencyCode($currencyCode);
 
-                    if (strtoupper($baseStore->getCurrentCurrency()->getCode()) !== $currencyCode) {
+                    if (strtoupper($targetStore->getCurrentCurrency()->getCode()) !== $currencyCode) {
                         throw new LocalizedException(
                             __(
                                 'The "%1" currency is currently unavailable (possible causes: it has not been allowed yet in the system configuration, or its conversion rate to "%2" is unknown).',
                                 $currencyCode,
-                                $baseStore->getBaseCurrencyCode()
+                                $targetStore->getBaseCurrencyCode()
                             )
                         );
                     }
@@ -528,7 +559,7 @@ class Importer implements ImporterInterface
                         sprintf(
                             'Forced the "%s" currency on store #%d.',
                             $currencyCode,
-                            $baseStore->getId()
+                            $targetStore->getId()
                         )
                     );
 
@@ -560,14 +591,6 @@ class Importer implements ImporterInterface
                     $quote->setIgnoreOldQty(true);
 
                     $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
-
-                    if (!isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_BILLING])) {
-                        throw new LocalizedException(__('The marketplace order has no billing address.'));
-                    }
-
-                    if (!isset($orderAddresses[$marketplaceOrderId][MarketplaceAddressInterface::TYPE_SHIPPING])) {
-                        throw new LocalizedException(__('The marketplace order has no shipping address.'));
-                    }
 
                     if (isset($orderItems[$marketplaceOrderId])) {
                         $isUntaxedBusinessOrder = $this->isUntaxedBusinessOrder(
@@ -689,6 +712,7 @@ class Importer implements ImporterInterface
                         )
                     );
 
+                    $this->currentTargetBaseStore = null;
                     $this->currentlyImportedQuoteBundleAdjustments = [];
                 }
             }
@@ -697,11 +721,16 @@ class Importer implements ImporterInterface
         } finally {
             $this->taxConfigPlugin->disableForcedCrossBorderTrade();
             $this->currentImportStore = null;
+            $this->currentTargetBaseStore = null;
             $this->currentlyImportedMarketplaceOrder = null;
             $this->currentlyImportedQuoteId = null;
             $this->currentlyImportedQuoteBundleAdjustments = [];
             $this->isCurrentlyImportedBusinessQuote = false;
-            $baseStore->setCurrentCurrencyCode($originalBaseStoreCurrencyCode);
+
+            if (isset($targetStore) && isset($originalTargetStoreCurrencyCode)) {
+                $targetStore->setCurrentCurrencyCode($originalTargetStoreCurrencyCode);
+            }
+
             $this->baseStoreManager->setCurrentStore($originalCurrentBaseStore);
         }
     }
@@ -739,7 +768,7 @@ class Importer implements ImporterInterface
      */
     private function applyStoreCurrencyRateToAmount($amount, StoreInterface $store)
     {
-        $baseStore = $store->getBaseStore();
+        $baseStore = $this->getCurrentTargetBaseStore($store);
 
         if ($baseStore->getCurrentCurrencyCode() !== $baseStore->getBaseCurrencyCode()) {
             $amount /= $baseStore->getCurrentCurrencyRate();
@@ -789,7 +818,7 @@ class Importer implements ImporterInterface
             $product,
             $quote->getShippingAddress(),
             $quote->getBillingAddress(),
-            $store->getBaseStore()->getWebsiteId(),
+            $this->getCurrentTargetBaseStore($store)->getWebsiteId(),
             true
         );
 
@@ -1170,7 +1199,7 @@ class Importer implements ImporterInterface
         $isUntaxedBusinessOrder,
         StoreInterface $store
     ) {
-        $isWeeeEnabled = $this->weeeHelper->isEnabled($store->getBaseStore());
+        $isWeeeEnabled = $this->weeeHelper->isEnabled($this->getCurrentTargetBaseStore($store));
         $shouldUseItemReferenceAsProductId = $this->orderGeneralConfig->shouldUseItemReferenceAsProductId($store);
 
         /** @var MarketplaceItemInterface $marketplaceItem */
@@ -1210,9 +1239,15 @@ class Importer implements ImporterInterface
                     throw new LocalizedException(__('The product with reference "%1" is disabled.', $reference));
                 }
 
+                $targetStore = $this->getCurrentTargetBaseStore($store);
+
                 if (
                     $this->orderGeneralConfig->shouldCheckProductWebsites($store)
-                    && !in_array($store->getBaseWebsiteId(), array_map('intval', $product->getWebsiteIds()), true)
+                    && !in_array(
+                        (int) $targetStore->getWebsiteId(),
+                        array_map('intval', $product->getWebsiteIds()),
+                        true
+                    )
                 ) {
                     throw new LocalizedException(
                         __('The product with reference "%1" is not available in the website.', $reference)
