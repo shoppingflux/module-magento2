@@ -1,4 +1,11 @@
 # Changelog
+## [1.8.2] - 2024-07-15
+### Changed
+- Improve multi-store notification on the account import form
+
+### Fixed
+- Improve handling of marketplace order discounts
+
 ## [1.8.1] - 2024-07-14
 ### Fixed
 - Fix validation of sales rules on older Magento versions

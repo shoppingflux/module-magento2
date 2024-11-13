@@ -47,3 +47,10 @@ select[name^=sfm_feed_attributes] option:empty,
 #sfm_feed_product_grid .data-grid-filters option:empty {
     display: inherit;
 }
+
+.admin__field.admin__sfm-multiple-store-notice .admin__field-value {
+    display: inline-block;
+    padding: 1rem 1.5rem;
+    background: #f8f8f8;
+    font-weight: bold;
+}
