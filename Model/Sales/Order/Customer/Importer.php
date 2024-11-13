@@ -239,8 +239,10 @@ class Importer
 
         $this->spainRegionPrefixToCodeMapping = self::SPAIN_REGION_PREFIX_TO_CODE_MAPPING;
 
-        foreach ($spainRegionPrefixToCodeMapping as $prefix => $code) {
-            $this->spainRegionPrefixToCodeMapping[$prefix] = $code;
+        if (is_array($spainRegionPrefixToCodeMapping)) {
+            foreach ($spainRegionPrefixToCodeMapping as $prefix => $code) {
+                $this->spainRegionPrefixToCodeMapping[$prefix] = $code;
+            }
         }
     }
 
