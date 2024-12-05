@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.9.1] - 2024-12-05
+### Fixed
+- Fix potential issue with feed export in multi-account configurations
+
 ## [1.9.0] - 2024-11-13
 ### Changed
 - Allow customizing the mapping of Spain regions using DI
