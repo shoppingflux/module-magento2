@@ -325,7 +325,6 @@ class Refresher extends AbstractDb
         $refreshableProductSectionTypes = [];
         $refreshableProductOldestRefresh = [];
 
-
         if ($exportStateRefreshProductFilter !== null) {
             $lastRefreshAtExpression = $this->getLastRefreshAtExpression(
                 'export_state_refresh_state',
@@ -435,6 +434,7 @@ class Refresher extends AbstractDb
 
         $select = $connection->select()
             ->from($this->tableDictionary->getFeedProductTableName())
+            ->where('store_id = ?', $storeId)
             ->where('product_id IN (?)', $refreshableProductIds);
 
         foreach ($connection->fetchAll($select) as $row) {
