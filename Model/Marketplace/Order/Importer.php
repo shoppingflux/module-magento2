@@ -452,6 +452,14 @@ class Importer
         $item->setPrice($apiItem->getUnitPrice());
         $item->setTaxAmount($apiItem->getTaxAmount());
 
+        $additionalData = $apiItem->getAdditionalFields();
+
+        if (is_array($additionalData) && !empty($additionalData)) {
+            $additionalFields = $this->dataObjectFactory->create();
+            $additionalFields->setData($additionalData);
+            $item->setAdditionalFields($additionalFields);
+        }
+
         return $item;
     }
 

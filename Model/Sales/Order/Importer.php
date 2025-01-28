@@ -22,6 +22,7 @@ use Magento\Quote\Api\CartRepositoryInterface as QuoteRepositoryInterface;
 use Magento\Quote\Api\Data\AddressExtensionFactory as QuoteAddressExtensionFactory;
 use Magento\Quote\Api\Data\AddressExtensionInterface;
 use Magento\Quote\Api\Data\AddressInterface as QuoteAddressInterface;
+use Magento\Quote\Api\Data\CartItemInterface;
 use Magento\Quote\Api\Data\PaymentInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address\RateFactory as ShippingAddressRateFactory;
@@ -889,6 +890,31 @@ class Importer implements ImporterInterface
     }
 
     /**
+     * @param CartItemInterface $quoteItem
+     * @param MarketplaceItemInterface $marketplaceItem
+     */
+    public function addAdditionalFieldsToQuoteItem(
+        CartItemInterface $quoteItem,
+        MarketplaceItemInterface $marketplaceItem
+    ) {
+        $additionalFields = $marketplaceItem->getAdditionalFields()->getData();
+
+        if (
+            !empty($additionalFields)
+            && ($optionValue = json_encode($additionalFields, JSON_FORCE_OBJECT))
+        ) {
+            $quoteItem->addOption(
+                [
+                    'code' => MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS,
+                    'value' => $optionValue,
+                ]
+            );
+
+            $quoteItem->save();
+        }
+    }
+
+    /**
      * @param Quote $quote
      * @param MarketplaceItemInterface $marketplaceItem
      * @param CatalogProduct $product
@@ -926,11 +952,17 @@ class Importer implements ImporterInterface
             $product->setData('tax_class_id', $this->businessTaxManager->getProductTaxClass()->getClassId());
         }
 
-        $quote->addProduct(
+        $quoteItem = $quote->addProduct(
             $product,
             $buyRequest,
             ProductType::PROCESS_MODE_LITE
         );
+
+        if (is_string($quoteItem)) {
+            throw new \Exception($quoteItem);
+        }
+
+        $this->addAdditionalFieldsToQuoteItem($quoteItem, $marketplaceItem);
     }
 
     /**
@@ -1016,6 +1048,8 @@ class Importer implements ImporterInterface
         if (is_string($bundleItem)) {
             throw new \Exception($bundleItem);
         }
+
+        $this->addAdditionalFieldsToQuoteItem($bundleItem, $marketplaceItem);
 
         // Check that every selection has been added to the quote, and gather their original prices.
 

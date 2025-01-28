@@ -166,7 +166,8 @@
             "reference": true,
             "quantity": true,
             "price": true,
-            "tax_amount": true
+            "tax_amount": true,
+            "additional_fields": true
         },
         "constraint": {
             "PRIMARY": true,

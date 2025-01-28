@@ -3,4 +3,8 @@
     <referenceContainer name="order_tab_info">
         <block class="ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Marketplace" name="sfm_order_marketplace_info" template="ShoppingFeed_Manager::sales/order/view/marketplace.phtml"/>
     </referenceContainer>
+
+    <referenceBlock name="order_item_extra_info">
+        <block class="ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Item\MarketplaceFields" name="sfm_order_item_marketplace_fields" template="ShoppingFeed_Manager::sales/order/view/item/marketplace/fields.phtml"/>
+    </referenceBlock>
 </page>

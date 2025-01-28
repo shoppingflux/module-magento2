@@ -2,6 +2,8 @@
 
 namespace ShoppingFeed\Manager\Api\Data\Marketplace\Order;
 
+use ShoppingFeed\Manager\DataObject;
+
 /**
  * @api
  */
@@ -14,7 +16,13 @@ interface ItemInterface
     const QUANTITY = 'quantity';
     const PRICE = 'price';
     const TAX_AMOUNT = 'tax_amount';
+    const ADDITIONAL_FIELDS = 'additional_fields';
     /**#@+*/
+
+    const ADDITIONAL_FIELD_ARTICLE_ID = 'article_id';
+    const ADDITIONAL_FIELD_ORDER_ITEM_ID = 'order_item_id';
+
+    const ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS = 'sfm_additional_fields';
 
     /**
      * @return int
@@ -47,6 +55,11 @@ interface ItemInterface
     public function getTaxAmount();
 
     /**
+     * @return DataObject
+     */
+    public function getAdditionalFields();
+
+    /**
      * @param int $orderId
      * @return ItemInterface
      */
@@ -75,4 +88,10 @@ interface ItemInterface
      * @return ItemInterface
      */
     public function setTaxAmount($taxAmount);
+
+    /**
+     * @param DataObject $additionalFields
+     * @return ItemInterface
+     */
+    public function setAdditionalFields(DataObject $additionalFields);
 }
