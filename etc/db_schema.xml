@@ -192,6 +192,7 @@
         <column xsi:type="decimal" name="quantity" scale="4" precision="12" unsigned="false" nullable="false" comment="Quantity"/>
         <column xsi:type="decimal" name="price" scale="4" precision="12" unsigned="false" nullable="false" comment="Prices"/>
         <column xsi:type="decimal" name="tax_amount" scale="4" precision="12" unsigned="false" nullable="true" comment="Tax Amount"/>
+        <column xsi:type="text" name="additional_fields" nullable="true" comment="Additional Fields"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
             <column name="item_id"/>
         </constraint>

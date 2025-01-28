@@ -325,6 +325,10 @@
         </arguments>
     </type>
 
+    <type name="Magento\Quote\Model\Quote\Item\ToOrderItem">
+        <plugin name="sfm_quote_quote_item_to_order_item_plugin" type="ShoppingFeed\Manager\Plugin\Quote\Item\ToOrderItemPlugin" sortOrder="0"/>
+    </type>
+
     <type name="Magento\Bundle\Model\Product\Price">
         <plugin name="sfm_bundle_product_price_plugin" type="ShoppingFeed\Manager\Plugin\Bundle\Product\PricePlugin" sortOrder="0"/>
     </type>

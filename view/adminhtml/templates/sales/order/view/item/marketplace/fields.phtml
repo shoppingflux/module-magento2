@@ -1,0 +1,14 @@
+<?php /** @var \ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Item\MarketplaceFields $block */ ?>
+<?php $_fields = $block->getMarketplaceFields(); ?>
+<?php if (!empty($_fields)): ?>
+<tr>
+    <td colspan="10" class="last">
+        <?php foreach ($block->getMarketplaceFields() as $code => $value): ?>
+            <p>
+                <span><?= $block->escapeHtml($code) ?>:</span>
+                <?= $block->escapeHtml($value) ?><br />
+            </p>
+        <?php endforeach; ?>
+    </td>
+</tr>
+<?php endif ?>

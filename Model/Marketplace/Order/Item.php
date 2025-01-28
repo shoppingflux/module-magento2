@@ -3,7 +3,12 @@
 namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use Magento\Framework\Model\AbstractModel;
+use Magento\Framework\Model\Context;
+use Magento\Framework\Registry;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface;
+use ShoppingFeed\Manager\DataObject;
+use ShoppingFeed\Manager\DataObjectFactory;
+use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as AddressCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item as ItemResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item\Collection as ItemCollection;
 
@@ -15,6 +20,31 @@ class Item extends AbstractModel implements ItemInterface
 {
     protected $_eventPrefix = 'shoppingfeed_manager_marketplace_order_item';
     protected $_eventObject = 'sales_order_item';
+
+    /**
+     * @var DataObjectFactory
+     */
+    private $dataObjectFactory;
+
+    /**
+     * @param Context $context
+     * @param Registry $registry
+     * @param DataObjectFactory $dataObjectFactory
+     * @param ItemResource|null $resource
+     * @param ItemCollection|null $resourceCollection
+     * @param array $data
+     */
+    public function __construct(
+        Context $context,
+        Registry $registry,
+        DataObjectFactory $dataObjectFactory,
+        ItemResource $resource = null,
+        ItemCollection $resourceCollection = null,
+        array $data = []
+    ) {
+        $this->dataObjectFactory = $dataObjectFactory;
+        parent::__construct($context, $registry, $resource, $resourceCollection, $data);
+    }
 
     protected function _construct()
     {
@@ -47,6 +77,19 @@ class Item extends AbstractModel implements ItemInterface
         return (null !== $taxAmount) ? (float) $taxAmount : null;
     }
 
+    public function getAdditionalFields()
+    {
+        $data = $this->getData(self::ADDITIONAL_FIELDS);
+
+        if (!$data instanceof DataObject) {
+            $data = is_string($data) ? json_decode($data, true) : [];
+            $data = $this->dataObjectFactory->create([ 'data' => is_array($data) ? $data : [] ]);
+            $this->setAdditionalFields($data);
+        }
+
+        return $data;
+    }
+
     public function setOrderId($orderId)
     {
         return $this->setData(self::ORDER_ID, (int) $orderId);
@@ -70,5 +113,10 @@ class Item extends AbstractModel implements ItemInterface
     public function setTaxAmount($taxAmount)
     {
         return $this->setData(self::TAX_AMOUNT, (null !== $taxAmount) ? (float) $taxAmount : null);
+    }
+
+    public function setAdditionalFields(DataObject $additionalFields)
+    {
+        return $this->setData(self::ADDITIONAL_FIELDS, $additionalFields);
     }
 }
