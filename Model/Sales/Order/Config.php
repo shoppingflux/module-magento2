@@ -36,6 +36,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID = 'use_item_reference_as_product_id';
     const KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS = 'check_product_availability_and_options';
     const KEY_CHECK_PRODUCT_WEBSITES = 'check_product_websites';
+    const KEY_CHECK_ADDRESS_COUNTRIES = 'check_address_countries';
     const KEY_SYNC_NON_IMPORTED_ITEMS = 'sync_non_imported_items';
     const KEY_SYNC_NON_IMPORTED_ADDRESSES = 'sync_non_imported_addresses';
     const KEY_IMPORT_CUSTOMERS = 'import_customers';
@@ -293,6 +294,22 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Orders containing products that are not associated to the right website will still be imported.'
                         ),
                         'sortOrder' => 40,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_CHECK_ADDRESS_COUNTRIES,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Check Address Countries'),
+                        'checkedNotice' => __(
+                            'The country of the addresses will be checked against the allowed countries for the website.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'The country of the addresses will not be checked.'
+                        ),
+                        'sortOrder' => 45,
                     ]
                 ),
 
@@ -968,6 +985,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldCheckProductWebsites(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CHECK_PRODUCT_WEBSITES);
+    }
+
+    public function shouldCheckAddressCountries(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_CHECK_ADDRESS_COUNTRIES);
     }
 
     public function shouldSyncNonImportedItems(StoreInterface $store)

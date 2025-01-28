@@ -325,6 +325,26 @@
         </arguments>
     </type>
 
+    <type name="Magento\Customer\Model\Address\Validator\Country">
+        <plugin name="sfm_customer_address_validator_country_plugin" type="ShoppingFeed\Manager\Plugin\Customer\Address\Validator\CountryPlugin" sortOrder="1000000000"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\Customer\Address\Validator\CountryPlugin">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="Magento\Quote\Model\ValidationRules\AllowedCountryValidationRule">
+        <plugin name="sfm_quote_validation_rules_allowed_country_plugin" type="ShoppingFeed\Manager\Plugin\Quote\ValidationRules\AllowedCountryPlugin" sortOrder="1000000000"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\Quote\ValidationRules\AllowedCountryPlugin">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\Quote\Model\Quote\Item\ToOrderItem">
         <plugin name="sfm_quote_quote_item_to_order_item_plugin" type="ShoppingFeed\Manager\Plugin\Quote\Item\ToOrderItemPlugin" sortOrder="0"/>
     </type>
