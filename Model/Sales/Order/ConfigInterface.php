@@ -68,6 +68,12 @@ interface ConfigInterface extends BaseConfig
      * @param StoreInterface $store
      * @return bool
      */
+    public function shouldCheckAddressCountries(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
     public function shouldSyncNonImportedItems(StoreInterface $store);
 
     /**
