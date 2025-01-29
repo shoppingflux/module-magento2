@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.10.0] - 2025-01-29
+### Added
+- Add option to disable country validation when importing orders
+- Import item marketplace fields to order item options
+
 ## [1.9.1] - 2024-12-05
 ### Fixed
 - Fix potential issue with feed export in multi-account configurations
