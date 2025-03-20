@@ -3,14 +3,17 @@
 namespace ShoppingFeed\Manager\Model\Feed;
 
 use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ProductMetadataInterface as AppMetadataInterface;
 use Magento\Framework\Exception\FileSystemException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
 use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
+use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\UrlInterface;
+use Magento\RemoteStorage\Driver\DriverPool;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
 use ShoppingFeed\Feed\ProductGenerator as FeedGenerator;
@@ -50,6 +53,11 @@ class Exporter
     private $moduleList;
 
     /**
+     * @var ModuleManager
+     */
+    private $moduleManager;
+
+    /**
      * @var FileSystem
      */
     private $fileSystem;
@@ -57,12 +65,22 @@ class Exporter
     /**
      * @var DirectoryReadInterface|null
      */
-    private $mediaDirectoryReader = null;
+    private $localMediaDirectoryReader = null;
 
     /**
      * @var DirectoryWriteInterface|null
      */
-    private $mediaDirectoryWriter = null;
+    private $localMediaDirectoryWriter = null;
+
+    /**
+     * @var DirectoryReadInterface|null
+     */
+    private $remoteMediaDirectoryReader = null;
+
+    /**
+     * @var DirectoryWriteInterface|null
+     */
+    private $remoteMediaDirectoryWriter = null;
 
     /**
      * @var FeedGeneratorFactory
@@ -109,7 +127,8 @@ class Exporter
         FeedConfigInterface $generalConfig,
         ExportStateConfigInterface $exportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
-        $feedDirectory
+        $feedDirectory,
+        ModuleManager $moduleManager = null
     ) {
         $this->fileSystem = $fileSystem;
         $this->resource = $resource;
@@ -120,31 +139,85 @@ class Exporter
         $this->exportStateConfig = $exportStateConfig;
         $this->sectionTypePool = $sectionTypePool;
         $this->feedDirectory = $feedDirectory;
+        $this->moduleManager = $moduleManager ?? ObjectManager::getInstance()->get(ModuleManager::class);
     }
 
     /**
      * @return DirectoryReadInterface
      */
-    private function getMediaDirectoryReader()
+    private function getLocalMediaDirectoryReader()
     {
-        if (null === $this->mediaDirectoryReader) {
-            $this->mediaDirectoryReader = $this->fileSystem->getDirectoryRead(DirectoryList::MEDIA);
+        if (null === $this->localMediaDirectoryReader) {
+            $this->localMediaDirectoryReader = $this->fileSystem->getDirectoryRead(
+                DirectoryList::MEDIA,
+                DriverPool::FILE
+            );
         }
 
-        return $this->mediaDirectoryReader;
+        return $this->localMediaDirectoryReader;
     }
 
     /**
      * @return DirectoryWriteInterface|null
      * @throws FileSystemException
      */
-    private function getMediaDirectoryWriter()
+    private function getLocalMediaDirectoryWriter()
     {
-        if (null === $this->mediaDirectoryWriter) {
-            $this->mediaDirectoryWriter = $this->fileSystem->getDirectoryWrite(DirectoryList::MEDIA);
+        if (null === $this->localMediaDirectoryWriter) {
+            $this->localMediaDirectoryWriter = $this->fileSystem->getDirectoryWrite(
+                DirectoryList::MEDIA,
+                DriverPool::FILE
+            );
         }
 
-        return $this->mediaDirectoryWriter;
+        return $this->localMediaDirectoryWriter;
+    }
+
+    /**
+     * @return DirectoryReadInterface
+     */
+    private function getRemoteMediaDirectoryReader()
+    {
+        if (null === $this->remoteMediaDirectoryReader) {
+            $this->remoteMediaDirectoryReader = $this->fileSystem->getDirectoryRead(
+                DirectoryList::MEDIA,
+                DriverPool::REMOTE
+            );
+        }
+
+        return $this->remoteMediaDirectoryReader;
+    }
+
+    /**
+     * @return DirectoryWriteInterface|null
+     * @throws FileSystemException
+     */
+    private function getRemoteMediaDirectoryWriter()
+    {
+        if (null === $this->remoteMediaDirectoryWriter) {
+            $this->remoteMediaDirectoryWriter = $this->fileSystem->getDirectoryWrite(
+                DirectoryList::MEDIA,
+                DriverPool::REMOTE
+            );
+        }
+
+        return $this->remoteMediaDirectoryWriter;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isRemoteMediaStorageEnabled()
+    {
+        if ($this->moduleManager->isEnabled('Magento_RemoteStorage')) {
+            /** @var \Magento\RemoteStorage\Model\Config $remoteStorageConfig */
+            $remoteStorageConfig = ObjectManager::getInstance()
+                ->get('Magento\RemoteStorage\Model\Config');
+
+            return $remoteStorageConfig->isEnabled();
+        }
+
+        return false;
     }
 
     /**
@@ -406,26 +479,27 @@ class Exporter
      */
     public function exportStoreFeed(StoreInterface $store)
     {
-        $mediaDirectoryReader = $this->getMediaDirectoryReader();
-        $feedAbsoluteMediaPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory) . '/';
-        $feedRelativeMediaPath = $mediaDirectoryReader->getRelativePath($this->feedDirectory) . '/';
+        $localMediaDirReader = $this->getLocalMediaDirectoryReader();
+        $localMediaDirWriter = $this->getLocalMediaDirectoryWriter();
+
+        $feedAbsoluteMediaPath = $localMediaDirReader->getAbsolutePath($this->feedDirectory) . '/';
+        $feedRelativeMediaPath = $localMediaDirReader->getRelativePath($this->feedDirectory) . '/';
 
         $feedFileName = $store->getFeedFileNameBase() . '.xml';
-        $feedAbsoluteFilePath = $feedAbsoluteMediaPath . '/' . $feedFileName;
+        $feedAbsoluteFilePath = rtrim($feedAbsoluteMediaPath, '/') . '/' . $feedFileName;
         $feedAbsoluteTempFilePath = $feedAbsoluteFilePath . '.tmp';
-        $feedRelativeFilePath = $feedRelativeMediaPath . '/' . $feedFileName;
+        $feedRelativeFilePath = rtrim($feedRelativeMediaPath, '/') . '/' . $feedFileName;
         $feedRelativeTempFilePath = $feedRelativeFilePath . '.tmp';
 
-        if (!$mediaDirectoryReader->isExist($feedRelativeMediaPath)) {
-            $mediaDirectoryWriter = $this->getMediaDirectoryWriter();
-            $mediaDirectoryWriter->create($feedRelativeMediaPath);
+        if (!$localMediaDirReader->isExist($feedRelativeMediaPath)) {
+            $localMediaDirWriter->create($feedRelativeMediaPath);
         }
 
         $feedGenerator = $this->feedGeneratorFactory->create();
 
         // Currently applied platform format: '[name]:[version]'.
         $feedGenerator->setPlatform(
-            // [name]
+        // [name]
             $this->appMetadata->getName()
             . ' ' . $this->appMetadata->getEdition()
             . ':' . $this->appMetadata->getVersion()
@@ -461,7 +535,49 @@ class Exporter
 
         $this->writeStoreProductsToGenerator($store, $feedGenerator, $this->getStoreProductsIterator($store));
 
-        if (false === $this->getMediaDirectoryWriter()->renameFile($feedRelativeTempFilePath, $feedRelativeFilePath)) {
+        if ($this->isRemoteMediaStorageEnabled()) {
+            $remoteMediaDirReader = $this->getRemoteMediaDirectoryReader();
+            $remoteMediaDirWriter = $this->getRemoteMediaDirectoryWriter();
+
+            if (!$remoteMediaDirReader->isExist($feedRelativeMediaPath)) {
+                $remoteMediaDirWriter->create($feedRelativeMediaPath);
+            }
+
+            $localMediaWriterDriver = $localMediaDirWriter->getDriver();
+
+            $isTempFileCopied = $localMediaWriterDriver->copy(
+                $feedAbsoluteTempFilePath,
+                $remoteMediaDirWriter->getAbsolutePath($feedRelativeTempFilePath),
+                $remoteMediaDirWriter->getDriver()
+            );
+
+            if (!$isTempFileCopied) {
+                throw new LocalizedException(
+                    __('Could not upload temporary feed file to remote storage.')
+                );
+            }
+
+            $isTempFileRenamed = $remoteMediaDirWriter->renameFile(
+                $feedRelativeTempFilePath,
+                $feedRelativeFilePath
+            );
+
+            if (!$isTempFileRenamed) {
+                $isFeedFileCopied = $localMediaWriterDriver->copy(
+                    $feedAbsoluteFilePath,
+                    $remoteMediaDirWriter->getAbsolutePath($feedRelativeFilePath),
+                    $remoteMediaDirWriter->getDriver()
+                );
+
+                if (!$isFeedFileCopied) {
+                    throw new LocalizedException(
+                        __('Could not update feed file on remote storage.')
+                    );
+                }
+            }
+        } elseif (
+            false === $localMediaDirWriter->renameFile($feedRelativeTempFilePath, $feedRelativeFilePath)
+        ) {
             throw new LocalizedException(
                 __('Could not copy file "%1" to file "%2".', $feedAbsoluteTempFilePath, $feedAbsoluteFilePath)
             );
@@ -488,7 +604,9 @@ class Exporter
      */
     public function isStoreFeedAvailable(StoreInterface $store)
     {
-        $mediaDirectoryReader = $this->getMediaDirectoryReader();
+        $mediaDirectoryReader = !$this->isRemoteMediaStorageEnabled()
+            ? $this->getLocalMediaDirectoryReader()
+            : $this->getRemoteMediaDirectoryReader();
 
         $feedPath = $mediaDirectoryReader->getAbsolutePath($this->feedDirectory)
             . '/'

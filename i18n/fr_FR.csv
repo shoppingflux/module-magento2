@@ -136,6 +136,8 @@
 "Could not fetch the Shopping Feed store for ID ""%1"".","Impossible de récupérer le store Shopping Feed avec l'ID ""%1""."
 "Could not import marketplace order:","Impossible d'importer la commande place de marché :"
 "Could not synchronize the imported order:","Impossible de synchroniser la commande importée :"
+"Could not update feed file on remote storage.","Impossible de mettre à jour le fichier du flux sur le stockage distant."
+"Could not upload temporary feed file to remote storage.","Impossible d'envoyer le fichier temporaire du flux sur le stockage distant."
 "Country","Pays"
 "Create Account","Créer le compte"
 "Create an Account","Créer un compte"
