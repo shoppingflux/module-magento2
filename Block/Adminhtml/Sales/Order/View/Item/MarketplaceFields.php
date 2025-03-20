@@ -3,12 +3,13 @@
 namespace ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Item;
 
 use Magento\Backend\Block\Template;
-use Magento\Directory\Helper\Data as DirectoryHelper;
-use Magento\Framework\Json\Helper\Data as JsonHelper;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface;
 
 class MarketplaceFields extends Template
 {
+    const FORMAT_LINK = 'link';
+    const FORMAT_TEXT = 'text';
+
     /**
      * @return \Magento\Sales\Model\Order\Item
      */
@@ -23,9 +24,21 @@ class MarketplaceFields extends Template
     public function getDisplayableFieldNames()
     {
         return [
-            'article_id',
-            'order_item_id',
+            ItemInterface::ADDITIONAL_FIELD_ARTICLE_ID,
+            ItemInterface::ADDITIONAL_FIELD_ORDER_ITEM_ID,
+            ItemInterface::ADDITIONAL_FIELD_CUSTOMIZED_URL,
         ];
+    }
+
+    /**
+     * @param string $field
+     * @return string
+     */
+    public function getFieldFormat($field)
+    {
+        return ($field === ItemInterface::ADDITIONAL_FIELD_CUSTOMIZED_URL)
+            ? self::FORMAT_LINK
+            : self::FORMAT_TEXT;
     }
 
     /**

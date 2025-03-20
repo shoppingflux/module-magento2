@@ -6,7 +6,11 @@
         <?php foreach ($block->getMarketplaceFields() as $code => $value): ?>
             <p>
                 <span><?= $block->escapeHtml($code) ?>:</span>
-                <?= $block->escapeHtml($value) ?><br />
+                <?php if ($block->getFieldFormat($code) === \ShoppingFeed\Manager\Block\Adminhtml\Sales\Order\View\Item\MarketplaceFields::FORMAT_LINK): ?>
+                    <a href="<?= $block->escapeUrl($value) ?>"><?= $block->escapeHtml($value) ?></a><br />
+                <?php else: ?>
+                    <?= $block->escapeHtml($value) ?><br />
+                <?php endif ?>
             </p>
         <?php endforeach; ?>
     </td>
