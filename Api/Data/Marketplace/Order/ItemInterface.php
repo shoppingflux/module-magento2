@@ -21,6 +21,7 @@ interface ItemInterface
 
     const ADDITIONAL_FIELD_ARTICLE_ID = 'article_id';
     const ADDITIONAL_FIELD_ORDER_ITEM_ID = 'order_item_id';
+    const ADDITIONAL_FIELD_CUSTOMIZED_URL = 'customized_url';
 
     const ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS = 'sfm_additional_fields';
 
