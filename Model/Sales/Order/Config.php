@@ -14,8 +14,8 @@ use ShoppingFeed\Manager\Model\Account\Store\ConfigManager;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants as StoreRegistryConstants;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
 use ShoppingFeed\Manager\Model\Config\Field\DynamicRows;
-use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\MultiSelect;
+use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
@@ -55,6 +55,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_ADDRESS_FIELD_PLACEHOLDER = 'address_field_placeholder';
     const KEY_ADDRESS_MAXIMUM_STREET_LINE_LENGTH = 'address_maximum_street_line_length';
     const KEY_USE_MOBILE_PHONE_NUMBER_FIRST = 'use_mobile_phone_number_first';
+    const KEY_DISABLE_TAX_FOR_BUSINESS_ORDERS = 'disable_tax_for_business_orders';
     const KEY_IMPORT_VAT_ID = 'import_vat_id';
     const KEY_DEFAULT_PAYMENT_METHOD_TITLE = 'default_payment_method_title';
     const KEY_MARKETPLACE_PAYMENT_METHOD_TITLES = 'marketplace_payment_method_titles';
@@ -423,10 +424,20 @@ class Config extends AbstractConfig implements ConfigInterface
                 $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
+                        'name' => self::KEY_DISABLE_TAX_FOR_BUSINESS_ORDERS,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Disable Tax for Business Orders'),
+                        'sortOrder' => 180,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
                         'name' => self::KEY_IMPORT_VAT_ID,
                         'isCheckedByDefault' => false,
                         'label' => __('Import VAT IDs'),
-                        'sortOrder' => 180,
+                        'sortOrder' => 190,
                     ]
                 ),
 
@@ -437,7 +448,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'valueHandler' => $textHandler,
                         'label' => __('Default Payment Method Title'),
                         'notice' => $paymentMethodTitleNotice,
-                        'sortOrder' => 190,
+                        'sortOrder' => 200,
                     ]
                 ),
 
@@ -458,7 +469,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             __('Prevents amount mismatches due to tax computations using different address rates.')
                             . "\n"
                             . __('Unless you know what you are doing, this option should probably be enabled.'),
-                        'sortOrder' => 210,
+                        'sortOrder' => 220,
                     ]
                 ),
 
@@ -470,7 +481,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'label' => __('Create Invoice'),
                         'checkedNotice' => __('Orders will be automatically invoiced upon import.'),
                         'uncheckedNotice' => __('Orders will not be invoiced automatically.'),
-                        'sortOrder' => 220,
+                        'sortOrder' => 230,
                     ]
                 ),
 
@@ -480,7 +491,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
                         'isCheckedByDefault' => false,
                         'label' => __('Import Fulfilled Orders'),
-                        'sortOrder' => 230,
+                        'sortOrder' => 240,
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_FULFILMENT_SHIPMENT ],
                     ]
                 ),
@@ -497,7 +508,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders fulfilled by the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 240,
+                        'sortOrder' => 250,
                     ]
                 ),
 
@@ -508,7 +519,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'isCheckedByDefault' => false,
                         'label' => __('Import Already Shipped Orders'),
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_SHIPPED_SHIPMENT ],
-                        'sortOrder' => 250,
+                        'sortOrder' => 260,
                     ]
                 ),
 
@@ -524,7 +535,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders already shipped on the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 260,
+                        'sortOrder' => 270,
                     ]
                 ),
 
@@ -538,7 +549,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => 15,
                         'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
                         'notice' => __('In days.'),
-                        'sortOrder' => 290,
+                        'sortOrder' => 300,
                     ]
                 ),
 
@@ -552,7 +563,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 300,
+                        'sortOrder' => 310,
                     ]
                 ),
 
@@ -566,7 +577,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 310,
+                        'sortOrder' => 320,
                     ]
                 ),
 
@@ -580,7 +591,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 320,
+                        'sortOrder' => 330,
                     ]
                 ),
 
@@ -596,7 +607,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
                         ),
-                        'sortOrder' => 330,
+                        'sortOrder' => 340,
                     ]
                 ),
 
@@ -610,7 +621,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 340,
+                        'sortOrder' => 350,
                     ]
                 ),
             ],
@@ -858,7 +869,7 @@ class Config extends AbstractConfig implements ConfigInterface
                                 ]
                             ),
                         ],
-                        'sortOrder' => 210,
+                        'sortOrder' => 220,
                     ]
                 ),
 
@@ -871,7 +882,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Order Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
-                        'sortOrder' => 280,
+                        'sortOrder' => 290,
                     ]
                 ),
 
@@ -884,7 +895,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Invoice Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
-                        'sortOrder' => 290,
+                        'sortOrder' => 300,
                     ]
                 ),
             ],
@@ -1136,6 +1147,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldUseMobilePhoneNumberFirst(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST);
+    }
+
+    public function shouldDisableTaxForBusinessOrders(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_DISABLE_TAX_FOR_BUSINESS_ORDERS);
     }
 
     public function shouldImportVatId(StoreInterface $store)

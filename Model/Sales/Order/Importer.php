@@ -381,7 +381,10 @@ class Importer implements ImporterInterface
      */
     public function isUntaxedBusinessOrder(MarketplaceOrderInterface $order, array $orderItems)
     {
-        if ($order->isBusinessOrder()) {
+        if (
+            $order->isBusinessOrder()
+            && $this->orderGeneralConfig->shouldDisableTaxForBusinessOrders($this->currentImportStore)
+        ) {
             $isUntaxed = true;
 
             foreach ($orderItems as $orderItem) {
