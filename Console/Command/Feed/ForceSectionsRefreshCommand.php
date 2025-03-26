@@ -5,9 +5,9 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Config\ScopeInterface as ConfigScopeInterface;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Feed\RefresherFactory as RefresherResourceFactory;
 use ShoppingFeed\Manager\Model\TimeFilterFactory;
@@ -64,12 +64,27 @@ class ForceSectionsRefreshCommand extends AbstractCommand
 
         $this->setDefinition(
             [
-                $this->getRefreshStateArgument('The refresh state to force (%s)'),
-                $this->getAccountsOption('Only force refresh for these account IDs'),
-                $this->getStoresOption('Only force refresh for these account IDs'),
-                $this->getSectionTypesOption('Only force refresh for those section types (%s)'),
-                $this->getExportStatesOption('Only force refresh for products with those export states (%s)'),
-                $this->getSelectedOnlyOption('Only force refresh for selected products'),
+                $this->getRefreshStateArgument(
+                    'The refresh state to force (%s)'
+                ),
+                $this->getAccountsOption(
+                    'Only force refresh for these account IDs'
+                ),
+                $this->getStoresOption(
+                    'Only force refresh for these account IDs'
+                ),
+                $this->getSectionTypesOption(
+                    'Only force refresh for those section types (%s)'
+                ),
+                $this->getExportStatesOption(
+                    'Only force refresh for products with those export states (%s)'
+                ),
+                $this->getChildExportStatesOption(
+                    'Only force refresh for products with those child export states (%s)'
+                ),
+                $this->getSelectedOnlyOption(
+                    'Only force refresh for selected products'
+                ),
                 $this->getFlagOption(
                     self::OPTION_KEY_UPDATED_IN_CATALOG_ONLY,
                     'Only force refresh for products which have been updated in the catalog'
@@ -98,6 +113,7 @@ class ForceSectionsRefreshCommand extends AbstractCommand
             $productFilter = $this->createFeedProductFilter();
             $productFilter->setSelectedOnly($this->getSelectedOnlyOptionValue($input));
             $productFilter->setExportStates($this->getExportStatesOptionValue($input));
+            $productFilter->setChildExportStates($this->getChildExportStatesOptionValue($input));
 
             $sectionFilter = $this->createFeedSectionFilter();
             $sectionFilter->setTypeIds($this->getSectionTypesOptionIds($input));

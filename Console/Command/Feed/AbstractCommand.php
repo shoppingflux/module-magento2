@@ -26,6 +26,7 @@ abstract class AbstractCommand extends BaseCommand
     const ARGUMENT_KEY_REFRESH_STATE = 'refresh_state';
 
     const OPTION_KEY_EXPORT_STATES = 'export_state';
+    const OPTION_KEY_CHILD_EXPORT_STATES = 'child_export_state';
     const OPTION_KEY_SECTION_TYPES = 'section_type';
     const OPTION_KEY_SELECTED_ONLY = 'selected_only';
     const OPTION_KEY_REFRESH_STATES = 'refresh_state';
@@ -200,6 +201,22 @@ abstract class AbstractCommand extends BaseCommand
      * @param string|null $name
      * @return InputOption
      */
+    protected function getChildExportStatesOption($description, $defaultsToAll = true, $name = null)
+    {
+        return $this->getChoiceOption(
+            $name ?? self::OPTION_KEY_CHILD_EXPORT_STATES,
+            sprintf($description, $this->getExportStateDescriptionList(true)),
+            true,
+            $defaultsToAll
+        );
+    }
+
+    /**
+     * @param string $description
+     * @param bool $defaultsToAll
+     * @param string|null $name
+     * @return InputOption
+     */
     protected function getSectionTypesOption($description, $defaultsToAll = true, $name = null)
     {
         return $this->getChoiceOption(
@@ -277,6 +294,33 @@ abstract class AbstractCommand extends BaseCommand
         }
 
         return $productExportStates;
+    }
+
+    /**
+     * @param InputInterface $input
+     * @param string|null $name
+     * @return int[]
+     * @throws CommandException
+     */
+    protected function getChildExportStatesOptionValue(InputInterface $input, $name = null)
+    {
+        $childExportStates = $this->getChoiceOptionValue(
+            $input,
+            $name ?? self::OPTION_KEY_CHILD_EXPORT_STATES,
+            array_keys(self::EXPORT_STATE_MAP)
+        );
+
+        $productChildExportStates = [];
+
+        foreach ($childExportStates as $childExportState) {
+            if (isset(self::EXPORT_STATE_MAP[$childExportState])) {
+                $productChildExportStates[] = self::EXPORT_STATE_MAP[$childExportState];
+            } else {
+                throw new CommandException('Unknown child export state: "' . (string) $childExportState . '"');
+            }
+        }
+
+        return $productChildExportStates;
     }
 
     /**

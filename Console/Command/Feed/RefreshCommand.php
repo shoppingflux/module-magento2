@@ -5,9 +5,9 @@ namespace ShoppingFeed\Manager\Console\Command\Feed;
 use Magento\Framework\App\State as AppState;
 use Magento\Framework\Config\ScopeInterface as ConfigScopeInterface;
 use Magento\Framework\Console\Cli;
-use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
-use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Product\Section\TypePoolInterface as SectionTypePoolInterface;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFilterFactory as FeedSectionFilterFactory;
+use ShoppingFeed\Manager\Model\Feed\ProductFilterFactory as FeedProductFilterFactory;
 use ShoppingFeed\Manager\Model\Feed\Refresher as FeedRefresher;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
 use ShoppingFeed\Manager\Model\TimeFilterFactory;
@@ -19,10 +19,12 @@ class RefreshCommand extends AbstractCommand
 {
     const OPTION_KEY_REFRESH_EXPORT_STATE = 'refresh_export_state';
     const OPTION_KEY_EXPORT_STATE_EXPORT_STATES = 'export_state_export_state';
+    const OPTION_KEY_EXPORT_STATE_CHILD_EXPORT_STATES = 'export_state_child_export_state';
     const OPTION_KEY_EXPORT_STATE_SELECTED_ONLY = 'export_state_selected_only';
     const OPTION_KEY_EXPORT_STATE_REFRESH_STATES = 'export_state_refresh_state';
     const OPTION_KEY_REFRESH_SECTION_TYPES = 'refresh_section_type';
     const BASE_OPTION_KEY_SECTION_TYPE_EXPORT_STATES = '%s_export_state';
+    const BASE_OPTION_KEY_SECTION_TYPE_CHILD_EXPORT_STATES = '%s_child_export_state';
     const BASE_OPTION_KEY_SECTION_TYPE_SELECTED_ONLY = '%s_selected_only';
     const BASE_OPTION_KEY_SECTION_TYPE_REFRESH_STATES = '%s_refresh_state';
 
@@ -81,6 +83,12 @@ class RefreshCommand extends AbstractCommand
                 self::OPTION_KEY_EXPORT_STATE_EXPORT_STATES
             ),
 
+            $this->getChildExportStatesOption(
+                'Only refresh export states for products with those current child export states (%s)',
+                false,
+                self::OPTION_KEY_EXPORT_STATE_CHILD_EXPORT_STATES
+            ),
+
             $this->getSelectedOnlyOption(
                 'Only refresh export states for selected products',
                 self::OPTION_KEY_EXPORT_STATE_SELECTED_ONLY
@@ -108,6 +116,12 @@ class RefreshCommand extends AbstractCommand
                 sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_EXPORT_STATES, $typeCode)
             );
 
+            $sectionOptions[] = $this->getChildExportStatesOption(
+                'Only refresh "' . $typeCode . '" section data for products with those child export states (%s)',
+                false,
+                sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_CHILD_EXPORT_STATES, $typeCode)
+            );
+
             $sectionOptions[] = $this->getSelectedOnlyOption(
                 'Only refresh "' . $typeCode . '" section data for selected products',
                 sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_SELECTED_ONLY, $typeCode)
@@ -121,11 +135,24 @@ class RefreshCommand extends AbstractCommand
         }
 
         $baseOptions = [
-            $this->getAccountsOption('Only refresh feed data for these account IDs'),
-            $this->getStoresOption('Only refresh feed data for these account IDs'),
-            $this->getExportStatesOption('Only refresh data for products with those export states (%s) (overridable)'),
-            $this->getSelectedOnlyOption('Only refresh data for selected products (overridable)'),
-            $this->getRefreshStatesOption('Only refresh data with those refresh states (%s) (overridable)'),
+            $this->getAccountsOption(
+                'Only refresh feed data for these account IDs'
+            ),
+            $this->getStoresOption(
+                'Only refresh feed data for these account IDs'
+            ),
+            $this->getExportStatesOption(
+                'Only refresh data for products with those export states (%s) (overridable)'
+            ),
+            $this->getChildExportStatesOption(
+                'Only refresh data for products with those child export states (%s) (overridable)'
+            ),
+            $this->getSelectedOnlyOption(
+                'Only refresh data for selected products (overridable)'
+            ),
+            $this->getRefreshStatesOption(
+                'Only refresh data with those refresh states (%s) (overridable)'
+            ),
         ];
 
         $this->setDefinition(array_merge($baseOptions, $exportStateOptions, $sectionOptions));
@@ -141,12 +168,20 @@ class RefreshCommand extends AbstractCommand
             $storeIds = $storeCollection->getLoadedIds();
 
             $defaultExportStates = $this->getExportStatesOptionValue($input);
+            $defaultChildExportStates = $this->getChildExportStatesOptionValue($input);
             $defaultSelectedOnly = $this->getSelectedOnlyOptionValue($input);
             $defaultRefreshStates = $this->getRefreshStatesOptionValue($input);
 
             if ($input->getOption(self::OPTION_KEY_REFRESH_EXPORT_STATE)) {
                 $exportStates = $this->getExportStatesOptionValue($input, self::OPTION_KEY_EXPORT_STATE_EXPORT_STATES);
+
+                $childExportStates = $this->getChildExportStatesOptionValue(
+                    $input,
+                    self::OPTION_KEY_EXPORT_STATE_CHILD_EXPORT_STATES
+                );
+
                 $selectedOnly = $this->getSelectedOnlyOptionValue($input, self::OPTION_KEY_EXPORT_STATE_SELECTED_ONLY);
+
                 $refreshStates = $this->getRefreshStatesOptionValue(
                     $input,
                     self::OPTION_KEY_EXPORT_STATE_REFRESH_STATES
@@ -154,6 +189,7 @@ class RefreshCommand extends AbstractCommand
 
                 $exportStateProductFilter = $this->createFeedProductFilter()
                     ->setExportStates(empty($exportStates) ? $defaultExportStates : $exportStates)
+                    ->setChildExportStates(empty($childExportStates) ? $defaultChildExportStates : $childExportStates)
                     ->setSelectedOnly($defaultSelectedOnly || $selectedOnly)
                     ->setExportStateRefreshStates(empty($refreshStates) ? $defaultRefreshStates : $refreshStates);
             } else {
@@ -173,6 +209,11 @@ class RefreshCommand extends AbstractCommand
                     sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_EXPORT_STATES, $typeCode)
                 );
 
+                $childExportStates = $this->getChildExportStatesOptionValue(
+                    $input,
+                    sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_CHILD_EXPORT_STATES, $typeCode)
+                );
+
                 $selectedOnly = $this->getSelectedOnlyOptionValue(
                     $input,
                     sprintf(self::BASE_OPTION_KEY_SECTION_TYPE_SELECTED_ONLY, $typeCode)
@@ -185,6 +226,7 @@ class RefreshCommand extends AbstractCommand
 
                 $sectionTypeProductFilters[$typeId] = $this->createFeedProductFilter()
                     ->setExportStates(empty($exportStates) ? $defaultExportStates : $exportStates)
+                    ->setChildExportStates(empty($childExportStates) ? $defaultChildExportStates : $childExportStates)
                     ->setSelectedOnly($defaultSelectedOnly || $selectedOnly);
 
                 $sectionTypeSectionFilters[$typeId] = $this->createFeedSectionFilter()

@@ -30,6 +30,11 @@ class ProductFilter extends AbstractFilter
     /**
      * @var int[]|null
      */
+    private $childExportStates = null;
+
+    /**
+     * @var int[]|null
+     */
     private $exportStateRefreshStates = null;
 
     /**
@@ -72,6 +77,14 @@ class ProductFilter extends AbstractFilter
     public function getExportStates()
     {
         return $this->exportStates;
+    }
+
+    /**
+     * @return int[]|null
+     */
+    public function getChildExportStates()
+    {
+        return $this->childExportStates;
     }
 
     /**
@@ -166,6 +179,25 @@ class ProductFilter extends AbstractFilter
     }
 
     /**
+     * @param int[] $childExportStates
+     * @return $this
+     */
+    public function setChildExportStates(array $childExportStates)
+    {
+        $this->childExportStates = $childExportStates;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function unsetChildExportStates()
+    {
+        $this->childExportStates = null;
+        return $this;
+    }
+
+    /**
      * @param int[] $exportStateRefreshStates
      * @return $this
      */
@@ -229,6 +261,7 @@ class ProductFilter extends AbstractFilter
             && (null === $this->storeIds)
             && (false === $this->selectedOnly)
             && (null === $this->exportStates)
+            && (null === $this->childExportStates)
             && (null === $this->exportStateRefreshStates)
             && (null === $this->lastExportStateRefreshTimeFilter)
             && (null === $this->exportRetentionStartTimeFilter)
