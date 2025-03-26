@@ -2,11 +2,21 @@
 
 namespace ShoppingFeed\Manager\Model\ResourceModel\Feed;
 
+use Magento\Framework\Model\ResourceModel\Db\Context as DbContext;
+use ShoppingFeed\Manager\Model\Feed\Product\SectionFactory as ProductSectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\AbstractDb;
+use ShoppingFeed\Manager\Model\ResourceModel\Feed\Product\SectionFilterApplier;
+use ShoppingFeed\Manager\Model\ResourceModel\Table\Dictionary as TableDictionary;
+use ShoppingFeed\Manager\Model\TimeHelper;
 
 class Product extends AbstractDb
 {
     const EXPORT_STATE_UPDATE_BATCH_SIZE = 1000;
+
+    /**
+     * @var int
+     */
+    private $exportStateUpdateBatchSize;
 
     /**
      * @var array|null
@@ -17,6 +27,36 @@ class Product extends AbstractDb
      * @var int
      */
     private $exportStateBatchedUpdateCount = 0;
+
+    /**
+     * @param DbContext $context
+     * @param TimeHelper $timeHelper
+     * @param TableDictionary $tableDictionary
+     * @param ProductFilterApplier $productFilterApplier
+     * @param SectionFilterApplier $sectionFilterApplier
+     * @param string|null $connectionName
+     * @param int $exportStateUpdateBatchSize
+     */
+    public function __construct(
+        DbContext $context,
+        TimeHelper $timeHelper,
+        TableDictionary $tableDictionary,
+        ProductFilterApplier $productFilterApplier,
+        SectionFilterApplier $sectionFilterApplier,
+        string $connectionName = null,
+        $exportStateUpdateBatchSize = self::EXPORT_STATE_UPDATE_BATCH_SIZE
+    ) {
+        $this->exportStateUpdateBatchSize = max(1, (int) $exportStateUpdateBatchSize);
+
+        parent::__construct(
+            $context,
+            $timeHelper,
+            $tableDictionary,
+            $productFilterApplier,
+            $sectionFilterApplier,
+            $connectionName
+        );
+    }
 
     protected function _construct()
     {
@@ -139,7 +179,7 @@ class Product extends AbstractDb
                 $this->exportStateBatchedUpdates['without_retention'][] = $values;
             }
 
-            if (++$this->exportStateBatchedUpdateCount > static::EXPORT_STATE_UPDATE_BATCH_SIZE) {
+            if (++$this->exportStateBatchedUpdateCount > $this->exportStateUpdateBatchSize) {
                 $this->flushExportStateBatchedUpdates();
             }
         } else {

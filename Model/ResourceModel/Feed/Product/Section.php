@@ -21,6 +21,11 @@ class Section extends AbstractDb
     private $productSectionFactory;
 
     /**
+     * @var int
+     */
+    private $sectionDataUpdateBatchSize;
+
+    /**
      * @var array|null
      */
     private $sectionDataBatchedUpdates = null;
@@ -38,6 +43,7 @@ class Section extends AbstractDb
      * @param SectionFilterApplier $sectionFilterApplier
      * @param ProductSectionFactory $productSectionFactory
      * @param string|null $connectionName
+     * @param int $sectionDataUpdateBatchSize
      */
     public function __construct(
         DbContext $context,
@@ -46,9 +52,11 @@ class Section extends AbstractDb
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
         ProductSectionFactory $productSectionFactory,
-        string $connectionName = null
+        string $connectionName = null,
+        $sectionDataUpdateBatchSize = self::SECTION_DATA_UPDATE_BATCH_SIZE
     ) {
         $this->productSectionFactory = $productSectionFactory;
+        $this->sectionDataUpdateBatchSize = max(1, (int) $sectionDataUpdateBatchSize);
 
         parent::__construct(
             $context,
@@ -109,7 +117,7 @@ class Section extends AbstractDb
             $values['store_id'] = $storeId;
             $this->sectionDataBatchedUpdates[] = $values;
 
-            if (++$this->sectionDataBatchedUpdateCount > static::SECTION_DATA_UPDATE_BATCH_SIZE) {
+            if (++$this->sectionDataBatchedUpdateCount > $this->sectionDataUpdateBatchSize) {
                 $this->flushSectionDataBatchedUpdates();
             }
         } else {
