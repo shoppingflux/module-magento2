@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Feed;
 
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface;
 use ShoppingFeed\Manager\Model\AbstractFilter;
 use ShoppingFeed\Manager\Model\TimeFilter;
 
@@ -165,7 +166,15 @@ class ProductFilter extends AbstractFilter
      */
     public function setExportStates(array $exportStates)
     {
-        $this->exportStates = $exportStates;
+        $this->exportStates = array_filter(array_map('intval', $exportStates));
+
+        if (
+            empty($this->exportStates)
+            || empty(array_diff(ProductInterface::ALL_EXPORT_STATES, $this->exportStates))
+        ) {
+            $this->exportStates = null;
+        }
+
         return $this;
     }
 
@@ -184,7 +193,15 @@ class ProductFilter extends AbstractFilter
      */
     public function setChildExportStates(array $childExportStates)
     {
-        $this->childExportStates = $childExportStates;
+        $this->childExportStates = array_filter(array_map('intval', $childExportStates));
+
+        if (
+            empty($this->childExportStates)
+            || empty(array_diff(ProductInterface::ALL_EXPORT_STATES, $this->childExportStates))
+        ) {
+            $this->childExportStates = null;
+        }
+
         return $this;
     }
 
@@ -203,7 +220,15 @@ class ProductFilter extends AbstractFilter
      */
     public function setExportStateRefreshStates(array $exportStateRefreshStates)
     {
-        $this->exportStateRefreshStates = $exportStateRefreshStates;
+        $this->exportStateRefreshStates = array_filter(array_map('intval', $exportStateRefreshStates));
+
+        if (
+            empty($this->exportStateRefreshStates)
+            || empty(array_diff(ProductInterface::ALL_REFRESH_STATES, $this->exportStateRefreshStates))
+        ) {
+            $this->exportStateRefreshStates = null;
+        }
+
         return $this;
     }
 

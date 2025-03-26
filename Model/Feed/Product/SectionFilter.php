@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product;
 
+use ShoppingFeed\Manager\Api\Data\Feed\ProductInterface;
 use ShoppingFeed\Manager\Model\AbstractFilter;
 use ShoppingFeed\Manager\Model\TimeFilter;
 
@@ -135,7 +136,15 @@ class SectionFilter extends AbstractFilter
      */
     public function setRefreshStates(array $refreshStates)
     {
-        $this->refreshStates = $refreshStates;
+        $this->refreshStates = array_filter(array_map('intval', $refreshStates));
+
+        if (
+            empty($this->refreshStates)
+            || empty(array_diff(ProductInterface::ALL_REFRESH_STATES, $this->refreshStates))
+        ) {
+            $this->refreshStates = null;
+        }
+
         return $this;
     }
 
