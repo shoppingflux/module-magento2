@@ -12,6 +12,13 @@ interface ProductInterface
     const STATE_NOT_EXPORTED = 3;
     const STATE_NEVER_EXPORTED = 4;
 
+    const ALL_EXPORT_STATES = [
+        self::STATE_EXPORTED,
+        self::STATE_RETAINED,
+        self::STATE_NOT_EXPORTED,
+        self::STATE_NEVER_EXPORTED,
+    ];
+
     const EXPORTED_STATES = [
         self::STATE_EXPORTED,
         self::STATE_RETAINED,
@@ -20,6 +27,12 @@ interface ProductInterface
     const REFRESH_STATE_UP_TO_DATE = 1;
     const REFRESH_STATE_ADVISED = 2;
     const REFRESH_STATE_REQUIRED = 3;
+
+    const ALL_REFRESH_STATES = [
+        self::REFRESH_STATE_UP_TO_DATE,
+        self::REFRESH_STATE_ADVISED,
+        self::REFRESH_STATE_REQUIRED,
+    ];
 
     const EXCLUSION_REASON_UNHANDLED_PRODUCT_TYPE = 1;
     const EXCLUSION_REASON_NOT_IN_WEBSITE = 2;
