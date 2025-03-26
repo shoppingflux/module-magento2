@@ -40,6 +40,15 @@ class ProductFilterApplier extends AbstractFilterApplier
             $conditions[] = $this->getQuotedCondition('export_state', 'IN (?)', $exportStates, $productTableAlias);
         }
 
+        if (is_array($childExportStates = $productFilter->getChildExportStates())) {
+            $conditions[] = $this->getQuotedCondition(
+                'child_export_state',
+                'IN (?)',
+                $childExportStates,
+                $productTableAlias
+            );
+        }
+
         if (is_array($refreshStates = $productFilter->getExportStateRefreshStates())) {
             $conditions[] = $this->getQuotedCondition(
                 'export_state_refresh_state',
