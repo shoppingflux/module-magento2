@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.11.0] - 2025-03-26
+### Added
+- Implement compatibility with remote media storage
+- Add `child_export_state` filter to CLI feed commands
+- Allow customization of batch size for feed data updates
+- Add an option to (not) disable tax for business orders
+- Show `customized_url` marketplace item field on order view
+
+### Changed
+- Optimize redundant filters when refreshing feed data
+
 ## [1.10.0] - 2025-01-29
 ### Added
 - Add option to disable country validation when importing orders
