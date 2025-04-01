@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.11.1] - 2025-04-01
+### Fixed
+- Fix compatibility with older Magento versions
+
 ## [1.11.0] - 2025-03-26
 ### Added
 - Implement compatibility with remote media storage
