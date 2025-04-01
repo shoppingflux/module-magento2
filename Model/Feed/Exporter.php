@@ -10,10 +10,10 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem as FileSystem;
 use Magento\Framework\Filesystem\Directory\ReadInterface as DirectoryReadInterface;
 use Magento\Framework\Filesystem\Directory\WriteInterface as DirectoryWriteInterface;
+use Magento\Framework\Filesystem\DriverPool;
 use Magento\Framework\Module\Manager as ModuleManager;
 use Magento\Framework\Module\ModuleListInterface;
 use Magento\Framework\UrlInterface;
-use Magento\RemoteStorage\Driver\DriverPool;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Feed\Product\Product as ExportedProduct;
 use ShoppingFeed\Feed\ProductGenerator as FeedGenerator;
@@ -179,10 +179,16 @@ class Exporter
     private function getRemoteMediaDirectoryReader()
     {
         if (null === $this->remoteMediaDirectoryReader) {
-            $this->remoteMediaDirectoryReader = $this->fileSystem->getDirectoryRead(
-                DirectoryList::MEDIA,
-                DriverPool::REMOTE
-            );
+            $remoteDriverPoolClassName = 'Magento\RemoteStorage\Driver\DriverPool';
+
+            if (class_exists($remoteDriverPoolClassName) && defined("$remoteDriverPoolClassName::REMOTE")) {
+                $this->remoteMediaDirectoryReader = $this->fileSystem->getDirectoryRead(
+                    DirectoryList::MEDIA,
+                    constant("$remoteDriverPoolClassName::REMOTE")
+                );
+            } else {
+                throw new LocalizedException(__('Remote storage is not available.'));
+            }
         }
 
         return $this->remoteMediaDirectoryReader;
@@ -195,10 +201,16 @@ class Exporter
     private function getRemoteMediaDirectoryWriter()
     {
         if (null === $this->remoteMediaDirectoryWriter) {
-            $this->remoteMediaDirectoryWriter = $this->fileSystem->getDirectoryWrite(
-                DirectoryList::MEDIA,
-                DriverPool::REMOTE
-            );
+            $remoteDriverPoolClassName = 'Magento\RemoteStorage\Driver\DriverPool';
+
+            if (class_exists($remoteDriverPoolClassName) && defined("$remoteDriverPoolClassName::REMOTE")) {
+                $this->remoteMediaDirectoryWriter = $this->fileSystem->getDirectoryWrite(
+                    DirectoryList::MEDIA,
+                    constant("$remoteDriverPoolClassName::REMOTE")
+                );
+            } else {
+                throw new LocalizedException(__('Remote storage is not available.'));
+            }
         }
 
         return $this->remoteMediaDirectoryWriter;
