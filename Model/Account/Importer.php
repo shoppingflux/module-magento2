@@ -150,7 +150,7 @@ class Importer
      * @return ApiSession
      * @throws LocalizedException
      */
-    private function getApiSessionByToken($apiToken)
+    public function getApiSessionByToken($apiToken)
     {
         try {
             return $this->apiSessionManager->getSessionByToken($apiToken);

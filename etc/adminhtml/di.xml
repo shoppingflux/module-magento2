@@ -45,6 +45,12 @@
         </arguments>
     </virtualType>
 
+    <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Account\Token\UpdateButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\Edit\SaveButton">
+        <arguments>
+            <argument name="label" xsi:type="string">Update Token</argument>
+        </arguments>
+    </virtualType>
+
     <virtualType name="ShoppingFeed\Manager\Block\Adminhtml\Marketplace\Order\FetchFormButton" type="ShoppingFeed\Manager\Block\Adminhtml\Base\LinkButton">
         <arguments>
             <argument name="aclResource" xsi:type="string">ShoppingFeed_Manager::marketplace_order_fetch</argument>

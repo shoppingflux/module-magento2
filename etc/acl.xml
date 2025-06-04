@@ -10,6 +10,7 @@
                             <resource id="ShoppingFeed_Manager::account_store_create_existing" title="Import an Account" translate="title" sortOrder="20000"/>
                             <resource id="ShoppingFeed_Manager::account_store_edit" title="Edit Account" translate="title" sortOrder="30000"/>
                             <resource id="ShoppingFeed_Manager::account_store_delete" title="Delete Account" translate="title" sortOrder="40000"/>
+                            <resource id="ShoppingFeed_Manager::account_token_update" title="Update Account Token" translate="title" sortOrder="50000"/>
                         </resource>
 
                         <resource id="ShoppingFeed_Manager::cron_tasks" title="Cron Tasks" translate="title" sortOrder="20000">
