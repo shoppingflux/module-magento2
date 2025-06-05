@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.12.0] - 2025-06-05
+### Added
+- Add new "Update Token" account action
+- Implement invoice PDF and order delivery synchronization
+
 ## [1.11.1] - 2025-04-01
 ### Fixed
 - Fix compatibility with older Magento versions
