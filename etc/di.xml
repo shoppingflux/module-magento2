@@ -409,6 +409,17 @@
         <plugin name="sfm_tax_sales_total_quote_common_tax_collector_plugin" type="ShoppingFeed\Manager\Plugin\Tax\Sales\Total\Quote\CommonTaxCollectorPlugin" sortOrder="0"/>
     </type>
 
+    <preference for="ShoppingFeed\Manager\Api\Sales\Invoice\Pdf\ProcessorPoolInterface" type="ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\ProcessorPool"/>
+
+    <type name="ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\ProcessorPool">
+        <arguments>
+            <argument name="processors" xsi:type="array">
+                <item name="magento_sales" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\Processor\MagentoSales</item>
+                <item name="xtento_pdf_customizer" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\Processor\XtentoPdfCustomizer</item>
+            </argument>
+        </arguments>
+    </type>
+
     <type name="Magento\Sales\Block\Order\Totals">
         <plugin name="sfm_order_totals_block_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\TotalsBlockPlugin" sortOrder="1000000000"/>
     </type>

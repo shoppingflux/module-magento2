@@ -35,11 +35,32 @@ class Collection extends AbstractCollection
                 [ self::KEY_SALES_INCREMENT_ID => 'increment_id' ]
             );
 
+        $this->addFilterToMap(OrderInterface::ORDER_ID, 'main_table.' . OrderInterface::ORDER_ID);
         $this->addFilterToMap(OrderInterface::STORE_ID, 'main_table.' . OrderInterface::STORE_ID);
         $this->addFilterToMap(OrderInterface::SHIPPING_AMOUNT, 'main_table.' . OrderInterface::SHIPPING_AMOUNT);
         $this->addFilterToMap(OrderInterface::CREATED_AT, 'main_table.' . OrderInterface::CREATED_AT);
         $this->addFilterToMap(self::KEY_SALES_INCREMENT_ID, '_sales_order_table.increment_id');
 
+        return $this;
+    }
+
+    /**
+     * @param int|int[] $orderIds
+     * @return $this
+     */
+    public function addIdsFilter($orderIds)
+    {
+        $this->addFieldToFilter(OrderInterface::ORDER_ID, [ 'in' => $this->prepareIdFilterValue($orderIds) ]);
+        return $this;
+    }
+
+    /**
+     * @param int|int[] $orderIds
+     * @return $this
+     */
+    public function addExcludedIdsFilter($orderIds)
+    {
+        $this->addFieldToFilter(OrderInterface::ORDER_ID, [ 'nin' => $this->prepareIdFilterValue($orderIds) ]);
         return $this;
     }
 
@@ -197,27 +218,28 @@ class Collection extends AbstractCollection
     }
 
     /**
-     * @param string $action
+     * @param string
      */
-    private function addHandledTicketAbsenceFilter($action)
+    private function addExistingHandledTicketFilter($action)
     {
-        $ticketSelect = $this->getConnection()
+        $connection = $this->getConnection();
+
+        $ticketSelect = $connection
             ->select()
-            ->from(
-                [ '_ticket_table' => $this->tableDictionary->getMarketplaceOrderTicketTableName() ],
-                [ TicketInterface::ORDER_ID ]
-            )
-            ->where('action = ?', $action)
-            ->where('status = ?', TicketInterface::STATUS_HANDLED);
+            ->from([ '_ticket_table' => $this->tableDictionary->getMarketplaceOrderTicketTableName() ])
+            ->where('main_table.order_id = _ticket_table.order_id')
+            ->where('_ticket_table.action = ?', $action)
+            ->where('_ticket_table.status = ?', TicketInterface::STATUS_HANDLED);
 
         $this->getSelect()
-            ->where('main_table.order_id NOT IN (?)', new \Zend_Db_Expr($ticketSelect->assemble()));
+            ->where('EXISTS(' . $ticketSelect->assemble() . ')');
     }
 
     /**
      * @param string $action
+     * @param callable|null $selectCallback
      */
-    private function addNoTicketBlockingNotificationsFilter($action)
+    private function addNoTicketBlockingNotificationsFilter($action, $selectCallback = null)
     {
         $connection = $this->getConnection();
 
@@ -234,6 +256,10 @@ class Collection extends AbstractCollection
                 )
                 . ') OR (_ticket_table.created_at <= DATE_SUB(NOW(), INTERVAL 7 DAY))'
             );
+
+        if (is_callable($selectCallback)) {
+            $selectCallback($ticketSelect);
+        }
 
         $this->getSelect()
             ->where('NOT EXISTS(' . $ticketSelect->assemble() . ')');
@@ -282,6 +308,67 @@ class Collection extends AbstractCollection
             );
 
         $this->addNoTicketBlockingNotificationsFilter(TicketInterface::ACTION_SHIP);
+
+        return $this;
+    }
+
+    /**
+     * @param int $maxDelayInDays
+     * @return $this
+     */
+    public function addUploadableInvoicePdfFilter($maxDelayInDays)
+    {
+        $this->join(
+            [ '_sales_invoice_table' => $this->tableDictionary->getSalesInvoiceTableName() ],
+            'main_table.sales_order_id = _sales_invoice_table.order_id',
+            [ 'invoice_ids' => 'GROUP_CONCAT(_sales_invoice_table.entity_id)' ]
+        );
+
+        $this->getSelect()->group('main_table.order_id');
+
+        if ($maxDelayInDays > 0) {
+            $this->getSelect()
+                ->where(
+                    'main_table.imported_at >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+                    (int) $maxDelayInDays
+                );
+        }
+
+        $this->addExistingHandledTicketFilter(TicketInterface::ACTION_SHIP);
+
+        $this->addNoTicketBlockingNotificationsFilter(
+            TicketInterface::ACTION_UPLOAD_INVOICE_PDF,
+            function ($ticketSelect) {
+                return $ticketSelect->where('_ticket_table.sales_entity_id = _sales_invoice_table.entity_id');
+            }
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param string[] $deliveredStatuses
+     * @param int $maxDelayInDays
+     * @return $this
+     */
+    public function addNotifiableDeliveryFilter(array $deliveredStatuses, $maxDelayInDays)
+    {
+        if (empty($deliveredStatuses)) {
+            $deliveredStatuses = [ '_unexisting_' ];
+        }
+
+        $this->getSelect()
+            ->where('_sales_order_table.status IN (?)', $deliveredStatuses);
+
+        if ($maxDelayInDays > 0) {
+            $this->getSelect()
+                ->where(
+                    'main_table.imported_at >= DATE_SUB(NOW(), INTERVAL ? DAY)',
+                    (int) $maxDelayInDays
+                );
+        }
+
+        $this->addNoTicketBlockingNotificationsFilter(TicketInterface::ACTION_DELIVER);
 
         return $this;
     }

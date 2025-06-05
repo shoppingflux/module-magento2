@@ -36,6 +36,13 @@ class Ticket extends AbstractModel implements TicketInterface
         return (int) $this->getDataByKey(self::ORDER_ID);
     }
 
+    public function getSalesEntityId()
+    {
+        $entityId = $this->getDataByKey(self::SALES_ENTITY_ID);
+
+        return empty($entityId) ? null : (int) $entityId;
+    }
+
     public function getAction()
     {
         return trim((string) $this->getDataByKey(self::ACTION));
@@ -64,6 +71,13 @@ class Ticket extends AbstractModel implements TicketInterface
     public function setOrderId($orderId)
     {
         return $this->setData(self::ORDER_ID, (int) $orderId);
+    }
+
+    public function setSalesEntityId($entityId)
+    {
+        $entityId = (int) $entityId;
+
+        return $this->setData(self::SALES_ENTITY_ID, empty($entityId) ? null : $entityId);
     }
 
     public function setAction($action)
