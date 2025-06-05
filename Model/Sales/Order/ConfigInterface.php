@@ -234,6 +234,37 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return bool
+     */
+    public function isInvoicePdfUploadEnabled(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @param string $marketplace
+     * @return bool
+     */
+    public function shouldUploadInvoicePdfForMarketplace(StoreInterface $store, $marketplace);
+
+    /**
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getInvoicePdfProcessorCode(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return int
+     */
+    public function getInvoicePdfUploadDelay(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return \DateTime
+     */
+    public function getInvoicePdfUploadFromDate(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return int
      */
     public function getOrderSyncingDelay(StoreInterface $store);
@@ -267,6 +298,24 @@ interface ConfigInterface extends BaseConfig
      * @return int|null
      */
     public function getShipmentSyncingMaximumDelay(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldSyncDeliveredOrders(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string[]
+     */
+    public function getOrderDeliveredStatuses(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return int
+     */
+    public function getDeliverySyncingMaximumDelay(StoreInterface $store);
 
     /**
      * @param StoreInterface $store

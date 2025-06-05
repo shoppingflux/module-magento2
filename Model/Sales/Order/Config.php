@@ -3,6 +3,7 @@
 namespace ShoppingFeed\Manager\Model\Sales\Order;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\Information as StoreInformation;
@@ -10,6 +11,7 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Sales\Invoice\Pdf\ProcessorPoolInterface as InvoicePdfProcessorPoolInterface;
 use ShoppingFeed\Manager\Model\Account\Store\ConfigManager;
 use ShoppingFeed\Manager\Model\Account\Store\RegistryConstants as StoreRegistryConstants;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
@@ -18,10 +20,12 @@ use ShoppingFeed\Manager\Model\Config\Field\MultiSelect;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
+use ShoppingFeed\Manager\Model\Config\Source\Order\Status\Complete as OrderCompleteStatusSource;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
 use ShoppingFeed\Manager\Model\Config\Value\HandlerFactoryInterface as ValueHandlerFactoryInterface;
+use ShoppingFeed\Manager\Model\Config\Value\HandlerInterface as ValueHandlerInterface;
 use ShoppingFeed\Manager\Model\Customer\Group\Source as CustomerGroupSource;
 use ShoppingFeed\Manager\Model\Marketplace\Order\Syncing\Action\Source as OrderSyncingActionSource;
 use ShoppingFeed\Manager\Model\Marketplace\Source as MarketplaceSource;
@@ -69,11 +73,17 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_CREATE_SHIPPED_SHIPMENT = 'create_shipped_shipment';
     const KEY_SEND_ORDER_EMAIL_FOR_MARKETPLACES = 'send_order_email_for_marketplaces';
     const KEY_SEND_INVOICE_EMAIL_FOR_MARKETPLACES = 'send_invoice_email_for_marketplaces';
+    const KEY_UPLOAD_INVOICE_PDF_FOR_MARKETPLACES = 'upload_invoice_pdf_for_marketplaces';
+    const KEY_INVOICE_PDF_PROCESSOR_CODE = 'invoice_pdf_processor_code';
+    const KEY_INVOICE_PDF_UPLOAD_DELAY = 'invoice_pdf_upload_delay';
     const KEY_ORDER_SYNCING_DELAY = 'order_syncing_delay';
     const KEY_ORDER_REFUSAL_SYNCING_ACTION = 'order_refusal_syncing_action';
     const KEY_ORDER_CANCELLATION_SYNCING_ACTION = 'order_cancellation_syncing_action';
     const KEY_ORDER_REFUND_SYNCING_ACTION = 'order_refund_syncing_action';
     const KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY = 'shipment_syncing_maximum_delay';
+    const KEY_SYNC_DELIVERED_ORDERS = 'sync_delivered_orders';
+    const KEY_ORDER_DELIVERED_STATUSES = 'order_delivered_statuses';
+    const KEY_DELIVERY_SYNCING_MAXIMUM_DELAY = 'delivery_syncing_maximum_delay';
     const KEY_ENABLE_DEBUG_MODE = 'enable_debug_mode';
 
     /**
@@ -112,6 +122,16 @@ class Config extends AbstractConfig implements ConfigInterface
     private $orderSyncingActionSource;
 
     /**
+     * @var OrderCompleteStatusSource
+     */
+    private $orderCompleteStatusSource;
+
+    /**
+     * @var InvoicePdfProcessorPoolInterface
+     */
+    private $invoicePdfProcessorPool;
+
+    /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param Registry $coreRegistry
@@ -121,6 +141,8 @@ class Config extends AbstractConfig implements ConfigInterface
      * @param CustomerGroupSource $customerGroupSource
      * @param MarketplaceSource $marketplaceSource
      * @param OrderSyncingActionSource $orderSyncingActionSource
+     * @param OrderCompleteStatusSource|null $orderCompleteStatusSource
+     * @param InvoicePdfProcessorPoolInterface|null $invoicePdfProcessorPool
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
@@ -131,7 +153,9 @@ class Config extends AbstractConfig implements ConfigInterface
         TimezoneInterface $localeDate,
         CustomerGroupSource $customerGroupSource,
         MarketplaceSource $marketplaceSource,
-        OrderSyncingActionSource $orderSyncingActionSource
+        OrderSyncingActionSource $orderSyncingActionSource,
+        OrderCompleteStatusSource $orderCompleteStatusSource = null,
+        InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->scopeConfig = $scopeConfig;
@@ -140,12 +164,51 @@ class Config extends AbstractConfig implements ConfigInterface
         $this->customerGroupSource = $customerGroupSource;
         $this->marketplaceSource = $marketplaceSource;
         $this->orderSyncingActionSource = $orderSyncingActionSource;
+
+        $this->orderCompleteStatusSource = $orderCompleteStatusSource
+            ?? ObjectManager::getInstance()->get(OrderCompleteStatusSource::class);
+
+        $this->invoicePdfProcessorPool = $invoicePdfProcessorPool
+            ?? ObjectManager::getInstance()->get(InvoicePdfProcessorPoolInterface::class);
+
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
     public function getScopeSubPath()
     {
         return [ 'general' ];
+    }
+
+    /**
+     * @return ValueHandlerInterface
+     */
+    private function getInvoicePdfProcessorValueHandler()
+    {
+        $invoicePdfProcessorOptions = [];
+
+        foreach ($this->invoicePdfProcessorPool->getProcessors() as $processor) {
+            if ($processor->isAvailable()) {
+                $invoicePdfProcessorOptions[] = [
+                    'value' => $processor->getCode(),
+                    'label' => $processor->getLabel(),
+                ];
+            }
+        }
+
+        usort(
+            $invoicePdfProcessorOptions,
+            function ($a, $b) {
+                return strnatcasecmp($a['label'], $b['label']);
+            }
+        );
+
+        return $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => $invoicePdfProcessorOptions,
+            ]
+        );
     }
 
     protected function getBaseFields()
@@ -183,12 +246,22 @@ class Config extends AbstractConfig implements ConfigInterface
             ]
         );
 
+        $invoicePdfProcessorHandler = $this->getInvoicePdfProcessorValueHandler();
+
         $orderSyncingActionHandler = $this->valueHandlerFactory->create(
             OptionHandler::TYPE_CODE,
             [
                 'dataType' => UiText::NAME,
                 'hasEmptyOption' => true,
                 'optionArray' => $this->orderSyncingActionSource->toOptionArray(),
+            ]
+        );
+
+        $orderCompleteStatusHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => $this->orderCompleteStatusSource->toOptionArray(),
             ]
         );
 
@@ -540,6 +613,34 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_INVOICE_PDF_PROCESSOR_CODE,
+                        'valueHandler' => $invoicePdfProcessorHandler,
+                        'isRequired' => false,
+                        'label' => __('Invoice PDF Processor'),
+                        'notice' => __(
+                            'Warning: the size of the generated PDF files should not exceed 2 MB. Any files larger than this will be ignored.'
+                        ),
+                        'sortOrder' => 310,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_INVOICE_PDF_UPLOAD_DELAY,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'isRequired' => true,
+                        'defaultFormValue' => 15,
+                        'defaultUseValue' => 15,
+                        'label' => __('Maximum Delay for Uploading Invoice PDF'),
+                        'notice' => __('In days. Only orders imported within this delay will be considered for invoice PDF upload.'),
+                        'sortOrder' => 320,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_ORDER_SYNCING_DELAY,
@@ -549,7 +650,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => 15,
                         'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
                         'notice' => __('In days.'),
-                        'sortOrder' => 300,
+                        'sortOrder' => 330,
                     ]
                 ),
 
@@ -563,7 +664,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 310,
+                        'sortOrder' => 340,
                     ]
                 ),
 
@@ -577,7 +678,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 320,
+                        'sortOrder' => 350,
                     ]
                 ),
 
@@ -591,7 +692,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 330,
+                        'sortOrder' => 360,
                     ]
                 ),
 
@@ -603,11 +704,52 @@ class Config extends AbstractConfig implements ConfigInterface
                         'isRequired' => true,
                         'defaultFormValue' => 24,
                         'defaultUseValue' => 24,
-                        'label' => __('Maximum Delay before Synchronizing Shipments'),
+                        'label' => __('Maximum Delay for Synchronizing Shipments'),
                         'notice' => __(
                             'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
                         ),
-                        'sortOrder' => 340,
+                        'sortOrder' => 370,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_SYNC_DELIVERED_ORDERS,
+                        'isCheckedByDefault' => false,
+                        'label' => __('Synchronize Delivered Orders'),
+                        'sortOrder' => 380,
+                        'checkedDependentFieldNames' => [ self::KEY_ORDER_DELIVERED_STATUSES ],
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    MultiSelect::TYPE_CODE,
+                    [
+                        'name' => self::KEY_ORDER_DELIVERED_STATUSES,
+                        'valueHandler' => $orderCompleteStatusHandler,
+                        'isRequired' => true,
+                        'defaultFormValue' => [],
+                        'defaultUseValue' => [],
+                        'label' => __('Order Delivered Statuses'),
+                        'notice' => __('An order is considered delivered if it has one of the selected statuses.'),
+                        'sortOrder' => 390,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    TextBox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_DELIVERY_SYNCING_MAXIMUM_DELAY,
+                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                        'isRequired' => true,
+                        'defaultFormValue' => 15,
+                        'defaultUseValue' => 15,
+                        'label' => __('Maximum Delay for Synchronizing Deliveries'),
+                        'notice' => __(
+                            'In days. Only orders imported within this delay will be considered for delivery synchronization.'
+                        ),
+                        'sortOrder' => 400,
                     ]
                 ),
 
@@ -621,7 +763,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 350,
+                        'sortOrder' => 410,
                     ]
                 ),
             ],
@@ -882,7 +1024,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Order Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
-                        'sortOrder' => 290,
+                        'sortOrder' => 280,
                     ]
                 ),
 
@@ -895,6 +1037,19 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Invoice Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
+                        'sortOrder' => 290,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    MultiSelect::TYPE_CODE,
+                    [
+                        'name' => self::KEY_UPLOAD_INVOICE_PDF_FOR_MARKETPLACES,
+                        'valueHandler' => $marketplaceHandler,
+                        'allowAll' => true,
+                        'defaultUseValue' => [],
+                        'label' => __('Upload Invoice PDF For'),
+                        'notice' => __('The invoice PDF will be uploaded to compatible marketplaces only (see list here: https://developer.shopping-feed.com/api/fae0997e4f525-store-order-api#specific-order-operations).'),
                         'sortOrder' => 300,
                     ]
                 ),
@@ -1226,6 +1381,37 @@ class Config extends AbstractConfig implements ConfigInterface
         );
     }
 
+    public function isInvoicePdfUploadEnabled(StoreInterface $store)
+    {
+        return !empty($this->getFieldValue($store, self::KEY_UPLOAD_INVOICE_PDF_FOR_MARKETPLACES));
+    }
+
+    public function shouldUploadInvoicePdfForMarketplace(StoreInterface $store, $marketplace)
+    {
+        return in_array(
+            $this->stringHelper->getNormalizedCode($marketplace),
+            (array) $this->getFieldValue($store, self::KEY_UPLOAD_INVOICE_PDF_FOR_MARKETPLACES),
+            true
+        );
+    }
+
+    public function getInvoicePdfProcessorCode(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_INVOICE_PDF_PROCESSOR_CODE);
+    }
+
+    public function getInvoicePdfUploadDelay(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_INVOICE_PDF_UPLOAD_DELAY);
+    }
+
+    public function getInvoicePdfUploadFromDate(StoreInterface $store)
+    {
+        $fromDate = $this->localeDate->scopeDate($store->getBaseStore());
+
+        return $fromDate->sub(new \DateInterval('P' . $this->getInvoicePdfUploadDelay($store) . 'D'));
+    }
+
     public function getOrderSyncingDelay(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_ORDER_SYNCING_DELAY);
@@ -1256,6 +1442,21 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getShipmentSyncingMaximumDelay(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY);
+    }
+
+    public function shouldSyncDeliveredOrders(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_SYNC_DELIVERED_ORDERS);
+    }
+
+    public function getOrderDeliveredStatuses(StoreInterface $store)
+    {
+        return (array) $this->getFieldValue($store, self::KEY_ORDER_DELIVERED_STATUSES);
+    }
+
+    public function getDeliverySyncingMaximumDelay(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_DELIVERY_SYNCING_MAXIMUM_DELAY);
     }
 
     public function isDebugModeEnabled(StoreInterface $store)

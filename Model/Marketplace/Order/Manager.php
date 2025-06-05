@@ -2,26 +2,35 @@
 
 namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
+use GuzzleHttp\Exception\BadResponseException;
+use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Framework\Filesystem;
+use Magento\Sales\Api\Data\InvoiceInterface;
+use Magento\Sales\Model\ResourceModel\Order\Invoice\CollectionFactory as SalesInvoiceCollectionFactory;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
-use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
-use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterfaceFactory as OrderLogInterfaceFactory;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterfaceFactory as OrderTicketInterfaceFactory;
+use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\LogRepositoryInterface as OrderLogRepositoryInterface;
 use ShoppingFeed\Manager\Api\Marketplace\Order\TicketRepositoryInterface as OrderTicketRepositoryInterface;
+use ShoppingFeed\Manager\Api\Sales\Invoice\Pdf\ProcessorInterface as PdfProcessorInterface;
+use ShoppingFeed\Manager\Api\Sales\Invoice\Pdf\ProcessorPoolInterface as InvoicePdfProcessorPoolInterface;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Collection as OrderCollection;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\CollectionFactory as OrderCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Ticket\CollectionFactory as OrderTicketCollectionFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
-use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track as ShipmentTrack;
 use ShoppingFeed\Manager\Model\Sales\Order\Shipment\Track\Collector as SalesShipmentTrackCollector;
+use ShoppingFeed\Manager\Model\Sales\Order\SyncerInterface as SalesOrderSyncerInterface;
 use ShoppingFeed\Manager\Model\ShoppingFeed\Api\SessionManager as ApiSessionManager;
-use ShoppingFeed\Sdk\Api\Order\OrderOperation as ApiOrderOperation;
+use ShoppingFeed\Sdk\Api\Order\Document\Invoice as ApiInvoiceDocument;
+use ShoppingFeed\Sdk\Api\Order\Identifier\Id as ApiOrderId;
+use ShoppingFeed\Sdk\Api\Order\Operation as ApiOrderOperation;
 use ShoppingFeed\Sdk\Api\Order\OrderResource as ApiOrder;
 use ShoppingFeed\Sdk\Api\Task\TicketResource as ApiTicket;
 
@@ -38,6 +47,11 @@ class Manager
 
     const API_ACKNOWLEDGED = 'acknowledged';
     const API_UNACKNOWLEDGED = 'unacknowledged';
+
+    /**
+     * @var Filesystem
+     */
+    private $fileSystem;
 
     /**
      * @var ApiSessionManager
@@ -80,6 +94,16 @@ class Manager
     private $orderTicketCollectionFactory;
 
     /**
+     * @var SalesInvoiceCollectionFactory
+     */
+    private $salesInvoiceCollectionFactory;
+
+    /**
+     * @var InvoicePdfProcessorPoolInterface
+     */
+    private $invoicePdfProcessorPool;
+
+    /**
      * @var SalesShipmentTrackCollector
      */
     private $salesShipmentTrackCollector;
@@ -106,6 +130,9 @@ class Manager
      * @param int $notificationSliceSize
      * @param int $maxNotificationIterations
      * @param OrderTicketCollectionFactory|null $orderTicketCollectionFactory
+     * @param SalesInvoiceCollectionFactory|null $salesInvoiceCollectionFactory
+     * @param InvoicePdfProcessorPoolInterface|null $invoicePdfProcessorPool
+     * @param Filesystem|null $fileSystem
      */
     public function __construct(
         ApiSessionManager $apiSessionManager,
@@ -118,7 +145,10 @@ class Manager
         SalesShipmentTrackCollector $salesShipmentTrackCollector,
         $notificationSliceSize = 50,
         $maxNotificationIterations = 20,
-        OrderTicketCollectionFactory $orderTicketCollectionFactory = null
+        OrderTicketCollectionFactory $orderTicketCollectionFactory = null,
+        SalesInvoiceCollectionFactory $salesInvoiceCollectionFactory = null,
+        InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null,
+        Filesystem $fileSystem = null
     ) {
         $this->apiSessionManager = $apiSessionManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
@@ -130,8 +160,19 @@ class Manager
         $this->salesShipmentTrackCollector = $salesShipmentTrackCollector;
         $this->notificationSliceSize = (int) $notificationSliceSize;
         $this->maxNotificationIterations = (int) $maxNotificationIterations;
+
+        $objectManager = ObjectManager::getInstance();
+
         $this->orderTicketCollectionFactory = $orderTicketCollectionFactory
-            ?? ObjectManager::getInstance()->get(OrderTicketCollectionFactory::class);
+            ?? $objectManager->get(OrderTicketCollectionFactory::class);
+
+        $this->salesInvoiceCollectionFactory = $salesInvoiceCollectionFactory
+            ?? $objectManager->get(SalesInvoiceCollectionFactory::class);
+
+        $this->invoicePdfProcessorPool = $invoicePdfProcessorPool
+            ?? $objectManager->get(InvoicePdfProcessorPoolInterface::class);
+
+        $this->fileSystem = $fileSystem ?? $objectManager->get(Filesystem::class);
     }
 
     /**
@@ -338,21 +379,30 @@ class Manager
                 $handledTicketIds[] = $ticket->getId();
 
                 try {
-                    if ($batchId = $ticket->getShoppingFeedBatchId()) {
-                        foreach ($ticketApi->getByBatch($batchId) as $batchTicket) {
-                            $apiTicket = $batchTicket;
-                            break;
+                    $ticketStatus = null;
+
+                    try {
+                        if ($batchId = $ticket->getShoppingFeedBatchId()) {
+                            foreach ($ticketApi->getByBatch($batchId) as $batchTicket) {
+                                $apiTicket = $batchTicket;
+                                break;
+                            }
+                        } elseif ($ticketId = $ticket->getShoppingFeedTicketId()) {
+                            $apiTicket = $ticketApi->getOne($ticketId);
                         }
-                    } elseif ($ticketId = $ticket->getShoppingFeedTicketId()) {
-                        $apiTicket = $ticketApi->getOne($ticketId);
+
+                        if ($apiTicket instanceof ApiTicket) {
+                            $ticketStatus = $apiTicket->getStatus();
+                        }
+                    } catch (BadResponseException $e) {
+                        if ($e->hasResponse() && ($e->getResponse()->getStatusCode() === 404)) {
+                            $ticketStatus = TicketInterface::API_STATUS_FAILED;
+                        }
                     }
 
-                    if (
-                        ($apiTicket instanceof ApiTicket)
-                        && !in_array($apiTicket->getStatus(), TicketInterface::API_PENDING_STATUSES, true)
-                    ) {
+                    if ($ticketStatus && !in_array($ticketStatus, TicketInterface::API_PENDING_STATUSES, true)) {
                         $ticket->setStatus(
-                            ($apiTicket->getStatus() === TicketInterface::API_STATUS_FAILED)
+                            ($ticketStatus === TicketInterface::API_STATUS_FAILED)
                                 ? TicketInterface::STATUS_FAILED
                                 : TicketInterface::STATUS_HANDLED
                         );
@@ -370,13 +420,15 @@ class Manager
      * @param OrderInterface $order
      * @param ApiTicket $apiTicket
      * @param string $action
+     * @param int|null $salesEntityId
      * @throws CouldNotSaveException
      */
-    private function registerOrderApiTicket(OrderInterface $order, ApiTicket $apiTicket, $action)
+    private function registerOrderApiTicket(OrderInterface $order, ApiTicket $apiTicket, $action, $salesEntityId = null)
     {
         $ticket = $this->orderTicketFactory->create();
         $ticket->setShoppingFeedTicketId(trim((string) $apiTicket->getId()));
         $ticket->setOrderId($order->getId());
+        $ticket->setSalesEntityId($salesEntityId);
         $ticket->setAction($action);
         $ticket->setStatus(TicketInterface::STATUS_PENDING);
         $this->orderTicketRepository->save($ticket);
@@ -386,13 +438,15 @@ class Manager
      * @param OrderInterface $order
      * @param ApiTicket $apiTicket
      * @param string $action
+     * @param int|null $salesEntityId
      * @throws CouldNotSaveException
      */
-    private function registerOrderApiTicketBatch(OrderInterface $order, string $batchId, $action)
+    private function registerOrderApiTicketBatch(OrderInterface $order, string $batchId, $action, $salesEntityId = null)
     {
         $ticket = $this->orderTicketFactory->create();
         $ticket->setShoppingFeedBatchId($batchId);
         $ticket->setOrderId($order->getId());
+        $ticket->setSalesEntityId($salesEntityId);
         $ticket->setAction($action);
         $ticket->setStatus(TicketInterface::STATUS_PENDING);
         $this->orderTicketRepository->save($ticket);
@@ -403,6 +457,7 @@ class Manager
      * @param OrderInterface $order
      * @param string $action
      * @param ApiOrderOperation $operation
+     * @param int|null $salesEntityId
      * @throws CouldNotSaveException
      * @throws LocalizedException
      */
@@ -410,7 +465,8 @@ class Manager
         StoreInterface $store,
         OrderInterface $order,
         $action,
-        ApiOrderOperation $operation
+        ApiOrderOperation $operation,
+        $salesEntityId = null
     ) {
         $result = $this->apiSessionManager
             ->getStoreApiResource($store)
@@ -420,15 +476,36 @@ class Manager
         $apiTickets = $result->getTickets();
 
         foreach ($apiTickets as $apiTicket) {
-            $this->registerOrderApiTicket($order, $apiTicket, $action);
+            $this->registerOrderApiTicket($order, $apiTicket, $action, $salesEntityId);
 
             return;
         }
 
         foreach ($result->getBatchIds() as $batchId) {
-            $this->registerOrderApiTicketBatch($order, $batchId, $action);
+            $this->registerOrderApiTicketBatch($order, $batchId, $action, $salesEntityId);
 
             return;
+        }
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @return ApiOrderId
+     */
+    private function getOrderApiId(OrderInterface $order)
+    {
+        return new ApiOrderId($order->getShoppingFeedOrderId());
+    }
+
+    /**
+     * @param OrderCollection $collection
+     */
+    private function loadOrderCollectionNextSliceWithoutDuplicates(OrderCollection $collection)
+    {
+        if ($collection->isLoaded()) {
+            $orderIds = $collection->getLoadedIds();
+            $collection->clear();
+            $collection->addExcludedIdsFilter($orderIds);
         }
     }
 
@@ -446,8 +523,6 @@ class Manager
         StoreInterface $store
     ) {
         $operation = new ApiOrderOperation();
-        $reference = $order->getMarketplaceOrderNumber();
-        $channelName = $order->getMarketplaceName();
 
         if (TicketInterface::ACTION_ACKNOWLEDGE_SUCCESS === $action) {
             $apiStatus = self::API_ACKNOWLEDGEMENT_STATUS_SUCCESS;
@@ -455,7 +530,11 @@ class Manager
             $apiStatus = self::API_ACKNOWLEDGEMENT_STATUS_FAILURE;
         }
 
-        $operation->acknowledge($reference, $channelName, $storeReference, $apiStatus);
+        $operation->acknowledge(
+            $this->getOrderApiId($order),
+            $storeReference,
+            $apiStatus
+        );
 
         $this->executeApiOrderOperation($store, $order, $action, $operation);
     }
@@ -506,7 +585,8 @@ class Manager
         $sliceCount = 0;
 
         do {
-            $importedCollection->clear();
+            $this->loadOrderCollectionNextSliceWithoutDuplicates($importedCollection);
+
             $hasNotifiedOrders = $importedCollection->count() > 0;
 
             foreach ($importedCollection as $order) {
@@ -527,10 +607,10 @@ class Manager
     public function notifyStoreOrderCancellation(OrderInterface $order, StoreInterface $store)
     {
         $operation = new ApiOrderOperation();
-        $reference = $order->getMarketplaceOrderNumber();
-        $channelName = $order->getMarketplaceName();
 
-        $operation->cancel($reference, $channelName);
+        $operation->cancel(
+            new ApiOrderId($order->getShoppingFeedOrderId()),
+        );
 
         $this->executeApiOrderOperation($store, $order, TicketInterface::ACTION_CANCEL, $operation);
     }
@@ -550,13 +630,139 @@ class Manager
         $sliceCount = 0;
 
         do {
-            $cancelledCollection->clear();
+            $this->loadOrderCollectionNextSliceWithoutDuplicates($cancelledCollection);
+
             $hasNotifiedOrders = $cancelledCollection->count() > 0;
 
             foreach ($cancelledCollection as $order) {
                 $this->notifyStoreOrderCancellation($order, $store);
             }
         } while ($hasNotifiedOrders && (++$sliceCount < $this->maxNotificationIterations));
+    }
+
+    /**
+     * @param OrderInterface $order
+     * @param InvoiceInterface $invoice
+     * @param PdfProcessorInterface $pdfProcessor
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    public function notifyStoreOrderInvoicePdfUpdate(
+        OrderInterface $order,
+        InvoiceInterface $invoice,
+        PdfProcessorInterface $pdfProcessor,
+        StoreInterface $store
+    ) {
+        $pdfContent = $pdfProcessor->getInvoicePdfContent($invoice);
+
+        $operation = new ApiOrderOperation();
+
+        if (strlen($pdfContent) >= 2 * 1024 * 1024) {
+            throw new LocalizedException(__('PDF file is too large'));
+        }
+
+        $tempDirectory = $this->fileSystem->getDirectoryWrite(DirectoryList::TMP);
+        $pdfPath = $tempDirectory->getAbsolutePath(sprintf('sfm-invoice-%d.pdf', $invoice->getId()));
+        $tempDirectory->writeFile($pdfPath, $pdfContent);
+
+        $operation->uploadDocument(
+            new ApiOrderId($order->getShoppingFeedOrderId()),
+            new ApiInvoiceDocument($pdfPath)
+        );
+
+        $this->executeApiOrderOperation(
+            $store,
+            $order,
+            TicketInterface::ACTION_UPLOAD_INVOICE_PDF,
+            $operation,
+            $invoice->getId()
+        );
+
+        try {
+            $tempDirectory->delete($pdfPath);
+        } catch (\Exception $e) {
+            // Failure to delete the temporary file is not relevant.
+        }
+    }
+
+    /**
+     * @param StoreInterface $store
+     */
+    public function notifyStoreOrderInvoicePdfUpdates(StoreInterface $store)
+    {
+        if (!$this->orderGeneralConfig->isInvoicePdfUploadEnabled($store)) {
+            return;
+        }
+
+        $pdfProcessor = $this->invoicePdfProcessorPool->getProcessorByCode(
+            $this->orderGeneralConfig->getInvoicePdfProcessorCode($store)
+        );
+
+        if (!$pdfProcessor || !$pdfProcessor->isAvailable()) {
+            return;
+        }
+
+        $invoicedCollection = $this->orderCollectionFactory->create();
+        $invoicedCollection->addStoreIdFilter($store->getId());
+        $invoicedCollection->addUploadableInvoicePdfFilter($this->orderGeneralConfig->getInvoicePdfUploadDelay($store));
+        $invoicedCollection->setCurPage(1);
+        $invoicedCollection->setPageSize($this->notificationSliceSize);
+
+        $sliceCount = 0;
+
+        do {
+            $this->loadOrderCollectionNextSliceWithoutDuplicates($invoicedCollection);
+
+            $invoiceOrderIds = [];
+
+            foreach ($invoicedCollection as $order) {
+                $orderId = (int) $order->getId();
+
+                $invoiceIds = array_filter(
+                    array_map(
+                        'intval',
+                        explode(',', (string) $order->getData('invoice_ids'))
+                    )
+                );
+
+                foreach ($invoiceIds as $invoiceId) {
+                    $invoiceOrderIds[$invoiceId] = $orderId;
+                }
+            }
+
+            if (empty($invoiceOrderIds)) {
+                $hasUploadedPdf = false;
+            } else {
+                $invoiceCollection = $this->salesInvoiceCollectionFactory->create();
+                $invoiceCollection->addFieldToFilter('entity_id', [ 'in' => array_keys($invoiceOrderIds) ]);
+
+                foreach ($invoiceCollection as $invoice) {
+                    $invoiceId = (int) $invoice->getId();
+
+                    /** @var OrderInterface $order */
+                    if (
+                        !isset($invoiceOrderIds[$invoiceId])
+                        || (!$order = $invoicedCollection->getItemById($invoiceOrderIds[$invoiceId]))
+                        || (!$marketplace = $order->getMarketplaceName())
+                        || !$this->orderGeneralConfig->shouldUploadInvoicePdfForMarketplace($store, $marketplace)
+                    ) {
+                        continue;
+                    }
+
+                    try {
+                        $this->notifyStoreOrderInvoicePdfUpdate($order, $invoice, $pdfProcessor, $store);
+                    } catch (\Exception $e) {
+                        $this->logOrderError(
+                            $order,
+                            __('Failed to upload invoice PDF:') . "\n" . $e->getMessage(),
+                            (string) $e
+                        );
+                    }
+                }
+
+                $hasUploadedPdf = $invoiceCollection->count() > 0;
+            }
+        } while ($hasUploadedPdf && (++$sliceCount < $this->maxNotificationIterations));
     }
 
     /**
@@ -572,12 +778,9 @@ class Manager
         StoreInterface $store
     ) {
         $operation = new ApiOrderOperation();
-        $reference = $order->getMarketplaceOrderNumber();
-        $channelName = $order->getMarketplaceName();
 
         $operation->ship(
-            $reference,
-            $channelName,
+            $this->getOrderApiId($order),
             $shipmentTrack->getCarrierTitle(),
             $shipmentTrack->getTrackingNumber(),
             $shipmentTrack->getTrackingUrl()
@@ -604,8 +807,9 @@ class Manager
         $sliceCount = 0;
 
         do {
+            $this->loadOrderCollectionNextSliceWithoutDuplicates($shippedCollection);
+
             $shippedSalesOrderIds = [];
-            $shippedCollection->clear();
 
             foreach ($shippedCollection as $marketplaceOrder) {
                 $shippedSalesOrderIds[] = (int) $marketplaceOrder->getSalesOrderId();
@@ -644,6 +848,53 @@ class Manager
     }
 
     /**
+     * @param OrderInterface $order
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    public function notifyStoreOrderDelivery(OrderInterface $order, StoreInterface $store)
+    {
+        $operation = new ApiOrderOperation();
+
+        $operation->deliver($this->getOrderApiId($order));
+
+        $this->executeApiOrderOperation($store, $order, TicketInterface::ACTION_DELIVER, $operation);
+    }
+
+    /**
+     * @param StoreInterface $store
+     */
+    public function notifyStoreOrderDeliveryUpdates(StoreInterface $store)
+    {
+        if (!$this->orderGeneralConfig->shouldSyncDeliveredOrders($store)) {
+            return;
+        }
+
+        $deliveredCollection = $this->orderCollectionFactory->create();
+        $deliveredCollection->addStoreIdFilter($store->getId());
+
+        $deliveredCollection->addNotifiableDeliveryFilter(
+            $this->orderGeneralConfig->getOrderDeliveredStatuses($store),
+            $this->orderGeneralConfig->getDeliverySyncingMaximumDelay($store)
+        );
+
+        $deliveredCollection->setCurPage(1);
+        $deliveredCollection->setPageSize($this->notificationSliceSize);
+
+        $sliceCount = 0;
+
+        do {
+            $this->loadOrderCollectionNextSliceWithoutDuplicates($deliveredCollection);
+
+            $hasNotifiedOrders = $deliveredCollection->count() > 0;
+
+            foreach ($deliveredCollection as $order) {
+                $this->notifyStoreOrderDelivery($order, $store);
+            }
+        } while ($hasNotifiedOrders && (++$sliceCount < $this->maxNotificationIterations));
+    }
+
+    /**
      * @param StoreInterface $store
      * @throws \Exception
      */
@@ -653,6 +904,8 @@ class Manager
         $this->notifyStoreOrderImportUpdates($store);
         $this->notifyStoreOrderCancellationUpdates($store);
         $this->notifyStoreOrderShipmentUpdates($store);
+        $this->notifyStoreOrderDeliveryUpdates($store);
+        $this->notifyStoreOrderInvoicePdfUpdates($store);
     }
 
     /**
@@ -705,4 +958,3 @@ class Manager
         $this->logOrderMessage($order, LogInterface::TYPE_ERROR, $message, $details);
     }
 }
-

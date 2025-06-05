@@ -11,6 +11,8 @@ interface TicketInterface
     const ACTION_ACKNOWLEDGE_FAILURE = 'acknowledge_failure';
     const ACTION_CANCEL = 'cancel';
     const ACTION_SHIP = 'ship';
+    const ACTION_DELIVER = 'deliver';
+    const ACTION_UPLOAD_INVOICE_PDF = 'upload_invoice_pdf';
 
     const STATUS_PENDING = 0;
     const STATUS_HANDLED = 1;
@@ -59,6 +61,11 @@ interface TicketInterface
     public function getOrderId();
 
     /**
+     * @return int|null
+     */
+    public function getSalesEntityId();
+
+    /**
      * @return string
      */
     public function getAction();
@@ -90,6 +97,12 @@ interface TicketInterface
      * @return TicketInterface
      */
     public function setOrderId($orderId);
+
+    /**
+     * @param int|null $entityId
+     * @return TicketInterface
+     */
+    public function setSalesEntityId($entityId);
 
     /**
      * @param string $action
