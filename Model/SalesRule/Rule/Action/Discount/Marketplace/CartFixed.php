@@ -48,11 +48,17 @@ class CartFixed extends BaseCartFixed
      */
     public function calculate($rule, $item, $qty)
     {
+        $store = $this->salesOrderImporter->getImportRunningForStore();
         $order = $this->salesOrderImporter->getCurrentlyImportedMarketplaceOrder();
 
         if ((null !== $order) && ($amount = $order->getCartDiscountAmount())) {
             $rule = clone $rule;
-            $rule->setDiscountAmount($amount);
+
+            $rule->setDiscountAmount(
+                $this->priceCurrency
+                    ->getCurrency(null, $order->getCurrencyCode())
+                    ->convert($amount, $store->getBaseStore()->getBaseCurrency())
+            );
 
             return parent::calculate($rule, $item, $qty);
         }
