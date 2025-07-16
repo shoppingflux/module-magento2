@@ -357,6 +357,22 @@ class Dictionary extends AbstractDb
     /**
      * @return string
      */
+    public function getSalesOrderGridTableCode()
+    {
+        return 'sales_order_grid';
+    }
+
+    /**
+     * @return string
+     */
+    public function getSalesOrderGridTableName()
+    {
+        return $this->getTable($this->getSalesOrderGridTableCode());
+    }
+
+    /**
+     * @return string
+     */
     public function getSalesInvoiceTableCode()
     {
         return 'sales_invoice';

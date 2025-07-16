@@ -274,5 +274,11 @@
             "sfm_base_bundle_adjustment": true,
             "sfm_base_bundle_adjustment_incl_tax": true
         }
+    },
+    "sales_order_grid": {
+        "column": {
+            "sfm_marketplace_order_number": true,
+            "sfm_marketplace_name": true
+        }
     }
 }

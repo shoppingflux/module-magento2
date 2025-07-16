@@ -299,4 +299,9 @@
         <column xsi:type="decimal" name="sfm_base_bundle_adjustment" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment"/>
         <column xsi:type="decimal" name="sfm_base_bundle_adjustment_incl_tax" scale="4" precision="12" unsigned="false" nullable="true" comment="Base Bundle Adjustment Incl Tax"/>
     </table>
+
+    <table name="sales_order_grid">
+        <column xsi:type="varchar" name="sfm_marketplace_order_number" nullable="true" length="255" comment="Shopping Feed Marketplace Order Number"/>
+        <column xsi:type="varchar" name="sfm_marketplace_name" nullable="true" length="255" comment="Shopping Feed Marketplace Name"/>
+    </table>
 </schema>
