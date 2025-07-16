@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.13.0] - 2025-07-16
+### Changed
+- Optimize performance of sales order listing
+
+### Fixed
+- Fix compatibility with Magento 2.4.8
+- Fix handling of discounts when the base and order currencies differ
+- Fix recurring upgrade of account configurations
+
 ## [1.12.0] - 2025-06-05
 ### Added
 - Add new "Update Token" account action
