@@ -561,6 +561,22 @@
         </arguments>
     </type>
 
+    <virtualType name="Magento\Sales\Model\ResourceModel\Order\Grid">
+        <arguments>
+            <argument name="joins" xsi:type="array">
+                <item name="sfm_marketplace_order" xsi:type="array">
+                    <item name="table" xsi:type="string">sfm_marketplace_order</item>
+                    <item name="origin_column" xsi:type="string">entity_id</item>
+                    <item name="target_column" xsi:type="string">sales_order_id</item>
+                </item>
+            </argument>
+            <argument name="columns">
+                <item name="sfm_marketplace_order_number" xsi:type="string">sfm_marketplace_order.marketplace_order_number</item>
+                <item name="sfm_marketplace_name" xsi:type="string">sfm_marketplace_order.marketplace_name</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
     <type name="ShoppingFeed\Manager\Model\StringHelper" shared="true">
         <arguments>
             <argument name="localeResolver" xsi:type="object">Magento\Framework\Locale\ResolverInterface\Proxy</argument>

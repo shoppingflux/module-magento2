@@ -8,23 +8,9 @@ use Magento\Framework\DB\Select as DbSelect;
 use Magento\Framework\View\Element\UiComponent\DataProvider\FulltextFilter;
 use Magento\Sales\Model\ResourceModel\Order\Grid\Collection as OrderGridCollection;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
-use ShoppingFeed\Manager\Plugin\Sales\Order\Grid\CollectionPlugin as OrderGridCollectionPlugin;
 
 class FulltextFilterPlugin
 {
-    /**
-     * @var OrderGridCollectionPlugin
-     */
-    private $orderGridCollectionPlugin;
-
-    /**
-     * @param OrderGridCollectionPlugin $orderGridCollectionPlugin
-     */
-    public function __construct(OrderGridCollectionPlugin $orderGridCollectionPlugin)
-    {
-        $this->orderGridCollectionPlugin = $orderGridCollectionPlugin;
-    }
-
     /**
      * @return string[]
      */
@@ -48,16 +34,8 @@ class FulltextFilterPlugin
     {
         $result = $proceed($collection, $filter);
 
-        if (
-            ($collection instanceof OrderGridCollection)
-            && $this->orderGridCollectionPlugin->isAppliedToOrderGridCollection($collection)
-        ) {
-            /**
-             * We can not use @see FulltextFilter::getFulltextIndexColumns() here to add our own filters, because
-             * ultimately fulltext-indexed fields must be located on the same table, which we do not want to alter.
-             * Instead, we search for a single MATCH AGAINST construct, which if it exists must correspond to the
-             * keyword filter, and adapt the corresponding condition to our needs.
-             */
+        if ($collection instanceof OrderGridCollection) {
+            // We search for a single MATCH AGAINST construct. If it exists, it must correspond to the keyword filter.
             $select = $collection->getSelect();
             $whereClauses = $select->getPart(DbSelect::WHERE);
             $fulltextClauseIndex = null;
@@ -78,17 +56,16 @@ class FulltextFilterPlugin
             }
 
             if (null !== $fulltextClauseIndex) {
-                $filterableFieldNames = array_intersect(
-                    $this->getFilterableMarketplaceOrderFieldNames(),
-                    $this->orderGridCollectionPlugin->getJoinableMarketplaceOrderFieldNames()
-                );
+                $filterableFieldNames = [
+                    'sfm_marketplace_name',
+                    'sfm_marketplace_order_number',
+                ];
 
                 $filterFields = [];
                 $filterConditions = [];
 
                 foreach ($filterableFieldNames as $fieldName) {
-                    $fieldAlias = $this->orderGridCollectionPlugin->getJoinedFieldAlias($fieldName);
-                    $filterFields[$fieldName] = $fieldAlias;
+                    $filterFields[$fieldName] = $fieldName;
                     $filterConditions[$fieldName] = [ 'like' => '%' . $filter->getValue() . '%' ];
                 }
 
