@@ -145,10 +145,10 @@ class Manager
         SalesShipmentTrackCollector $salesShipmentTrackCollector,
         $notificationSliceSize = 50,
         $maxNotificationIterations = 20,
-        OrderTicketCollectionFactory $orderTicketCollectionFactory = null,
-        SalesInvoiceCollectionFactory $salesInvoiceCollectionFactory = null,
-        InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null,
-        Filesystem $fileSystem = null
+        ?OrderTicketCollectionFactory $orderTicketCollectionFactory = null,
+        ?SalesInvoiceCollectionFactory $salesInvoiceCollectionFactory = null,
+        ?InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null,
+        ?Filesystem $fileSystem = null
     ) {
         $this->apiSessionManager = $apiSessionManager;
         $this->orderGeneralConfig = $orderGeneralConfig;

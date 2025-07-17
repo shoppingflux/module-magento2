@@ -328,7 +328,7 @@ interface OrderInterface
      * @param \DateTimeInterface|null $latestShipDate
      * @return OrderInterface
      */
-    public function setLatestShipDate(\DateTimeInterface $latestShipDate = null);
+    public function setLatestShipDate(?\DateTimeInterface $latestShipDate = null);
 
     /**
      * @param DataObject $additionalFields

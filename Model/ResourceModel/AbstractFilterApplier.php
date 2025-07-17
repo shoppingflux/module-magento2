@@ -20,7 +20,7 @@ abstract class AbstractFilterApplier extends AbstractDb
      * @param TimeHelper $timeHelper
      * @param string|null $connectionName
      */
-    public function __construct(DbContext $context, TimeHelper $timeHelper, string $connectionName = null)
+    public function __construct(DbContext $context, TimeHelper $timeHelper, ?string $connectionName = null)
     {
         $this->timeHelper = $timeHelper;
         parent::__construct($context, $connectionName);

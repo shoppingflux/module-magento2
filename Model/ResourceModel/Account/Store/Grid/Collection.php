@@ -35,7 +35,7 @@ class Collection extends StoreCollection implements SearchResultInterface
         return $this;
     }
 
-    public function setItems(array $items = null)
+    public function setItems(?array $items = null)
     {
         return $this;
     }

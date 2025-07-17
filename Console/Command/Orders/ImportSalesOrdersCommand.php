@@ -43,7 +43,7 @@ class ImportSalesOrdersCommand extends AbstractCommand
         MarketplaceOrderImporter $marketplaceOrderImporter,
         SalesOrderImporterInterface $salesOrderImporter,
         SalesOrderSyncerInterface $salesOrderSyncer,
-        CacheInterface $cache = null
+        ?CacheInterface $cache = null
     ) {
         $this->cache = $cache ?? ObjectManager::getInstance()->get(CacheInterface::class);
 

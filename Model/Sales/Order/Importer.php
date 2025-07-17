@@ -322,8 +322,8 @@ class Importer implements ImporterInterface
         MarketplaceOrderResourceFactory $marketplaceOrderResourceFactory,
         MarketplaceAddressCollectionFactory $marketplaceAddressCollectionFactory,
         MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory,
-        SalesShipmentFactory $salesShipmentFactory = null,
-        SalesRuleApplier $salesRuleApplier = null
+        ?SalesShipmentFactory $salesShipmentFactory = null,
+        ?SalesRuleApplier $salesRuleApplier = null
     ) {
         $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;

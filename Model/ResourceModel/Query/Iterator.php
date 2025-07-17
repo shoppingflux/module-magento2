@@ -57,8 +57,8 @@ class Iterator implements \Iterator
     public function __construct(
         $query,
         callable $itemCallback,
-        callable $rewindCallback = null,
-        AdapterInterface $connection = null
+        ?callable $rewindCallback = null,
+        ?AdapterInterface $connection = null
     ) {
         $this->query = $query;
         $this->itemCallback = $itemCallback;

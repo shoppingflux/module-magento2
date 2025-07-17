@@ -37,7 +37,7 @@ class AccountRepository implements AccountRepositoryInterface
     public function __construct(
         AccountResourceFactory $accountResourceFactory,
         AccountFactory $accountFactory,
-        AccountCollectionFactory $accountCollectionFactory = null
+        ?AccountCollectionFactory $accountCollectionFactory = null
     ) {
         $this->accountResource = $accountResourceFactory->create();
         $this->accountFactory = $accountFactory;

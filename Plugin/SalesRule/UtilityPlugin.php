@@ -25,8 +25,8 @@ class UtilityPlugin
      * @param OrderImporterInterface|null $salesOrderImporter
      */
     public function __construct(
-        ValidatorPlugin $validatorPlugin = null,
-        OrderImporterInterface $salesOrderImporter = null
+        ?ValidatorPlugin $validatorPlugin = null,
+        ?OrderImporterInterface $salesOrderImporter = null
     ) {
         $this->validatorPlugin = $validatorPlugin
             ?? ObjectManager::getInstance()->get(ValidatorPlugin::class);

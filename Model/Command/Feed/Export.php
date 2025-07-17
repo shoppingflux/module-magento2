@@ -49,7 +49,7 @@ class Export extends AbstractCommand
         FeedSectionFilterFactory $feedSectionFilterFactory,
         FeedRefresher $feedRefresher,
         FeedExporter $feedExporter,
-        StoreRepositoryInterface $storeRepository = null
+        ?StoreRepositoryInterface $storeRepository = null
     ) {
         $this->feedRefresher = $feedRefresher;
         $this->feedExporter = $feedExporter;

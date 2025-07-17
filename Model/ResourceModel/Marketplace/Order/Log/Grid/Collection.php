@@ -62,7 +62,7 @@ class Collection extends LogCollection implements SearchResultInterface
         return parent::addFieldToFilter($field, $condition);
     }
 
-    public function setItems(array $items = null)
+    public function setItems(?array $items = null)
     {
         return $this;
     }

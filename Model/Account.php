@@ -31,9 +31,9 @@ class Account extends AbstractModel implements AccountInterface
     public function __construct(
         Context $context,
         Registry $registry,
-        AbstractResource $resource = null,
-        AbstractCollection $resourceCollection = null,
-        EncryptorInterface $encryptor = null,
+        ?AbstractResource $resource = null,
+        ?AbstractCollection $resourceCollection = null,
+        ?EncryptorInterface $encryptor = null,
         array $data = []
     ) {
         $this->encryptor = $encryptor ?? ObjectManager::getInstance()->get(EncryptorInterface::class);

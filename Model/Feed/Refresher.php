@@ -356,7 +356,7 @@ class Refresher
      */
     public function refreshProducts(
         StoreInterface $store,
-        FeedProductFilter $exportStateRefreshProductFilter = null,
+        ?FeedProductFilter $exportStateRefreshProductFilter = null,
         array $refreshedSectionTypeProductFilters = [],
         array $refreshedSectionTypeSectionFilters = []
     ) {

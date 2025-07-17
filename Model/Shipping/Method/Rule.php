@@ -64,8 +64,8 @@ class Rule extends AbstractModel implements RuleInterface
         TimezoneInterface $localeDate,
         CombinedConditionFactory $combinedConditionFactory,
         ApplierPoolInterface $applierPool,
-        AbstractResource $resource = null,
-        AbstractCollection $resourceCollection = null,
+        ?AbstractResource $resource = null,
+        ?AbstractCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->dataObjectFactory = $dataObjectFactory;

@@ -43,7 +43,7 @@ class Product extends AbstractDb
         TableDictionary $tableDictionary,
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
-        string $connectionName = null,
+        ?string $connectionName = null,
         $exportStateUpdateBatchSize = self::EXPORT_STATE_UPDATE_BATCH_SIZE
     ) {
         $this->exportStateUpdateBatchSize = max(1, (int) $exportStateUpdateBatchSize);

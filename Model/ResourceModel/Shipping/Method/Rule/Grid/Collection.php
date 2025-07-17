@@ -21,7 +21,7 @@ class Collection extends BaseCollection implements SearchResultInterface
         $this->_init(UiDocument::class, RuleResource::class);
     }
 
-    public function setItems(array $items = null)
+    public function setItems(?array $items = null)
     {
         return $this;
     }

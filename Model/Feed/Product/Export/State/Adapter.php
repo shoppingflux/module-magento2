@@ -39,7 +39,7 @@ class Adapter implements AdapterInterface
      * @param Config $config
      * @param QtyResolverInterface|null $qtyResolver
      */
-    public function __construct(TimeHelper $timeHelper, Config $config, QtyResolverInterface $qtyResolver = null)
+    public function __construct(TimeHelper $timeHelper, Config $config, ?QtyResolverInterface $qtyResolver = null)
     {
         $this->timeHelper = $timeHelper;
         $this->config = $config;

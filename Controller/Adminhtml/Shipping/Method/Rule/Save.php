@@ -64,7 +64,7 @@ class Save extends RuleAction
         DataObjectFactory $dataObjectFactory,
         DateFilterFactory $dateFilterFactory,
         ApplierPoolInterface $applierPool,
-        InputFilterFactory $inputFilterFactory = null
+        ?InputFilterFactory $inputFilterFactory = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
         $this->dateFilterFactory = $dateFilterFactory;

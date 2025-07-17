@@ -37,8 +37,8 @@ class Collection extends AbstractCollection
         FetchStrategyInterface $fetchStrategy,
         EventManagerInterface $eventManager,
         TimezoneInterface $localeDate,
-        DbAdapterInterface $connection = null,
-        AbstractResource $resource = null
+        ?DbAdapterInterface $connection = null,
+        ?AbstractResource $resource = null
     ) {
         $this->localeDate = $localeDate;
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);

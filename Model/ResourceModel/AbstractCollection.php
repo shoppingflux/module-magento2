@@ -33,8 +33,8 @@ class AbstractCollection extends BaseCollection
         FetchStrategyInterface $fetchStrategy,
         EventManagerInterface $eventManager,
         TableDictionary $tableDictionary,
-        AdapterInterface $connection = null,
-        AbstractResource $resource = null
+        ?AdapterInterface $connection = null,
+        ?AbstractResource $resource = null
     ) {
         $this->tableDictionary = $tableDictionary;
         parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);

@@ -52,8 +52,8 @@ class Order extends AbstractModel implements OrderInterface
         Registry $registry,
         DataObjectFactory $dataObjectFactory,
         AddressCollectionFactory $addressCollectionFactory,
-        OrderResource $resource = null,
-        OrderCollection $resourceCollection = null,
+        ?OrderResource $resource = null,
+        ?OrderCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
@@ -345,7 +345,7 @@ class Order extends AbstractModel implements OrderInterface
         return $this->setData(self::SHIPMENT_CARRIER, trim((string) $shipmentCarrier));
     }
 
-    public function setLatestShipDate(\DateTimeInterface $latestShipDate = null)
+    public function setLatestShipDate(?\DateTimeInterface $latestShipDate = null)
     {
         return $this->setData(
             self::LATEST_SHIP_DATE,

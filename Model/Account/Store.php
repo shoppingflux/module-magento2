@@ -79,8 +79,8 @@ class Store extends AbstractModel implements StoreInterface
         DataObjectFactory $dataObjectFactory,
         AccountRepositoryInterface $accountRepository,
         StoreResourceFactory $storeResourceFactory,
-        StoreResource $resource = null,
-        StoreCollection $resourceCollection = null,
+        ?StoreResource $resource = null,
+        ?StoreCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->scopeConfig = $scopeConfig;

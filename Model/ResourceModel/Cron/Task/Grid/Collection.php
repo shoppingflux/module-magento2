@@ -21,7 +21,7 @@ class Collection extends TaskCollection implements SearchResultInterface
         $this->_init(UiDocument::class, TaskResource::class);
     }
 
-    public function setItems(array $items = null)
+    public function setItems(?array $items = null)
     {
         return $this;
     }

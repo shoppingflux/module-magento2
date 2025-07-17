@@ -53,9 +53,9 @@ class OnQuoteSubmitSuccessObserver implements ObserverInterface
     public function __construct(
         RealTimeFeedUpdater $realTimeFeedUpdater,
         OrderImporterInterface $orderImporter,
-        OrderConfigInterface $orderGeneralConfig = null,
-        OrderEmailSender $orderEmailSender = null,
-        InvoiceEmailSender $invoiceEmailSender = null
+        ?OrderConfigInterface $orderGeneralConfig = null,
+        ?OrderEmailSender $orderEmailSender = null,
+        ?InvoiceEmailSender $invoiceEmailSender = null
     ) {
         $this->realTimeFeedUpdater = $realTimeFeedUpdater;
         $this->orderImporter = $orderImporter;
