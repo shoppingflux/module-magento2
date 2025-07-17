@@ -1,8 +1,12 @@
 # Changelog
 
+## [1.13.1] - 2025-07-17
+### Fixed
+- Fix compatibility with PHP 8.4
+
 ## [1.13.0] - 2025-07-16
 ### Changed
-- Optimize performance of sales order listing
+- Optimize performance of the sales order listing
 
 ### Fixed
 - Fix compatibility with Magento 2.4.8
