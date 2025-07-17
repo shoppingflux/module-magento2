@@ -38,8 +38,8 @@ class Item extends AbstractModel implements ItemInterface
         Context $context,
         Registry $registry,
         DataObjectFactory $dataObjectFactory,
-        ItemResource $resource = null,
-        ItemCollection $resourceCollection = null,
+        ?ItemResource $resource = null,
+        ?ItemCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->dataObjectFactory = $dataObjectFactory;

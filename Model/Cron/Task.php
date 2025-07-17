@@ -41,8 +41,8 @@ class Task extends AbstractModel implements TaskInterface
         Context $context,
         Registry $registry,
         DataObjectFactory $dataObjectFactory,
-        AbstractResource $resource = null,
-        AbstractCollection $resourceCollection = null,
+        ?AbstractResource $resource = null,
+        ?AbstractCollection $resourceCollection = null,
         array $data = []
     ) {
         $this->dataObjectFactory = $dataObjectFactory;

@@ -214,8 +214,8 @@ class Importer
         CustomerAddressFactory $customerAddressFactory,
         CustomerAddressResourceFactory $customerAddresssResourceFactory,
         OrderConfigInterface $orderGeneralConfig,
-        EmailAddressValidator $emailAddressValidator = null,
-        BaseStoreManagerInterface $baseStoreManager = null,
+        ?EmailAddressValidator $emailAddressValidator = null,
+        ?BaseStoreManagerInterface $baseStoreManager = null,
         $spainRegionPrefixToCodeMapping = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;

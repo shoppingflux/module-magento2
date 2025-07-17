@@ -128,7 +128,7 @@ class Exporter
         ExportStateConfigInterface $exportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
         $feedDirectory,
-        ModuleManager $moduleManager = null
+        ?ModuleManager $moduleManager = null
     ) {
         $this->fileSystem = $fileSystem;
         $this->resource = $resource;

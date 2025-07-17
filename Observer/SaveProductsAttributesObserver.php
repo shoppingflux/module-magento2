@@ -48,7 +48,7 @@ class SaveProductsAttributesObserver implements ObserverInterface
         RequestInterface $request,
         FeedProductResourceFactory $feedProductResourceFactory,
         AttributeActionHelper $attributeActionHelper,
-        MessageManagerInterface $messageManager = null
+        ?MessageManagerInterface $messageManager = null
     ) {
         $this->request = $request;
         $this->feedProductResourceFactory = $feedProductResourceFactory;

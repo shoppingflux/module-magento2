@@ -387,7 +387,7 @@ class Importer
         $type,
         array $apiAddressData,
         StoreInterface $store,
-        AddressInterface $address = null
+        ?AddressInterface $address = null
     ) {
         $firstName = trim($apiAddressData['firstName'] ?? '');
         $lastName = trim($apiAddressData['lastName'] ?? '');
@@ -438,7 +438,7 @@ class Importer
         ApiItem $apiItem,
         array $referenceAliases,
         StoreInterface $store,
-        MarketplaceItemInterface $item = null
+        ?MarketplaceItemInterface $item = null
     ) {
         $item = (null !== $item) ? $item : $this->itemFactory->create();
         $reference = $apiItem->getReference();

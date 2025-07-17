@@ -52,7 +52,7 @@ class Section extends AbstractDb
         ProductFilterApplier $productFilterApplier,
         SectionFilterApplier $sectionFilterApplier,
         ProductSectionFactory $productSectionFactory,
-        string $connectionName = null,
+        ?string $connectionName = null,
         $sectionDataUpdateBatchSize = self::SECTION_DATA_UPDATE_BATCH_SIZE
     ) {
         $this->productSectionFactory = $productSectionFactory;

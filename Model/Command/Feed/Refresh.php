@@ -41,7 +41,7 @@ class Refresh extends AbstractCommand
         FeedProductFilterFactory $feedProductFilterFactory,
         FeedSectionFilterFactory $feedSectionFilterFactory,
         FeedRefresher $feedRefresher,
-        StoreRepositoryInterface $storeRepository = null
+        ?StoreRepositoryInterface $storeRepository = null
     ) {
         $this->feedRefresher = $feedRefresher;
         $this->storeRepository = $storeRepository ?: ObjectManager::getInstance()->get(StoreRepositoryInterface::class);

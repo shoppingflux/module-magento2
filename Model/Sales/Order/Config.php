@@ -154,8 +154,8 @@ class Config extends AbstractConfig implements ConfigInterface
         CustomerGroupSource $customerGroupSource,
         MarketplaceSource $marketplaceSource,
         OrderSyncingActionSource $orderSyncingActionSource,
-        OrderCompleteStatusSource $orderCompleteStatusSource = null,
-        InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null
+        ?OrderCompleteStatusSource $orderCompleteStatusSource = null,
+        ?InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->scopeConfig = $scopeConfig;

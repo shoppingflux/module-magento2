@@ -22,7 +22,7 @@ class Complete extends StatusSource
      * @param OrderConfig $orderConfig
      * @param AppState|null $appState
      */
-    public function __construct(OrderConfig $orderConfig, AppState $appState = null)
+    public function __construct(OrderConfig $orderConfig, ?AppState $appState = null)
     {
         parent::__construct($orderConfig);
         $this->appState = $appState ?? ObjectManager::getInstance()->get(AppState::class);

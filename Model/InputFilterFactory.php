@@ -42,7 +42,7 @@ class InputFilterFactory
      * @return \Magento\Framework\Filter\FilterInput|\Zend_Filter_Input
      * @throws \Exception
      */
-    public function getInputFilter(array $filterRules, array $validatorRules, array $data = null, array $options = null)
+    public function getInputFilter(array $filterRules, array $validatorRules, ?array $data = null, ?array $options = null)
     {
         // Work around a new EQP restriction.
         // \Magento\Framework\Filter\FilterInput was not yet available on all versions from the 2.3.x branch.

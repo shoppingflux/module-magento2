@@ -48,9 +48,9 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
      */
     public function __construct(
         QuoteFeesTotal $quoteFeesTotal,
-        Registry $coreRegistry = null,
-        OrderImporterInterface $orderImporter = null,
-        OrderConfigInterface $orderGeneralConfig = null
+        ?Registry $coreRegistry = null,
+        ?OrderImporterInterface $orderImporter = null,
+        ?OrderConfigInterface $orderGeneralConfig = null
     ) {
         $this->quoteFeesTotal = $quoteFeesTotal;
 

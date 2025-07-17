@@ -56,8 +56,8 @@ class Recurring implements InstallSchemaInterface
         StoreConfigManager $storeConfigManager,
         StoreRepositoryInterface $storeRepository,
         StoreCollectionFactory $storeCollectionFactory,
-        ModuleDataSetupInterface $moduleDataSetup = null,
-        TableDictionary $tableDictionary = null,
+        ?ModuleDataSetupInterface $moduleDataSetup = null,
+        ?TableDictionary $tableDictionary = null,
         $salesOrderGridBatchSize = 1000
     ) {
         $this->storeConfigManager = $storeConfigManager;

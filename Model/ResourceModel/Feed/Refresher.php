@@ -69,7 +69,7 @@ class Refresher extends AbstractDb
         SectionFilterApplier $sectionFilterApplier,
         FeedProductFactory $feedProductFactory,
         RefreshableProductFactory $refreshableProductFactory,
-        string $connectionName = null,
+        ?string $connectionName = null,
         $advisedRefreshPrioritizationDelay = self::DEFAULT_ADVISED_REFRESH_PRIORITIZATION_DELAY
     ) {
         $this->storeCollectionFactory = $storeCollectionFactory;
@@ -310,7 +310,7 @@ class Refresher extends AbstractDb
      */
     public function getRefreshableProducts(
         $storeId,
-        ProductFilter $exportStateRefreshProductFilter = null,
+        ?ProductFilter $exportStateRefreshProductFilter = null,
         array $sortedRefreshedSectionTypeIds = [],
         array $refreshedSectionTypeProductFilters = [],
         array $refreshedSectionTypeSectionFilters = [],
