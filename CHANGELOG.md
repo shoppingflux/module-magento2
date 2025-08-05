@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0] - 2025-08-05
+### Changed
+- Improve the use of attributes for exporting product categories
+
+### Fixed
+- Fix M2 setup when the module is already installed
+
 ## [1.13.1] - 2025-07-17
 ### Fixed
 - Fix compatibility with PHP 8.4
