@@ -67,19 +67,47 @@ class Categories extends AbstractAdapter implements CategoriesInterface
     {
         $data = [];
         $config = $this->getConfig();
+        $catalogProduct = $product->getCatalogProduct();
 
         if (
             $config->shouldUseAttributeValue($store)
             && ($categoryAttribute = $config->getCategoryAttribute($store))
         ) {
+            if ($categoryAttribute->usesSource()) {
+                $productOptionIds = array_filter(
+                    array_map(
+                        'intval',
+                        explode(',', (string) $catalogProduct->getData($categoryAttribute->getAttributeCode()))
+                    )
+                );
+
+                if (!empty($productOptionIds)) {
+                    $selectionMode = $config->getCategorySelectionMode($store);
+                    $selectedOptionIds = $config->getCategoryAttributeSelectionIds($store);
+
+                    if ($selectionMode === CategorySelectorInterface::SELECTION_MODE_EXCLUDE) {
+                        $productOptionIds = array_diff($productOptionIds, $selectedOptionIds);
+                    } else {
+                        $productOptionIds = array_intersect($productOptionIds, $selectedOptionIds);
+                    }
+
+                    $catalogProduct = clone $catalogProduct;
+
+                    $catalogProduct->setData(
+                        $categoryAttribute->getAttributeCode(),
+                        implode(',', $productOptionIds)
+                    );
+                }
+            }
+
             $data[self::KEY_CATEGORY_NAME] = $this->getCatalogProductAttributeValue(
                 $store,
-                $product->getCatalogProduct(),
+                $catalogProduct,
                 $categoryAttribute
             );
         } else {
             $categoryPath = $this->productCategorySelector->getCatalogProductCategoryPath(
-                $product->getCatalogProduct(),
+                $catalogProduct,
                 $store,
                 $product->getFeedProduct()->getSelectedCategoryId(),
                 $config->getCategorySelectionIds($store),

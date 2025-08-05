@@ -85,7 +85,7 @@ class MultiSelect extends AbstractField
                         [
                             'label' => $this->getLabel(),
                             'componentType' => UiContainer::NAME,
-                            'component' => 'Magento_Ui/js/form/components/group',
+                            'component' => 'ShoppingFeed_Manager/js/form/components/group',
                             'template' => 'ShoppingFeed_Manager/form/group/group',
                             'dataScope' => '',
                             'breakLine' => false,
