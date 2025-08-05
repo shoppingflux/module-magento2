@@ -2,12 +2,15 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section\Config;
 
+use Magento\Eav\Model\Entity\Attribute\Source\SourceInterface as EavAttributeSourceInterface;
 use Magento\Framework\Registry;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Ui\Component\Form\Element\DataType\Number as UiNumber;
 use Magento\Ui\Component\Form\Element\DataType\Text as UiText;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Config\Field\Category\MultiSelect as CategoryMultiSelect;
 use ShoppingFeed\Manager\Model\Config\Field\Checkbox;
+use ShoppingFeed\Manager\Model\Config\Field\MultiSelect;
 use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
@@ -27,6 +30,7 @@ class Categories extends AbstractConfig implements CategoriesInterface
     const KEY_CATEGORY_ATTRIBUTE = 'category_attribute';
     const KEY_CATEGORY_NAME_TYPE = 'category_name_type';
     const KEY_CATEGORY_SELECTION_IDS = 'category_selection_ids';
+    const KEY_CATEGORY_ATTRIBUTE_SELECTION_IDS = 'category_attribute_selection_ids';
     const KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION = 'include_sub_categories_in_selection';
     const KEY_CATEGORY_SELECTION_MODE = 'category_selection_mode';
     const KEY_MAXIMUM_CATEGORY_LEVEL = 'maximum_category_level';
@@ -144,9 +148,19 @@ class Categories extends AbstractConfig implements CategoriesInterface
                         ),
                         'checkedDependentFieldNames' => [
                             self::KEY_CATEGORY_ATTRIBUTE,
+                            self::KEY_CATEGORY_ATTRIBUTE_SELECTION_IDS,
                         ],
                         'uncheckedDependentFieldNames' => [
                             self::KEY_CATEGORY_NAME_TYPE,
+                            self::KEY_CATEGORY_SELECTION_IDS,
+                            self::KEY_INCLUDE_SUB_CATEGORIES_IN_SELECTION,
+                            self::KEY_MAXIMUM_CATEGORY_LEVEL,
+                            self::KEY_LEVEL_WEIGHT_MULTIPLIER,
+                            self::KEY_USE_PARENT_CATEGORIES,
+                            self::KEY_INCLUDABLE_PARENT_COUNT,
+                            self::KEY_MINIMUM_PARENT_LEVEL,
+                            self::KEY_PARENT_WEIGHT_MULTIPLIER,
+                            self::KEY_TIE_BREAKING_SELECTION,
                         ],
                         'sortOrder' => 10,
                     ]
@@ -344,18 +358,46 @@ class Categories extends AbstractConfig implements CategoriesInterface
      */
     protected function getStoreFields(StoreInterface $store)
     {
+        $selectionFields = [
+            $this->fieldFactory->create(
+                CategoryMultiSelect::TYPE_CODE,
+                [
+                    'name' => self::KEY_CATEGORY_SELECTION_IDS,
+                    'categoryTree' => $this->categorySelector->getStoreCategoryTree($store),
+                    'label' => __('Category Selection'),
+                    'sortOrder' => 40,
+                ]
+            ),
+        ];
+
+        if (
+            ($categoryAttribute = $this->getCategoryAttribute($store))
+            && $categoryAttribute->usesSource()
+            && ($categoryAttributeSource = $categoryAttribute->getSource())
+            && ($categoryAttributeSource instanceof EavAttributeSourceInterface)
+        ) {
+            $categoryAttributeOptions = $categoryAttributeSource->getAllOptions(false);
+
+            $selectionFields[] = $this->fieldFactory->create(
+                MultiSelect::TYPE_CODE,
+                [
+                    'name' => self::KEY_CATEGORY_ATTRIBUTE_SELECTION_IDS,
+                    'valueHandler' => $this->valueHandlerFactory->create(
+                        OptionHandler::TYPE_CODE,
+                        [
+                            'dataType' => UiNumber::NAME,
+                            'optionArray' => $categoryAttributeOptions,
+                        ]
+                    ),
+                    'label' => __('Category Selection'),
+                    'notice' => __('After selecting a new attribute, save your changes to refresh the options.'),
+                    'sortOrder' => 40,
+                ]
+            );
+        }
+
         return array_merge(
-            [
-                $this->fieldFactory->create(
-                    CategoryMultiSelect::TYPE_CODE,
-                    [
-                        'name' => self::KEY_CATEGORY_SELECTION_IDS,
-                        'categoryTree' => $this->categorySelector->getStoreCategoryTree($store),
-                        'label' => __('Category Selection'),
-                        'sortOrder' => 40,
-                    ]
-                ),
-            ],
+            $selectionFields,
             parent::getStoreFields($store)
         );
     }
@@ -383,6 +425,11 @@ class Categories extends AbstractConfig implements CategoriesInterface
     public function getCategorySelectionIds(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CATEGORY_SELECTION_IDS) ?? [];
+    }
+
+    public function getCategoryAttributeSelectionIds(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_CATEGORY_ATTRIBUTE_SELECTION_IDS) ?? [];
     }
 
     public function shouldIncludeSubCategoriesInSelection(StoreInterface $store)

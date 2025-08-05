@@ -37,6 +37,12 @@ interface CategoriesInterface extends ConfigInterface
 
     /**
      * @param StoreInterface $store
+     * @return int[]
+     */
+    public function getCategoryAttributeSelectionIds(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return bool
      */
     public function shouldIncludeSubCategoriesInSelection(StoreInterface $store);
