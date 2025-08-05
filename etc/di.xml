@@ -420,6 +420,12 @@
         </arguments>
     </type>
 
+    <type name="ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\Processor\MagentoSales">
+        <arguments>
+            <argument name="pdfGenerator" xsi:type="object">Magento\Sales\Model\Order\Pdf\Invoice\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\Sales\Block\Order\Totals">
         <plugin name="sfm_order_totals_block_plugin" type="ShoppingFeed\Manager\Plugin\Sales\Order\TotalsBlockPlugin" sortOrder="1000000000"/>
     </type>
