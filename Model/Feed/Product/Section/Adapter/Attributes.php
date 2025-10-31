@@ -385,11 +385,11 @@ class Attributes extends AbstractAdapter implements AttributesInterface
             $exportedProduct->setBrand($productData[self::KEY_BRAND]);
         }
 
-        if (isset($productData[self::KEY_DESCRIPTION])) {
-            $exportedProduct->setDescription(
-                $productData[self::KEY_DESCRIPTION],
-                $productData[self::KEY_SHORT_DESCRIPTION] ?? ''
-            );
+        $description = (string) ($productData[self::KEY_DESCRIPTION] ?? '');
+        $shortDescription = (string) ($productData[self::KEY_SHORT_DESCRIPTION] ?? '');
+
+        if (('' !== $description) || ('' !== $shortDescription)) {
+            $exportedProduct->setDescription($description, $shortDescription);
         }
 
         if (isset($productData[self::KEY_URL])) {
