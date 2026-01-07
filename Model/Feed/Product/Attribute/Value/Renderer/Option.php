@@ -41,6 +41,8 @@ class Option extends AbstractRenderer
                     $label = (string) $label;
                 } elseif (isset($label['label'])) {
                     $label = (string) $label['label'];
+                } else {
+                    $label = implode(', ', $label);
                 }
             }
 
