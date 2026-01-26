@@ -494,6 +494,7 @@
                     <item name="sync_product_list" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\SyncProductList</item>
                     <item name="force_automatic_refresh" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\ForceAutomaticRefresh</item>
                     <item name="refresh" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\Refresh</item>
+                    <item name="refresh_exported" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\RefreshExported</item>
                     <item name="export" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\Export</item>
                     <item name="export_without_refresh" xsi:type="object">ShoppingFeed\Manager\Model\Command\Feed\ExportWithoutRefresh</item>
                 </item>
