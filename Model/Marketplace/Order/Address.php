@@ -51,6 +51,11 @@ class Address extends AbstractModel implements AddressInterface
         return trim((string) $this->getDataByKey(self::STREET));
     }
 
+    public function getProvince()
+    {
+        return trim((string) $this->getDataByKey(self::PROVINCE));
+    }
+
     public function getPostalCode()
     {
         return trim((string) $this->getDataByKey(self::POSTAL_CODE));
@@ -119,6 +124,13 @@ class Address extends AbstractModel implements AddressInterface
     public function setStreet($street)
     {
         return $this->setData(self::STREET, trim((string) $street));
+    }
+
+    public function setProvince($province)
+    {
+        $province = trim((string) $province);
+
+        return $this->setData(self::PROVINCE, $province ?: null);
     }
 
     public function setPostalCode($postalCode)

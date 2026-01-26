@@ -151,7 +151,8 @@
             "mobile_phone": true,
             "email": true,
             "misc_data": true,
-            "relay_point_id": true
+            "relay_point_id": true,
+            "province": true
         },
         "constraint": {
             "PRIMARY": true,

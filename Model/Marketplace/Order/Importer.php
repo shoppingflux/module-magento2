@@ -415,6 +415,7 @@ class Importer
         $address->setLastName($lastName);
         $address->setCompany($apiAddressData['company'] ?? '');
         $address->setStreet(trim(implode("\n", array_map('trim', $streetLines))));
+        $address->setProvince($apiAddressData['province'] ?? null);
         $address->setPostalCode($apiAddressData['postalCode'] ?? '');
         $address->setCity($apiAddressData['city'] ?? '');
         $address->setCountryCode($apiAddressData['country'] ?? '');

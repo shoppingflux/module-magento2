@@ -167,6 +167,7 @@
         <column xsi:type="varchar" name="last_name" nullable="false" length="255" comment="Last Name"/>
         <column xsi:type="varchar" name="company" nullable="false" length="255" comment="Company"/>
         <column xsi:type="varchar" name="street" nullable="false" length="255" comment="Street"/>
+        <column xsi:type="varchar" name="province" nullable="true" length="255" comment="Province"/>
         <column xsi:type="varchar" name="postal_code" nullable="false" length="255" comment="Postal Code"/>
         <column xsi:type="varchar" name="city" nullable="false" length="255" comment="City"/>
         <column xsi:type="varchar" name="country_code" nullable="false" length="2" comment="Country Code"/>
