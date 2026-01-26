@@ -360,6 +360,20 @@ class Importer
      * @param MarketplaceOrderInterface $order
      * @param MarketplaceAddressInterface $address
      * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getAddressRegionName(
+        MarketplaceOrderInterface $order,
+        MarketplaceAddressInterface $address,
+        StoreInterface $store
+    ) {
+        return $address->getProvince() ?: null;
+    }
+
+    /**
+     * @param MarketplaceOrderInterface $order
+     * @param MarketplaceAddressInterface $address
+     * @param StoreInterface $store
      * @return string
      */
     public function getAddressPostalCode(
@@ -734,6 +748,7 @@ class Importer
                 'lastname' => $this->getAddressLastname($order, $address, $store),
                 'company' => $this->getAddressCompany($order, $address, $store),
                 'street' => $this->getAddressStreet($order, $address, $store),
+                'region' => $this->getAddressRegionName($order, $address, $store),
                 'postcode' => $this->getAddressPostalCode($order, $address, $store),
                 'city' => $this->getAddressCity($order, $address, $store),
                 'country_id' => $countryId,
@@ -809,6 +824,7 @@ class Importer
         $quoteAddress->setLastname($this->getAddressLastname($order, $address, $store));
         $quoteAddress->setCompany($this->getAddressCompany($order, $address, $store));
         $quoteAddress->setStreet($this->getAddressStreet($order, $address, $store));
+        $quoteAddress->setRegion($this->getAddressRegionName($order, $address, $store));
         $quoteAddress->setPostcode($this->getAddressPostalCode($order, $address, $store));
         $quoteAddress->setCity($this->getAddressCity($order, $address, $store));
         $quoteAddress->setEmail($this->getAddressEmail($order, $address, $store));

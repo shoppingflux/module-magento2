@@ -18,6 +18,7 @@ interface AddressInterface
     const LAST_NAME = 'last_name';
     const COMPANY = 'company';
     const STREET = 'street';
+    const PROVINCE = 'province';
     const POSTAL_CODE = 'postal_code';
     const CITY = 'city';
     const COUNTRY_CODE = 'country_code';
@@ -62,6 +63,11 @@ interface AddressInterface
      * @return string
      */
     public function getStreet();
+
+    /**
+     * @return string
+     */
+    public function getProvince();
 
     /**
      * @return string
@@ -138,6 +144,12 @@ interface AddressInterface
      * @return AddressInterface
      */
     public function setStreet($street);
+
+    /**
+     * @param string|null $province
+     * @return AddressInterface
+     */
+    public function setProvince($province);
 
     /**
      * @param string $postalCode
