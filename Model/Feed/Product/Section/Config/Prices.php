@@ -62,6 +62,11 @@ class Prices extends AbstractConfig implements PricesInterface
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
 
+    protected function isProductLoadAlwaysRequired(StoreInterface $store)
+    {
+        return true;
+    }
+
     protected function getBaseFields()
     {
         $customerGroupHandler = $this->valueHandlerFactory->create(

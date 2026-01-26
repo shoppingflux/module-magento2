@@ -78,6 +78,11 @@ class Config extends RefreshableConfig implements ConfigInterface
         return [ self::SUB_SCOPE ];
     }
 
+    protected function isProductLoadAlwaysRequired(StoreInterface $store)
+    {
+        return true;
+    }
+
     protected function getBaseFields()
     {
         $booleanAttributeValueHandler = $this->valueHandlerFactory->create(
