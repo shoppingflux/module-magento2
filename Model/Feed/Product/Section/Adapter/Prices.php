@@ -94,6 +94,11 @@ class Prices extends AbstractAdapter implements PricesInterface
         return Type::CODE;
     }
 
+    public function requiresLoadedProduct(StoreInterface $store)
+    {
+        return true;
+    }
+
     public function prepareLoadableProductCollection(StoreInterface $store, ProductCollection $productCollection)
     {
         $productCollection->addAttributeToSelect(

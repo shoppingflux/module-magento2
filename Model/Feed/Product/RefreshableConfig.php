@@ -22,33 +22,17 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
     const KEY_ENABLE_ADVISED_REFRESH_REQUIREMENT = 'enable_advised_refresh_requirement';
     const KEY_ADVISED_REFRESH_REQUIREMENT_DELAY = 'advised_refresh_requirement_delay';
 
+    protected function isProductLoadAlwaysRequired(StoreInterface $store)
+    {
+        return false;
+    }
+
     protected function getBaseFields()
     {
         // Note: we can not use big sort orders here because each index between 1 and the defined value
         // will actually be tested on the browser side, multiple times.
 
         return [
-            $this->fieldFactory->create(
-                Checkbox::TYPE_CODE,
-                [
-                    'name' => self::KEY_FORCE_PRODUCT_LOAD_FOR_REFRESH,
-                    'label' => __('Force Full Loading of Products for Refresh'),
-                    'sortOrder' => 100010,
-                    'checkedNotice' => $this->getTranslatedMultiLineString(
-                        [
-                            'Products will be loaded individually, with all their data.',
-                            'This method is (much) slower, and should therefore only be used if the other is insufficient.'
-                        ]
-                    ),
-                    'uncheckedNotice' => $this->getTranslatedMultiLineString(
-                        [
-                            'Products will be loaded in batch, with only the necessary data.',
-                            'This method is (much) faster, but in some rare cases insufficient to fetch specific data.'
-                        ]
-                    ),
-                ]
-            ),
-
             $this->fieldFactory->create(
                 Select::TYPE_CODE,
                 [
@@ -73,7 +57,7 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
                             'Indicates whether to refresh the section data on a regular basis:',
                             '- "No": data will only be refreshed when updates are detected.',
                             '- "Advised" / "Required": data will also be refreshed after a specific amount of time.',
-                            '- "Required": takes priority over "Advised" refresh, and is enforced before any generation of the feed.'
+                            '- "Required": takes priority over "Advised" refresh, and is enforced before any generation of the feed.',
                         ]
                     ),
                     'dependencies' => [
@@ -126,6 +110,34 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
             ),
             */
         ];
+    }
+
+    protected function getStoreFields(StoreInterface $store)
+    {
+        return $this->isProductLoadAlwaysRequired($store)
+            ? []
+            : [
+                $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_FORCE_PRODUCT_LOAD_FOR_REFRESH,
+                        'label' => __('Force Full Loading of Products for Refresh'),
+                        'sortOrder' => 100010,
+                        'checkedNotice' => $this->getTranslatedMultiLineString(
+                            [
+                                'Products will be loaded individually, with all their data.',
+                                'This method is slower, and should therefore only be used if the other is insufficient.',
+                            ]
+                        ),
+                        'uncheckedNotice' => $this->getTranslatedMultiLineString(
+                            [
+                                'Products will be loaded in batch, with only the necessary data.',
+                                'This method is faster, but in some cases insufficient to fetch specific data.',
+                            ]
+                        ),
+                    ]
+                ),
+            ];
     }
 
     public function shouldForceProductLoadForRefresh(StoreInterface $store)
