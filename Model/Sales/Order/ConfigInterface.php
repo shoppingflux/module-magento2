@@ -190,9 +190,21 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getNewOrderStatus(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return bool
      */
     public function shouldCreateInvoice(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getProcessingOrderStatus(StoreInterface $store);
 
     /**
      * @param StoreInterface $store
@@ -217,6 +229,12 @@ interface ConfigInterface extends BaseConfig
      * @return bool
      */
     public function shouldCreateShippedShipment(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return string|null
+     */
+    public function getCompleteOrderStatus(StoreInterface $store);
 
     /**
      * @param StoreInterface $store

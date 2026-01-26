@@ -28,6 +28,7 @@ use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address\RateFactory as ShippingAddressRateFactory;
 use Magento\Quote\Model\Quote\Address\RateResult\MethodFactory as ShippingRateMethodFactory;
 use Magento\Sales\Api\Data\OrderInterface as SalesOrderInterface;
+use Magento\Sales\Api\OrderRepositoryInterface as SalesOrderRepositoryInterface;
 use Magento\Sales\Model\Convert\Order as SalesOrderConverter;
 use Magento\Sales\Model\Order as SalesOrder;
 use Magento\Sales\Model\Order\ShipmentFactory as SalesShipmentFactory;
@@ -184,6 +185,11 @@ class Importer implements ImporterInterface
     private $shippingMethodRuleCollection = null;
 
     /**
+     * @var SalesOrderRepositoryInterface
+     */
+    private $salesOrderRepository;
+
+    /**
      * @var SalesOrderConverter
      */
     private $salesOrderConverter;
@@ -323,7 +329,8 @@ class Importer implements ImporterInterface
         MarketplaceAddressCollectionFactory $marketplaceAddressCollectionFactory,
         MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory,
         ?SalesShipmentFactory $salesShipmentFactory = null,
-        ?SalesRuleApplier $salesRuleApplier = null
+        ?SalesRuleApplier $salesRuleApplier = null,
+        ?SalesOrderRepositoryInterface $salesOrderRepository = null
     ) {
         $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;
@@ -355,10 +362,17 @@ class Importer implements ImporterInterface
         $this->marketplaceOrderResourceFactory = $marketplaceOrderResourceFactory;
         $this->marketplaceAddressCollectionFactory = $marketplaceAddressCollectionFactory;
         $this->marketplaceItemCollectionFactory = $marketplaceItemCollectionFactory;
+
+        $objectManager = ObjectManager::getInstance();
+
         $this->salesShipmentFactory = $salesShipmentFactory
-            ?? ObjectManager::getInstance()->get(SalesShipmentFactory::class);
+            ?? $objectManager->get(SalesShipmentFactory::class);
+
         $this->salesRuleApplier = $salesRuleApplier
-            ?? ObjectManager::getInstance()->get(SalesRuleApplier::class);
+            ?? $objectManager->get(SalesRuleApplier::class);
+
+        $this->salesOrderRepository = $salesOrderRepository
+            ?? $objectManager->get(SalesOrderRepositoryInterface::class);
     }
 
     /**
@@ -1659,6 +1673,22 @@ class Importer implements ImporterInterface
                 } else {
                     $this->logDebugMessage('A shipment is not required.');
                 }
+            }
+
+            $newStatus = null;
+
+            if ($order->getState() === SalesOrder::STATE_NEW) {
+                $newStatus = $this->orderGeneralConfig->getNewOrderStatus($this->currentImportStore);
+            } elseif ($order->getState() === SalesOrder::STATE_PROCESSING) {
+                $newStatus = $this->orderGeneralConfig->getProcessingOrderStatus($this->currentImportStore);
+            } elseif ($order->getState() === SalesOrder::STATE_COMPLETE) {
+                $newStatus = $this->orderGeneralConfig->getCompleteOrderStatus($this->currentImportStore);
+            }
+
+            if ((null !== $newStatus) && ($order->getStatus() !== $newStatus)) {
+                $this->logDebugMessage(sprintf('Setting order status to "%s".', $newStatus));
+                $order->addCommentToStatusHistory('', $newStatus, false);
+                $this->salesOrderRepository->save($order);
             }
         }
     }

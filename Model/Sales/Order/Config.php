@@ -21,6 +21,8 @@ use ShoppingFeed\Manager\Model\Config\Field\Select;
 use ShoppingFeed\Manager\Model\Config\Field\TextBox;
 use ShoppingFeed\Manager\Model\Config\FieldFactoryInterface;
 use ShoppingFeed\Manager\Model\Config\Source\Order\Status\Complete as OrderCompleteStatusSource;
+use ShoppingFeed\Manager\Model\Config\Source\Order\Status\NewStatus as OrderNewStatusSource;
+use ShoppingFeed\Manager\Model\Config\Source\Order\Status\Processing as OrderProcessingStatusSource;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Option as OptionHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\PositiveInteger as PositiveIntegerHandler;
 use ShoppingFeed\Manager\Model\Config\Value\Handler\Text as TextHandler;
@@ -71,6 +73,9 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_CREATE_FULFILMENT_SHIPMENT = 'create_fulfilment_shipment';
     const KEY_IMPORT_SHIPPED_ORDERS = 'import_shipped_orders';
     const KEY_CREATE_SHIPPED_SHIPMENT = 'create_shipped_shipment';
+    const KEY_NEW_ORDER_STATUS = 'new_order_status';
+    const KEY_PROCESSING_ORDER_STATUS = 'processing_order_status';
+    const KEY_COMPLETE_ORDER_STATUS = 'complete_order_status';
     const KEY_SEND_ORDER_EMAIL_FOR_MARKETPLACES = 'send_order_email_for_marketplaces';
     const KEY_SEND_INVOICE_EMAIL_FOR_MARKETPLACES = 'send_invoice_email_for_marketplaces';
     const KEY_UPLOAD_INVOICE_PDF_FOR_MARKETPLACES = 'upload_invoice_pdf_for_marketplaces';
@@ -122,6 +127,16 @@ class Config extends AbstractConfig implements ConfigInterface
     private $orderSyncingActionSource;
 
     /**
+     * @var OrderNewStatusSource
+     */
+    private $orderNewStatusSource;
+
+    /**
+     * @var OrderProcessingStatusSource
+     */
+    private $orderProcessingStatusSource;
+
+    /**
      * @var OrderCompleteStatusSource
      */
     private $orderCompleteStatusSource;
@@ -143,6 +158,8 @@ class Config extends AbstractConfig implements ConfigInterface
      * @param OrderSyncingActionSource $orderSyncingActionSource
      * @param OrderCompleteStatusSource|null $orderCompleteStatusSource
      * @param InvoicePdfProcessorPoolInterface|null $invoicePdfProcessorPool
+     * @param OrderNewStatusSource|null $orderNewStatusSource
+     * @param OrderProcessingStatusSource|null $orderProcessingStatusSource
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
@@ -155,7 +172,9 @@ class Config extends AbstractConfig implements ConfigInterface
         MarketplaceSource $marketplaceSource,
         OrderSyncingActionSource $orderSyncingActionSource,
         ?OrderCompleteStatusSource $orderCompleteStatusSource = null,
-        ?InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null
+        ?InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null,
+        ?OrderNewStatusSource $orderNewStatusSource = null,
+        ?OrderProcessingStatusSource $orderProcessingStatusSource = null
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->scopeConfig = $scopeConfig;
@@ -165,11 +184,19 @@ class Config extends AbstractConfig implements ConfigInterface
         $this->marketplaceSource = $marketplaceSource;
         $this->orderSyncingActionSource = $orderSyncingActionSource;
 
+        $objectManager = ObjectManager::getInstance();
+
+        $this->orderNewStatusSource = $orderNewStatusSource
+            ?? $objectManager->get(OrderNewStatusSource::class);
+
+        $this->orderProcessingStatusSource = $orderProcessingStatusSource
+            ?? $objectManager->get(OrderProcessingStatusSource::class);
+
         $this->orderCompleteStatusSource = $orderCompleteStatusSource
             ?? ObjectManager::getInstance()->get(OrderCompleteStatusSource::class);
 
         $this->invoicePdfProcessorPool = $invoicePdfProcessorPool
-            ?? ObjectManager::getInstance()->get(InvoicePdfProcessorPoolInterface::class);
+            ?? $objectManager->get(InvoicePdfProcessorPoolInterface::class);
 
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
@@ -254,6 +281,22 @@ class Config extends AbstractConfig implements ConfigInterface
                 'dataType' => UiText::NAME,
                 'hasEmptyOption' => true,
                 'optionArray' => $this->orderSyncingActionSource->toOptionArray(),
+            ]
+        );
+
+        $orderNewStatusHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => $this->orderNewStatusSource->toOptionArray(),
+            ]
+        );
+
+        $orderProcessingStatusHandler = $this->valueHandlerFactory->create(
+            OptionHandler::TYPE_CODE,
+            [
+                'dataType' => UiText::NAME,
+                'optionArray' => $this->orderProcessingStatusSource->toOptionArray(),
             ]
         );
 
@@ -547,6 +590,17 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_NEW_ORDER_STATUS,
+                        'valueHandler' => $orderNewStatusHandler,
+                        'label' => __('New Order Custom Status'),
+                        'notice' => __('Leave empty to use the default status.'),
+                        'sortOrder' => 230,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     Checkbox::TYPE_CODE,
                     [
                         'name' => self::KEY_CREATE_INVOICE,
@@ -554,7 +608,18 @@ class Config extends AbstractConfig implements ConfigInterface
                         'label' => __('Create Invoice'),
                         'checkedNotice' => __('Orders will be automatically invoiced upon import.'),
                         'uncheckedNotice' => __('Orders will not be invoiced automatically.'),
-                        'sortOrder' => 230,
+                        'sortOrder' => 240,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_PROCESSING_ORDER_STATUS,
+                        'valueHandler' => $orderProcessingStatusHandler,
+                        'label' => __('Invoiced Order Custom Status'),
+                        'notice' => __('Leave empty to use the default status.'),
+                        'sortOrder' => 250,
                     ]
                 ),
 
@@ -564,7 +629,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
                         'isCheckedByDefault' => false,
                         'label' => __('Import Fulfilled Orders'),
-                        'sortOrder' => 240,
+                        'sortOrder' => 260,
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_FULFILMENT_SHIPMENT ],
                     ]
                 ),
@@ -581,7 +646,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders fulfilled by the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 250,
+                        'sortOrder' => 270,
                     ]
                 ),
 
@@ -592,7 +657,18 @@ class Config extends AbstractConfig implements ConfigInterface
                         'isCheckedByDefault' => false,
                         'label' => __('Import Already Shipped Orders'),
                         'checkedDependentFieldNames' => [ self::KEY_CREATE_SHIPPED_SHIPMENT ],
-                        'sortOrder' => 260,
+                        'sortOrder' => 280,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
+                    Select::TYPE_CODE,
+                    [
+                        'name' => self::KEY_COMPLETE_ORDER_STATUS,
+                        'valueHandler' => $orderCompleteStatusHandler,
+                        'label' => __('Shipped Order Custom Status'),
+                        'sortOrder' => 290,
+                        'notice' => __('Leave empty to use the default status.'),
                     ]
                 ),
 
@@ -608,7 +684,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'uncheckedNotice' => __(
                             'Orders already shipped on the marketplaces will not be shipped automatically.'
                         ),
-                        'sortOrder' => 270,
+                        'sortOrder' => 300,
                     ]
                 ),
 
@@ -622,7 +698,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'Warning: the size of the generated PDF files should not exceed 2 MB. Any files larger than this will be ignored.'
                         ),
-                        'sortOrder' => 310,
+                        'sortOrder' => 340,
                     ]
                 ),
 
@@ -635,8 +711,10 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultFormValue' => 15,
                         'defaultUseValue' => 15,
                         'label' => __('Maximum Delay for Uploading Invoice PDF'),
-                        'notice' => __('In days. Only orders imported within this delay will be considered for invoice PDF upload.'),
-                        'sortOrder' => 320,
+                        'notice' => __(
+                            'In days. Only orders imported within this delay will be considered for invoice PDF upload.'
+                        ),
+                        'sortOrder' => 350,
                     ]
                 ),
 
@@ -650,7 +728,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => 15,
                         'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
                         'notice' => __('In days.'),
-                        'sortOrder' => 330,
+                        'sortOrder' => 360,
                     ]
                 ),
 
@@ -664,7 +742,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 340,
+                        'sortOrder' => 370,
                     ]
                 ),
 
@@ -678,7 +756,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 350,
+                        'sortOrder' => 380,
                     ]
                 ),
 
@@ -692,7 +770,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
                         'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
                         'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 360,
+                        'sortOrder' => 390,
                     ]
                 ),
 
@@ -708,7 +786,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
                         ),
-                        'sortOrder' => 370,
+                        'sortOrder' => 400,
                     ]
                 ),
 
@@ -718,7 +796,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_SYNC_DELIVERED_ORDERS,
                         'isCheckedByDefault' => false,
                         'label' => __('Synchronize Delivered Orders'),
-                        'sortOrder' => 380,
+                        'sortOrder' => 410,
                         'checkedDependentFieldNames' => [ self::KEY_ORDER_DELIVERED_STATUSES ],
                     ]
                 ),
@@ -733,7 +811,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Order Delivered Statuses'),
                         'notice' => __('An order is considered delivered if it has one of the selected statuses.'),
-                        'sortOrder' => 390,
+                        'sortOrder' => 420,
                     ]
                 ),
 
@@ -749,7 +827,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'In days. Only orders imported within this delay will be considered for delivery synchronization.'
                         ),
-                        'sortOrder' => 400,
+                        'sortOrder' => 430,
                     ]
                 ),
 
@@ -763,7 +841,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 410,
+                        'sortOrder' => 440,
                     ]
                 ),
             ],
@@ -1024,7 +1102,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Order Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
-                        'sortOrder' => 280,
+                        'sortOrder' => 310,
                     ]
                 ),
 
@@ -1037,7 +1115,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Send Invoice Email For'),
                         'notice' => __('The email will only be sent if it is enabled in the store configuration.'),
-                        'sortOrder' => 290,
+                        'sortOrder' => 320,
                     ]
                 ),
 
@@ -1049,8 +1127,10 @@ class Config extends AbstractConfig implements ConfigInterface
                         'allowAll' => true,
                         'defaultUseValue' => [],
                         'label' => __('Upload Invoice PDF For'),
-                        'notice' => __('The invoice PDF will be uploaded to compatible marketplaces only (see list here: https://developer.shopping-feed.com/api/fae0997e4f525-store-order-api#specific-order-operations).'),
-                        'sortOrder' => 300,
+                        'notice' => __(
+                            'The invoice PDF will be uploaded to compatible marketplaces only (see list here: https://developer.shopping-feed.com/api/fae0997e4f525-store-order-api#specific-order-operations).'
+                        ),
+                        'sortOrder' => 330,
                     ]
                 ),
             ],
@@ -1338,9 +1418,19 @@ class Config extends AbstractConfig implements ConfigInterface
         return $this->getFieldValue($store, self::KEY_FORCE_CROSS_BORDER_TRADE);
     }
 
+    public function getNewOrderStatus(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_NEW_ORDER_STATUS);
+    }
+
     public function shouldCreateInvoice(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CREATE_INVOICE);
+    }
+
+    public function getProcessingOrderStatus(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_PROCESSING_ORDER_STATUS);
     }
 
     public function shouldImportFulfilledOrders(StoreInterface $store)
@@ -1361,6 +1451,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldCreateShippedShipment(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CREATE_SHIPPED_SHIPMENT);
+    }
+
+    public function getCompleteOrderStatus(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_COMPLETE_ORDER_STATUS);
     }
 
     public function shouldSendOrderEmailForMarketplace(StoreInterface $store, $marketplace)
