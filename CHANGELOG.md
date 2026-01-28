@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.15.0] - 2026-01-28
+### Added
+- Implement a command to allow refreshing of exported product data only
+- Implement handling of new `province` order address field
+- Implement custom order statuses
+- Implement (optional) syncing of partial shipments
+
+### Changed
+- Force loading of products when refreshing price data
+
+### Fixed
+- Fix export of short description if description is missing
+- Handle the case of multiple options within single-option attributes
+
 ## [1.14.0] - 2025-08-05
 ### Changed
 - Improve the use of attributes for exporting product categories
