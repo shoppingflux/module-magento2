@@ -85,6 +85,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_ORDER_REFUSAL_SYNCING_ACTION = 'order_refusal_syncing_action';
     const KEY_ORDER_CANCELLATION_SYNCING_ACTION = 'order_cancellation_syncing_action';
     const KEY_ORDER_REFUND_SYNCING_ACTION = 'order_refund_syncing_action';
+    const KEY_SHOULD_SYNC_PARTIAL_SHIPMENTS = 'should_sync_partial_shipments';
     const KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY = 'shipment_syncing_maximum_delay';
     const KEY_SYNC_DELIVERED_ORDERS = 'sync_delivered_orders';
     const KEY_ORDER_DELIVERED_STATUSES = 'order_delivered_statuses';
@@ -775,6 +776,22 @@ class Config extends AbstractConfig implements ConfigInterface
                 ),
 
                 $this->fieldFactory->create(
+                    Checkbox::TYPE_CODE,
+                    [
+                        'name' => self::KEY_SHOULD_SYNC_PARTIAL_SHIPMENTS,
+                        'isCheckedByDefault' => true,
+                        'label' => __('Synchronize Partial Shipments'),
+                        'checkedNotice' => __(
+                            'When an order is partially shipped, only the relevant items will be shipped on the marketplace, if possible.'
+                        ),
+                        'uncheckedNotice' => __(
+                            'When an order is partially shipped, the entire order will be shipped on the marketplace.'
+                        ),
+                        'sortOrder' => 400,
+                    ]
+                ),
+
+                $this->fieldFactory->create(
                     TextBox::TYPE_CODE,
                     [
                         'name' => self::KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY,
@@ -786,7 +803,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
                         ),
-                        'sortOrder' => 400,
+                        'sortOrder' => 410,
                     ]
                 ),
 
@@ -796,7 +813,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'name' => self::KEY_SYNC_DELIVERED_ORDERS,
                         'isCheckedByDefault' => false,
                         'label' => __('Synchronize Delivered Orders'),
-                        'sortOrder' => 410,
+                        'sortOrder' => 420,
                         'checkedDependentFieldNames' => [ self::KEY_ORDER_DELIVERED_STATUSES ],
                     ]
                 ),
@@ -811,7 +828,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'defaultUseValue' => [],
                         'label' => __('Order Delivered Statuses'),
                         'notice' => __('An order is considered delivered if it has one of the selected statuses.'),
-                        'sortOrder' => 420,
+                        'sortOrder' => 430,
                     ]
                 ),
 
@@ -827,7 +844,7 @@ class Config extends AbstractConfig implements ConfigInterface
                         'notice' => __(
                             'In days. Only orders imported within this delay will be considered for delivery synchronization.'
                         ),
-                        'sortOrder' => 430,
+                        'sortOrder' => 440,
                     ]
                 ),
 
@@ -841,7 +858,7 @@ class Config extends AbstractConfig implements ConfigInterface
                             'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
                         ),
                         'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 440,
+                        'sortOrder' => 450,
                     ]
                 ),
             ],
@@ -1532,6 +1549,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function getOrderRefundSyncingAction(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_ORDER_REFUND_SYNCING_ACTION);
+    }
+
+    public function shouldSyncPartialShipments(StoreInterface $store)
+    {
+        return $this->getFieldValue($store, self::KEY_SHOULD_SYNC_PARTIAL_SHIPMENTS);
     }
 
     public function getShipmentSyncingMaximumDelay(StoreInterface $store)

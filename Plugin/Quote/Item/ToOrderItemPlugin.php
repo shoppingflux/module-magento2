@@ -22,10 +22,21 @@ class ToOrderItemPlugin
         if (
             ($result instanceof OrderItemInterface)
             && is_array($options = $result->getProductOptions())
-            && ($fields = $item->getOptionByCode(MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS))
-            && is_array($fields = json_decode($fields->getValue(), true))
         ) {
-            $options[MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS] = $fields;
+            if (
+                ($id = $item->getOptionByCode(MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_SHOPPING_FEED_ITEM_ID))
+                && ($id = json_decode($id->getValue(), true))
+            ) {
+                $options[MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_SHOPPING_FEED_ITEM_ID] = $id;
+            }
+
+            if (
+                ($fields = $item->getOptionByCode(MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS))
+                && is_array($fields = json_decode($fields->getValue(), true))
+            ) {
+                $options[MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS] = $fields;
+            }
+
             $result->setProductOptions($options);
         }
 

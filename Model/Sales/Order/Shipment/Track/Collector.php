@@ -29,6 +29,11 @@ class Collector
     private $shipmentTrackFactory;
 
     /**
+     * @var int[]
+     */
+    private array $excludedShipmentIds = [];
+
+    /**
      * @param SalesShipmentCollectionFactory $salesShipmentCollectionFactory
      * @param ShipmentTrackFactory $shipmentTrackFactory
      */
@@ -48,6 +53,14 @@ class Collector
     {
         $shipmentCollection = $this->salesShipmentCollectionFactory->create();
         $shipmentCollection->addFieldToFilter(ShipmentInterface::ORDER_ID, [ 'in' => $orderIds ]);
+
+        if (!empty($this->excludedShipmentIds)) {
+            $shipmentCollection->addFieldToFilter(
+                ShipmentInterface::ENTITY_ID,
+                [ 'nin' => $this->excludedShipmentIds ]
+            );
+        }
+
         $orderShipments = [];
 
         /** @var ShipmentInterface $shipment */
@@ -100,6 +113,7 @@ class Collector
                     'trackingNumber' => $trackingNumber,
                     'trackingUrl' => $trackingUrl,
                     'relevance' => $relevance,
+                    'shipment' => $shipment,
                 ]
             );
         }
@@ -137,5 +151,16 @@ class Collector
         }
 
         return $shipmentTracks;
+    }
+
+    /**
+     * @param int[] $shipmentIds
+     * @return $this
+     */
+    public function setExcludedShipmentIds(array $shipmentIds)
+    {
+        $this->excludedShipmentIds = $shipmentIds;
+
+        return $this;
     }
 }

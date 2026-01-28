@@ -12,6 +12,7 @@ interface ItemInterface
     /**#@+*/
     const ITEM_ID = 'item_id';
     const ORDER_ID = 'order_id';
+    const SHOPPING_FEED_ITEM_ID = 'shopping_feed_item_id';
     const REFERENCE = 'reference';
     const QUANTITY = 'quantity';
     const PRICE = 'price';
@@ -24,6 +25,7 @@ interface ItemInterface
     const ADDITIONAL_FIELD_CUSTOMIZED_URL = 'customized_url';
 
     const ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS = 'sfm_additional_fields';
+    const ORDER_ITEM_OPTION_CODE_SHOPPING_FEED_ITEM_ID = 'sfm_shopping_feed_item_id';
 
     /**
      * @return int
@@ -34,6 +36,11 @@ interface ItemInterface
      * @return int
      */
     public function getOrderId();
+
+    /**
+     * @return int|null
+     */
+    public function getShoppingFeedItemId();
 
     /**
      * @return string
@@ -65,6 +72,12 @@ interface ItemInterface
      * @return ItemInterface
      */
     public function setOrderId($orderId);
+
+    /**
+     * @param int|null $shoppingFeedItemId
+     * @return ItemInterface
+     */
+    public function setShoppingFeedItemId($shoppingFeedItemId);
 
     /**
      * @param string $reference

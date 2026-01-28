@@ -168,7 +168,8 @@
             "quantity": true,
             "price": true,
             "tax_amount": true,
-            "additional_fields": true
+            "additional_fields": true,
+            "shopping_feed_item_id": true
         },
         "constraint": {
             "PRIMARY": true,

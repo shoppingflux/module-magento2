@@ -8,7 +8,6 @@ use Magento\Framework\Registry;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface;
 use ShoppingFeed\Manager\DataObject;
 use ShoppingFeed\Manager\DataObjectFactory;
-use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Address\CollectionFactory as AddressCollectionFactory;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item as ItemResource;
 use ShoppingFeed\Manager\Model\ResourceModel\Marketplace\Order\Item\Collection as ItemCollection;
 
@@ -56,6 +55,12 @@ class Item extends AbstractModel implements ItemInterface
         return (int) $this->getDataByKey(self::ORDER_ID);
     }
 
+    public function getShoppingFeedItemId()
+    {
+        $itemId = (int) $this->getDataByKey(self::SHOPPING_FEED_ITEM_ID);
+        return ($itemId > 0) ? $itemId : null;
+    }
+
     public function getReference()
     {
         return trim((string) $this->getDataByKey(self::REFERENCE));
@@ -93,6 +98,12 @@ class Item extends AbstractModel implements ItemInterface
     public function setOrderId($orderId)
     {
         return $this->setData(self::ORDER_ID, (int) $orderId);
+    }
+
+    public function setShoppingFeedItemId($shoppingFeedItemId)
+    {
+        $itemId = (int) $shoppingFeedItemId;
+        return $this->setData(self::SHOPPING_FEED_ITEM_ID, ($itemId > 0) ? $itemId : null);
     }
 
     public function setReference($reference)

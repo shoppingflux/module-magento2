@@ -313,6 +313,12 @@ interface ConfigInterface extends BaseConfig
 
     /**
      * @param StoreInterface $store
+     * @return bool
+     */
+    public function shouldSyncPartialShipments(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
      * @return int|null
      */
     public function getShipmentSyncingMaximumDelay(StoreInterface $store);
