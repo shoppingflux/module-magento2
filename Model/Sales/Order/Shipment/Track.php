@@ -2,6 +2,8 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Order\Shipment;
 
+use Magento\Sales\Api\Data\ShipmentInterface;
+
 class Track
 {
     /**
@@ -35,12 +37,18 @@ class Track
     private $delay;
 
     /**
+     * @var ShipmentInterface|null
+     */
+    private $shipment = null;
+
+    /**
      * @param string $carrierCode
      * @param string $carrierTitle
      * @param string $trackingNumber
      * @param string $trackingUrl
      * @param int $relevance
      * @param int $delay
+     * @param ShipmentInterface|null $shipment
      */
     public function __construct(
         $carrierCode,
@@ -48,7 +56,8 @@ class Track
         $trackingNumber,
         $trackingUrl,
         $relevance,
-        $delay = 0
+        $delay = 0,
+        $shipment = null
     ) {
         $this->setCarrierCode($carrierCode);
         $this->setCarrierTitle($carrierTitle);
@@ -56,6 +65,7 @@ class Track
         $this->setTrackingUrl($trackingUrl);
         $this->setRelevance($relevance);
         $this->setDelay($delay);
+        $this->setShipment($shipment);
     }
 
     /**
@@ -104,6 +114,14 @@ class Track
     public function getDelay()
     {
         return $this->delay;
+    }
+
+    /**
+     * @return ShipmentInterface|null
+     */
+    public function getShipment()
+    {
+        return $this->shipment;
     }
 
     /**
@@ -171,6 +189,16 @@ class Track
     public function setDelay($delay)
     {
         $this->delay = max(0, (int) $delay);
+        return $this;
+    }
+
+    /**
+     * @param ShipmentInterface|null $shipment
+     * @return $this
+     */
+    public function setShipment(?ShipmentInterface $shipment)
+    {
+        $this->shipment = $shipment;
         return $this;
     }
 }

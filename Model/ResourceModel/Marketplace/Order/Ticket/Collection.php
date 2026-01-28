@@ -46,6 +46,17 @@ class Collection extends AbstractCollection
     }
 
     /**
+     * @param string $action
+     * @return $this
+     */
+    public function addActionFilter($action)
+    {
+        $this->addFieldToFilter(TicketInterface::ACTION, (string) $action);
+
+        return $this;
+    }
+
+    /**
      * @param int|int[] $orderIds
      * @return $this
      */

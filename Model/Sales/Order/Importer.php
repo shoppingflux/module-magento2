@@ -914,19 +914,35 @@ class Importer implements ImporterInterface
         CartItemInterface $quoteItem,
         MarketplaceItemInterface $marketplaceItem
     ) {
+        $hasCustomOptions = false;
         $additionalFields = $marketplaceItem->getAdditionalFields()->getData();
+
+        if ($itemId = $marketplaceItem->getShoppingFeedItemId()) {
+            $hasCustomOptions = true;
+
+            $quoteItem->addOption(
+                [
+                    'code' => MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_SHOPPING_FEED_ITEM_ID,
+                    'value' => $itemId,
+                ]
+            );
+        }
 
         if (
             !empty($additionalFields)
             && ($optionValue = json_encode($additionalFields, JSON_FORCE_OBJECT))
         ) {
+            $hasCustomOptions = true;
+
             $quoteItem->addOption(
                 [
                     'code' => MarketplaceItemInterface::ORDER_ITEM_OPTION_CODE_ADDITIONAL_FIELDS,
                     'value' => $optionValue,
                 ]
             );
+        }
 
+        if ($hasCustomOptions) {
             $quoteItem->save();
         }
     }

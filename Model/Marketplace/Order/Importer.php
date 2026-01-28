@@ -448,6 +448,7 @@ class Importer
             $reference = $referenceAliases[$reference];
         }
 
+        $item->setShoppingFeedItemId($apiItem->getId());
         $item->setReference($reference);
         $item->setQuantity($apiItem->getQuantity());
         $item->setPrice($apiItem->getUnitPrice());

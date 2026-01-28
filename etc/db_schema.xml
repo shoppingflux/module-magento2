@@ -189,6 +189,7 @@
     <table name="sfm_marketplace_order_item" resource="default" engine="innodb" comment="Shopping Feed Marketplace Order Item">
         <column xsi:type="int" name="item_id" padding="10" unsigned="true" nullable="false" identity="true" comment="Item ID"/>
         <column xsi:type="int" name="order_id" padding="10" unsigned="true" nullable="false" identity="false" comment="Order ID"/>
+        <column xsi:type="bigint" name="shopping_feed_item_id" padding="20" unsigned="true" nullable="true" identity="false" comment="Shopping Feed Item ID"/>
         <column xsi:type="varchar" name="reference" nullable="false" length="255" comment="Reference"/>
         <column xsi:type="decimal" name="quantity" scale="4" precision="12" unsigned="false" nullable="false" comment="Quantity"/>
         <column xsi:type="decimal" name="price" scale="4" precision="12" unsigned="false" nullable="false" comment="Prices"/>

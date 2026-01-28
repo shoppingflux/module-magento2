@@ -153,6 +153,7 @@ class Collector extends OriginalCollector
                     'trackingUrl' => $trackingUrl,
                     'relevance' => $relevance,
                     'delay' => $shipmentDelay,
+                    'shipment' => $shipment,
                 ]
             );
         }

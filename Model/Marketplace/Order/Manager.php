@@ -3,14 +3,18 @@
 namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
 use GuzzleHttp\Exception\BadResponseException;
+use Magento\Framework\Api\SearchCriteriaBuilder;
 use Magento\Framework\App\Filesystem\DirectoryList;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filesystem;
 use Magento\Sales\Api\Data\InvoiceInterface;
+use Magento\Sales\Api\Data\OrderItemInterface as SalesOrderItemInterface;
+use Magento\Sales\Api\OrderItemRepositoryInterface as SalesOrderItemRepositoryInterface;
 use Magento\Sales\Model\ResourceModel\Order\Invoice\CollectionFactory as SalesInvoiceCollectionFactory;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
+use ShoppingFeed\Manager\Api\Data\Marketplace\Order\ItemInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterface;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\LogInterfaceFactory as OrderLogInterfaceFactory;
 use ShoppingFeed\Manager\Api\Data\Marketplace\Order\TicketInterface;
@@ -54,6 +58,11 @@ class Manager
     private $fileSystem;
 
     /**
+     * @var SearchCriteriaBuilder
+     */
+    private $searchCriteriaBuilder;
+
+    /**
      * @var ApiSessionManager
      */
     private $apiSessionManager;
@@ -92,6 +101,11 @@ class Manager
      * @var OrderTicketCollectionFactory
      */
     private $orderTicketCollectionFactory;
+
+    /**
+     * @var SalesOrderItemRepositoryInterface
+     */
+    private $salesOrderItemRepository;
 
     /**
      * @var SalesInvoiceCollectionFactory
@@ -133,6 +147,7 @@ class Manager
      * @param SalesInvoiceCollectionFactory|null $salesInvoiceCollectionFactory
      * @param InvoicePdfProcessorPoolInterface|null $invoicePdfProcessorPool
      * @param Filesystem|null $fileSystem
+     * @param SalesOrderItemRepositoryInterface|null $salesOrderItemRepository
      */
     public function __construct(
         ApiSessionManager $apiSessionManager,
@@ -148,7 +163,9 @@ class Manager
         ?OrderTicketCollectionFactory $orderTicketCollectionFactory = null,
         ?SalesInvoiceCollectionFactory $salesInvoiceCollectionFactory = null,
         ?InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null,
-        ?Filesystem $fileSystem = null
+        ?Filesystem $fileSystem = null,
+        ?SearchCriteriaBuilder $searchCriteriaBuilder = null,
+        ?SalesOrderItemRepositoryInterface $salesOrderItemRepository = null
     ) {
         $this->apiSessionManager = $apiSessionManager;
         $this->orderGeneralConfig = $orderGeneralConfig;
@@ -173,6 +190,11 @@ class Manager
             ?? $objectManager->get(InvoicePdfProcessorPoolInterface::class);
 
         $this->fileSystem = $fileSystem ?? $objectManager->get(Filesystem::class);
+
+        $this->searchCriteriaBuilder = $searchCriteriaBuilder ?? $objectManager->get(SearchCriteriaBuilder::class);
+
+        $this->salesOrderItemRepository = $salesOrderItemRepository
+            ?? $objectManager->get(SalesOrderItemRepositoryInterface::class);
     }
 
     /**
@@ -790,13 +812,163 @@ class Manager
     }
 
     /**
+     * @param OrderInterface $order
+     * @param int $shipmentId
+     * @param ShipmentTrack $shipmentTrack
+     * @param array $items
+     * @param StoreInterface $store
+     * @throws CouldNotSaveException
+     * @throws LocalizedException
+     */
+    public function notifyStoreOrderPartialShipment(
+        OrderInterface $order,
+        $shipmentId,
+        ShipmentTrack $shipmentTrack,
+        array $items,
+        StoreInterface $store
+    ) {
+        $operation = new ApiOrderOperation();
+
+        $operation->ship(
+            $this->getOrderApiId($order),
+            $shipmentTrack->getCarrierTitle(),
+            $shipmentTrack->getTrackingNumber(),
+            $shipmentTrack->getTrackingUrl(),
+            $items
+        );
+
+        $this->executeApiOrderOperation($store, $order, TicketInterface::ACTION_SHIP, $operation, $shipmentId);
+    }
+
+    /**
+     * @param OrderInterface[] $marketplaceOrders
+     * @param ShipmentTrack[][] $salesOrderShipmentTracks
+     * @param int[] $salesOrderItemShoppingFeedIds
+     * @param StoreInterface $store
+     * @return void
+     * @throws CouldNotSaveException
+     * @throws LocalizedException
+     */
+    private function notifyStoreOrderPartialShipments(
+        array $marketplaceOrders,
+        array $salesOrderShipmentTracks,
+        array $salesOrderItemShoppingFeedIds,
+        StoreInterface $store
+    ) {
+        $maximumDelay = $this->orderGeneralConfig->getShipmentSyncingMaximumDelay($store);
+
+        foreach ($marketplaceOrders as $marketplaceOrder) {
+            $salesOrderId = (int) $marketplaceOrder->getSalesOrderId();
+
+            if (!empty($salesOrderShipmentTracks[$salesOrderId])) {
+                $shipments = [];
+
+                /** @var ShipmentTrack[] $shipmentChosenTracks */
+                $shipmentChosenTracks = [];
+
+                /** @var ShipmentTrack $shipmentTrack */
+                foreach ($salesOrderShipmentTracks[$salesOrderId] as $shipmentTrack) {
+                    if (
+                        (!$shipment = $shipmentTrack->getShipment())
+                        || (!$shipmentId = (int) $shipment->getId())
+                    ) {
+                        continue;
+                    }
+
+                    if (
+                        !isset($shipmentChosenTracks[$shipmentId])
+                        || ($shipmentTrack->getRelevance() >= $shipmentChosenTracks[$shipmentId]->getRelevance())
+                    ) {
+                        $shipments[$shipmentId] = $shipment;
+                        $shipmentChosenTracks[$shipmentId] = $shipmentTrack;
+                    }
+                }
+
+                foreach ($shipmentChosenTracks as $shipmentId => $chosenTrack) {
+                    if (
+                        ($maximumDelay > 0)
+                        && !$chosenTrack->hasTrackingData()
+                        && ($chosenTrack->getDelay() <= $maximumDelay)
+                    ) {
+                        continue;
+                    }
+
+                    $itemMap = [];
+
+                    foreach ($shipments[$shipmentId]->getItems() as $shipmentItem) {
+                        if (
+                            (!$salesOrderItemId = (int) $shipmentItem->getOrderItemId())
+                            || !isset($salesOrderItemShoppingFeedIds[$salesOrderItemId])
+                        ) {
+                            continue 2;
+                        }
+
+                        $itemMap[$salesOrderItemShoppingFeedIds[$salesOrderItemId]] = (int) $shipmentItem->getQty();
+                    }
+
+                    $this->notifyStoreOrderPartialShipment(
+                        $marketplaceOrder,
+                        $shipmentId,
+                        $chosenTrack,
+                        $itemMap,
+                        $store
+                    );
+                }
+            }
+        }
+    }
+
+    /**
+     * @param OrderInterface[] $marketplaceOrders
+     * @param ShipmentTrack[][] $salesOrderShipmentTracks
+     * @param StoreInterface $store
+     * @return void
+     * @throws CouldNotSaveException
+     * @throws LocalizedException
+     */
+    private function notifyStoreOrderFullShipments(
+        array $marketplaceOrders,
+        array $salesOrderShipmentTracks,
+        StoreInterface $store
+    ) {
+        $maximumDelay = $this->orderGeneralConfig->getShipmentSyncingMaximumDelay($store);
+
+        foreach ($marketplaceOrders as $marketplaceOrder) {
+            $salesOrderId = (int) $marketplaceOrder->getSalesOrderId();
+
+            if (!empty($salesOrderShipmentTracks[$salesOrderId])) {
+                /** @var ShipmentTrack $chosenTrack */
+                $chosenTrack = null;
+
+                /** @var ShipmentTrack $shipmentTrack */
+                foreach ($salesOrderShipmentTracks[$salesOrderId] as $shipmentTrack) {
+                    if (
+                        (null === $chosenTrack)
+                        || ($shipmentTrack->getRelevance() >= $chosenTrack->getRelevance())
+                    ) {
+                        $chosenTrack = $shipmentTrack;
+                    }
+                }
+
+                if (
+                    ($maximumDelay > 0)
+                    && !$chosenTrack->hasTrackingData()
+                    && ($chosenTrack->getDelay() <= $maximumDelay)
+                ) {
+                    continue;
+                }
+
+                $this->notifyStoreOrderShipment($marketplaceOrder, $chosenTrack, $store);
+            }
+        }
+    }
+
+    /**
      * @param StoreInterface $store
      * @throws \Exception
      */
     public function notifyStoreOrderShipmentUpdates(StoreInterface $store)
     {
-        $maximumDelay = $this->orderGeneralConfig->getShipmentSyncingMaximumDelay($store);
-
         $shippedCollection = $this->orderCollectionFactory->create();
         $shippedCollection->addStoreIdFilter($store->getId());
         $shippedCollection->addIsFulfilledFilter(false);
@@ -809,40 +981,144 @@ class Manager
         do {
             $this->loadOrderCollectionNextSliceWithoutDuplicates($shippedCollection);
 
-            $shippedSalesOrderIds = [];
-
-            foreach ($shippedCollection as $marketplaceOrder) {
-                $shippedSalesOrderIds[] = (int) $marketplaceOrder->getSalesOrderId();
+            if ($shippedCollection->count() === 0) {
+                break;
             }
 
-            $salesShipmentTracks = $this->salesShipmentTrackCollector->getOrdersShipmentTracks($shippedSalesOrderIds);
+            $shippedOrderIds = [];
+            $shippedSalesOrderIds = [];
 
+            /** @var OrderInterface $marketplaceOrder */
             foreach ($shippedCollection as $marketplaceOrder) {
-                $salesOrderId = (int) $marketplaceOrder->getSalesOrderId();
+                $marketplaceOrderId = (int) $marketplaceOrder->getId();
+                $shippedOrderIds[] = $marketplaceOrderId;
+                $shippedSalesOrderIds[$marketplaceOrderId] = (int) $marketplaceOrder->getSalesOrderId();
+            }
 
-                if (!empty($salesShipmentTracks[$salesOrderId])) {
-                    /** @var ShipmentTrack $chosenTrack */
-                    $chosenTrack = null;
+            // Determine which orders can be partially shipped on the marketplaces.
 
-                    foreach ($salesShipmentTracks[$salesOrderId] as $shipmentTrack) {
-                        if (
-                            (null === $chosenTrack)
-                            || ($shipmentTrack->getRelevance() >= $chosenTrack->getRelevance())
-                        ) {
-                            $chosenTrack = $shipmentTrack;
+            $syncedShipmentIds = [];
+            $fullyShippableSalesOrderIds = [];
+
+            // 1. If a previous ticket failed, assume the corresponding order is not compatible with partial shipments.
+
+            $shipmentTickets = $this->orderTicketCollectionFactory
+                ->create()
+                ->addOrderIdFilter($shippedOrderIds)
+                ->addActionFilter(TicketInterface::ACTION_SHIP);
+
+            /** @var TicketInterface $shipmentTicket */
+            foreach ($shipmentTickets as $shipmentTicket) {
+                if ($shipmentTicket->getStatus() === TicketInterface::STATUS_FAILED) {
+                    $fullyShippableSalesOrderIds[] = $shippedSalesOrderIds[$shipmentTicket->getOrderId()] ?? null;
+                } elseif ($salesEntityId = $shipmentTicket->getSalesEntityId()) {
+                    $syncedShipmentIds[] = $salesEntityId;
+                }
+            }
+
+            $this->salesShipmentTrackCollector->setExcludedShipmentIds($syncedShipmentIds);
+
+            $salesOrderShipmentTracks = $this->salesShipmentTrackCollector
+                ->getOrdersShipmentTracks($shippedSalesOrderIds);
+
+            // 2. Syncing of partial shipments should be enabled in the account configuration.
+
+            if (!$this->orderGeneralConfig->shouldSyncPartialShipments($store)) {
+                $partiallyShippableOrderIds = [];
+                $fullyShippableSalesOrderIds = $shippedSalesOrderIds;
+            } else {
+                // 3. Shipments must be present on the shipment tracks so that we can map the corresponding items.
+
+                foreach ($salesOrderShipmentTracks as $salesOrderId => $shipmentTracks) {
+                    $hasAllShipments = true;
+
+                    foreach ($shipmentTracks as $shipmentTrack) {
+                        if (!$shipmentTrack->getShipment()) {
+                            $hasAllShipments = false;
+                            break;
                         }
                     }
 
-                    if (
-                        ($maximumDelay > 0)
-                        && !$chosenTrack->hasTrackingData()
-                        && ($chosenTrack->getDelay() <= $maximumDelay)
-                    ) {
-                        continue;
+                    if (!$hasAllShipments) {
+                        $fullyShippableSalesOrderIds[] = (int) $salesOrderId;
+                    }
+                }
+
+                $partiallyShippableSalesOrderIds = array_diff(
+                    $shippedSalesOrderIds,
+                    array_unique(array_filter($fullyShippableSalesOrderIds))
+                );
+
+                // 4. The Shopping Feed ID of each order item must be known in order to map the shipped items.
+
+                $salesOrderItemShoppingFeedIds = [];
+
+                if (!empty($partiallyShippableSalesOrderIds)) {
+                    $partiallyShippableSalesOrderItems = $this->salesOrderItemRepository->getList(
+                        $this->searchCriteriaBuilder
+                            ->addFilter(
+                                SalesOrderItemInterface::ORDER_ID,
+                                $partiallyShippableSalesOrderIds,
+                                'in'
+                            )
+                            ->create()
+                    );
+
+                    /** @var SalesOrderItemInterface $salesOrderItem */
+                    foreach ($partiallyShippableSalesOrderItems as $salesOrderItem) {
+                        if (
+                            $sfItemId = (int) $salesOrderItem->getProductOptionByCode(
+                                ItemInterface::ORDER_ITEM_OPTION_CODE_SHOPPING_FEED_ITEM_ID
+                            )
+                        ) {
+                            $salesOrderItemShoppingFeedIds[(int) $salesOrderItem->getItemId()] = $sfItemId;
+                        } else {
+                            $fullyShippableSalesOrderIds[] = (int) $salesOrderItem->getOrderId();
+                        }
                     }
 
-                    $this->notifyStoreOrderShipment($marketplaceOrder, $chosenTrack, $store);
+                    $partiallyShippableSalesOrderIds = array_diff(
+                        $partiallyShippableSalesOrderIds,
+                        array_unique(array_filter($fullyShippableSalesOrderIds))
+                    );
                 }
+            }
+
+            if (!empty($partiallyShippableSalesOrderIds)) {
+                $partiallyShippableOrderIds = array_flip(
+                    array_intersect(
+                        $shippedSalesOrderIds,
+                        $partiallyShippableSalesOrderIds
+                    )
+                );
+
+                $this->notifyStoreOrderPartialShipments(
+                    array_intersect_key(
+                        $shippedCollection->getItems(),
+                        array_flip($partiallyShippableOrderIds)
+                    ),
+                    $salesOrderShipmentTracks,
+                    $salesOrderItemShoppingFeedIds,
+                    $store
+                );
+            }
+
+            if (!empty($fullyShippableSalesOrderIds)) {
+                $fullyShippableOrderIds = array_flip(
+                    array_intersect(
+                        $shippedSalesOrderIds,
+                        $fullyShippableSalesOrderIds
+                    )
+                );
+
+                $this->notifyStoreOrderFullShipments(
+                    array_intersect_key(
+                        $shippedCollection->getItems(),
+                        array_flip($fullyShippableOrderIds)
+                    ),
+                    $salesOrderShipmentTracks,
+                    $store
+                );
             }
         } while (!empty($shippedSalesOrderIds) && (++$sliceCount < $this->maxNotificationIterations));
     }

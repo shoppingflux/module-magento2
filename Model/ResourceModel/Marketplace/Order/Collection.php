@@ -294,20 +294,24 @@ class Collection extends AbstractCollection
     {
         $this->addFieldToFilter(OrderInterface::HAS_NON_NOTIFIABLE_SHIPMENT, 0);
 
-        $shipmentSelect = $this->getConnection()
-            ->select()
-            ->from(
-                [ '_sales_shipment_table' => $this->tableDictionary->getSalesShipmentTableName() ],
-                [ 'order_id' ]
-            );
+        $this->join(
+            [ '_sales_shipment_table' => $this->tableDictionary->getSalesShipmentTableName() ],
+            'main_table.sales_order_id = _sales_shipment_table.order_id',
+            [ 'shipment_ids' => 'GROUP_CONCAT(_sales_shipment_table.entity_id)' ]
+        );
 
-        $this->getSelect()
-            ->where(
-                '_sales_order_table.entity_id IN (?)',
-                new \Zend_Db_Expr($shipmentSelect->assemble())
-            );
+        $this->addNoTicketBlockingNotificationsFilter(
+            TicketInterface::ACTION_SHIP,
+            function ($ticketSelect) {
+                return $ticketSelect->where(
+                    '_ticket_table.sales_entity_id IS NULL'
+                    . ' OR '
+                    . '_ticket_table.sales_entity_id = _sales_shipment_table.entity_id'
+                );
+            }
+        );
 
-        $this->addNoTicketBlockingNotificationsFilter(TicketInterface::ACTION_SHIP);
+        $this->getSelect()->group('main_table.order_id');
 
         return $this;
     }
