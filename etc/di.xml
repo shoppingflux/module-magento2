@@ -345,6 +345,16 @@
         </arguments>
     </type>
 
+    <type name="Magento\Quote\Model\Quote\Item\AbstractItem">
+        <plugin name="sfm_quote_abstract_item_plugin" type="ShoppingFeed\Manager\Plugin\Quote\Item\AbstractItemPlugin" sortOrder="1000000000"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\Quote\Item\AbstractItemPlugin">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\Quote\Model\Quote\Item\ToOrderItem">
         <plugin name="sfm_quote_quote_item_to_order_item_plugin" type="ShoppingFeed\Manager\Plugin\Quote\Item\ToOrderItemPlugin" sortOrder="0"/>
     </type>
