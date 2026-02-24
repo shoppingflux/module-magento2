@@ -235,9 +235,9 @@ class Importer implements ImporterInterface
     private $marketplaceItemCollectionFactory;
 
     /**
-     * @var StoreInterface|null
+     * @var ImportStateInterface
      */
-    private $currentImportStore = null;
+    private $importState;
 
     /**
      * @var BaseStore|null
@@ -245,24 +245,9 @@ class Importer implements ImporterInterface
     private $currentTargetBaseStore = null;
 
     /**
-     * @var MarketplaceOrderInterface|null
-     */
-    private $currentlyImportedMarketplaceOrder = null;
-
-    /**
-     * @var int|null
-     */
-    private $currentlyImportedQuoteId = null;
-
-    /**
      * @var float[]|null
      */
     private $currentlyImportedQuoteBundleAdjustments = [];
-
-    /**
-     * @var bool
-     */
-    private $isCurrentlyImportedBusinessQuote = false;
 
     /**
      * @param LoggerInterface $logger
@@ -330,7 +315,8 @@ class Importer implements ImporterInterface
         MarketplaceItemCollectionFactory $marketplaceItemCollectionFactory,
         ?SalesShipmentFactory $salesShipmentFactory = null,
         ?SalesRuleApplier $salesRuleApplier = null,
-        ?SalesOrderRepositoryInterface $salesOrderRepository = null
+        ?SalesOrderRepositoryInterface $salesOrderRepository = null,
+        ?ImportStateInterface $importState = null
     ) {
         $this->logger = $logger;
         $this->transactionFactory = $transactionFactory;
@@ -373,6 +359,9 @@ class Importer implements ImporterInterface
 
         $this->salesOrderRepository = $salesOrderRepository
             ?? $objectManager->get(SalesOrderRepositoryInterface::class);
+
+        $this->importState = $importState
+            ?? $objectManager->get(ImportStateInterface::class);
     }
 
     /**
@@ -381,8 +370,8 @@ class Importer implements ImporterInterface
     private function logDebugMessage($message)
     {
         if (
-            (null !== $this->currentImportStore)
-            && $this->orderGeneralConfig->isDebugModeEnabled($this->currentImportStore)
+            ($store = $this->importState->getImportRunningForStore())
+            && $this->orderGeneralConfig->isDebugModeEnabled($store)
         ) {
             $this->logger->debug($message);
         }
@@ -397,7 +386,8 @@ class Importer implements ImporterInterface
     {
         if (
             $order->isBusinessOrder()
-            && $this->orderGeneralConfig->shouldDisableTaxForBusinessOrders($this->currentImportStore)
+            && ($store = $this->importState->getImportRunningForStore())
+            && $this->orderGeneralConfig->shouldDisableTaxForBusinessOrders($store)
         ) {
             $isUntaxed = true;
 
@@ -481,7 +471,7 @@ class Importer implements ImporterInterface
             return;
         }
 
-        $this->currentImportStore = $store;
+        $this->importState->setCurrentImportStore($store);
 
         if ($this->orderGeneralConfig->shouldForceCrossBorderTrade($store)) {
             $this->taxConfigPlugin->enableForcedCrossBorderTrade();
@@ -554,7 +544,7 @@ class Importer implements ImporterInterface
 
                     $this->baseStoreManager->setCurrentStore($targetStore);
 
-                    $this->currentlyImportedMarketplaceOrder = $marketplaceOrder;
+                    $this->importState->setCurrentlyImportedMarketplaceOrder($marketplaceOrder);
 
                     $marketplaceOrderResource->bumpOrderImportTryCount($marketplaceOrderId);
                     $marketplaceOrder->setImportRemainingTryCount($marketplaceOrder->getImportRemainingTryCount() - 1);
@@ -582,7 +572,7 @@ class Importer implements ImporterInterface
                     );
 
                     $quoteId = (int) $this->quoteManager->createEmptyCart();
-                    $this->currentlyImportedQuoteId = $quoteId;
+                    $this->importState->setCurrentlyImportedQuoteId($quoteId);
 
                     /** @var Quote $quote */
                     $quote = $this->quoteRepository->get($quoteId);
@@ -655,12 +645,12 @@ class Importer implements ImporterInterface
 
                     if ($isUntaxedBusinessOrder) {
                         $this->logDebugMessage('Business order: forcing untaxed context.');
-                        $this->isCurrentlyImportedBusinessQuote = true;
+                        $this->importState->setIsCurrentlyImportedBusinessQuote(true);
                         $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
                         $quote->setCustomerGroupId($this->businessTaxManager->getCustomerGroup()->getId());
                         $quote->setCustomerTaxClassId($this->businessTaxManager->getCustomerTaxClass()->getClassId());
                     } else {
-                        $this->isCurrentlyImportedBusinessQuote = false;
+                        $this->importState->setIsCurrentlyImportedBusinessQuote(false);
                     }
 
                     $this->logDebugMessage('Importing the items.');
@@ -738,12 +728,10 @@ class Importer implements ImporterInterface
             throw $e;
         } finally {
             $this->taxConfigPlugin->disableForcedCrossBorderTrade();
-            $this->currentImportStore = null;
+
+            $this->importState->reset();
             $this->currentTargetBaseStore = null;
-            $this->currentlyImportedMarketplaceOrder = null;
-            $this->currentlyImportedQuoteId = null;
             $this->currentlyImportedQuoteBundleAdjustments = [];
-            $this->isCurrentlyImportedBusinessQuote = false;
 
             if (isset($targetStore) && isset($originalTargetStoreCurrencyCode)) {
                 $targetStore->setCurrentCurrencyCode($originalTargetStoreCurrencyCode);
@@ -1538,7 +1526,7 @@ class Importer implements ImporterInterface
 
     public function isCurrentlyImportedQuote(Quote $quote)
     {
-        return $this->currentlyImportedQuoteId === (int) $quote->getId();
+        return $this->importState->isCurrentlyImportedQuote($quote);
     }
 
     /**
@@ -1580,20 +1568,22 @@ class Importer implements ImporterInterface
 
     public function tagImportedQuote(Quote $quote)
     {
+        $isBusinessQuote = $this->importState->isCurrentlyImportedBusinessQuote();
+
         $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_ORDER, true);
 
-        if ($this->isCurrentlyImportedBusinessQuote) {
+        if ($isBusinessQuote) {
             $quote->setData(self::QUOTE_KEY_IS_SHOPPING_FEED_BUSINESS_ORDER, true);
         }
 
         $this->tagImportedQuoteAddress(
             $quote->getBillingAddress(),
-            $this->isCurrentlyImportedBusinessQuote
+            $isBusinessQuote
         );
 
         $this->tagImportedQuoteAddress(
             $quote->getShippingAddress(),
-            $this->isCurrentlyImportedBusinessQuote
+            $isBusinessQuote
         );
 
         $this->applyBundleAdjustmentsOnQuote($quote);
@@ -1601,7 +1591,7 @@ class Importer implements ImporterInterface
 
     public function isCurrentlyImportedSalesOrder(SalesOrderInterface $order)
     {
-        return $this->currentlyImportedQuoteId === (int) $order->getQuoteId();
+        return $this->importState->isCurrentlyImportedSalesOrder($order);
     }
 
     /**
@@ -1662,30 +1652,33 @@ class Importer implements ImporterInterface
      */
     public function handleImportedSalesOrder(SalesOrderInterface $order)
     {
-        if ($this->isImportRunning() && ($order instanceof SalesOrder)) {
-            if ($this->orderGeneralConfig->shouldCreateInvoice($this->currentImportStore)) {
+        if ($this->importState->isImportRunning() && ($order instanceof SalesOrder)) {
+            $store = $this->importState->getImportRunningForStore();
+            $marketplaceOrder = $this->importState->getCurrentlyImportedMarketplaceOrder();
+
+            if ($this->orderGeneralConfig->shouldCreateInvoice($store)) {
                 $this->logDebugMessage('Creating invoice.');
                 $this->invoiceSalesOrder($order);
             } else {
                 $this->logDebugMessage('An invoice is not required.');
             }
 
-            if (null !== $this->currentlyImportedMarketplaceOrder) {
-                $shoppingFeedStatus = $this->currentlyImportedMarketplaceOrder->getShoppingFeedStatus();
+            if (null !== $marketplaceOrder) {
+                $shoppingFeedStatus = $marketplaceOrder->getShoppingFeedStatus();
 
                 $shouldShipOrder = (
-                        $this->currentlyImportedMarketplaceOrder->isFulfilled()
-                        && $this->orderGeneralConfig->shouldCreateFulfilmentShipment($this->currentImportStore)
+                        $marketplaceOrder->isFulfilled()
+                        && $this->orderGeneralConfig->shouldCreateFulfilmentShipment($store)
                     ) || (
-                        !$this->currentlyImportedMarketplaceOrder->isFulfilled()
+                        !$marketplaceOrder->isFulfilled()
                         && (MarketplaceOrderInterface::STATUS_SHIPPED === $shoppingFeedStatus)
-                        && $this->orderGeneralConfig->shouldCreateShippedShipment($this->currentImportStore)
+                        && $this->orderGeneralConfig->shouldCreateShippedShipment($store)
                     );
 
                 if ($shouldShipOrder) {
                     $this->logDebugMessage('Creating shipment.');
                     $this->shipSalesOrder($order);
-                    $this->currentlyImportedMarketplaceOrder->setHasNonNotifiableShipment(true);
+                    $marketplaceOrder->setHasNonNotifiableShipment(true);
                 } else {
                     $this->logDebugMessage('A shipment is not required.');
                 }
@@ -1694,11 +1687,11 @@ class Importer implements ImporterInterface
             $newStatus = null;
 
             if ($order->getState() === SalesOrder::STATE_NEW) {
-                $newStatus = $this->orderGeneralConfig->getNewOrderStatus($this->currentImportStore);
+                $newStatus = $this->orderGeneralConfig->getNewOrderStatus($store);
             } elseif ($order->getState() === SalesOrder::STATE_PROCESSING) {
-                $newStatus = $this->orderGeneralConfig->getProcessingOrderStatus($this->currentImportStore);
+                $newStatus = $this->orderGeneralConfig->getProcessingOrderStatus($store);
             } elseif ($order->getState() === SalesOrder::STATE_COMPLETE) {
-                $newStatus = $this->orderGeneralConfig->getCompleteOrderStatus($this->currentImportStore);
+                $newStatus = $this->orderGeneralConfig->getCompleteOrderStatus($store);
             }
 
             if ((null !== $newStatus) && ($order->getStatus() !== $newStatus)) {
@@ -1711,16 +1704,16 @@ class Importer implements ImporterInterface
 
     public function isImportRunning()
     {
-        return null !== $this->currentImportStore;
+        return $this->importState->isImportRunning();
     }
 
     public function getImportRunningForStore()
     {
-        return $this->currentImportStore;
+        return $this->importState->getImportRunningForStore();
     }
 
     public function getCurrentlyImportedMarketplaceOrder()
     {
-        return $this->currentlyImportedMarketplaceOrder;
+        return $this->importState->getCurrentlyImportedMarketplaceOrder();
     }
 }

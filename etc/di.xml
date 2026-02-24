@@ -303,6 +303,9 @@
         </arguments>
     </virtualType>
 
+    <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface" type="ShoppingFeed\Manager\Model\Sales\Order\ImportState"/>
+    <type name="ShoppingFeed\Manager\Model\Sales\Order\ImportState" shared="true"/>
+
     <preference for="ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface" type="ShoppingFeed\Manager\Model\Sales\Order\Importer"/>
     <type name="ShoppingFeed\Manager\Model\Sales\Order\Importer" shared="true">
         <arguments>
@@ -363,12 +366,30 @@
         <plugin name="sfm_bundle_product_price_plugin" type="ShoppingFeed\Manager\Plugin\Bundle\Product\PricePlugin" sortOrder="0"/>
     </type>
 
+    <type name="ShoppingFeed\Manager\Plugin\Bundle\Product\PricePlugin">
+        <arguments>
+            <argument name="salesOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\CatalogInventory\Model\Spi\StockStateProviderInterface">
         <plugin name="sfm_cataloginventory_spi_stock_state_provider_plugin" type="ShoppingFeed\Manager\Plugin\CatalogInventory\Spi\StockStateProviderPlugin" sortOrder="1000000000"/>
     </type>
 
+    <type name="ShoppingFeed\Manager\Plugin\CatalogInventory\Spi\StockStateProviderPlugin">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\InventorySales\Model\CheckItemsQuantity">
         <plugin name="sfm_inventory_sales_check_items_quantity_plugin" type="ShoppingFeed\Manager\Plugin\InventorySales\CheckItemsQuantityPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\InventorySales\CheckItemsQuantityPlugin">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
     </type>
 
     <type name="Magento\SalesRule\Model\Rule\Action\Discount\CalculatorFactory">
@@ -453,9 +474,28 @@
         <plugin name="sfm_tax_sales_pdf_grand_total_plugin" type="ShoppingFeed\Manager\Plugin\Tax\Sales\Pdf\GrandTotalPlugin" sortOrder="1000000000"/>
     </type>
 
+    <type name="ShoppingFeed\Manager\Model\Sales\Quote\Address\Total\MarketplaceFees">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Observer\BeforeQuoteSubmitObserver">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="ShoppingFeed\Manager\Observer\AfterQuoteLoadObserver">
         <arguments>
             <argument name="catalogProductHelper" xsi:type="object">Magento\Catalog\Helper\Product\Proxy</argument>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Observer\OnQuoteSubmitSuccessObserver">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
         </arguments>
     </type>
 
@@ -467,8 +507,20 @@
         <plugin name="sfm_msi_place_reservations_for_sales_event_plugin" type="ShoppingFeed\Manager\Plugin\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin" sortOrder="0"/>
     </type>
 
+    <type name="ShoppingFeed\Manager\Plugin\InventorySalesApi\Api\PlaceReservationsForSalesEventPlugin">
+        <arguments>
+            <argument name="salesOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
     <type name="Magento\InventoryShipping\Observer\SourceDeductionProcessor">
         <plugin name="sfm_msi_source_deduction_processor" type="ShoppingFeed\Manager\Plugin\InventoryShipping\Observer\SourceDeductionProcessorPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\InventoryShipping\Observer\SourceDeductionProcessorPlugin">
+        <arguments>
+            <argument name="salesOrderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
     </type>
 
     <type name="Magento\CatalogInventory\Observer\CancelOrderItemObserver">
@@ -485,6 +537,18 @@
 
     <type name="Magento\Customer\Model\Validator\Name">
         <plugin name="sfm_customer_name_validator_plugin" type="ShoppingFeed\Manager\Plugin\Customer\Validator\NamePlugin" sortOrder="0"/>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\Customer\Validator\NamePlugin">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
+    </type>
+
+    <type name="ShoppingFeed\Manager\Plugin\Quote\Observer\SubmitObserverPlugin">
+        <arguments>
+            <argument name="orderImporter" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface\Proxy</argument>
+        </arguments>
     </type>
 
     <preference for="ShoppingFeed\Manager\Api\Data\Cron\TaskInterface" type="ShoppingFeed\Manager\Model\Cron\Task"/>

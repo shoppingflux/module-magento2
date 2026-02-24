@@ -2,11 +2,13 @@
 
 namespace ShoppingFeed\Manager\Model\Sales\Quote\Address\Total;
 
+use Magento\Framework\App\ObjectManager;
 use Magento\Quote\Api\Data\ShippingAssignmentInterface;
 use Magento\Quote\Model\Quote;
 use Magento\Quote\Model\Quote\Address\Total;
 use Magento\Quote\Model\Quote\Address\Total\AbstractTotal;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface as SalesOrderImportStateInterface;
 
 class MarketplaceFees extends AbstractTotal
 {
@@ -19,11 +21,21 @@ class MarketplaceFees extends AbstractTotal
     private $orderImporter;
 
     /**
-     * @param OrderImporterInterface $orderImporter
+     * @var SalesOrderImportStateInterface
      */
-    public function __construct(OrderImporterInterface $orderImporter)
-    {
+    private $salesOrderImportState;
+
+    /**
+     * @param OrderImporterInterface $orderImporter
+     * @param SalesOrderImportStateInterface|null $salesOrderImportState
+     */
+    public function __construct(
+        OrderImporterInterface $orderImporter,
+        ?SalesOrderImportStateInterface $salesOrderImportState = null
+    ) {
         $this->orderImporter = $orderImporter;
+        $this->salesOrderImportState = $salesOrderImportState
+            ?? ObjectManager::getInstance()->get(SalesOrderImportStateInterface::class);
     }
 
     /**
@@ -33,9 +45,9 @@ class MarketplaceFees extends AbstractTotal
     public function getQuoteMarketplaceFeesAmounts(Quote $quote)
     {
         if (
-            $this->orderImporter->isImportRunning()
-            && $this->orderImporter->isCurrentlyImportedQuote($quote)
-            && ($marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder())
+            $this->salesOrderImportState->isImportRunning()
+            && $this->salesOrderImportState->isCurrentlyImportedQuote($quote)
+            && ($marketplaceOrder = $this->salesOrderImportState->getCurrentlyImportedMarketplaceOrder())
         ) {
             $store = $quote->getStore();
             $feesAmount = $marketplaceOrder->getFeesAmount();

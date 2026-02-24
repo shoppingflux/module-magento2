@@ -12,6 +12,7 @@ use Magento\Sales\Model\Order\Email\Sender\OrderSender as OrderEmailSender;
 use ShoppingFeed\Manager\Model\Feed\RealTimeUpdater as RealTimeFeedUpdater;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface as SalesOrderImportStateInterface;
 
 class OnQuoteSubmitSuccessObserver implements ObserverInterface
 {
@@ -22,6 +23,11 @@ class OnQuoteSubmitSuccessObserver implements ObserverInterface
      * @var RealTimeFeedUpdater
      */
     private $realTimeFeedUpdater;
+
+    /**
+     * @var SalesOrderImportStateInterface
+     */
+    private $salesOrderImportState;
 
     /**
      * @var OrderImporterInterface
@@ -49,13 +55,15 @@ class OnQuoteSubmitSuccessObserver implements ObserverInterface
      * @param OrderConfigInterface|null $orderGeneralConfig
      * @param OrderEmailSender|null $orderEmailSender
      * @param InvoiceEmailSender|null $invoiceEmailSender
+     * @param SalesOrderImportStateInterface|null $salesOrderImportState
      */
     public function __construct(
         RealTimeFeedUpdater $realTimeFeedUpdater,
         OrderImporterInterface $orderImporter,
         ?OrderConfigInterface $orderGeneralConfig = null,
         ?OrderEmailSender $orderEmailSender = null,
-        ?InvoiceEmailSender $invoiceEmailSender = null
+        ?InvoiceEmailSender $invoiceEmailSender = null,
+        ?SalesOrderImportStateInterface $salesOrderImportState = null
     ) {
         $this->realTimeFeedUpdater = $realTimeFeedUpdater;
         $this->orderImporter = $orderImporter;
@@ -65,6 +73,8 @@ class OnQuoteSubmitSuccessObserver implements ObserverInterface
             ?? ObjectManager::getInstance()->get(OrderEmailSender::class);
         $this->invoiceEmailSender = $invoiceEmailSender
             ?? ObjectManager::getInstance()->get(InvoiceEmailSender::class);
+        $this->salesOrderImportState = $salesOrderImportState
+            ?? ObjectManager::getInstance()->get(SalesOrderImportStateInterface::class);
     }
 
     public function execute(Observer $observer)
@@ -85,13 +95,13 @@ class OnQuoteSubmitSuccessObserver implements ObserverInterface
             if (
                 ($quote = $observer->getEvent()->getData(static::EVENT_KEY_QUOTE))
                 && ($quote instanceof Quote)
-                && $this->orderImporter->isCurrentlyImportedQuote($quote)
+                && $this->salesOrderImportState->isCurrentlyImportedQuote($quote)
             ) {
                 $this->orderImporter->handleImportedSalesOrder($order);
 
-                $store = $this->orderImporter->getImportRunningForStore();
+                $store = $this->salesOrderImportState->getImportRunningForStore();
                 $marketplaceName = '';
-                $marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder();
+                $marketplaceOrder = $this->salesOrderImportState->getCurrentlyImportedMarketplaceOrder();
 
                 if ($marketplaceOrder) {
                     $marketplaceName = $marketplaceOrder->getMarketplaceName();

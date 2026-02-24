@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Plugin\InventoryShipping\Observer;
 
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\Observer as EventObserver;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Registry;
@@ -9,6 +10,7 @@ use Magento\InventoryShipping\Observer\SourceDeductionProcessor;
 use Magento\Sales\Model\Order\Shipment;
 use ShoppingFeed\Manager\Api\Marketplace\OrderRepositoryInterface as MarketplaceOrderRepositoryInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface as SalesOrderImportStateInterface;
 use ShoppingFeed\Manager\Observer\BeforeQuoteSubmitObserver;
 
 class SourceDeductionProcessorPlugin
@@ -31,18 +33,27 @@ class SourceDeductionProcessorPlugin
     private $salesOrderImporter;
 
     /**
+     * @var SalesOrderImportStateInterface
+     */
+    private $salesOrderImportState;
+
+    /**
      * @param Registry $coreRegistry
      * @param MarketplaceOrderRepositoryInterface $marketplaceOrderRepository
      * @param SalesOrderImporterInterface $salesOrderImporter
+     * @param SalesOrderImportStateInterface|null $salesOrderImportState
      */
     public function __construct(
         Registry $coreRegistry,
         MarketplaceOrderRepositoryInterface $marketplaceOrderRepository,
-        SalesOrderImporterInterface $salesOrderImporter
+        SalesOrderImporterInterface $salesOrderImporter,
+        ?SalesOrderImportStateInterface $salesOrderImportState = null
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->marketplaceOrderRepository = $marketplaceOrderRepository;
         $this->salesOrderImporter = $salesOrderImporter;
+        $this->salesOrderImportState = $salesOrderImportState
+            ?? ObjectManager::getInstance()->get(SalesOrderImportStateInterface::class);
     }
 
     /**
@@ -67,7 +78,7 @@ class SourceDeductionProcessorPlugin
                 !empty($salesOrderIncrementId)
                 && ($salesOrderIncrementId === $importedSalesOrderIncrementId)
             ) {
-                $marketplaceOrder = $this->salesOrderImporter->getCurrentlyImportedMarketplaceOrder();
+                $marketplaceOrder = $this->salesOrderImportState->getCurrentlyImportedMarketplaceOrder();
             }
         } catch (\Exception $e) {
             // The order has not been created yet.

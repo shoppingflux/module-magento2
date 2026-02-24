@@ -11,6 +11,7 @@ use Magento\Sales\Model\Order;
 use ShoppingFeed\Manager\Api\Data\Marketplace\OrderInterface as MarketplaceOrderInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface as SalesOrderImportStateInterface;
 use ShoppingFeed\Manager\Model\Sales\Quote\Address\Total\MarketplaceFees as QuoteFeesTotal;
 
 class BeforeQuoteSubmitObserver implements ObserverInterface
@@ -41,16 +42,23 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
     private $orderGeneralConfig;
 
     /**
+     * @var SalesOrderImportStateInterface
+     */
+    private $salesOrderImportState;
+
+    /**
      * @param QuoteFeesTotal $quoteFeesTotal
      * @param Registry|null $coreRegistry
-     * @param OrderImporterInterface $orderImporter
+     * @param OrderImporterInterface|null $orderImporter
      * @param OrderConfigInterface|null $orderGeneralConfig
+     * @param SalesOrderImportStateInterface|null $salesOrderImportState
      */
     public function __construct(
         QuoteFeesTotal $quoteFeesTotal,
         ?Registry $coreRegistry = null,
         ?OrderImporterInterface $orderImporter = null,
-        ?OrderConfigInterface $orderGeneralConfig = null
+        ?OrderConfigInterface $orderGeneralConfig = null,
+        ?SalesOrderImportStateInterface $salesOrderImportState = null
     ) {
         $this->quoteFeesTotal = $quoteFeesTotal;
 
@@ -62,6 +70,9 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
 
         $this->orderGeneralConfig = $orderGeneralConfig
             ?? ObjectManager::getInstance()->get(OrderConfigInterface::class);
+
+        $this->salesOrderImportState = $salesOrderImportState
+            ?? ObjectManager::getInstance()->get(SalesOrderImportStateInterface::class);
     }
 
     public function execute(Observer $observer)
@@ -72,11 +83,11 @@ class BeforeQuoteSubmitObserver implements ObserverInterface
             && ($order = $observer->getEvent()->getData(self::EVENT_KEY_ORDER))
             && ($order instanceof Order)
         ) {
-            if ($this->orderImporter->isCurrentlyImportedQuote($quote)) {
-                $store = $this->orderImporter->getImportRunningForStore();
+            if ($this->salesOrderImportState->isCurrentlyImportedQuote($quote)) {
+                $store = $this->salesOrderImportState->getImportRunningForStore();
                 $marketplaceName = null;
 
-                if ($marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder()) {
+                if ($marketplaceOrder = $this->salesOrderImportState->getCurrentlyImportedMarketplaceOrder()) {
                     $marketplaceName = $marketplaceOrder->getMarketplaceName();
                 }
 
