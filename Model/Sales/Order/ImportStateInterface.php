@@ -54,12 +54,12 @@ interface ImportStateInterface
     /**
      * @param int|null $quoteId
      */
-    public function setCurrentlyImportedQuoteId(?int $quoteId);
+    public function setCurrentlyImportedQuoteId($quoteId);
 
     /**
      * @param bool $isBusinessQuote
      */
-    public function setIsCurrentlyImportedBusinessQuote(bool $isBusinessQuote);
+    public function setIsCurrentlyImportedBusinessQuote($isBusinessQuote);
 
     public function reset();
 }
