@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0] - 2026-02-24
+### Changed
+- Optimize execution context for order import observers and plugins
+
+### Fixed
+- Fix deactivation of required item options check when importing orders
+
 ## [1.15.0] - 2026-01-28
 ### Added
 - Implement a command to allow refreshing of exported product data only
