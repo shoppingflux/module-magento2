@@ -98,7 +98,7 @@ class ImportState implements ImportStateInterface
     /**
      * @param int|null $quoteId
      */
-    public function setCurrentlyImportedQuoteId(?int $quoteId)
+    public function setCurrentlyImportedQuoteId($quoteId)
     {
         $this->currentlyImportedQuoteId = $quoteId;
     }
@@ -106,7 +106,7 @@ class ImportState implements ImportStateInterface
     /**
      * @param bool $isBusinessQuote
      */
-    public function setIsCurrentlyImportedBusinessQuote(bool $isBusinessQuote)
+    public function setIsCurrentlyImportedBusinessQuote($isBusinessQuote)
     {
         $this->isCurrentlyImportedBusinessQuote = $isBusinessQuote;
     }
