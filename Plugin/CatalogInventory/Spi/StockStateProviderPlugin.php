@@ -4,10 +4,12 @@ namespace ShoppingFeed\Manager\Plugin\CatalogInventory\Spi;
 
 use Magento\CatalogInventory\Api\Data\StockItemInterface;
 use Magento\CatalogInventory\Model\Spi\StockStateProviderInterface;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\DataObject;
 use Magento\Framework\DataObjectFactory;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface as SalesOrderImportStateInterface;
 
 class StockStateProviderPlugin
 {
@@ -27,18 +29,27 @@ class StockStateProviderPlugin
     private $orderImporter;
 
     /**
+     * @var SalesOrderImportStateInterface
+     */
+    private $salesOrderImportState;
+
+    /**
      * @param DataObjectFactory $dataObjectFactory
      * @param OrderConfigInterface $orderGeneralConfig
      * @param OrderImporterInterface $orderImporter
+     * @param SalesOrderImportStateInterface|null $salesOrderImportState
      */
     public function __construct(
         DataObjectFactory $dataObjectFactory,
         OrderConfigInterface $orderGeneralConfig,
-        OrderImporterInterface $orderImporter
+        OrderImporterInterface $orderImporter,
+        ?SalesOrderImportStateInterface $salesOrderImportState = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
         $this->orderGeneralConfig = $orderGeneralConfig;
         $this->orderImporter = $orderImporter;
+        $this->salesOrderImportState = $salesOrderImportState
+            ?? ObjectManager::getInstance()->get(SalesOrderImportStateInterface::class);
     }
 
     /**
@@ -46,9 +57,11 @@ class StockStateProviderPlugin
      */
     private function shouldPreventQtyCheck()
     {
-        return $this->orderImporter->isImportRunning()
-            && ($store = $this->orderImporter->getImportRunningForStore())
-            && !$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store);
+        return (
+            $this->salesOrderImportState->isImportRunning()
+            && ($store = $this->salesOrderImportState->getImportRunningForStore())
+            && !$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
+        );
     }
 
     /**

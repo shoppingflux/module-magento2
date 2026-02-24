@@ -13,6 +13,7 @@ use Magento\SalesRule\Model\Rule\Action\Discount\DataFactory as DiscountDataFact
 use Magento\SalesRule\Model\Rule\Action\Discount\ExistingDiscountRuleCollector;
 use Magento\SalesRule\Model\Validator;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as SalesOrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface as SalesOrderImportStateInterface;
 
 class CartFixed extends BaseCartFixed
 {
@@ -23,14 +24,22 @@ class CartFixed extends BaseCartFixed
      */
     private $salesOrderImporter;
 
+    /**
+     * @var SalesOrderImportStateInterface
+     */
+    private $salesOrderImportState;
+
     public function __construct(
         Validator $validator,
         DiscountDataFactory $discountDataFactory,
         PriceCurrencyInterface $priceCurrency,
         DeltaPriceRound $deltaPriceRound,
-        SalesOrderImporterInterface $salesOrderImporter
+        SalesOrderImporterInterface $salesOrderImporter,
+        ?SalesOrderImportStateInterface $salesOrderImportState = null
     ) {
         $this->salesOrderImporter = $salesOrderImporter;
+        $this->salesOrderImportState = $salesOrderImportState
+            ?? ObjectManager::getInstance()->get(SalesOrderImportStateInterface::class);
 
         /**
          * Avoid the parent constructor call integrity check.
@@ -48,8 +57,8 @@ class CartFixed extends BaseCartFixed
      */
     public function calculate($rule, $item, $qty)
     {
-        $store = $this->salesOrderImporter->getImportRunningForStore();
-        $order = $this->salesOrderImporter->getCurrentlyImportedMarketplaceOrder();
+        $store = $this->salesOrderImportState->getImportRunningForStore();
+        $order = $this->salesOrderImportState->getCurrentlyImportedMarketplaceOrder();
 
         if ((null !== $order) && ($amount = $order->getCartDiscountAmount())) {
             $rule = clone $rule;

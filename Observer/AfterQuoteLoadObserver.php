@@ -6,11 +6,13 @@ use Magento\Catalog\Helper\Product as CatalogProductHelper;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\Product\Attribute\Source\Status as CatalogProductStatus;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Quote\Model\Quote;
 use ShoppingFeed\Manager\Model\Sales\Order\ConfigInterface as OrderConfigInterface;
 use ShoppingFeed\Manager\Model\Sales\Order\ImporterInterface as OrderImporterInterface;
+use ShoppingFeed\Manager\Model\Sales\Order\ImportStateInterface as SalesOrderImportStateInterface;
 
 class AfterQuoteLoadObserver implements ObserverInterface
 {
@@ -28,6 +30,11 @@ class AfterQuoteLoadObserver implements ObserverInterface
     private $orderGeneralConfig;
 
     /**
+     * @var SalesOrderImportStateInterface
+     */
+    private $salesOrderImportState;
+
+    /**
      * @var OrderImporterInterface
      */
     private $orderImporter;
@@ -41,27 +48,31 @@ class AfterQuoteLoadObserver implements ObserverInterface
      * @param CatalogProductHelper $catalogProductHelper
      * @param OrderConfigInterface $orderGeneralConfig
      * @param OrderImporterInterface $orderImporter
+     * @param SalesOrderImportStateInterface|null $salesOrderImportState
      */
     public function __construct(
         CatalogProductHelper $catalogProductHelper,
         OrderConfigInterface $orderGeneralConfig,
-        OrderImporterInterface $orderImporter
+        OrderImporterInterface $orderImporter,
+        ?SalesOrderImportStateInterface $salesOrderImportState = null
     ) {
         $this->catalogProductHelper = $catalogProductHelper;
         $this->orderGeneralConfig = $orderGeneralConfig;
         $this->orderImporter = $orderImporter;
+        $this->salesOrderImportState = $salesOrderImportState
+            ?? ObjectManager::getInstance()->get(SalesOrderImportStateInterface::class);
     }
 
     public function execute(Observer $observer)
     {
         if (($quote = $observer->getEvent()->getData(static::EVENT_KEY_QUOTE)) && ($quote instanceof Quote)) {
-            $this->isImportedQuoteEvent = $this->orderImporter->isCurrentlyImportedQuote($quote);
+            $this->isImportedQuoteEvent = $this->salesOrderImportState->isCurrentlyImportedQuote($quote);
 
             if ($this->isImportedQuoteEvent) {
                 $this->orderImporter->tagImportedQuote($quote);
 
                 if (
-                    ($store = $this->orderImporter->getImportRunningForStore())
+                    ($store = $this->salesOrderImportState->getImportRunningForStore())
                     && !$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
                 ) {
                     $quote->setIsSuperMode(true);
@@ -69,7 +80,7 @@ class AfterQuoteLoadObserver implements ObserverInterface
                 }
 
                 if (
-                    ($marketplaceOrder = $this->orderImporter->getCurrentlyImportedMarketplaceOrder())
+                    ($marketplaceOrder = $this->salesOrderImportState->getCurrentlyImportedMarketplaceOrder())
                     && $marketplaceOrder->isFulfilled()
                 ) {
                     $quote->setInventoryProcessed(true);
@@ -82,7 +93,7 @@ class AfterQuoteLoadObserver implements ObserverInterface
             $this->isImportedQuoteEvent
             && ($productCollection = $observer->getEvent()->getData(static::EVENT_KEY_PRODUCT_COLLECTION))
             && ($productCollection instanceof CatalogProductCollection)
-            && ($store = $this->orderImporter->getImportRunningForStore())
+            && ($store = $this->salesOrderImportState->getImportRunningForStore())
             && !$this->orderGeneralConfig->shouldCheckProductAvailabilityAndOptions($store)
         ) {
             /** @var CatalogProduct $product */
