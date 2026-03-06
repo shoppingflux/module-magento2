@@ -440,6 +440,7 @@
         <arguments>
             <argument name="processors" xsi:type="array">
                 <item name="magento_sales" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\Processor\MagentoSales</item>
+                <item name="fooman_pdf_customiser" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\Processor\FoomanPdfCustomiser</item>
                 <item name="xtento_pdf_customizer" xsi:type="object">ShoppingFeed\Manager\Model\Sales\Invoice\Pdf\Processor\XtentoPdfCustomizer</item>
             </argument>
         </arguments>
