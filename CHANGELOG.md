@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.17.0] - 2026-03-06
+### Added
+- Implement compatibility with the `Fooman_PdfCustomiser` module for invoice PDF synchronisation
+
 ## [1.16.0] - 2026-02-24
 ### Changed
 - Optimize execution context for order import observers and plugins
