@@ -1186,7 +1186,7 @@ class Importer implements ImporterInterface
 
             // Prefer adapting custom prices whenever possible.
             foreach ($selectionItems as $childItem) {
-                if ($itemPriceDifference * 100 % $childItem->getQty() === 0) {
+                if ((int) ($itemPriceDifference * 100) % (int) $childItem->getQty() === 0) {
                     $finalUnitPrice = $childItem->getCustomPrice() + $itemPriceDifference / $childItem->getQty();
 
                     if ($finalUnitPrice <= 0.0) {
