@@ -893,7 +893,7 @@ class Manager
                         continue;
                     }
 
-                    $itemMap = [];
+                    $items = [];
 
                     foreach ($shipments[$shipmentId]->getItems() as $shipmentItem) {
                         if (
@@ -903,14 +903,17 @@ class Manager
                             continue 2;
                         }
 
-                        $itemMap[$salesOrderItemShoppingFeedIds[$salesOrderItemId]] = (int) $shipmentItem->getQty();
+                        $items[] = [
+                            'id' => $salesOrderItemShoppingFeedIds[$salesOrderItemId],
+                            'quantity' => (int) $shipmentItem->getQty(),
+                        ];
                     }
 
                     $this->notifyStoreOrderPartialShipment(
                         $marketplaceOrder,
                         $shipmentId,
                         $chosenTrack,
-                        $itemMap,
+                        $items,
                         $store
                     );
                 }
