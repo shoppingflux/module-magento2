@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.17.1] - 2026-03-16
+### Fixed
+- Fix implicit conversion error when importing bundle items
+- Fix syncing of partial shipments
+
 ## [1.17.0] - 2026-03-06
 ### Added
 - Implement compatibility with the `Fooman_PdfCustomiser` module for invoice PDF synchronisation
