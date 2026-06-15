@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Sales\Order;
 
 use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\ProductMetadataInterface as AppMetadataInterface;
 use Magento\Framework\Registry;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\Information as StoreInformation;
@@ -61,6 +62,7 @@ class Config extends AbstractConfig implements ConfigInterface
     const KEY_ADDRESS_FIELD_PLACEHOLDER = 'address_field_placeholder';
     const KEY_ADDRESS_MAXIMUM_STREET_LINE_LENGTH = 'address_maximum_street_line_length';
     const KEY_USE_MOBILE_PHONE_NUMBER_FIRST = 'use_mobile_phone_number_first';
+    const KEY_REPLACE_INVALID_ADDRESS_CHARS = 'replace_invalid_address_chars';
     const KEY_DISABLE_TAX_FOR_BUSINESS_ORDERS = 'disable_tax_for_business_orders';
     const KEY_IMPORT_VAT_ID = 'import_vat_id';
     const KEY_DEFAULT_PAYMENT_METHOD_TITLE = 'default_payment_method_title';
@@ -148,6 +150,11 @@ class Config extends AbstractConfig implements ConfigInterface
     private $invoicePdfProcessorPool;
 
     /**
+     * @var AppMetadataInterface
+     */
+    private $appMetadata;
+
+    /**
      * @param FieldFactoryInterface $fieldFactory
      * @param ValueHandlerFactoryInterface $valueHandlerFactory
      * @param Registry $coreRegistry
@@ -161,6 +168,7 @@ class Config extends AbstractConfig implements ConfigInterface
      * @param InvoicePdfProcessorPoolInterface|null $invoicePdfProcessorPool
      * @param OrderNewStatusSource|null $orderNewStatusSource
      * @param OrderProcessingStatusSource|null $orderProcessingStatusSource
+     * @param AppMetadataInterface|null $appMetadata
      */
     public function __construct(
         FieldFactoryInterface $fieldFactory,
@@ -175,7 +183,8 @@ class Config extends AbstractConfig implements ConfigInterface
         ?OrderCompleteStatusSource $orderCompleteStatusSource = null,
         ?InvoicePdfProcessorPoolInterface $invoicePdfProcessorPool = null,
         ?OrderNewStatusSource $orderNewStatusSource = null,
-        ?OrderProcessingStatusSource $orderProcessingStatusSource = null
+        ?OrderProcessingStatusSource $orderProcessingStatusSource = null,
+        ?AppMetadataInterface $appMetadata = null
     ) {
         $this->coreRegistry = $coreRegistry;
         $this->scopeConfig = $scopeConfig;
@@ -198,6 +207,9 @@ class Config extends AbstractConfig implements ConfigInterface
 
         $this->invoicePdfProcessorPool = $invoicePdfProcessorPool
             ?? $objectManager->get(InvoicePdfProcessorPoolInterface::class);
+
+        $this->appMetadata = $appMetadata
+            ?? $objectManager->get(AppMetadataInterface::class);
 
         parent::__construct($fieldFactory, $valueHandlerFactory);
     }
@@ -340,530 +352,546 @@ class Config extends AbstractConfig implements ConfigInterface
             )
         );
 
-        return array_merge(
-            [
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ORDER_IMPORT_MODE,
-                        'valueHandler' => $orderImportModeHandler,
-                        'isRequired' => true,
-                        'defaultFormValue' => self::ORDER_IMPORT_MODE_ALL,
-                        'defaultUseValue' => self::ORDER_IMPORT_MODE_NONE,
-                        'label' => __('Import Orders'),
-                        'sortOrder' => 0,
-                    ]
-                ),
+        $baseFields = [
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_ORDER_IMPORT_MODE,
+                    'valueHandler' => $orderImportModeHandler,
+                    'isRequired' => true,
+                    'defaultFormValue' => self::ORDER_IMPORT_MODE_ALL,
+                    'defaultUseValue' => self::ORDER_IMPORT_MODE_NONE,
+                    'label' => __('Import Orders'),
+                    'sortOrder' => 0,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ORDER_IMPORT_DELAY,
-                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
-                        'isRequired' => true,
-                        'defaultFormValue' => 15,
-                        'defaultUseValue' => 15,
-                        'label' => __('Import Orders For'),
-                        'notice' => __('In days.'),
-                        'sortOrder' => 10,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_ORDER_IMPORT_DELAY,
+                    'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                    'isRequired' => true,
+                    'defaultFormValue' => 15,
+                    'defaultUseValue' => 15,
+                    'label' => __('Import Orders For'),
+                    'notice' => __('In days.'),
+                    'sortOrder' => 10,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Use Item Reference as Product ID'),
-                        'checkedNotice' => __('The item references will be considered to correspond to product IDs.'),
-                        'uncheckedNotice' => __(
-                            'The item references will be considered to correspond to product SKUs.'
-                        ),
-                        'sortOrder' => 20,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_USE_ITEM_REFERENCE_AS_PRODUCT_ID,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Use Item Reference as Product ID'),
+                    'checkedNotice' => __('The item references will be considered to correspond to product IDs.'),
+                    'uncheckedNotice' => __(
+                        'The item references will be considered to correspond to product SKUs.'
+                    ),
+                    'sortOrder' => 20,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Check Product Availability and Required Options'),
-                        'checkedNotice' => __(
-                            'Orders containing products that are not available or have required options will not be imported.'
-                        ),
-                        'uncheckedNotice' => __(
-                            'Orders containing products that are not available or have required options will still be imported.'
-                        ),
-                        'sortOrder' => 30,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_CHECK_PRODUCT_AVAILABILITY_AND_OPTIONS,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Check Product Availability and Required Options'),
+                    'checkedNotice' => __(
+                        'Orders containing products that are not available or have required options will not be imported.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'Orders containing products that are not available or have required options will still be imported.'
+                    ),
+                    'sortOrder' => 30,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_CHECK_PRODUCT_WEBSITES,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Check Product Websites'),
-                        'checkedNotice' => __(
-                            'Orders containing products that are not associated to the right website will not be imported.'
-                        ),
-                        'uncheckedNotice' => __(
-                            'Orders containing products that are not associated to the right website will still be imported.'
-                        ),
-                        'sortOrder' => 40,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_CHECK_PRODUCT_WEBSITES,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Check Product Websites'),
+                    'checkedNotice' => __(
+                        'Orders containing products that are not associated to the right website will not be imported.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'Orders containing products that are not associated to the right website will still be imported.'
+                    ),
+                    'sortOrder' => 40,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_CHECK_ADDRESS_COUNTRIES,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Check Address Countries'),
-                        'checkedNotice' => __(
-                            'The country of the addresses will be checked against the allowed countries for the website.'
-                        ),
-                        'uncheckedNotice' => __(
-                            'The country of the addresses will not be checked.'
-                        ),
-                        'sortOrder' => 45,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_CHECK_ADDRESS_COUNTRIES,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Check Address Countries'),
+                    'checkedNotice' => __(
+                        'The country of the addresses will be checked against the allowed countries for the website.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'The country of the addresses will not be checked.'
+                    ),
+                    'sortOrder' => 45,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_SYNC_NON_IMPORTED_ITEMS,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Synchronize Items of Non-Imported Orders with Shopping Feed'),
-                        'sortOrder' => 50,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_SYNC_NON_IMPORTED_ITEMS,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Synchronize Items of Non-Imported Orders with Shopping Feed'),
+                    'sortOrder' => 50,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_SYNC_NON_IMPORTED_ADDRESSES,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Synchronize Addresses of Non-Imported Orders with Shopping Feed'),
-                        'sortOrder' => 60,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_SYNC_NON_IMPORTED_ADDRESSES,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Synchronize Addresses of Non-Imported Orders with Shopping Feed'),
+                    'sortOrder' => 60,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_IMPORT_CUSTOMERS,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Import Customer Accounts'),
-                        'checkedNotice' => __(
-                            'A customer account will be created for each order, using the billing email address.'
-                        ),
-                        'uncheckedNotice' => __(
-                            'Orders will be imported using guest mode. No customer account will be created.'
-                        ),
-                        'checkedDependentFieldNames' => [
-                            self::KEY_DEFAULT_CUSTOMER_GROUP,
-                            self::KEY_MARKETPLACE_CUSTOMER_GROUPS,
-                            self::KEY_CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE,
-                        ],
-                        'sortOrder' => 70,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_IMPORT_CUSTOMERS,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Import Customer Accounts'),
+                    'checkedNotice' => __(
+                        'A customer account will be created for each order, using the billing email address.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'Orders will be imported using guest mode. No customer account will be created.'
+                    ),
+                    'checkedDependentFieldNames' => [
+                        self::KEY_DEFAULT_CUSTOMER_GROUP,
+                        self::KEY_MARKETPLACE_CUSTOMER_GROUPS,
+                        self::KEY_CUSTOMER_DEFAULT_ADDRESS_IMPORT_MODE,
+                    ],
+                    'sortOrder' => 70,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_DEFAULT_CUSTOMER_GROUP,
-                        'valueHandler' => $customerGroupHandler,
-                        'isRequired' => true,
-                        'label' => __('Default Customer Group'),
-                        'sortOrder' => 80,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_DEFAULT_CUSTOMER_GROUP,
+                    'valueHandler' => $customerGroupHandler,
+                    'isRequired' => true,
+                    'label' => __('Default Customer Group'),
+                    'sortOrder' => 80,
+                ]
+            ),
 
-                // Store fields:
-                // * Marketplace Customer Groups
-                // * Default Email Address
-                // * Marketplace Default Email Addresses
-                // * Force Default Email Address For
+            // Store fields:
+            // * Marketplace Customer Groups
+            // * Default Email Address
+            // * Marketplace Default Email Addresses
+            // * Force Default Email Address For
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_SPLIT_LAST_NAME_WHEN_EMPTY_FIRST_NAME,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Split Last Name When Empty First Name'),
-                        'sortOrder' => 130,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_SPLIT_LAST_NAME_WHEN_EMPTY_FIRST_NAME,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Split Last Name When Empty First Name'),
+                    'sortOrder' => 130,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Use Mobile Phone Number First (If Available)'),
-                        'sortOrder' => 140,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Use Mobile Phone Number First (If Available)'),
+                    'sortOrder' => 140,
+                ]
+            ),
 
-                // Default Phone Number (store field)
+            // Default Phone Number (store field)
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ADDRESS_FIELD_PLACEHOLDER,
-                        'valueHandler' => $textHandler,
-                        'isRequired' => true,
-                        'defaultFormValue' => $this->getDefaultAddressFieldPlaceholder(),
-                        'defaultUseValue' => $this->getDefaultAddressFieldPlaceholder(),
-                        'label' => __('Default Address Field Value'),
-                        'notice' => __('This value will be used as the default for other missing required fields.'),
-                        'sortOrder' => 160,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_ADDRESS_FIELD_PLACEHOLDER,
+                    'valueHandler' => $textHandler,
+                    'isRequired' => true,
+                    'defaultFormValue' => $this->getDefaultAddressFieldPlaceholder(),
+                    'defaultUseValue' => $this->getDefaultAddressFieldPlaceholder(),
+                    'label' => __('Default Address Field Value'),
+                    'notice' => __('This value will be used as the default for other missing required fields.'),
+                    'sortOrder' => 160,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ADDRESS_MAXIMUM_STREET_LINE_LENGTH,
-                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
-                        'defaultFormValue' => null,
-                        'defaultUseValue' => null,
-                        'label' => __('Maximum Length for Street Lines'),
-                        'notice' => __('Leave empty to keep the original street lines.'),
-                        'sortOrder' => 170,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_ADDRESS_MAXIMUM_STREET_LINE_LENGTH,
+                    'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                    'defaultFormValue' => null,
+                    'defaultUseValue' => null,
+                    'label' => __('Maximum Length for Street Lines'),
+                    'notice' => __('Leave empty to keep the original street lines.'),
+                    'sortOrder' => 170,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_DISABLE_TAX_FOR_BUSINESS_ORDERS,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Disable Tax for Business Orders'),
-                        'sortOrder' => 180,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_DISABLE_TAX_FOR_BUSINESS_ORDERS,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Disable Tax for Business Orders'),
+                    'sortOrder' => 180,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_IMPORT_VAT_ID,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Import VAT IDs'),
-                        'sortOrder' => 190,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_IMPORT_VAT_ID,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Import VAT IDs'),
+                    'sortOrder' => 190,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_DEFAULT_PAYMENT_METHOD_TITLE,
-                        'valueHandler' => $textHandler,
-                        'label' => __('Default Payment Method Title'),
-                        'notice' => $paymentMethodTitleNotice,
-                        'sortOrder' => 200,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_DEFAULT_PAYMENT_METHOD_TITLE,
+                    'valueHandler' => $textHandler,
+                    'label' => __('Default Payment Method Title'),
+                    'notice' => $paymentMethodTitleNotice,
+                    'sortOrder' => 200,
+                ]
+            ),
 
-                // Store fields:
-                // * Marketplace Payment Method Titles
+            // Store fields:
+            // * Marketplace Payment Method Titles
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_FORCE_CROSS_BORDER_TRADE,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Force Cross Border Trade'),
-                        'checkedNotice' =>
-                            __('Prevents amount mismatches due to tax computations using different address rates.')
-                            . "\n"
-                            . __('Only disable this if you know what you are doing.'),
-                        'uncheckedNotice' =>
-                            __('Prevents amount mismatches due to tax computations using different address rates.')
-                            . "\n"
-                            . __('Unless you know what you are doing, this option should probably be enabled.'),
-                        'sortOrder' => 220,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_FORCE_CROSS_BORDER_TRADE,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Force Cross Border Trade'),
+                    'checkedNotice' =>
+                        __('Prevents amount mismatches due to tax computations using different address rates.')
+                        . "\n"
+                        . __('Only disable this if you know what you are doing.'),
+                    'uncheckedNotice' =>
+                        __('Prevents amount mismatches due to tax computations using different address rates.')
+                        . "\n"
+                        . __('Unless you know what you are doing, this option should probably be enabled.'),
+                    'sortOrder' => 220,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_NEW_ORDER_STATUS,
-                        'valueHandler' => $orderNewStatusHandler,
-                        'label' => __('New Order Custom Status'),
-                        'notice' => __('Leave empty to use the default status.'),
-                        'sortOrder' => 230,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_NEW_ORDER_STATUS,
+                    'valueHandler' => $orderNewStatusHandler,
+                    'label' => __('New Order Custom Status'),
+                    'notice' => __('Leave empty to use the default status.'),
+                    'sortOrder' => 230,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_CREATE_INVOICE,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Create Invoice'),
-                        'checkedNotice' => __('Orders will be automatically invoiced upon import.'),
-                        'uncheckedNotice' => __('Orders will not be invoiced automatically.'),
-                        'sortOrder' => 240,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_CREATE_INVOICE,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Create Invoice'),
+                    'checkedNotice' => __('Orders will be automatically invoiced upon import.'),
+                    'uncheckedNotice' => __('Orders will not be invoiced automatically.'),
+                    'sortOrder' => 240,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_PROCESSING_ORDER_STATUS,
-                        'valueHandler' => $orderProcessingStatusHandler,
-                        'label' => __('Invoiced Order Custom Status'),
-                        'notice' => __('Leave empty to use the default status.'),
-                        'sortOrder' => 250,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_PROCESSING_ORDER_STATUS,
+                    'valueHandler' => $orderProcessingStatusHandler,
+                    'label' => __('Invoiced Order Custom Status'),
+                    'notice' => __('Leave empty to use the default status.'),
+                    'sortOrder' => 250,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Import Fulfilled Orders'),
-                        'sortOrder' => 260,
-                        'checkedDependentFieldNames' => [ self::KEY_CREATE_FULFILMENT_SHIPMENT ],
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_IMPORT_FULFILLED_ORDERS,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Import Fulfilled Orders'),
+                    'sortOrder' => 260,
+                    'checkedDependentFieldNames' => [ self::KEY_CREATE_FULFILMENT_SHIPMENT ],
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_CREATE_FULFILMENT_SHIPMENT,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Create Shipment for Fulfilled Orders'),
-                        'checkedNotice' => __(
-                            'Orders fulfilled by the marketplaces will be automatically shipped upon import.'
-                        ),
-                        'uncheckedNotice' => __(
-                            'Orders fulfilled by the marketplaces will not be shipped automatically.'
-                        ),
-                        'sortOrder' => 270,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_CREATE_FULFILMENT_SHIPMENT,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Create Shipment for Fulfilled Orders'),
+                    'checkedNotice' => __(
+                        'Orders fulfilled by the marketplaces will be automatically shipped upon import.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'Orders fulfilled by the marketplaces will not be shipped automatically.'
+                    ),
+                    'sortOrder' => 270,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_IMPORT_SHIPPED_ORDERS,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Import Already Shipped Orders'),
-                        'checkedDependentFieldNames' => [ self::KEY_CREATE_SHIPPED_SHIPMENT ],
-                        'sortOrder' => 280,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_IMPORT_SHIPPED_ORDERS,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Import Already Shipped Orders'),
+                    'checkedDependentFieldNames' => [ self::KEY_CREATE_SHIPPED_SHIPMENT ],
+                    'sortOrder' => 280,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_COMPLETE_ORDER_STATUS,
-                        'valueHandler' => $orderCompleteStatusHandler,
-                        'label' => __('Shipped Order Custom Status'),
-                        'sortOrder' => 290,
-                        'notice' => __('Leave empty to use the default status.'),
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_COMPLETE_ORDER_STATUS,
+                    'valueHandler' => $orderCompleteStatusHandler,
+                    'label' => __('Shipped Order Custom Status'),
+                    'sortOrder' => 290,
+                    'notice' => __('Leave empty to use the default status.'),
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_CREATE_SHIPPED_SHIPMENT,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Create Shipment for Already Shipped Orders'),
-                        'checkedNotice' => __(
-                            'Orders already shipped on the marketplaces will be automatically shipped upon import.'
-                        ),
-                        'uncheckedNotice' => __(
-                            'Orders already shipped on the marketplaces will not be shipped automatically.'
-                        ),
-                        'sortOrder' => 300,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_CREATE_SHIPPED_SHIPMENT,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Create Shipment for Already Shipped Orders'),
+                    'checkedNotice' => __(
+                        'Orders already shipped on the marketplaces will be automatically shipped upon import.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'Orders already shipped on the marketplaces will not be shipped automatically.'
+                    ),
+                    'sortOrder' => 300,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_INVOICE_PDF_PROCESSOR_CODE,
-                        'valueHandler' => $invoicePdfProcessorHandler,
-                        'isRequired' => false,
-                        'label' => __('Invoice PDF Processor'),
-                        'notice' => __(
-                            'Warning: the size of the generated PDF files should not exceed 2 MB. Any files larger than this will be ignored.'
-                        ),
-                        'sortOrder' => 340,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_INVOICE_PDF_PROCESSOR_CODE,
+                    'valueHandler' => $invoicePdfProcessorHandler,
+                    'isRequired' => false,
+                    'label' => __('Invoice PDF Processor'),
+                    'notice' => __(
+                        'Warning: the size of the generated PDF files should not exceed 2 MB. Any files larger than this will be ignored.'
+                    ),
+                    'sortOrder' => 340,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_INVOICE_PDF_UPLOAD_DELAY,
-                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
-                        'isRequired' => true,
-                        'defaultFormValue' => 15,
-                        'defaultUseValue' => 15,
-                        'label' => __('Maximum Delay for Uploading Invoice PDF'),
-                        'notice' => __(
-                            'In days. Only orders imported within this delay will be considered for invoice PDF upload.'
-                        ),
-                        'sortOrder' => 350,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_INVOICE_PDF_UPLOAD_DELAY,
+                    'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                    'isRequired' => true,
+                    'defaultFormValue' => 15,
+                    'defaultUseValue' => 15,
+                    'label' => __('Maximum Delay for Uploading Invoice PDF'),
+                    'notice' => __(
+                        'In days. Only orders imported within this delay will be considered for invoice PDF upload.'
+                    ),
+                    'sortOrder' => 350,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ORDER_SYNCING_DELAY,
-                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
-                        'isRequired' => true,
-                        'defaultFormValue' => 15,
-                        'defaultUseValue' => 15,
-                        'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
-                        'notice' => __('In days.'),
-                        'sortOrder' => 360,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_ORDER_SYNCING_DELAY,
+                    'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                    'isRequired' => true,
+                    'defaultFormValue' => 15,
+                    'defaultUseValue' => 15,
+                    'label' => __('Synchronize Imported Orders Canceled on the Marketplaces For'),
+                    'notice' => __('In days.'),
+                    'sortOrder' => 360,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ORDER_REFUSAL_SYNCING_ACTION,
-                        'valueHandler' => $orderSyncingActionHandler,
-                        'isRequired' => true,
-                        'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
-                        'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
-                        'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
-                        'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 370,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_ORDER_REFUSAL_SYNCING_ACTION,
+                    'valueHandler' => $orderSyncingActionHandler,
+                    'isRequired' => true,
+                    'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                    'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                    'label' => __('Synchronization Action in Case of Refusal on the Marketplace'),
+                    'notice' => __('The action will only be applied if it is compatible with the order state.'),
+                    'sortOrder' => 370,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ORDER_CANCELLATION_SYNCING_ACTION,
-                        'valueHandler' => $orderSyncingActionHandler,
-                        'isRequired' => true,
-                        'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
-                        'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
-                        'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
-                        'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 380,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_ORDER_CANCELLATION_SYNCING_ACTION,
+                    'valueHandler' => $orderSyncingActionHandler,
+                    'isRequired' => true,
+                    'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                    'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                    'label' => __('Synchronization Action in Case of Cancellation on the Marketplace'),
+                    'notice' => __('The action will only be applied if it is compatible with the order state.'),
+                    'sortOrder' => 380,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Select::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ORDER_REFUND_SYNCING_ACTION,
-                        'valueHandler' => $orderSyncingActionHandler,
-                        'isRequired' => true,
-                        'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
-                        'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
-                        'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
-                        'notice' => __('The action will only be applied if it is compatible with the order state.'),
-                        'sortOrder' => 390,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Select::TYPE_CODE,
+                [
+                    'name' => self::KEY_ORDER_REFUND_SYNCING_ACTION,
+                    'valueHandler' => $orderSyncingActionHandler,
+                    'isRequired' => true,
+                    'defaultFormValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                    'defaultUseValue' => SalesOrderSyncerInterface::SYNCING_ACTION_NONE,
+                    'label' => __('Synchronization Action in Case of Refund on the Marketplace'),
+                    'notice' => __('The action will only be applied if it is compatible with the order state.'),
+                    'sortOrder' => 390,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_SHOULD_SYNC_PARTIAL_SHIPMENTS,
-                        'isCheckedByDefault' => true,
-                        'label' => __('Synchronize Partial Shipments'),
-                        'checkedNotice' => __(
-                            'When an order is partially shipped, only the relevant items will be shipped on the marketplace, if possible.'
-                        ),
-                        'uncheckedNotice' => __(
-                            'When an order is partially shipped, the entire order will be shipped on the marketplace.'
-                        ),
-                        'sortOrder' => 400,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_SHOULD_SYNC_PARTIAL_SHIPMENTS,
+                    'isCheckedByDefault' => true,
+                    'label' => __('Synchronize Partial Shipments'),
+                    'checkedNotice' => __(
+                        'When an order is partially shipped, only the relevant items will be shipped on the marketplace, if possible.'
+                    ),
+                    'uncheckedNotice' => __(
+                        'When an order is partially shipped, the entire order will be shipped on the marketplace.'
+                    ),
+                    'sortOrder' => 400,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY,
-                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
-                        'isRequired' => true,
-                        'defaultFormValue' => 24,
-                        'defaultUseValue' => 24,
-                        'label' => __('Maximum Delay for Synchronizing Shipments'),
-                        'notice' => __(
-                            'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
-                        ),
-                        'sortOrder' => 410,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_SHIPMENT_SYNCING_MAXIMUM_DELAY,
+                    'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                    'isRequired' => true,
+                    'defaultFormValue' => 24,
+                    'defaultUseValue' => 24,
+                    'label' => __('Maximum Delay for Synchronizing Shipments'),
+                    'notice' => __(
+                        'For each shipment, the module will wait at most that many hours for tracking data to become available, before sending the corresponding update.'
+                    ),
+                    'sortOrder' => 410,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_SYNC_DELIVERED_ORDERS,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Synchronize Delivered Orders'),
-                        'sortOrder' => 420,
-                        'checkedDependentFieldNames' => [ self::KEY_ORDER_DELIVERED_STATUSES ],
-                    ]
-                ),
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_SYNC_DELIVERED_ORDERS,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Synchronize Delivered Orders'),
+                    'sortOrder' => 420,
+                    'checkedDependentFieldNames' => [ self::KEY_ORDER_DELIVERED_STATUSES ],
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    MultiSelect::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ORDER_DELIVERED_STATUSES,
-                        'valueHandler' => $orderCompleteStatusHandler,
-                        'isRequired' => true,
-                        'defaultFormValue' => [],
-                        'defaultUseValue' => [],
-                        'label' => __('Order Delivered Statuses'),
-                        'notice' => __('An order is considered delivered if it has one of the selected statuses.'),
-                        'sortOrder' => 430,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                MultiSelect::TYPE_CODE,
+                [
+                    'name' => self::KEY_ORDER_DELIVERED_STATUSES,
+                    'valueHandler' => $orderCompleteStatusHandler,
+                    'isRequired' => true,
+                    'defaultFormValue' => [],
+                    'defaultUseValue' => [],
+                    'label' => __('Order Delivered Statuses'),
+                    'notice' => __('An order is considered delivered if it has one of the selected statuses.'),
+                    'sortOrder' => 430,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    TextBox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_DELIVERY_SYNCING_MAXIMUM_DELAY,
-                        'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
-                        'isRequired' => true,
-                        'defaultFormValue' => 15,
-                        'defaultUseValue' => 15,
-                        'label' => __('Maximum Delay for Synchronizing Deliveries'),
-                        'notice' => __(
-                            'In days. Only orders imported within this delay will be considered for delivery synchronization.'
-                        ),
-                        'sortOrder' => 440,
-                    ]
-                ),
+            $this->fieldFactory->create(
+                TextBox::TYPE_CODE,
+                [
+                    'name' => self::KEY_DELIVERY_SYNCING_MAXIMUM_DELAY,
+                    'valueHandler' => $this->valueHandlerFactory->create(PositiveIntegerHandler::TYPE_CODE),
+                    'isRequired' => true,
+                    'defaultFormValue' => 15,
+                    'defaultUseValue' => 15,
+                    'label' => __('Maximum Delay for Synchronizing Deliveries'),
+                    'notice' => __(
+                        'In days. Only orders imported within this delay will be considered for delivery synchronization.'
+                    ),
+                    'sortOrder' => 440,
+                ]
+            ),
 
-                $this->fieldFactory->create(
-                    Checkbox::TYPE_CODE,
-                    [
-                        'name' => self::KEY_ENABLE_DEBUG_MODE,
-                        'isCheckedByDefault' => false,
-                        'label' => __('Enable Debug Mode'),
-                        'checkedNotice' => __(
-                            'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
-                        ),
-                        'uncheckedNotice' => __('Debug mode is disabled.'),
-                        'sortOrder' => 450,
-                    ]
-                ),
-            ],
-            parent::getBaseFields()
-        );
+            $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_ENABLE_DEBUG_MODE,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Enable Debug Mode'),
+                    'checkedNotice' => __(
+                        'Debug mode is enabled. Debugging data will be logged to "/var/log/sfm_sales_order.log".'
+                    ),
+                    'uncheckedNotice' => __('Debug mode is disabled.'),
+                    'sortOrder' => 450,
+                ]
+            ),
+        ];
+
+        // The customer address field validators this option works around were introduced in Magento 2.4.8.
+        if (version_compare($this->appMetadata->getVersion(), '2.4.8', '>=')) {
+            $baseFields[] = $this->fieldFactory->create(
+                Checkbox::TYPE_CODE,
+                [
+                    'name' => self::KEY_REPLACE_INVALID_ADDRESS_CHARS,
+                    'isCheckedByDefault' => false,
+                    'label' => __('Replace Invalid Characters in Address Fields'),
+                    'checkedNotice' => __(
+                        'Characters rejected by Magento in the customer name, city, street and telephone fields will be replaced with a valid equivalent, or with a space.'
+                    ),
+                    'uncheckedNotice' => __('Address field values will be imported as-is.'),
+                    'sortOrder' => 175,
+                ]
+            );
+        }
+
+        return array_merge($baseFields, parent::getBaseFields());
     }
 
     protected function getStoreFields(StoreInterface $store)
@@ -1383,7 +1411,10 @@ class Config extends AbstractConfig implements ConfigInterface
      */
     public function getDefaultAddressFieldPlaceholder()
     {
-        return '__';
+        // Magento >= 2.4.8 rejects underscores in the city, street and telephone fields,
+        // so the legacy "__" placeholder is no longer valid there.
+        // "-" is (currently) accepted by every address field validator.
+        return version_compare($this->appMetadata->getVersion(), '2.4.8', '>=') ? '-' : '__';
     }
 
     public function getAddressFieldPlaceholder(StoreInterface $store)
@@ -1399,6 +1430,11 @@ class Config extends AbstractConfig implements ConfigInterface
     public function shouldUseMobilePhoneNumberFirst(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_USE_MOBILE_PHONE_NUMBER_FIRST);
+    }
+
+    public function shouldReplaceInvalidAddressChars(StoreInterface $store)
+    {
+        return (bool) $this->getFieldValue($store, self::KEY_REPLACE_INVALID_ADDRESS_CHARS);
     }
 
     public function shouldDisableTaxForBusinessOrders(StoreInterface $store)

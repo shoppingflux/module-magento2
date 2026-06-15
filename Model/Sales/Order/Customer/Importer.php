@@ -4,6 +4,7 @@ namespace ShoppingFeed\Manager\Model\Sales\Order\Customer;
 
 use Magento\Config\Model\Config\Source\Nooptreq as NooptreqSource;
 use Magento\Customer\Api\CustomerMetadataInterface;
+use Magento\Customer\Api\Data\AddressInterface as CustomerAddressInterface;
 use Magento\Customer\Api\Data\CustomerInterface;
 use Magento\Customer\Helper\Address as CustomerAddressHelper;
 use Magento\Customer\Model\AddressFactory as CustomerAddressFactory;
@@ -17,6 +18,7 @@ use Magento\Directory\Helper\Data as DirectoryHelper;
 use Magento\Directory\Model\Region;
 use Magento\Directory\Model\ResourceModel\Region\CollectionFactory as RegionCollectionFactory;
 use Magento\Framework\App\ObjectManager;
+use Magento\Framework\DataObject;
 use Magento\Framework\DataObjectFactory;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Filter\Template as TemplateFilter;
@@ -95,6 +97,58 @@ class Importer
         '50' => 'Zaragoza',
         '51' => 'Ceuta',
         '52' => 'Melilla',
+    ];
+
+    /**
+     * Patterns matching a single character that Magento's (>= 2.4.8) customer address validators reject.
+     *
+     * These mirror the (private) patterns used by the core validators (which expose no public accessor).
+     *
+     * @see \Magento\Customer\Model\Validator\Name
+     * @see \Magento\Customer\Model\Validator\City
+     * @see \Magento\Customer\Model\Validator\Street
+     * @see \Magento\Customer\Model\Validator\Telephone
+     */
+    const VALIDATOR_PATTERN_NAME = '/[^\p{L}\p{M}\,\-\_\.\'’`&\s\d]/u';
+    const VALIDATOR_PATTERN_CITY = '/[^\p{L}\p{M}\s\-\']/u';
+    const VALIDATOR_PATTERN_STREET = '/[^\p{L}\p{M}"\[\]\,\-\.\'’`&\s\d]/u';
+    const VALIDATOR_PATTERN_TELEPHONE = '/[^\d\s\+\-\(\)]/u';
+
+    /**
+     * Default correspondence table used to replace invalid address characters with a known equivalent.
+     */
+    const DEFAULT_INVALID_CHARACTER_REPLACEMENTS = [
+        '–' => '-',
+        '—' => '-',
+        '―' => '-',
+        '‐' => '-',
+        '‑' => '-',
+        '‒' => '-',
+        '−' => '-',
+        '•' => '-',
+        '·' => '-',
+        '’' => '\'',
+        '‘' => '\'',
+        '‚' => '\'',
+        '`' => '\'',
+        '“' => '\'',
+        '”' => '\'',
+        '„' => '\'',
+        '«' => '\'',
+        '»' => '\'',
+    ];
+
+    /**
+     * Default pattern to apply per customer address field, indexed by attribute code.
+     *
+     * Overridable through dependency injection if the core validators ever change.
+     */
+    const DEFAULT_ADDRESS_FIELD_INVALID_CHARACTER_PATTERNS = [
+        CustomerAddressInterface::FIRSTNAME => self::VALIDATOR_PATTERN_NAME,
+        CustomerAddressInterface::LASTNAME => self::VALIDATOR_PATTERN_NAME,
+        CustomerAddressInterface::CITY => self::VALIDATOR_PATTERN_CITY,
+        CustomerAddressInterface::STREET => self::VALIDATOR_PATTERN_STREET,
+        CustomerAddressInterface::TELEPHONE => self::VALIDATOR_PATTERN_TELEPHONE,
     ];
 
     /**
@@ -178,6 +232,16 @@ class Importer
     private $spainRegionPrefixToCodeMapping;
 
     /**
+     * @var array
+     */
+    private $invalidCharacterReplacements;
+
+    /**
+     * @var array
+     */
+    private $addressFieldInvalidCharacterPatterns;
+
+    /**
      * @var string[]|null
      */
     private $existingCountryCodes = null;
@@ -199,6 +263,8 @@ class Importer
      * @param EmailAddressValidator|null $emailAddressValidator
      * @param BaseStoreManagerInterface|null $baseStoreManager
      * @param array|null $spainRegionPrefixToCodeMapping
+     * @param array|null $invalidCharacterReplacements
+     * @param array|null $addressFieldInvalidCharacterPatterns
      */
     public function __construct(
         DataObjectFactory $dataObjectFactory,
@@ -216,7 +282,9 @@ class Importer
         OrderConfigInterface $orderGeneralConfig,
         ?EmailAddressValidator $emailAddressValidator = null,
         ?BaseStoreManagerInterface $baseStoreManager = null,
-        $spainRegionPrefixToCodeMapping = null
+        $spainRegionPrefixToCodeMapping = null,
+        $invalidCharacterReplacements = null,
+        $addressFieldInvalidCharacterPatterns = null
     ) {
         $this->dataObjectFactory = $dataObjectFactory;
         $this->randomGenerator = $randomGenerator;
@@ -245,6 +313,22 @@ class Importer
                 $this->spainRegionPrefixToCodeMapping[$prefix] = $code;
             }
         }
+
+        $this->invalidCharacterReplacements = self::DEFAULT_INVALID_CHARACTER_REPLACEMENTS;
+
+        if (is_array($invalidCharacterReplacements)) {
+            foreach ($invalidCharacterReplacements as $search => $replacement) {
+                $this->invalidCharacterReplacements[$search] = $replacement;
+            }
+        }
+
+        $this->addressFieldInvalidCharacterPatterns = self::DEFAULT_ADDRESS_FIELD_INVALID_CHARACTER_PATTERNS;
+
+        if (is_array($addressFieldInvalidCharacterPatterns)) {
+            foreach ($addressFieldInvalidCharacterPatterns as $fieldType => $pattern) {
+                $this->addressFieldInvalidCharacterPatterns[$fieldType] = $pattern;
+            }
+        }
     }
 
     /**
@@ -257,6 +341,83 @@ class Importer
         return ('' !== trim((string) $marketplaceValue))
             ? $marketplaceValue
             : $this->orderGeneralConfig->getAddressFieldPlaceholder($store);
+    }
+
+    /**
+     * @param DataObject $object
+     * @param StoreInterface $store
+     * @param string[]|null $fields  Attribute codes to clean; defaults to every validated field.
+     */
+    private function cleanAddressFields(DataObject $object, StoreInterface $store, ?array $fields = null)
+    {
+        if (!$this->orderGeneralConfig->shouldReplaceInvalidAddressChars($store)) {
+            return;
+        }
+
+        foreach ($fields ?? array_keys($this->addressFieldInvalidCharacterPatterns) as $field) {
+            if (!$object->hasData($field)) {
+                continue;
+            }
+
+            $originalValue = $object->getData($field);
+            $cleanedValue = $this->cleanAddressFieldValue($field, $originalValue);
+
+            if (('' === $cleanedValue) && ('' !== trim((string) $originalValue))) {
+                $placeholder = (CustomerAddressInterface::TELEPHONE === $field)
+                    ? $this->orderGeneralConfig->getDefaultPhoneNumber($store)
+                    : $this->orderGeneralConfig->getAddressFieldPlaceholder($store);
+
+                if ($placeholder !== '') {
+                    $cleanedValue = $this->cleanAddressFieldValue($field, $placeholder);
+
+                    if ('' === $cleanedValue) {
+                        $cleanedValue = '-';
+                    }
+                }
+            }
+
+            $object->setData($field, $cleanedValue);
+        }
+    }
+
+    /**
+     * @param string $fieldType
+     * @param string|null $value
+     * @return string
+     */
+    private function cleanAddressFieldValue($fieldType, $value)
+    {
+        $value = (string) $value;
+
+        if (('' === $value) || !isset($this->addressFieldInvalidCharacterPatterns[$fieldType])) {
+            return $value;
+        }
+
+        $pattern = $this->addressFieldInvalidCharacterPatterns[$fieldType];
+        $replacements = $this->invalidCharacterReplacements;
+
+        $cleanedValue = preg_replace_callback(
+            $pattern,
+            function (array $matches) use ($replacements) {
+                return $replacements[$matches[0]] ?? ' ';
+            },
+            $value
+        );
+
+        // A null result means an error occurred (e.g. malformed UTF-8): leave the value untouched.
+        if (null === $cleanedValue) {
+            return $value;
+        }
+
+        // A replacement taken from the table might itself hold characters that are invalid for this field:
+        // turn anything still unexpected into a space to guarantee a valid result.
+        $cleanedValue = preg_replace($pattern, ' ', $cleanedValue);
+
+        if (null === $cleanedValue) {
+            return $value;
+        }
+
+        return trim((string) preg_replace('/\h+/u', ' ', $cleanedValue));
     }
 
     /**
@@ -609,7 +770,8 @@ class Importer
 
         if ($address->getType() === MarketplaceAddressInterface::TYPE_BILLING) {
             $vatId = trim(
-                (string) $order->getAdditionalFields()
+                (string) $order
+                    ->getAdditionalFields()
                     ->getDataByKey(MarketplaceOrderInterface::ADDITIONAL_FIELD_VAT_ID)
             );
         }
@@ -677,8 +839,8 @@ class Importer
         $customer->addData(
             [
                 'is_active' => true,
-                'lastname' => $this->getAddressRequiredFieldValue($billingAddress->getLastName(), $store),
-                'firstname' => $this->getAddressRequiredFieldValue($billingAddress->getFirstName(), $store),
+                'lastname' => $this->getAddressLastname($order, $billingAddress, $store),
+                'firstname' => $this->getAddressFirstname($order, $billingAddress, $store),
             ]
         );
 
@@ -694,6 +856,12 @@ class Importer
                 $address->setData('should_ignore_validation', true);
             }
         }
+
+        $this->cleanAddressFields(
+            $customer,
+            $store,
+            [ CustomerAddressInterface::FIRSTNAME, CustomerAddressInterface::LASTNAME ]
+        );
 
         $this->customerResource->save($customer);
 
@@ -788,6 +956,9 @@ class Importer
         }
 
         $customerAddress->setCustomerId($customer->getId());
+
+        $this->cleanAddressFields($customerAddress, $store);
+
         $this->customerAddressResource->save($customerAddress);
 
         // Remove the customer from the registry cache, because the cached version does not know about the new address.
@@ -841,6 +1012,8 @@ class Importer
         if ($this->orderGeneralConfig->shouldImportVatId($store)) {
             $quoteAddress->setVatId($this->getAddressVatId($order, $address, $store));
         }
+
+        $this->cleanAddressFields($quoteAddress, $store);
 
         return $quoteAddress;
     }

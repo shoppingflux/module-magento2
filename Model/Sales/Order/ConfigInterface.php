@@ -161,6 +161,12 @@ interface ConfigInterface extends BaseConfig
      * @param StoreInterface $store
      * @return bool
      */
+    public function shouldReplaceInvalidAddressChars(StoreInterface $store);
+
+    /**
+     * @param StoreInterface $store
+     * @return bool
+     */
     public function shouldDisableTaxForBusinessOrders(StoreInterface $store);
 
     /**
