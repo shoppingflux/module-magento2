@@ -26,6 +26,8 @@ use ShoppingFeed\Sdk\Api\Order\OrderItem as ApiItem;
 
 class Importer
 {
+    const PAYMENT_TAX_MODE_EXCLUDED = 'tax_excluded';
+
     /**
      * @var LoggerInterface
      */
@@ -201,6 +203,28 @@ class Importer
 
     /**
      * @param ApiOrder $apiOrder
+     * @return bool
+     */
+    public function isTaxExcludedBusinessApiOrder(ApiOrder $apiOrder)
+    {
+        $paymentData = $apiOrder->getPaymentInformation();
+        $paymentMode = trim((string) ($paymentData['taxMode'] ?? ''));
+
+        if (strtolower($paymentMode) !== self::PAYMENT_TAX_MODE_EXCLUDED) {
+            return false;
+        }
+
+        foreach ($apiOrder->getItems() as $apiItem) {
+            if ((float) $apiItem->getTaxAmount() > 0) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param ApiOrder $apiOrder
      * @param StoreInterface $store
      * @param bool $updateOnly
      * @throws \Exception
@@ -257,10 +281,20 @@ class Importer
         }
 
         $apiOrderData = $apiOrder->toArray();
+        $hasAdditionalFields = !empty($apiOrderData['additionalFields']) && is_array($apiOrderData['additionalFields']);
+        $isTaxExcludedBusinessOrder = $this->isTaxExcludedBusinessApiOrder($apiOrder);
 
-        if (!empty($apiOrderData['additionalFields']) && is_array($apiOrderData['additionalFields'])) {
+        if ($hasAdditionalFields || $isTaxExcludedBusinessOrder) {
             $additionalFields = $this->dataObjectFactory->create();
-            $additionalFields->setData($apiOrderData['additionalFields']);
+
+            if ($hasAdditionalFields) {
+                $additionalFields->setData($apiOrderData['additionalFields']);
+            }
+
+            if ($isTaxExcludedBusinessOrder) {
+                $additionalFields->setData(MarketplaceOrderInterface::ADDITIONAL_FIELD_IS_BUSINESS_ORDER, '1');
+            }
+
             $this->importApiAdditionalOrderData($apiOrder, $marketplaceOrder, $additionalFields, $store);
         }
 
