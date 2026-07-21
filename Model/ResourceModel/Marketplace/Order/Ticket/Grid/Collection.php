@@ -41,6 +41,7 @@ class Collection extends TicketCollection implements SearchResultInterface
 
         $this->addFilterToMap('order_id', 'main_table.order_id');
         $this->addFilterToMap('store_id', 'order_table.store_id');
+        $this->addFilterToMap('status', 'main_table.status');
         $this->addFilterToMap('created_at', 'main_table.created_at');
 
         return $this;
