@@ -54,6 +54,19 @@
                     </item>
                 </argument>
             </action>
+            <action name="delete">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="type" xsi:type="string">delete</item>
+                        <item name="label" xsi:type="string" translate="true">Delete</item>
+                        <item name="url" xsi:type="url" path="shoppingfeed_manager/marketplace_order_log/massDelete"/>
+                        <item name="confirm" xsi:type="array">
+                            <item name="title" xsi:type="string" translate="true">Delete Order Logs</item>
+                            <item name="message" xsi:type="string" translate="true">Are you sure you want to delete the selected order logs?</item>
+                        </item>
+                    </item>
+                </argument>
+            </action>
         </massaction>
         <paging name="listing_paging"/>
     </listingToolbar>

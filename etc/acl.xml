@@ -35,6 +35,7 @@
 
                         <resource id="ShoppingFeed_Manager::marketplace_order_logs" title="Order Logs" translate="title" sortOrder="30000">
                             <resource id="ShoppingFeed_Manager::marketplace_order_log_mark_as_read" title="Mark as Read" translate="title" sortOrder="10000"/>
+                            <resource id="ShoppingFeed_Manager::marketplace_order_log_delete" title="Delete Order Logs" translate="title" sortOrder="20000"/>
                         </resource>
 
                         <resource id="ShoppingFeed_Manager::marketplace_order_tickets" title="Order Sync Tickets" translate="title" sortOrder="40000"/>

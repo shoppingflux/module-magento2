@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Marketplace\Order;
 
+use Magento\Framework\Exception\CouldNotDeleteException;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use ShoppingFeed\Manager\Api\Marketplace\Order\LogRepositoryInterface;
@@ -52,5 +53,21 @@ class LogRepository implements LogRepositoryInterface
         }
 
         return $log;
+    }
+
+    public function delete(LogInterface $log)
+    {
+        try {
+            $this->logResource->delete($log);
+        } catch (\Exception $exception) {
+            throw new CouldNotDeleteException(__($exception->getMessage()));
+        }
+
+        return true;
+    }
+
+    public function deleteById($logId)
+    {
+        return $this->delete($this->getById($logId));
     }
 }
