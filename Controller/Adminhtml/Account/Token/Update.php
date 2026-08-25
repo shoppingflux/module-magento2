@@ -13,7 +13,6 @@ use ShoppingFeed\Manager\Api\Data\AccountInterface;
 use ShoppingFeed\Manager\Controller\Adminhtml\AccountAction;
 use ShoppingFeed\Manager\Model\Account\Importer as AccountImporter;
 use ShoppingFeed\Manager\Model\ResourceModel\Account\Store\CollectionFactory as StoreCollectionFactory;
-use ShoppingFeed\Sdk\Api\Session\SessionResource;
 
 class Update extends AccountAction
 {
@@ -42,8 +41,10 @@ class Update extends AccountAction
         parent::__construct($context, $coreRegistry, $pageResultFactory, $accountRepository);
     }
 
-    private function isApiSessionMatchingAccount(SessionResource $session, AccountInterface $account)
+    private function isApiSessionMatchingAccount(AccountInterface $account, $apiToken)
     {
+        $session = $this->accountImporter->getApiSessionByToken($apiToken);
+
         if (!$sessionAccountId = (int) $session->getId()) {
             return false;
         }
@@ -53,7 +54,7 @@ class Update extends AccountAction
         }
 
         $account = clone $account;
-        $account->setApiToken($session->getToken());
+        $account->setApiToken($apiToken);
 
         $sessionStores = $this->accountImporter->getAccountStoresOptionHash($account);
 
@@ -80,8 +81,7 @@ class Update extends AccountAction
             if (
                 is_array($data)
                 && ($token = trim((string) ($data['token'] ?? '')))
-                && ($session = $this->accountImporter->getApiSessionByToken($token))
-                && $this->isApiSessionMatchingAccount($session, $account)
+                && $this->isApiSessionMatchingAccount($account, $token)
             ) {
                 $account->setApiToken($token);
                 $this->accountRepository->save($account);

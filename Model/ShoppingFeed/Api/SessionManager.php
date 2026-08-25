@@ -68,6 +68,37 @@ class SessionManager
     }
 
     /**
+     * @param string $login
+     * @param string $password
+     * @return string
+     * @throws LocalizedException
+     */
+    public function getApiTokenByLogin($login, $password)
+    {
+        try {
+            $response = (new ApiClient($this->getApiClientOptions()))
+                ->getHalClient()
+                ->request(
+                    'POST',
+                    'v1/auth',
+                    [
+                        'json' => [
+                            'grant_type' => 'password',
+                            'username' => trim($login),
+                            'password' => trim($password),
+                        ],
+                    ]
+                );
+        } catch (\Exception $e) {
+            throw new LocalizedException(
+                __('Could not connect to the API with the login "%1" and given password.', $login)
+            );
+        }
+
+        return trim((string) $response->getProperty('access_token'));
+    }
+
+    /**
      * @param string $token
      * @return ApiSession
      * @throws LocalizedException

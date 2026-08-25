@@ -140,9 +140,7 @@ class Importer
      */
     public function getApiTokenByLogin($login, $password)
     {
-        $apiSession = $this->apiSessionManager->getSessionByLogin($login, $password);
-
-        return trim((string) $apiSession->getToken());
+        return $this->apiSessionManager->getApiTokenByLogin($login, $password);
     }
 
     /**
