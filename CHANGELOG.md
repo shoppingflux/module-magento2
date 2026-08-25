@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.21.0] - 2026-08-25
+### Changed
+- Rework the account import and token update processes in preparation for breaking API changes
+
 ## [1.20.0] - 2026-07-21
 ### Added
 - Add ability to delete multiple order logs at once
