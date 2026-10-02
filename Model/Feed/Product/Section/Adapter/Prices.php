@@ -186,16 +186,52 @@ class Prices extends AbstractAdapter implements PricesInterface
     }
 
     /**
+     * @param BundleProductType $productType
+     * @param CatalogProduct $product
+     * @return float
+     */
+    private function getBundleProductBasePrice(BundleProductType $productType, CatalogProduct $product)
+    {
+        // Mirror the computation of the final price for the configured selections,
+        // without applying any discount (special price, tier price or catalog price rule).
+        $bundlePrice = (float) $product->getPrice();
+        $selectionIdsOption = $product->getCustomOption('bundle_selection_ids');
+        $selectionIds = $selectionIdsOption ? json_decode((string) $selectionIdsOption->getValue(), true) : [];
+
+        if (empty($selectionIds) || !is_array($selectionIds)) {
+            return $bundlePrice;
+        }
+
+        $selectionsPrice = 0.0;
+
+        /** @var CatalogProduct $selection */
+        foreach ($productType->getSelectionsByIds($selectionIds, $product)->getItems() as $selection) {
+            $selectionQtyOption = $product->getCustomOption('selection_qty_' . $selection->getSelectionId());
+
+            if (!$selectionQtyOption || !$selection->isSalable()) {
+                continue;
+            }
+
+            $selectionPrice = $selection->getSelectionPriceType()
+                ? $bundlePrice * ($selection->getSelectionPriceValue() / 100)
+                : (float) $selection->getSelectionPriceValue();
+
+            $selectionsPrice += $selectionPrice * $selectionQtyOption->getValue();
+        }
+
+        return $bundlePrice + $selectionsPrice;
+    }
+
+    /**
      * @param CatalogProduct $product
      * @return float
      */
     private function getProductBasePrice(CatalogProduct $product)
     {
-        if ($product->getTypeInstance() instanceof BundleProductType) {
-            $product = clone $product;
-            $product->setData('tier_price', []);
-            $product->unsetData('special_price');
-            return $product->getFinalPrice(1);
+        $productType = $product->getTypeInstance();
+
+        if ($productType instanceof BundleProductType) {
+            return $this->getBundleProductBasePrice($productType, $product);
         }
 
         return (float) $product->getPrice();
@@ -263,7 +299,12 @@ class Prices extends AbstractAdapter implements PricesInterface
             $taxAmount = $this->getPriceTaxAmount($finalPrice, $taxRate);
         } else {
             $basePrice = $this->applyTaxRateOnPrice($basePrice, $taxRate);
-            $specialPrice = $this->applyTaxRateOnPrice($specialPrice, $taxRate);
+
+            // The special price of bundle products is a percentage.
+            if (!($product->getTypeInstance() instanceof BundleProductType)) {
+                $specialPrice = $this->applyTaxRateOnPrice($specialPrice, $taxRate);
+            }
+
             $finalPriceExclTax = $finalPrice;
             $finalPrice = $this->applyTaxRateOnPrice($finalPrice, $taxRate);
             $taxAmount = $finalPrice - $finalPriceExclTax;
@@ -404,7 +445,11 @@ class Prices extends AbstractAdapter implements PricesInterface
             self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($store, $product, 'special_to_date'),
         ];
 
+        // Tier prices depend on the customer group, which would otherwise default to the one from the session.
+        $originalCustomerGroupId = $product->getCustomerGroupId();
+        $product->setCustomerGroupId($this->getConfig()->getCustomerGroupId($store));
         $tierPrice = $this->getProductTierPrice($product);
+        $product->setCustomerGroupId($originalCustomerGroupId);
 
         if ($tierPrice > 0.0) {
             $priceData[self::KEY_TIER_PRICE] = $tierPrice;
@@ -476,22 +521,23 @@ class Prices extends AbstractAdapter implements PricesInterface
             $ecotaxAmount += ((float) ($childData[self::KEY_ECOTAX] ?? 0.0)) * $bundledQuantity;
         }
 
-        if (($bundleData[self::KEY_SPECIAL_PRICE] ?? 0.0) > 0.0) {
-            $specialPrice = $finalPrice * ($bundleData[self::KEY_SPECIAL_PRICE] / 100);
+        // As in Magento, the special price and tier price discounts do not stack: only the best one applies.
+        $discountRatio = 1.0;
 
-            if ($specialPrice < $finalPrice) {
-                $finalPrice = $specialPrice;
-                $taxAmount = $taxAmount * ($bundleData[self::KEY_SPECIAL_PRICE] / 100);
-            }
+        if (($bundleData[self::KEY_SPECIAL_PRICE] ?? 0.0) > 0.0) {
+            $discountRatio = min($discountRatio, $bundleData[self::KEY_SPECIAL_PRICE] / 100);
         }
 
         if (($bundleData[self::KEY_TIER_PRICE] ?? 0.0) > 0.0) {
-            $tierPrice = $finalPrice - $finalPrice * ($bundleData[self::KEY_TIER_PRICE] / 100);
+            $discountRatio = min($discountRatio, 1 - $bundleData[self::KEY_TIER_PRICE] / 100);
+        }
 
-            if ($tierPrice < $finalPrice) {
-                $finalPrice = $tierPrice;
-                $taxAmount = $taxAmount - $taxAmount * ($bundleData[self::KEY_TIER_PRICE] / 100);
-            }
+        // As in Magento, prices can not go below zero.
+        $discountRatio = max(0.0, $discountRatio);
+
+        if ($discountRatio < 1.0) {
+            $finalPrice = $finalPrice * $discountRatio;
+            $taxAmount = $taxAmount * $discountRatio;
         }
 
         $bundleData[self::KEY_BASE_PRICE] = $basePrice;
