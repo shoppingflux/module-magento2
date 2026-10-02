@@ -481,6 +481,41 @@ class Manager
     }
 
     /**
+     * @param OrderInterface $order
+     * @param string $action
+     * @param int|null $salesEntityId
+     * @throws CouldNotSaveException
+     */
+    private function registerFailedOrderTicket(OrderInterface $order, $action, $salesEntityId = null)
+    {
+        $ticket = $this->orderTicketFactory->create();
+
+        // Keep both IDs null, so as to not trigger the unique indices.
+        $ticket->setOrderId($order->getId());
+        $ticket->setSalesEntityId($salesEntityId);
+        $ticket->setAction($action);
+        $ticket->setStatus(TicketInterface::STATUS_FAILED);
+
+        $this->orderTicketRepository->save($ticket);
+    }
+
+    /**
+     * @param \Exception $e
+     * @return bool
+     */
+    private function isRejectedOperationException(\Exception $e)
+    {
+        if (!($e instanceof BadResponseException) || !$e->hasResponse()) {
+            return false;
+        }
+
+        $statusCode = (int) $e->getResponse()->getStatusCode();
+
+        // Rate limiting is not a definitive rejection.
+        return ($statusCode >= 400) && ($statusCode < 500) && (429 !== $statusCode);
+    }
+
+    /**
      * @param StoreInterface $store
      * @param OrderInterface $order
      * @param string $action
@@ -851,7 +886,7 @@ class Manager
      * @param ShipmentTrack[][] $salesOrderShipmentTracks
      * @param int[] $salesOrderItemShoppingFeedIds
      * @param StoreInterface $store
-     * @return void
+     * @return int[] The IDs of the sales orders whose partial shipments were rejected by the API
      * @throws CouldNotSaveException
      * @throws LocalizedException
      */
@@ -862,6 +897,7 @@ class Manager
         StoreInterface $store
     ) {
         $maximumDelay = $this->orderGeneralConfig->getShipmentSyncingMaximumDelay($store);
+        $rejectedSalesOrderIds = [];
 
         foreach ($marketplaceOrders as $marketplaceOrder) {
             $salesOrderId = (int) $marketplaceOrder->getSalesOrderId();
@@ -915,16 +951,38 @@ class Manager
                         ];
                     }
 
-                    $this->notifyStoreOrderPartialShipment(
-                        $marketplaceOrder,
-                        $shipmentId,
-                        $chosenTrack,
-                        $items,
-                        $store
-                    );
+                    try {
+                        $this->notifyStoreOrderPartialShipment(
+                            $marketplaceOrder,
+                            $shipmentId,
+                            $chosenTrack,
+                            $items,
+                            $store
+                        );
+                    } catch (\Exception $e) {
+                        $this->logOrderError(
+                            $marketplaceOrder,
+                            __('Failed to notify partial shipment:') . "\n" . $e->getMessage(),
+                            (string) $e
+                        );
+
+                        if ($this->isRejectedOperationException($e)) {
+                            $this->registerFailedOrderTicket(
+                                $marketplaceOrder,
+                                TicketInterface::ACTION_SHIP,
+                                $shipmentId
+                            );
+
+                            $rejectedSalesOrderIds[] = $salesOrderId;
+                        }
+
+                        continue 2;
+                    }
                 }
             }
         }
+
+        return $rejectedSalesOrderIds;
     }
 
     /**
@@ -967,7 +1025,15 @@ class Manager
                     continue;
                 }
 
-                $this->notifyStoreOrderShipment($marketplaceOrder, $chosenTrack, $store);
+                try {
+                    $this->notifyStoreOrderShipment($marketplaceOrder, $chosenTrack, $store);
+                } catch (\Exception $e) {
+                    $this->logOrderError(
+                        $marketplaceOrder,
+                        __('Failed to notify shipment:') . "\n" . $e->getMessage(),
+                        (string) $e
+                    );
+                }
             }
         }
     }
@@ -1033,7 +1099,7 @@ class Manager
             // 2. Syncing of partial shipments should be enabled in the account configuration.
 
             if (!$this->orderGeneralConfig->shouldSyncPartialShipments($store)) {
-                $partiallyShippableOrderIds = [];
+                $partiallyShippableSalesOrderIds = [];
                 $fullyShippableSalesOrderIds = $shippedSalesOrderIds;
             } else {
                 // 3. Shipments must be present on the shipment tracks so that we can map the corresponding items.
@@ -1101,7 +1167,7 @@ class Manager
                     )
                 );
 
-                $this->notifyStoreOrderPartialShipments(
+                $rejectedSalesOrderIds = $this->notifyStoreOrderPartialShipments(
                     array_intersect_key(
                         $shippedCollection->getItems(),
                         array_flip($partiallyShippableOrderIds)
@@ -1110,6 +1176,9 @@ class Manager
                     $salesOrderItemShoppingFeedIds,
                     $store
                 );
+
+                // Orders whose partial shipments were rejected must be fully shipped instead, as soon as possible.
+                $fullyShippableSalesOrderIds = array_merge($fullyShippableSalesOrderIds, $rejectedSalesOrderIds);
             }
 
             if (!empty($fullyShippableSalesOrderIds)) {
