@@ -360,8 +360,6 @@ class Refresher
         array $refreshedSectionTypeProductFilters = [],
         array $refreshedSectionTypeSectionFilters = []
     ) {
-        $this->appEmulation->startEnvironmentEmulation($store->getBaseStoreId());
-
         $isExportStateRefreshed = (null !== $exportStateRefreshProductFilter);
 
         $refreshedSectionTypeIds = array_intersect(
@@ -373,134 +371,139 @@ class Refresher
             return $this;
         }
 
-        $this->feedProductResource->startExportStateUpdateBatching();
-        $this->feedSectionResource->startSectionDataUpdateBatching();
+        $this->appEmulation->startEnvironmentEmulation($store->getBaseStoreId());
 
-        $sortedRefreshedSectionTypeIds = [];
+        try {
+            $this->feedProductResource->startExportStateUpdateBatching();
+            $this->feedSectionResource->startSectionDataUpdateBatching();
 
-        foreach ($refreshedSectionTypeIds as $key => $typeId) {
-            $sectionType = $this->sectionTypePool->getTypeById($typeId);
-            $sortedRefreshedSectionTypeIds[$sectionType->getSortOrder()] = $typeId;
-        }
+            $sortedRefreshedSectionTypeIds = [];
 
-        ksort($sortedRefreshedSectionTypeIds, SORT_NUMERIC);
-        $sortedRefreshedSectionTypeIds = array_values($sortedRefreshedSectionTypeIds);
-
-        $refreshedProductCount = 0;
-        $refreshableSliceSize = static::REFRESHABLE_SLICE_SIZE;
-        $maximumRefreshedCount = static::MAXIMUM_REFRESHED_COUNT;
-        $startTime = time();
-
-        while ($refreshedProductCount < $maximumRefreshedCount) {
-            $currentTime = time();
-
-            if ($currentTime - $startTime > static::MAXIMUM_TIME_SPENT) {
-                break;
+            foreach ($refreshedSectionTypeIds as $key => $typeId) {
+                $sectionType = $this->sectionTypePool->getTypeById($typeId);
+                $sortedRefreshedSectionTypeIds[$sectionType->getSortOrder()] = $typeId;
             }
 
-            $refreshableProducts = $this->refresherResource->getRefreshableProducts(
-                $store->getId(),
-                $exportStateRefreshProductFilter,
-                $sortedRefreshedSectionTypeIds,
-                $refreshedSectionTypeProductFilters,
-                $refreshedSectionTypeSectionFilters,
-                $refreshableSliceSize
-            );
+            ksort($sortedRefreshedSectionTypeIds, SORT_NUMERIC);
+            $sortedRefreshedSectionTypeIds = array_values($sortedRefreshedSectionTypeIds);
 
-            if (empty($refreshableProducts)) {
-                break;
-            }
+            $refreshedProductCount = 0;
+            $refreshableSliceSize = static::REFRESHABLE_SLICE_SIZE;
+            $maximumRefreshedCount = static::MAXIMUM_REFRESHED_COUNT;
+            $startTime = time();
 
-            $refreshedSliceSize = count($refreshableProducts);
-            $refreshedProductCount += $refreshedSliceSize;
+            while ($refreshedProductCount < $maximumRefreshedCount) {
+                $currentTime = time();
 
-            // Check which parts are to be refreshed for the products of the current slice.
-
-            $refreshSliceExportState = false;
-            $sliceNonRefreshableSectionTypeIds = $refreshedSectionTypeIds;
-
-            /** @var RefreshableProduct $refreshableProduct */
-            foreach ($refreshableProducts as $refreshableProduct) {
-                if (
-                    $isExportStateRefreshed
-                    && !$refreshSliceExportState
-                    && $refreshableProduct->hasRefreshableExportState()
-                ) {
-                    $refreshSliceExportState = true;
+                if ($currentTime - $startTime > static::MAXIMUM_TIME_SPENT) {
+                    break;
                 }
 
-                foreach ($sliceNonRefreshableSectionTypeIds as $key => $typeId) {
-                    if ($refreshableProduct->hasRefreshableSectionType($typeId)) {
-                        unset($sliceNonRefreshableSectionTypeIds[$key]);
+                $refreshableProducts = $this->refresherResource->getRefreshableProducts(
+                    $store->getId(),
+                    $exportStateRefreshProductFilter,
+                    $sortedRefreshedSectionTypeIds,
+                    $refreshedSectionTypeProductFilters,
+                    $refreshedSectionTypeSectionFilters,
+                    $refreshableSliceSize
+                );
+
+                if (empty($refreshableProducts)) {
+                    break;
+                }
+
+                $refreshedSliceSize = count($refreshableProducts);
+                $refreshedProductCount += $refreshedSliceSize;
+
+                // Check which parts are to be refreshed for the products of the current slice.
+
+                $refreshSliceExportState = false;
+                $sliceNonRefreshableSectionTypeIds = $refreshedSectionTypeIds;
+
+                /** @var RefreshableProduct $refreshableProduct */
+                foreach ($refreshableProducts as $refreshableProduct) {
+                    if (
+                        $isExportStateRefreshed
+                        && !$refreshSliceExportState
+                        && $refreshableProduct->hasRefreshableExportState()
+                    ) {
+                        $refreshSliceExportState = true;
+                    }
+
+                    foreach ($sliceNonRefreshableSectionTypeIds as $key => $typeId) {
+                        if ($refreshableProduct->hasRefreshableSectionType($typeId)) {
+                            unset($sliceNonRefreshableSectionTypeIds[$key]);
+                        }
+                    }
+
+                    if (
+                        empty($sliceNonRefreshableSectionTypeIds)
+                        && (!$isExportStateRefreshed || $refreshSliceExportState)
+                    ) {
+                        break;
                     }
                 }
 
+                $sliceRefreshableSectionTypeIds = array_diff(
+                    $refreshedSectionTypeIds,
+                    $sliceNonRefreshableSectionTypeIds
+                );
+
+                // Find out the most efficient strategies to refresh the products from the current slice.
+
+                $isProductLoadingRequiredForSections = false;
+                $isProductLoadingRequiredForExportState =
+                    $this->exportStateAdapter->requiresLoadedProduct($store)
+                    || $this->exportStateConfig->shouldForceProductLoadForRefresh($store);
+
+                foreach ($sliceRefreshableSectionTypeIds as $typeId) {
+                    $sectionType = $this->sectionTypePool->getTypeById($typeId);
+
+                    if (
+                        $sectionType->getAdapter()->requiresLoadedProduct($store)
+                        || $sectionType->getConfig()->shouldForceProductLoadForRefresh($store)
+                    ) {
+                        $isProductLoadingRequiredForSections = true;
+                        break;
+                    }
+                }
+
+                // Refresh products.
+
                 if (
-                    empty($sliceNonRefreshableSectionTypeIds)
-                    && (!$isExportStateRefreshed || $refreshSliceExportState)
+                    (!$refreshSliceExportState && !$isProductLoadingRequiredForSections)
+                    || ($refreshSliceExportState && !$isProductLoadingRequiredForExportState)
                 ) {
+                    $this->refreshProductsWithCollection(
+                        $refreshableProducts,
+                        $store,
+                        $refreshSliceExportState,
+                        $isProductLoadingRequiredForSections ? [] : $sliceRefreshableSectionTypeIds
+                    );
+                }
+
+                if (
+                    ($refreshSliceExportState && $isProductLoadingRequiredForExportState)
+                    || $isProductLoadingRequiredForSections
+                ) {
+                    $this->refreshProductsWithRepository(
+                        $refreshableProducts,
+                        $store,
+                        $refreshSliceExportState && $isProductLoadingRequiredForExportState,
+                        $sliceRefreshableSectionTypeIds
+                    );
+                }
+
+                if ($refreshedSliceSize < $refreshableSliceSize) {
                     break;
                 }
             }
 
-            $sliceRefreshableSectionTypeIds = array_diff(
-                $refreshedSectionTypeIds,
-                $sliceNonRefreshableSectionTypeIds
-            );
-
-            // Find out the most efficient strategies to refresh the products from the current slice.
-
-            $isProductLoadingRequiredForSections = false;
-            $isProductLoadingRequiredForExportState =
-                $this->exportStateAdapter->requiresLoadedProduct($store)
-                || $this->exportStateConfig->shouldForceProductLoadForRefresh($store);
-
-            foreach ($sliceRefreshableSectionTypeIds as $typeId) {
-                $sectionType = $this->sectionTypePool->getTypeById($typeId);
-
-                if (
-                    $sectionType->getAdapter()->requiresLoadedProduct($store)
-                    || $sectionType->getConfig()->shouldForceProductLoadForRefresh($store)
-                ) {
-                    $isProductLoadingRequiredForSections = true;
-                    break;
-                }
-            }
-
-            // Refresh products.
-
-            if (
-                (!$refreshSliceExportState && !$isProductLoadingRequiredForSections)
-                || ($refreshSliceExportState && !$isProductLoadingRequiredForExportState)
-            ) {
-                $this->refreshProductsWithCollection(
-                    $refreshableProducts,
-                    $store,
-                    $refreshSliceExportState,
-                    $isProductLoadingRequiredForSections ? [] : $sliceRefreshableSectionTypeIds
-                );
-            }
-
-            if (
-                ($refreshSliceExportState && $isProductLoadingRequiredForExportState)
-                || $isProductLoadingRequiredForSections
-            ) {
-                $this->refreshProductsWithRepository(
-                    $refreshableProducts,
-                    $store,
-                    $refreshSliceExportState && $isProductLoadingRequiredForExportState,
-                    $sliceRefreshableSectionTypeIds
-                );
-            }
-
-            if ($refreshedSliceSize < $refreshableSliceSize) {
-                break;
-            }
+            $this->feedProductResource->stopExportStateUpdateBatching();
+            $this->feedSectionResource->stopSectionDataUpdateBatching();
+        } finally {
+            $this->appEmulation->stopEnvironmentEmulation();
         }
-
-        $this->feedProductResource->stopExportStateUpdateBatching();
-        $this->feedSectionResource->stopSectionDataUpdateBatching();
-        $this->appEmulation->stopEnvironmentEmulation();
 
         return $this;
     }
