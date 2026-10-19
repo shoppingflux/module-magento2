@@ -69,11 +69,16 @@ class Selector implements SelectorInterface
 
     /**
      * @param CatalogCategory $category
+     * @param int $storeId
      */
-    private function initializeCategoryUrl(CatalogCategory $category)
+    private function initializeCategoryUrl(CatalogCategory $category, $storeId)
     {
+        // The "_scope" parameter prevents the URLs cached for other stores from being returned.
         if ($category->hasData('request_path') && ('' !== $category->getRequestPath())) {
-            $url = $this->frontendUrlBuilder->getDirectUrl($category->getRequestPath());
+            $url = $this->frontendUrlBuilder->getDirectUrl(
+                $category->getRequestPath(),
+                [ '_scope' => $storeId ]
+            );
         } else {
             $url = $this->frontendUrlBuilder->getUrl(
                 'catalog/category/view',
@@ -82,6 +87,7 @@ class Selector implements SelectorInterface
                     's' => $category->getUrlKey()
                         ? $category->getUrlKey()
                         : $category->formatUrlKey($category->getName()),
+                    '_scope' => $storeId,
                 ]
             );
         }
@@ -139,7 +145,7 @@ class Selector implements SelectorInterface
             /** @var CatalogCategory $category */
             foreach ($categoryCollection as $category) {
                 // Force the category URL as the URL instance does not use the emulated scope (if any).
-                $this->initializeCategoryUrl($category);
+                $this->initializeCategoryUrl($category, $storeId);
                 $parentChildIds[$category->getParentId()][] = (int) $categoryId = $category->getId();
             }
 
