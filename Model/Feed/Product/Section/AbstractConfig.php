@@ -2,6 +2,7 @@
 
 namespace ShoppingFeed\Manager\Model\Feed\Product\Section;
 
+use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\RefreshableConfig;
 
 abstract class AbstractConfig extends RefreshableConfig implements ConfigInterface
@@ -31,5 +32,11 @@ abstract class AbstractConfig extends RefreshableConfig implements ConfigInterfa
     {
         $this->type = $type;
         return $this;
+    }
+
+    public function isRefreshNeededForGeneralConfigChange(StoreInterface $store)
+    {
+        // Assume by default that the section data may depend on the general configuration (e.g. URLs).
+        return true;
     }
 }

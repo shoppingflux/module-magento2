@@ -224,6 +224,11 @@ class Prices extends AbstractConfig implements PricesInterface
         return __('Feed - Prices Section');
     }
 
+    public function isRefreshNeededForGeneralConfigChange(StoreInterface $store)
+    {
+        return false;
+    }
+
     public function getCustomerGroupId(StoreInterface $store)
     {
         return $this->customerGroupSource->getGroupId($this->getFieldValue($store, self::KEY_CUSTOMER_GROUP_ID));

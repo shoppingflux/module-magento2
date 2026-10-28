@@ -108,6 +108,11 @@ class Exporter
     private $feedDirectory;
 
     /**
+     * @var SecureUrlState
+     */
+    private $secureUrlState;
+
+    /**
      * @param FileSystem $fileSystem
      * @param ExporterResource $resource
      * @param AppMetadataInterface $appMetadata
@@ -117,6 +122,8 @@ class Exporter
      * @param ExportStateConfigInterface $exportStateConfig
      * @param SectionTypePoolInterface $sectionTypePool
      * @param string $feedDirectory
+     * @param ModuleManager|null $moduleManager
+     * @param SecureUrlState|null $secureUrlState
      */
     public function __construct(
         FileSystem $fileSystem,
@@ -128,7 +135,8 @@ class Exporter
         ExportStateConfigInterface $exportStateConfig,
         SectionTypePoolInterface $sectionTypePool,
         $feedDirectory,
-        ?ModuleManager $moduleManager = null
+        ?ModuleManager $moduleManager = null,
+        ?SecureUrlState $secureUrlState = null
     ) {
         $this->fileSystem = $fileSystem;
         $this->resource = $resource;
@@ -140,6 +148,7 @@ class Exporter
         $this->sectionTypePool = $sectionTypePool;
         $this->feedDirectory = $feedDirectory;
         $this->moduleManager = $moduleManager ?? ObjectManager::getInstance()->get(ModuleManager::class);
+        $this->secureUrlState = $secureUrlState ?? ObjectManager::getInstance()->get(SecureUrlState::class);
     }
 
     /**
@@ -273,6 +282,19 @@ class Exporter
 
             $product->setSectionTypeData($typeId, $productData);
         }
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param callable $callback
+     * @return mixed
+     */
+    private function runWithStoreSecureUrlForcing(StoreInterface $store, callable $callback)
+    {
+        return $this->secureUrlState->runWithSecureUrlForcing(
+            $this->generalConfig->shouldForceSecureUrls($store),
+            $callback
+        );
     }
 
     /**
@@ -460,10 +482,16 @@ class Exporter
             }
         );
 
-        $this->writeStoreProductsToGenerator(
+        // Most URLs are built during the refresh, but the section adapters may still build some upon export.
+        $this->runWithStoreSecureUrlForcing(
             $store,
-            $feedGenerator,
-            $this->getStoreProductsIterator($store, $productIds)
+            function () use ($store, $feedGenerator, $productIds) {
+                $this->writeStoreProductsToGenerator(
+                    $store,
+                    $feedGenerator,
+                    $this->getStoreProductsIterator($store, $productIds)
+                );
+            }
         );
 
         $products = ProductListWriter::getUriProducts($uri);
@@ -490,6 +518,21 @@ class Exporter
      * @throws \Exception
      */
     public function exportStoreFeed(StoreInterface $store)
+    {
+        // Most URLs are built during the refresh, but the feed attributes and the section adapters still build some.
+        $this->runWithStoreSecureUrlForcing(
+            $store,
+            function () use ($store) {
+                $this->writeStoreFeed($store);
+            }
+        );
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @throws \Exception
+     */
+    private function writeStoreFeed(StoreInterface $store)
     {
         $localMediaDirReader = $this->getLocalMediaDirectoryReader();
         $localMediaDirWriter = $this->getLocalMediaDirectoryWriter();
@@ -602,7 +645,14 @@ class Exporter
      */
     public function getStoreFeedUrl(StoreInterface $store)
     {
-        return $store->getBaseStore()->getBaseUrl(UrlInterface::URL_TYPE_MEDIA)
+        $baseMediaUrl = $this->runWithStoreSecureUrlForcing(
+            $store,
+            function () use ($store) {
+                return $store->getBaseStore()->getBaseUrl(UrlInterface::URL_TYPE_MEDIA);
+            }
+        );
+
+        return $baseMediaUrl
             . $this->feedDirectory
             . '/'
             . $store->getFeedFileNameBase()

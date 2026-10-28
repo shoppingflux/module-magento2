@@ -139,6 +139,11 @@ class Shipping extends AbstractConfig implements ShippingInterface
         return __('Feed - Shipping Section');
     }
 
+    public function isRefreshNeededForGeneralConfigChange(StoreInterface $store)
+    {
+        return false;
+    }
+
     public function getCarrierNameAttribute(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_CARRIER_NAME_ATTRIBUTE);

@@ -6,11 +6,13 @@ use Magento\Catalog\Api\ProductRepositoryInterface as CatalogProductRepository;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as CatalogProductCollection;
 use Magento\Catalog\Model\ResourceModel\Product\CollectionFactory as CatalogProductCollectionFactory;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\App\Emulation as AppEmulation;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\DataObject;
+use ShoppingFeed\Manager\Model\Feed\ConfigInterface as FeedConfigInterface;
 use ShoppingFeed\Manager\Model\Feed\Product as FeedProduct;
 use ShoppingFeed\Manager\Model\Feed\Product\AdapterInterface as ProductAdapterInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Export\State\AdapterInterface as ExportStateAdapterInterface;
@@ -93,6 +95,16 @@ class Refresher
     private $catalogProductCollectionFactory;
 
     /**
+     * @var FeedConfigInterface
+     */
+    private $feedGeneralConfig;
+
+    /**
+     * @var SecureUrlState
+     */
+    private $secureUrlState;
+
+    /**
      * @param AppEmulation $appEmulation
      * @param RefresherResource $refresherResource
      * @param ExportStateAdapterInterface $exportStateAdapter
@@ -104,6 +116,8 @@ class Refresher
      * @param FeedSectionResourceFactory $feedSectionResourceFactory
      * @param CatalogProductRepository $catalogProductRepository
      * @param CatalogProductCollectionFactory $catalogProductCollectionFactory
+     * @param FeedConfigInterface|null $feedGeneralConfig
+     * @param SecureUrlState|null $secureUrlState
      */
     public function __construct(
         AppEmulation $appEmulation,
@@ -116,7 +130,9 @@ class Refresher
         FeedProductResourceFactory $feedProductResourceFactory,
         FeedSectionResourceFactory $feedSectionResourceFactory,
         CatalogProductRepository $catalogProductRepository,
-        CatalogProductCollectionFactory $catalogProductCollectionFactory
+        CatalogProductCollectionFactory $catalogProductCollectionFactory,
+        ?FeedConfigInterface $feedGeneralConfig = null,
+        ?SecureUrlState $secureUrlState = null
     ) {
         $this->appEmulation = $appEmulation;
         $this->refresherResource = $refresherResource;
@@ -129,6 +145,8 @@ class Refresher
         $this->feedSectionResource = $feedSectionResourceFactory->create();
         $this->catalogProductRepository = $catalogProductRepository;
         $this->catalogProductCollectionFactory = $catalogProductCollectionFactory;
+        $this->feedGeneralConfig = $feedGeneralConfig ?? ObjectManager::getInstance()->get(FeedConfigInterface::class);
+        $this->secureUrlState = $secureUrlState ?? ObjectManager::getInstance()->get(SecureUrlState::class);
     }
 
     /**
@@ -153,10 +171,19 @@ class Refresher
 
         $outdatedSectionTypeIds = [];
 
+        $isGeneralRefreshNeeded = $this->feedGeneralConfig->isSectionRefreshNeededForStoreDataChange(
+            $store,
+            $oldConfiguration,
+            $newConfiguration
+        );
+
         foreach ($this->sectionTypePool->getTypes() as $sectionType) {
             $config = $sectionType->getConfig();
 
-            if ($config->isRefreshNeededForStoreDataChange($store, $oldConfiguration, $newConfiguration)) {
+            if (
+                ($isGeneralRefreshNeeded && $config->isRefreshNeededForGeneralConfigChange($store))
+                || $config->isRefreshNeededForStoreDataChange($store, $oldConfiguration, $newConfiguration)
+            ) {
                 $outdatedSectionTypeIds[] = $sectionType->getId();
             }
         }
@@ -359,6 +386,38 @@ class Refresher
         ?FeedProductFilter $exportStateRefreshProductFilter = null,
         array $refreshedSectionTypeProductFilters = [],
         array $refreshedSectionTypeSectionFilters = []
+    ) {
+        return $this->secureUrlState->runWithSecureUrlForcing(
+            $this->feedGeneralConfig->shouldForceSecureUrls($store),
+            function () use (
+                $store,
+                $exportStateRefreshProductFilter,
+                $refreshedSectionTypeProductFilters,
+                $refreshedSectionTypeSectionFilters
+            ) {
+                return $this->refreshStoreProducts(
+                    $store,
+                    $exportStateRefreshProductFilter,
+                    $refreshedSectionTypeProductFilters,
+                    $refreshedSectionTypeSectionFilters
+                );
+            }
+        );
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param FeedProductFilter|null $exportStateRefreshProductFilter
+     * @param FeedProductFilter[] $refreshedSectionTypeProductFilters
+     * @param FeedSectionFilter[] $refreshedSectionTypeSectionFilters
+     * @return $this
+     * @throws LocalizedException
+     */
+    private function refreshStoreProducts(
+        StoreInterface $store,
+        ?FeedProductFilter $exportStateRefreshProductFilter,
+        array $refreshedSectionTypeProductFilters,
+        array $refreshedSectionTypeSectionFilters
     ) {
         $isExportStateRefreshed = (null !== $exportStateRefreshProductFilter);
 

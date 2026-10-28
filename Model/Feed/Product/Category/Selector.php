@@ -5,12 +5,14 @@ namespace ShoppingFeed\Manager\Model\Feed\Product\Category;
 use Magento\Catalog\Model\Category as CatalogCategory;
 use Magento\Catalog\Model\Product as CatalogProduct;
 use Magento\Catalog\Model\ResourceModel\Category\CollectionFactory as CategoryCollectionFactory;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\UrlInterface;
 use Magento\Store\Model\StoreManagerInterface as BaseStoreManagerInterface;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
 use ShoppingFeed\Manager\Model\Feed\Product\Category as FeedCategory;
 use ShoppingFeed\Manager\Model\Feed\Product\CategoryFactory as FeedCategoryFactory;
+use ShoppingFeed\Manager\Model\Feed\SecureUrlState;
 
 class Selector implements SelectorInterface
 {
@@ -35,6 +37,11 @@ class Selector implements SelectorInterface
     private $feedCategoryFactory;
 
     /**
+     * @var SecureUrlState
+     */
+    private $secureUrlState;
+
+    /**
      * @var array[]
      */
     private $storeCategoryTree = [];
@@ -54,17 +61,20 @@ class Selector implements SelectorInterface
      * @param UrlInterface $frontendUrlBuilder
      * @param CategoryCollectionFactory $categoryCollectionFactory
      * @param FeedCategoryFactory $feedCategoryFactory
+     * @param SecureUrlState|null $secureUrlState
      */
     public function __construct(
         BaseStoreManagerInterface $baseStoreManager,
         UrlInterface $frontendUrlBuilder,
         CategoryCollectionFactory $categoryCollectionFactory,
-        FeedCategoryFactory $feedCategoryFactory
+        FeedCategoryFactory $feedCategoryFactory,
+        ?SecureUrlState $secureUrlState = null
     ) {
         $this->baseStoreManager = $baseStoreManager;
         $this->frontendUrlBuilder = $frontendUrlBuilder;
         $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->feedCategoryFactory = $feedCategoryFactory;
+        $this->secureUrlState = $secureUrlState ?? ObjectManager::getInstance()->get(SecureUrlState::class);
     }
 
     /**
@@ -123,9 +133,11 @@ class Selector implements SelectorInterface
     private function getStoreCategoryList(StoreInterface $store)
     {
         $storeId = $store->getBaseStoreId();
+        // The category URLs differ depending on whether secure URLs are forced.
+        $listKey = $storeId . ($this->secureUrlState->isSecureUrlForced() ? '-secure' : '');
 
-        if (!isset($this->storeCategoryList[$storeId])) {
-            $this->storeCategoryList[$storeId] = [];
+        if (!isset($this->storeCategoryList[$listKey])) {
+            $this->storeCategoryList[$listKey] = [];
             $baseStoreGroup = $this->baseStoreManager->getGroup($store->getBaseStore()->getStoreGroupId());
             $rootCategoryId = $baseStoreGroup->getRootCategoryId();
 
@@ -168,12 +180,12 @@ class Selector implements SelectorInterface
                 if ($category = $categoryCollection->getItemById($categoryId)) {
                     $feedCategory = $this->feedCategoryFactory->create([ 'catalogCategory' => $category ]);
                     $feedCategory->setGlobalPosition($index + 1);
-                    $this->storeCategoryList[$storeId][$category->getId()] = $feedCategory;
+                    $this->storeCategoryList[$listKey][$category->getId()] = $feedCategory;
                 }
             }
         }
 
-        return $this->storeCategoryList[$storeId];
+        return $this->storeCategoryList[$listKey];
     }
 
     /**

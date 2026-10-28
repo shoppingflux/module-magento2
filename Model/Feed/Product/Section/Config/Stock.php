@@ -154,6 +154,11 @@ class Stock extends AbstractConfig implements StockInterface
         return __('Feed - Stock Section');
     }
 
+    public function isRefreshNeededForGeneralConfigChange(StoreInterface $store)
+    {
+        return false;
+    }
+
     public function shouldUseActualStockState(StoreInterface $store)
     {
         return $this->getFieldValue($store, self::KEY_USE_ACTUAL_STOCK_STATE);
