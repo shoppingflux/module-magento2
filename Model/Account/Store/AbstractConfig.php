@@ -235,6 +235,32 @@ abstract class AbstractConfig implements ConfigInterface
         return $isEqualStoreData;
     }
 
+    /**
+     * @param StoreInterface $store
+     * @param DataObject $dataA
+     * @param DataObject $dataB
+     * @param string[] $ignoredFieldNames
+     * @return bool
+     * @throws LocalizedException
+     */
+    protected function isEqualStoreDataIgnoringFields(
+        StoreInterface $store,
+        DataObject $dataA,
+        DataObject $dataB,
+        array $ignoredFieldNames
+    ) {
+        $cleanDataA = clone $dataA;
+        $cleanDataB = clone $dataB;
+
+        foreach ($ignoredFieldNames as $fieldName) {
+            $fieldValuePath = $this->getFieldValuePath($fieldName);
+            $cleanDataA->unsetDataByPath($fieldValuePath);
+            $cleanDataB->unsetDataByPath($fieldValuePath);
+        }
+
+        return $this->isEqualStoreData($store, $cleanDataA, $cleanDataB);
+    }
+
     public function upgradeStoreData(StoreInterface $store, ConfigManager $configManager, $moduleVersion)
     {
     }

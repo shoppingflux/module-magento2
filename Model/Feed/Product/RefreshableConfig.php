@@ -183,15 +183,6 @@ abstract class RefreshableConfig extends AbstractConfig implements RefreshableCo
             self::KEY_ADVISED_REFRESH_REQUIREMENT_DELAY,
         ];
 
-        $cleanDataA = clone $dataA;
-        $cleanDataB = clone $dataB;
-
-        foreach ($irrelevantFieldNames as $fieldName) {
-            $fieldValuePath = $this->getFieldValuePath($fieldName);
-            $cleanDataA->unsetDataByPath($fieldValuePath);
-            $cleanDataB->unsetDataByPath($fieldValuePath);
-        }
-
-        return !$this->isEqualStoreData($store, $cleanDataA, $cleanDataB);
+        return !$this->isEqualStoreDataIgnoringFields($store, $dataA, $dataB, $irrelevantFieldNames);
     }
 }

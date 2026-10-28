@@ -714,6 +714,16 @@
         </arguments>
     </virtualType>
 
+    <type name="ShoppingFeed\Manager\Model\Feed\SecureUrlState" shared="true"/>
+
+    <type name="Magento\Framework\Url">
+        <plugin name="sfm_framework_url_plugin" type="ShoppingFeed\Manager\Plugin\Framework\UrlPlugin" sortOrder="0"/>
+    </type>
+
+    <type name="Magento\Store\Model\Store">
+        <plugin name="sfm_store_plugin" type="ShoppingFeed\Manager\Plugin\Store\StorePlugin" sortOrder="0"/>
+    </type>
+
     <type name="ShoppingFeed\Manager\Setup\UpgradeData">
         <arguments>
             <argument name="storeConfigManager" xsi:type="object">ShoppingFeed\Manager\Model\Account\Store\ConfigManager\Proxy</argument>
