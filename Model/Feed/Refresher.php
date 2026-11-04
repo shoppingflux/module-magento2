@@ -557,11 +557,17 @@ class Refresher
                     break;
                 }
             }
-
-            $this->feedProductResource->stopExportStateUpdateBatching();
-            $this->feedSectionResource->stopSectionDataUpdateBatching();
         } finally {
-            $this->appEmulation->stopEnvironmentEmulation();
+            // Also save the updates of the products refreshed before any failure.
+            try {
+                try {
+                    $this->feedProductResource->stopExportStateUpdateBatching();
+                } finally {
+                    $this->feedSectionResource->stopSectionDataUpdateBatching();
+                }
+            } finally {
+                $this->appEmulation->stopEnvironmentEmulation();
+            }
         }
 
         return $this;

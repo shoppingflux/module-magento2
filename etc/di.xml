@@ -716,8 +716,12 @@
 
     <type name="ShoppingFeed\Manager\Model\Feed\SecureUrlState" shared="true"/>
 
-    <type name="Magento\Framework\Url">
-        <plugin name="sfm_framework_url_plugin" type="ShoppingFeed\Manager\Plugin\Framework\UrlPlugin" sortOrder="0"/>
+    <type name="Magento\Framework\Url\RouteParamsPreprocessorComposite">
+        <arguments>
+            <argument name="routeParamsPreprocessors" xsi:type="array">
+                <item name="sfm_secure_url" xsi:type="object">ShoppingFeed\Manager\Model\Feed\SecureUrlRouteParamsPreprocessor</item>
+            </argument>
+        </arguments>
     </type>
 
     <type name="Magento\Store\Model\Store">
