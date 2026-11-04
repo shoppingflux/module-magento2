@@ -33,11 +33,11 @@ class Config extends AbstractConfig implements ConfigInterface
                 [
                     'name' => self::KEY_FORCE_SECURE_URLS,
                     'isCheckedByDefault' => false,
-                    'label' => __('Force Secure URLs'),
+                    'label' => __('Force Use of Secure URLs'),
                     'checkedNotice' => $this->getTranslatedMultiLineString(
                         [
                             'The product, category and image URLs, as well as the feed URL, will always use the secure base URLs of the store view.',
-                            'If this changes the feed URL, the one already registered on Shopping Feed will not be updated automatically.',
+                            'This option only has an effect if the secure base URLs configured for the store view differ from the unsecure ones.',
                         ]
                     ),
                     'uncheckedNotice' => $this->getTranslatedMultiLineString(
