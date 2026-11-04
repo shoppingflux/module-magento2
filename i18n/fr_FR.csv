@@ -251,6 +251,8 @@
 "Exported Image Count","Nombre d'images exportées"
 "Everything","Tout"
 "Failed","Échoué"
+"Failed to notify partial shipment:","La synchronisation de l'expédition partielle a échoué :"
+"Failed to notify shipment:","La synchronisation de l'expédition a échoué :"
 "Failed to upload invoice PDF:","L'upload du PDF de facture a échoué :"
 "Feed","Flux"
 "Feed - Attributes Section","Flux - Section attributs"
