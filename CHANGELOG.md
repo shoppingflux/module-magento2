@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.22.0] - 2026-11-04
+### Added
+- Add option to force the use of secure URLs in exported feeds
+
+### Fixed
+- Fix calculation of bundle product prices in some cases
+- Fix edge cases related to exported category URLs in multi-store mode
+- Fix handling of errors and edge cases when refreshing feed data
+- Prevent shipment syncing errors from blocking the rest of the process
+
 ## [1.21.0] - 2026-08-25
 ### Changed
 - Rework the account import and token update processes in preparation for breaking API changes
