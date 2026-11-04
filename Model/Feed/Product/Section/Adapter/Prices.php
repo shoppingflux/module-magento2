@@ -288,60 +288,62 @@ class Prices extends AbstractAdapter implements PricesInterface
         $product->setWebsiteId($store->getBaseStore()->getWebsiteId());
         $product->setCustomerGroupId($config->getCustomerGroupId($store));
 
-        $product->unsetData('final_price');
-        $product->unsetData('calculated_final_price');
+        try {
+            $product->unsetData('final_price');
+            $product->unsetData('calculated_final_price');
 
-        $basePrice = $this->getProductBasePrice($product);
-        $specialPrice = $this->getProductSpecialPrice($product);
-        $finalPrice = $this->getProductFinalPrice($product);
+            $basePrice = $this->getProductBasePrice($product);
+            $specialPrice = $this->getProductSpecialPrice($product);
+            $finalPrice = $this->getProductFinalPrice($product);
 
-        if ($isPriceIncludingTax) {
-            $taxAmount = $this->getPriceTaxAmount($finalPrice, $taxRate);
-        } else {
-            $basePrice = $this->applyTaxRateOnPrice($basePrice, $taxRate);
+            if ($isPriceIncludingTax) {
+                $taxAmount = $this->getPriceTaxAmount($finalPrice, $taxRate);
+            } else {
+                $basePrice = $this->applyTaxRateOnPrice($basePrice, $taxRate);
 
-            // The special price of bundle products is a percentage.
-            if (!($product->getTypeInstance() instanceof BundleProductType)) {
-                $specialPrice = $this->applyTaxRateOnPrice($specialPrice, $taxRate);
+                // The special price of bundle products is a percentage.
+                if (!($product->getTypeInstance() instanceof BundleProductType)) {
+                    $specialPrice = $this->applyTaxRateOnPrice($specialPrice, $taxRate);
+                }
+
+                $finalPriceExclTax = $finalPrice;
+                $finalPrice = $this->applyTaxRateOnPrice($finalPrice, $taxRate);
+                $taxAmount = $finalPrice - $finalPriceExclTax;
             }
 
-            $finalPriceExclTax = $finalPrice;
-            $finalPrice = $this->applyTaxRateOnPrice($finalPrice, $taxRate);
-            $taxAmount = $finalPrice - $finalPriceExclTax;
-        }
+            $data = [
+                self::KEY_BASE_PRICE => round($basePrice, 2),
+                self::KEY_SPECIAL_PRICE => ($specialPrice > 0) ? round($specialPrice, 2) : '',
+                self::KEY_FINAL_PRICE => round($finalPrice, 2),
+                self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($store, $product, 'special_from_date'),
+                self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($store, $product, 'special_to_date'),
+                self::KEY_VAT => round($taxAmount, 2),
+            ];
 
-        $data = [
-            self::KEY_BASE_PRICE => round($basePrice, 2),
-            self::KEY_SPECIAL_PRICE => ($specialPrice > 0) ? round($specialPrice, 2) : '',
-            self::KEY_FINAL_PRICE => round($finalPrice, 2),
-            self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($store, $product, 'special_from_date'),
-            self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($store, $product, 'special_to_date'),
-            self::KEY_VAT => round($taxAmount, 2),
-        ];
+            if (
+                ($ecotaxAttribute = $config->getEcotaxAttribute($store))
+                && $this->fptAttributeRenderer->isAppliableToAttribute($ecotaxAttribute)
+            ) {
+                $ecotaxAmounts = $this->fptAttributeRenderer->getProductAttributeValue(
+                    $store,
+                    $product,
+                    $ecotaxAttribute
+                );
 
-        if (
-            ($ecotaxAttribute = $config->getEcotaxAttribute($store))
-            && $this->fptAttributeRenderer->isAppliableToAttribute($ecotaxAttribute)
-        ) {
-            $ecotaxAmounts = $this->fptAttributeRenderer->getProductAttributeValue(
-                $store,
-                $product,
-                $ecotaxAttribute
-            );
+                $ecotaxCountry = strtolower($config->getEcotaxCountry($store));
 
-            $ecotaxCountry = strtolower($config->getEcotaxCountry($store));
+                if (is_array($ecotaxAmounts) && isset($ecotaxAmounts[$ecotaxCountry])) {
+                    $data[self::KEY_ECOTAX] = (float) $ecotaxAmounts[$ecotaxCountry];
 
-            if (is_array($ecotaxAmounts) && isset($ecotaxAmounts[$ecotaxCountry])) {
-                $data[self::KEY_ECOTAX] = (float) $ecotaxAmounts[$ecotaxCountry];
-
-                if (!$isPriceIncludingTax && $store->getScopeConfigValue(WeeeConfig::XML_PATH_FPT_TAXABLE)) {
-                    $data[self::KEY_ECOTAX] = $this->applyTaxRateOnPrice($data[self::KEY_ECOTAX], $taxRate);
+                    if (!$isPriceIncludingTax && $store->getScopeConfigValue(WeeeConfig::XML_PATH_FPT_TAXABLE)) {
+                        $data[self::KEY_ECOTAX] = $this->applyTaxRateOnPrice($data[self::KEY_ECOTAX], $taxRate);
+                    }
                 }
             }
+        } finally {
+            $product->setWebsiteId($originalWebsiteId);
+            $product->setCustomerGroupId($originalCustomerGroupId);
         }
-
-        $product->setWebsiteId($originalWebsiteId);
-        $product->setCustomerGroupId($originalCustomerGroupId);
 
         return $data;
     }
@@ -415,21 +417,23 @@ class Prices extends AbstractAdapter implements PricesInterface
         $defaultSelectionIds = [];
         $selectionCollection = $productType->getSelectionsCollection($allOptionIds, $product);
 
-        /** @var BundleProductSelection $selection */
-        foreach ($selectionCollection as $selection) {
-            if ($selection->getIsDefault()) {
-                $selectionId = (int) $selection->getSelectionId();
-                $defaultSelectionIds[] = $selectionId;
-                $product->addCustomOption('selection_qty_' . $selectionId, $selection->getSelectionQty());
+        try {
+            /** @var BundleProductSelection $selection */
+            foreach ($selectionCollection as $selection) {
+                if ($selection->getIsDefault()) {
+                    $selectionId = (int) $selection->getSelectionId();
+                    $defaultSelectionIds[] = $selectionId;
+                    $product->addCustomOption('selection_qty_' . $selectionId, $selection->getSelectionQty());
+                }
             }
+
+            $product->addCustomOption('bundle_selection_ids', json_encode($defaultSelectionIds));
+
+            $priceData = $this->getBasicProductPriceData($product, $store);
+        } finally {
+            // Clean up the product to avoid any inconsistent behavior in other sections.
+            $product->setCustomOptions([]);
         }
-
-        $product->addCustomOption('bundle_selection_ids', json_encode($defaultSelectionIds));
-
-        $priceData = $this->getBasicProductPriceData($product, $store);
-
-        // Clean up the product to avoid any inconsistent behavior in other sections.
-        $product->setCustomOptions([]);
 
         return $priceData;
     }
@@ -448,8 +452,12 @@ class Prices extends AbstractAdapter implements PricesInterface
         // Tier prices depend on the customer group, which would otherwise default to the one from the session.
         $originalCustomerGroupId = $product->getCustomerGroupId();
         $product->setCustomerGroupId($this->getConfig()->getCustomerGroupId($store));
-        $tierPrice = $this->getProductTierPrice($product);
-        $product->setCustomerGroupId($originalCustomerGroupId);
+
+        try {
+            $tierPrice = $this->getProductTierPrice($product);
+        } finally {
+            $product->setCustomerGroupId($originalCustomerGroupId);
+        }
 
         if ($tierPrice > 0.0) {
             $priceData[self::KEY_TIER_PRICE] = $tierPrice;

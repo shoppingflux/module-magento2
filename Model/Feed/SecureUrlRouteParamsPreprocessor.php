@@ -1,11 +1,10 @@
 <?php
 
-namespace ShoppingFeed\Manager\Plugin\Framework;
+namespace ShoppingFeed\Manager\Model\Feed;
 
-use Magento\Framework\Url;
-use ShoppingFeed\Manager\Model\Feed\SecureUrlState;
+use Magento\Framework\Url\RouteParamsPreprocessorInterface;
 
-class UrlPlugin
+class SecureUrlRouteParamsPreprocessor implements RouteParamsPreprocessorInterface
 {
     /**
      * @var SecureUrlState
@@ -21,20 +20,18 @@ class UrlPlugin
     }
 
     /**
-     * The "_secure" parameter also prevents previously cached unsecure URLs from being returned.
-     *
-     * @param Url $subject
+     * @param string $areaCode
      * @param string|null $routePath
      * @param array|null $routeParams
-     * @return array
+     * @return array|null
      */
-    public function beforeGetUrl(Url $subject, $routePath = null, $routeParams = null)
+    public function execute($areaCode, $routePath, $routeParams)
     {
         if ($this->secureUrlState->isSecureUrlForced()) {
             $routeParams = is_array($routeParams) ? $routeParams : [];
             $routeParams['_secure'] = true;
         }
 
-        return [ $routePath, $routeParams ];
+        return $routeParams;
     }
 }
