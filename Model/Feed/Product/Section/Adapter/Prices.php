@@ -10,10 +10,17 @@ use Magento\Catalog\Model\ResourceModel\Product as CatalogProductResource;
 use Magento\Catalog\Model\ResourceModel\Product\Collection as ProductCollection;
 use Magento\Catalog\Model\ResourceModel\ProductFactory as CatalogProductResourceFactory;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable as ConfigurableProductType;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface as TimezoneInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\Tax\Api\Data\QuoteDetailsInterfaceFactory;
+use Magento\Tax\Api\Data\QuoteDetailsItemInterface;
+use Magento\Tax\Api\Data\QuoteDetailsItemInterfaceFactory;
+use Magento\Tax\Api\Data\TaxClassKeyInterface;
+use Magento\Tax\Api\Data\TaxClassKeyInterfaceFactory;
 use Magento\Tax\Api\TaxCalculationInterface as TaxCalculationInterface;
 use Magento\Tax\Model\Config as TaxConfig;
+use Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector;
 use Magento\Weee\Model\Config as WeeeConfig;
 use ShoppingFeed\Feed\Product\AbstractProduct as AbstractExportedProduct;
 use ShoppingFeed\Manager\Api\Data\Account\StoreInterface;
@@ -38,6 +45,9 @@ class Prices extends AbstractAdapter implements PricesInterface
     const KEY_SPECIAL_PRICE_TO_DATE = 'special_price_to_date';
     const KEY_VAT = 'vat';
     const KEY_ECOTAX = 'ecotax';
+    const KEY_CATALOG_BASE_PRICE = 'catalog_base_price';
+    const KEY_CATALOG_FINAL_PRICE = 'catalog_final_price';
+    const KEY_TAX_CLASS_ID = 'tax_class_id';
 
     /**
      * @var CatalogProductResourceFactory
@@ -65,6 +75,26 @@ class Prices extends AbstractAdapter implements PricesInterface
     private $fptAttributeRenderer;
 
     /**
+     * @var QuoteDetailsInterfaceFactory
+     */
+    private $quoteDetailsFactory;
+
+    /**
+     * @var QuoteDetailsItemInterfaceFactory
+     */
+    private $quoteDetailsItemFactory;
+
+    /**
+     * @var TaxClassKeyInterfaceFactory
+     */
+    private $taxClassKeyFactory;
+
+    /**
+     * @var bool
+     */
+    private $isTaxCalculationFailing = false;
+
+    /**
      * @param StoreManagerInterface $storeManager
      * @param LabelledValueFactory $labelledValueFactory
      * @param AttributeRendererPoolInterface $attributeRendererPool
@@ -72,6 +102,9 @@ class Prices extends AbstractAdapter implements PricesInterface
      * @param TimezoneInterface $localeDate
      * @param TaxCalculationInterface $taxCalculator
      * @param AbstractAttributeRenderer $fptAttributeRenderer
+     * @param QuoteDetailsInterfaceFactory|null $quoteDetailsFactory
+     * @param QuoteDetailsItemInterfaceFactory|null $quoteDetailsItemFactory
+     * @param TaxClassKeyInterfaceFactory|null $taxClassKeyFactory
      */
     public function __construct(
         StoreManagerInterface $storeManager,
@@ -80,12 +113,25 @@ class Prices extends AbstractAdapter implements PricesInterface
         CatalogProductResourceFactory $catalogProductResourceFactory,
         TimezoneInterface $localeDate,
         TaxCalculationInterface $taxCalculator,
-        AbstractAttributeRenderer $fptAttributeRenderer
+        AbstractAttributeRenderer $fptAttributeRenderer,
+        ?QuoteDetailsInterfaceFactory $quoteDetailsFactory = null,
+        ?QuoteDetailsItemInterfaceFactory $quoteDetailsItemFactory = null,
+        ?TaxClassKeyInterfaceFactory $taxClassKeyFactory = null
     ) {
         $this->catalogProductResourceFactory = $catalogProductResourceFactory;
         $this->localeDate = $localeDate;
         $this->taxCalculator = $taxCalculator;
         $this->fptAttributeRenderer = $fptAttributeRenderer;
+
+        $this->quoteDetailsFactory = $quoteDetailsFactory
+            ?? ObjectManager::getInstance()->get(QuoteDetailsInterfaceFactory::class);
+
+        $this->quoteDetailsItemFactory = $quoteDetailsItemFactory
+            ?? ObjectManager::getInstance()->get(QuoteDetailsItemInterfaceFactory::class);
+
+        $this->taxClassKeyFactory = $taxClassKeyFactory
+            ?? ObjectManager::getInstance()->get(TaxClassKeyInterfaceFactory::class);
+
         parent::__construct($storeManager, $labelledValueFactory, $attributeRendererPool);
     }
 
@@ -296,6 +342,10 @@ class Prices extends AbstractAdapter implements PricesInterface
             $specialPrice = $this->getProductSpecialPrice($product);
             $finalPrice = $this->getProductFinalPrice($product);
 
+            // The prices as entered in the catalog (including or excluding tax), unrounded.
+            $catalogBasePrice = $basePrice;
+            $catalogFinalPrice = $finalPrice;
+
             if ($isPriceIncludingTax) {
                 $taxAmount = $this->getPriceTaxAmount($finalPrice, $taxRate);
             } else {
@@ -318,6 +368,10 @@ class Prices extends AbstractAdapter implements PricesInterface
                 self::KEY_SPECIAL_PRICE_FROM_DATE => $this->getDateValue($store, $product, 'special_from_date'),
                 self::KEY_SPECIAL_PRICE_TO_DATE => $this->getDateValue($store, $product, 'special_to_date'),
                 self::KEY_VAT => round($taxAmount, 2),
+                // Data required to compute the prices of dynamic bundles the same way as Magento.
+                self::KEY_CATALOG_BASE_PRICE => (float) $catalogBasePrice,
+                self::KEY_CATALOG_FINAL_PRICE => (float) $catalogFinalPrice,
+                self::KEY_TAX_CLASS_ID => (int) $taxClassId,
             ];
 
             if (
@@ -516,44 +570,193 @@ class Prices extends AbstractAdapter implements PricesInterface
             return $bundleData;
         }
 
-        $basePrice = 0.0;
-        $finalPrice = 0.0;
-        $taxAmount = 0.0;
+        // The special price and tier price of bundle products are percentages.
+        $specialPercentage = (float) ($bundleData[self::KEY_SPECIAL_PRICE] ?? 0.0);
+        $tierPercentage = (float) ($bundleData[self::KEY_TIER_PRICE] ?? 0.0);
+
+        $quantities = [];
         $ecotaxAmount = 0.0;
+        $isLegacyData = false;
 
         foreach ($childrenData as $key => $childData) {
-            $bundledQuantity = max(1, $childrenQuantities[$key] ?? 0);
-            $basePrice += ((float) ($childData[self::KEY_BASE_PRICE] ?? 0.0)) * $bundledQuantity;
-            $finalPrice += ((float) ($childData[self::KEY_FINAL_PRICE] ?? 0.0)) * $bundledQuantity;
-            $taxAmount += ((float) ($childData[self::KEY_VAT] ?? 0.0)) * $bundledQuantity;
-            $ecotaxAmount += ((float) ($childData[self::KEY_ECOTAX] ?? 0.0)) * $bundledQuantity;
+            $quantities[$key] = max(1, $childrenQuantities[$key] ?? 0);
+            $ecotaxAmount += ((float) ($childData[self::KEY_ECOTAX] ?? 0.0)) * $quantities[$key];
+
+            $isLegacyData = $isLegacyData
+                || !isset(
+                    $childData[self::KEY_CATALOG_BASE_PRICE],
+                    $childData[self::KEY_CATALOG_FINAL_PRICE],
+                    $childData[self::KEY_TAX_CLASS_ID]
+                );
         }
 
-        // As in Magento, the special price and tier price discounts do not stack: only the best one applies.
-        $discountRatio = 1.0;
+        $prices = null;
 
-        if (($bundleData[self::KEY_SPECIAL_PRICE] ?? 0.0) > 0.0) {
-            $discountRatio = min($discountRatio, $bundleData[self::KEY_SPECIAL_PRICE] / 100);
+        // The data refreshed by previous versions lack what is required to compute the prices as Magento does.
+        if (!$isLegacyData && !$this->isTaxCalculationFailing) {
+            try {
+                $prices = $this->getBundlePrices(
+                    $store,
+                    $childrenData,
+                    $quantities,
+                    $specialPercentage,
+                    $tierPercentage
+                );
+            } catch (\Throwable $e) {
+                // A failing tax calculation (in a third-party tax extension, for example) must not prevent the export.
+                $this->isTaxCalculationFailing = true;
+            }
         }
 
-        if (($bundleData[self::KEY_TIER_PRICE] ?? 0.0) > 0.0) {
-            $discountRatio = min($discountRatio, 1 - $bundleData[self::KEY_TIER_PRICE] / 100);
-        }
-
-        // As in Magento, prices can not go below zero.
-        $discountRatio = max(0.0, $discountRatio);
-
-        if ($discountRatio < 1.0) {
-            $finalPrice = $finalPrice * $discountRatio;
-            $taxAmount = $taxAmount * $discountRatio;
-        }
+        list ($basePrice, $finalPrice, $taxAmount) = $prices
+            ?? $this->getBundleLegacyPrices($childrenData, $quantities, $specialPercentage, $tierPercentage);
 
         $bundleData[self::KEY_BASE_PRICE] = $basePrice;
         $bundleData[self::KEY_FINAL_PRICE] = $finalPrice;
         $bundleData[self::KEY_VAT] = $taxAmount;
-        $bundleData[self::KEY_ECOTAX] = $ecotaxAmount;
+        $bundleData[self::KEY_ECOTAX] = round($ecotaxAmount, 2);
 
         return $bundleData;
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param array[] $childrenData
+     * @param int[] $quantities
+     * @param float $specialPercentage
+     * @param float $tierPercentage
+     * @return float[]
+     */
+    private function getBundlePrices(
+        StoreInterface $store,
+        array $childrenData,
+        array $quantities,
+        $specialPercentage,
+        $tierPercentage
+    ) {
+        $baseLines = [];
+        $finalLines = [];
+
+        foreach ($childrenData as $key => $childData) {
+            $taxClassId = (int) $childData[self::KEY_TAX_CLASS_ID];
+            $baseUnitPrice = (float) $childData[self::KEY_CATALOG_BASE_PRICE];
+
+            $finalUnitPrice = $this->getBundleDiscountedPrice(
+                (float) $childData[self::KEY_CATALOG_FINAL_PRICE],
+                $specialPercentage,
+                $tierPercentage
+            );
+
+            // As in Magento, unit prices are rounded (after the discount) before they are multiplied and taxed.
+            $baseLines[] = [ round($baseUnitPrice, 2), $quantities[$key], $taxClassId ];
+            $finalLines[] = [ round($finalUnitPrice, 2), $quantities[$key], $taxClassId ];
+        }
+
+        list ($basePrice) = $this->getBundleChildrenTotalPrices($store, $baseLines);
+        list ($finalPrice, $taxAmount) = $this->getBundleChildrenTotalPrices($store, $finalLines);
+
+        return [ $basePrice, $finalPrice, $taxAmount ];
+    }
+
+    /**
+     * @param array[] $childrenData
+     * @param int[] $quantities
+     * @param float $specialPercentage
+     * @param float $tierPercentage
+     * @return float[]
+     */
+    private function getBundleLegacyPrices(array $childrenData, array $quantities, $specialPercentage, $tierPercentage)
+    {
+        $basePrice = 0.0;
+        $finalPrice = 0.0;
+        $taxAmount = 0.0;
+
+        foreach ($childrenData as $key => $childData) {
+            $basePrice += ((float) ($childData[self::KEY_BASE_PRICE] ?? 0.0)) * $quantities[$key];
+            $finalPrice += ((float) ($childData[self::KEY_FINAL_PRICE] ?? 0.0)) * $quantities[$key];
+            $taxAmount += ((float) ($childData[self::KEY_VAT] ?? 0.0)) * $quantities[$key];
+        }
+
+        return [
+            round($basePrice, 2),
+            round($this->getBundleDiscountedPrice($finalPrice, $specialPercentage, $tierPercentage), 2),
+            round($this->getBundleDiscountedPrice($taxAmount, $specialPercentage, $tierPercentage), 2),
+        ];
+    }
+
+    /**
+     * @param float $price
+     * @param float $specialPercentage
+     * @param float $tierPercentage
+     * @return float
+     * @see \Magento\Bundle\Model\Product\Price::getLowestPrice()
+     */
+    private function getBundleDiscountedPrice($price, $specialPercentage, $tierPercentage)
+    {
+        // As in Magento, the special price and tier price discounts do not stack: only the best one applies.
+        $discountedPrice = $price;
+
+        if ($specialPercentage > 0.0) {
+            $discountedPrice = min($discountedPrice, $price * ($specialPercentage / 100));
+        }
+
+        if ($tierPercentage > 0.0) {
+            $discountedPrice = min($discountedPrice, $price - $price * ($tierPercentage / 100));
+        }
+
+        // As in Magento, prices can not go below zero.
+        return max(0.0, $discountedPrice);
+    }
+
+    /**
+     * @param StoreInterface $store
+     * @param array[] $lines
+     * @return float[]
+     * @see \Magento\Tax\Model\Sales\Total\Quote\CommonTaxCollector
+     */
+    private function getBundleChildrenTotalPrices(StoreInterface $store, array $lines)
+    {
+        if (empty($lines)) {
+            return [ 0.0, 0.0 ];
+        }
+
+        $isPriceIncludingTax = (bool) $store->getScopeConfigValue(TaxConfig::CONFIG_XML_PATH_PRICE_INCLUDES_TAX);
+        $items = [];
+
+        foreach ($lines as $index => list($unitPrice, $quantity, $taxClassId)) {
+            $taxClassKey = $this->taxClassKeyFactory->create();
+            $taxClassKey->setType(TaxClassKeyInterface::TYPE_ID);
+            $taxClassKey->setValue($taxClassId);
+
+            /** @var QuoteDetailsItemInterface $item */
+            $item = $this->quoteDetailsItemFactory->create();
+
+            $item->setCode('child-' . $index);
+            $item->setType(CommonTaxCollector::ITEM_TYPE_PRODUCT);
+            $item->setTaxClassKey($taxClassKey);
+            $item->setUnitPrice($unitPrice);
+            $item->setQuantity($quantity);
+            $item->setIsTaxIncluded($isPriceIncludingTax);
+            $item->setDiscountAmount(0.0);
+
+            $items[] = $item;
+        }
+
+        $quoteDetails = $this->quoteDetailsFactory->create();
+        $quoteDetails->setItems($items);
+
+        // Without addresses nor customer tax class, Magento uses the default tax destination and customer tax class.
+        $taxDetails = $this->taxCalculator->calculateTax($quoteDetails, $store->getBaseStoreId());
+
+        $totalPrice = 0.0;
+        $taxAmount = 0.0;
+
+        foreach ($taxDetails->getItems() ?: [] as $itemDetails) {
+            $totalPrice += $itemDetails->getRowTotalInclTax();
+            $taxAmount += $itemDetails->getRowTax();
+        }
+
+        return [ round($totalPrice, 2), round($taxAmount, 2) ];
     }
 
     public function exportBaseProductData(
