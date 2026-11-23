@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.22.1] - 2026-11-23
+### Fixed
+- Fix calculation of bundle product prices in some more cases
+
 ## [1.22.0] - 2026-11-04
 ### Added
 - Add option to force the use of secure URLs in exported feeds
